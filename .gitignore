@@ -1,0 +1,112 @@
+venv
+.DS_Store
+.idea
+.gcloudignore
+.git
+.venv
+__pycache__/
+/setup.cfg
+.ipynb_checkpoints
+# *.ipynb
+.env
+Brewfile.lock.json
+*.pdf
+.mypy_cache
+
+# Terraform
+**/.terraform/*
+**/terraform/terraform.tfstate.d
+**/.terraform*
+# Terraform lock files
+*/.terraform.lock.hcl
+.terraform.lock.hcl
+*.terraform.lock.hcl 
+
+# Data
+*.csv
+*.xlsx
+*.xls
+*.pkl
+*.parquet
+*.zip
+*.ods
+.data
+
+# outputs
+*.pdf
+*.jpg
+*.pptx
+*.ppt
+*.docx
+
+# Rendered presentations
+*.html
+*_files/
+
+# Docker cache
+.build-cache
+
+
+/frontend/test-results
+/frontend/playwright-report
+
+
+### nextjs
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+frontend/.pnp
+frontend/.pnp.js
+frontend/.yarn/install-state.gz
+
+frontend/.env.sentry-build-plugin
+
+# testing
+frontend/coverage
+
+# next.js
+frontend/.next/
+frontend/out/
+frontend/package-lock.json
+
+# production
+frontend/build
+frontend/artifacts
+
+# misc
+frontend/.DS_Store
+frontend/*.pem
+
+# debug
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# local env files
+frontend/.env*.local
+
+# vercel
+frontend/.vercel
+
+# typescript
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+
+frontend/.next/
+
+sagemaker
+backend/app/cabinet-style.txt
+backend/app/delivery-style.txt
+backend/app/llm/generate_test_meeting.py
+backend/app/generate_test_meeting.py
+curl.sh
+test_azure.py
+test.json
+config/google-credentials.json
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/

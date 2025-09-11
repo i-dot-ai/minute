@@ -1,0 +1,11 @@
+FROM node:23-alpine
+
+WORKDIR /app
+
+# Install dependencies based on the preferred package manager
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm install
+
+COPY frontend .
+
+ENTRYPOINT [ "npm", "run", "dev" ]

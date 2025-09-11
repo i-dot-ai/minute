@@ -1,0 +1,30 @@
+{
+  "editor.formatOnSave": true,
+  "eslint.format.enable": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.ruff": "explicit"
+  },
+  "eslint.validate": [
+    "javascript",
+    "typescript"
+  ],
+  "eslint.nodePath": "./node_modules/eslint",
+  "typescript.tsdk": "./frontend/node_modules/typescript/lib",
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "eslint.workingDirectories": [
+    "./frontend"
+  ],
+  "ruff.enable": true,
+  "ruff.importStrategy": "fromEnvironment",
+  "ruff.organizeImports": true,
+  // Debugging settings
+  "debug.javascript.autoAttachFilter": "smart",
+  "debug.javascript.terminalOptions": {
+    "skipFiles": [
+      "<node_internals>/**"
+    ]
+  },
+  "js/ts.implicitProjectConfig.checkJs": true,
+  "python.analysis.typeCheckingMode": "standard"
+}

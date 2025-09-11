@@ -1,0 +1,68 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python Debugger: FastAPI",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "backend.main:app",
+        "--reload",
+        "--port",
+        "8080"
+      ],
+      "jinja": true,
+      "cwd": "${workspaceFolder}",
+      "python": "${command:python.interpreterPath}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "preLaunchTask": "run-in-aws-vault"
+    },
+    {
+      "name": "Next.js: debug server-side",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "debug"
+      ],
+      "sourceMaps": true,
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/frontend/**",
+        "!**/node_modules/**"
+      ],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Next.js: debug client-side",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMapPathOverrides": {
+        "webpack://_N_E/*": "${webRoot}/*"
+      }
+    },
+    {
+      "name": "Next.js: debug full stack",
+      "compounds": [
+        "Next.js: debug server-side",
+        "Next.js: debug client-side"
+      ],
+      "presentation": {
+        "hidden": false,
+        "group": "Next.js",
+        "order": 1
+      }
+    }
+  ]
+}

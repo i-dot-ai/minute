@@ -1,0 +1,153 @@
+name: build-push-frontend
+on:
+  workflow_call:
+    secrets:
+      AWS_GITHUBRUNNER_USER_ACCESS_KEY:
+        required: false
+      AWS_GITHUBRUNNER_USER_SECRET_ID:
+        required: false
+      AWS_GITHUBRUNNER_PAT:
+        required: true
+      AWS_REGION:
+        required: true
+      AWS_ACCOUNT_ID:
+        required: true
+      AWS_GITHUBRUNNER_PAT_USER:
+        required: true
+      DOCKERHUB_USERNAME:
+        required: false
+      DOCKERHUB_TOKEN:
+        required: false
+      SENTRY_DSN:
+        required: true
+      POSTHOG_API_KEY:
+        required: true
+
+env:
+  ECR_REPO_URL: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/minute-frontend
+
+jobs:
+  set-vars:
+    runs-on: ubuntu-latest
+    outputs:
+      app-name: ${{ steps.export.outputs.app-name }}
+      ec2-instance-type: ${{ steps.export.outputs.ec2-instance-type }}
+      version: ${{ steps.export.outputs.version }}
+      runner-size: ${{ steps.export.outputs.runner-size }}
+      docker-build-instance: ${{ steps.export.outputs.docker-build-instance }}
+      docker-build-args: ${{ steps.export.outputs.docker-build-args }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - id: export
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+        run: |
+          . ./.github/.github.env
+          echo "ec2-instance-type=${EC2_INSTANCE_TYPE}" >> $GITHUB_OUTPUT
+          echo "app-name=${APP_NAME}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "runner-size=${RUNNER_SIZE}" >> $GITHUB_OUTPUT
+          echo "docker-build-instance=${DOCKER_BUILD_INSTANCE}" >> $GITHUB_OUTPUT
+          echo "docker-build-args=\"--build-arg NEXT_PUBLIC_SENTRY_DSN=${SENTRY_DSN} --build-arg NEXT_PUBLIC_POSTHOG_API_KEY=${POSTHOG_API_KEY}\"" >> $GITHUB_OUTPUT
+
+  start-runner:
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
+    needs: set-vars
+    permissions: write-all
+    with:
+      EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
+      RUNNER_SIZE: ${{ needs.set-vars.outputs.runner-size }}
+      USE_OIDC: true
+    secrets:
+      AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
+      AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  
+  build-image:
+    needs:
+      - set-vars
+      - start-runner
+    permissions: write-all
+    runs-on: ${{ needs.start-runner.outputs.label }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      
+      - name: AWS Authentication
+        uses: i-dot-ai/i-dot-ai-core-github-actions/.github/actions/authenticate-aws@main
+        with:
+            APP_NAME: ${{ needs.set-vars.outputs.app-name }}
+            USE_OIDC: true
+            ENVIRONMENT: prod # Looks like it use to default to this anyway
+            AWS_REGION: ${{ secrets.AWS_REGION }}
+            AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+            AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
+            AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
+
+      - name: Login to Amazon ECR (Private)
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+        shell: bash
+
+      - name: Create Docker cache container
+        env:
+          INSTANCE_NAME: ${{ needs.set-vars.outputs.docker-build-instance }}
+        run: |
+          if docker buildx ls --format "{{.Name}}" | grep -w "${INSTANCE_NAME}"; then
+            echo "Instance ${INSTANCE_NAME} found."
+          else
+            echo "Instance ${INSTANCE_NAME} not found."
+            docker buildx create --name "${INSTANCE_NAME}" --driver docker-container
+            echo "Instance ${INSTANCE_NAME} is created."
+          fi
+
+      - name: Export EFS_MOUNT_PATH
+        uses: i-dot-ai/i-dot-ai-core-github-actions/.github/actions/export-parameter@main
+        with:
+            PARAMETER_STORE_VAR_NAME: /github-runner-prod/efs-mount-path # defaults to prod??
+            ENVIRONMENT_VAR_NAME: EFS_MOUNT_PATH
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILDKIT: 1
+        with:
+          file: frontend/Dockerfile
+          context: .
+          builder: ${{ needs.set-vars.outputs.app-name }}
+          push: true
+          platforms: linux/amd64
+          build-args: |
+            NEXT_PUBLIC_SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+            NEXT_PUBLIC_POSTHOG_API_KEY=${{ secrets.POSTHOG_API_KEY }}
+          load: true
+          cache-to: type=local,dest=${{ env.EFS_MOUNT_PATH }}
+          cache-from: type=local,src=${{ env.EFS_MOUNT_PATH }}
+          tags: ${{ env.ECR_REPO_URL }}:${{ github.sha }}
+
+  stop-runner:
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main
+    if: needs.start-runner.outputs.use-persisted == 0 && always()
+    needs:
+      - set-vars
+      - start-runner
+      - build-image
+    permissions: write-all
+    with:
+      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+      EC2_INSTANCE_ID: ${{ needs.start-runner.outputs.ec2-instance-id }}
+      USE_OIDC: true
+    secrets:
+      AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
+      AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}

@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "run-in-aws-vault",
+            "type": "shell",
+            "command": "aws-vault exec --duration 4h developer-role -- ${command:python.interpreterPath} -m uvicorn backend.main:app --reload --port 8080",
+            "options": {
+                "env": {
+                    "PYTHONPATH": "${workspaceFolder}"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": [],
+            "isBackground": true
+        }
+    ]
+}

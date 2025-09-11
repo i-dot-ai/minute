@@ -1,0 +1,128 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SESSION_TOKEN
+      - AWS_DEFAULT_REGION=eu-west-2
+      - POSTGRES_HOST=db
+      - LOCALSTACK_URL=http://localstack:4566
+    depends_on:
+      db:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    develop:
+      watch:
+        - path: ./backend
+          target: /app/backend
+          action: sync+restart
+        - path: ./common
+          target: /app/common
+          action: sync+restart
+        - path: ./poetry.lock
+          action: rebuild
+        - path: ./alembic
+          action: rebuild
+  worker:
+    build:
+      context: .
+      dockerfile: ./worker/Dockerfile
+    shm_size: 4gb
+    deploy: # Make sure the worker has a couple of CPUS
+      resources:
+        limits:
+          cpus: "2.0" # Set CPU limit to 2 cores
+
+    env_file:
+      - .env
+    ports:
+      - "8265:8265"
+    volumes:
+      - /tmp:/tmp
+    environment:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SESSION_TOKEN
+      - AWS_DEFAULT_REGION=eu-west-2
+      - POSTGRES_HOST=db
+      - LOCALSTACK_URL=http://localstack:4566
+    stop_grace_period: 10s
+    depends_on:
+      db:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    develop:
+      watch:
+        - path: ./backend
+          target: /app/backend
+          action: sync+restart
+        - path: ./common
+          target: /app/common
+          action: sync+restart
+        - path: ./poetry.lock
+          action: rebuild
+  frontend:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile.dev
+      args:
+        - NEXT_PUBLIC_SENTRY_DSN=$SENTRY_DSN
+        - NEXT_PUBLIC_POSTHOG_API_KEY=$POSTHOG_API_KEY
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      - BACKEND_HOST=http://backend:8080
+      - NEXT_PUBLIC_SENTRY_DSN=$SENTRY_DSN
+      - NEXT_PUBLIC_POSTHOG_API_KEY=$POSTHOG_API_KEY
+    develop:
+      watch:
+        - path: ./frontend
+          target: /app
+          action: sync
+        - path: ./frontend/package.json
+          action: rebuild
+  db:
+    image: postgres:13
+    user: postgres
+    env_file:
+      - .env
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data:Z
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "minute_db"]
+      interval: 5s
+      timeout: 30s
+      retries: 24
+      start_period: 30s
+  localstack: # LocalStack container
+    image: localstack/localstack:latest
+    env_file:
+      - .env
+    ports:
+      - 4566:4566
+      - 4510-4559:4510-4559
+    volumes:
+      # Here you mount your setup file so it will be executed
+      # when the container starts
+      - ./localstack-setup.sh:/etc/localstack/init/ready.d/script.sh
+    environment:
+      - AWS_DEFAULT_REGION=eu-west-2
+
+volumes:
+  local_postgres_data: {}

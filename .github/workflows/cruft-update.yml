@@ -1,0 +1,19 @@
+# 
+name: Update repository from Cookiecutter
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 * * *" # Every day at 9am
+
+jobs:
+  check_for_update:
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/cruft-update-repo.yml@main
+    secrets:
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      COOKIECUTTER_SSH_PRIVATE_KEY: ${{ secrets.COOKIECUTTER_SSH_PRIVATE_KEY }}
+#

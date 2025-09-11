@@ -1,0 +1,66 @@
+# Put action within a raw block so that the curly bracket expressions aren't picked up by the cookiecutter
+# 
+name: Checks
+
+env:
+  DOCKER_BUILDKIT: 1
+
+on:
+  push:
+    paths:
+      - backend/**
+      - Makefile
+      - frontend/**
+    branches:
+      - 'main'
+      - 'feature/**'
+      - 'chore/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+      - 'develop'
+      - 'dependabot/**'
+      - 'security/**'
+  workflow_dispatch:
+
+jobs:
+  static_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.12"
+
+      - name: Set up Poetry
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: 1.8.0
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-root --no-ansi --only dev
+
+      - name: Format code
+        run: |
+          poetry run ruff format . --check
+          poetry run ruff check .
+
+  run_tests:
+    name: Run tests
+
+    runs-on: ubuntu-latest
+    environment: release
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Copy env file
+      run: |
+        cp .env.example .env
+
+    - name: Run tests
+      run: |
+        make test
+#

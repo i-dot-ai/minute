@@ -1,0 +1,101 @@
+name: build-push-one
+on:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+    secrets:
+      AWS_GITHUBRUNNER_USER_ACCESS_KEY:
+        required: false
+      AWS_GITHUBRUNNER_USER_SECRET_ID:
+        required: false
+      AWS_GITHUBRUNNER_PAT:
+        required: true
+      AWS_REGION:
+        required: true
+      AWS_ACCOUNT_ID:
+        required: true
+      AWS_GITHUBRUNNER_PAT_USER:
+        required: true
+      DOCKERHUB_USERNAME:
+        required: false
+      DOCKERHUB_TOKEN:
+        required: false
+
+
+jobs:
+  set-vars:
+    runs-on: ubuntu-latest
+    outputs:
+      app-name: ${{ steps.export.outputs.app-name }}
+      ec2-instance-type: ${{ steps.export.outputs.ec2-instance-type }}
+      version: ${{ steps.export.outputs.version }}
+      runner-size: ${{ steps.export.outputs.runner-size }}
+      docker-build-instance: ${{ steps.export.outputs.docker-build-instance }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - id: export
+        run: |
+          . ./.github/.github.env
+          echo "ec2-instance-type=${EC2_INSTANCE_TYPE}" >> $GITHUB_OUTPUT
+          echo "app-name=${APP_NAME}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "runner-size=${RUNNER_SIZE}" >> $GITHUB_OUTPUT
+          echo "docker-build-instance=${DOCKER_BUILD_INSTANCE}" >> $GITHUB_OUTPUT
+
+  start-runner:
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
+    needs: set-vars
+    permissions: write-all
+    with:
+      EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
+      RUNNER_SIZE: ${{ needs.set-vars.outputs.runner-size }}
+      USE_OIDC: true
+    secrets:
+      AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
+      AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+  build-image:
+    needs:
+      - set-vars
+      - start-runner
+    permissions: write-all
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@main
+    with:
+      APP_NAME: ${{ needs.set-vars.outputs.app-name }}
+      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+      INFRASTRUCTURE_FOLDER: "terraform"
+      DOCKER_BUILD_INSTANCE: ${{ needs.set-vars.outputs.docker-build-instance }}
+      SERVICE: ${{ inputs.service }}
+      COMMIT_HASH: ${{ github.sha }}
+      USE_OIDC: true
+    secrets:
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+  stop-runner:
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main
+    if: needs.start-runner.outputs.use-persisted == 0 && always()
+    needs:
+      - set-vars
+      - start-runner
+      - build-image
+    permissions: write-all
+    with:
+      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+      EC2_INSTANCE_ID: ${{ needs.start-runner.outputs.ec2-instance-id }}
+      USE_OIDC: true
+    secrets:
+      AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
+      AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}

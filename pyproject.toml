@@ -1,0 +1,123 @@
+[tool.ruff]
+line-length = 120
+target-version = 'py312'
+fix = true
+
+[tool.cruft]
+skip = [
+    # fastapi_paths
+    "backend/fastapi/settings.py",
+    "backend/fastapi/tests.py",
+    
+    # nextjs_paths
+    "frontend/nextjs/pages/api/health.ts",
+    "frontend/nextjs/pages/api/info.ts",
+    "frontend/nextjs/app/globals.css",
+    "frontend/nextjs/app/favicon.ico",
+    "frontend/nextjs/app/layout.tsx",
+    "frontend/nextjs/app/page.tsx",
+    # general_paths
+    ".env.*",
+    "data",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.3"
+addopts = "-ra -q"
+testpaths = [
+    "backend/tests"
+]
+
+[tool.poetry]
+name = "minute"
+authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    {include = "backend"},
+    {include = "common"},
+]
+version = "2.0.0"
+
+# add common dependencies here
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+cryptography = "^44.0.2"
+pydantic-settings = "^2.5.2"
+alembic = "^1.13.3"
+sqlmodel = "^0.0.24"
+apscheduler = "^3.11.0"
+tenacity = "^9.1.2"
+aioboto3 = "^14.3.0"
+breame = "^0.1.2"
+mistune = "^3.1.3"
+httpx = "^0.28.1"
+psycopg2-binary = "^2.9.9"
+boto3 = "^1.35.3"
+sentry-sdk = {extras = ["fastapi"], version = "^2.18.0"}
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.42"}
+asyncpg = "^0.30.0"
+
+[tool.poetry.group.backend.dependencies]
+fastapi = ">=0.112.0"
+uvicorn = "^0.31.0"
+pyjwt = "^2.9.0"
+cryptography = "^44.0.2"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.42"}
+asyncpg = "^0.30.0"
+posthog = "^6.6.1"
+azure-servicebus = "^7.14.2"
+
+[tool.poetry.group.worker.dependencies]
+google-genai = "^1.10.0"
+openai = "^1.42.0"
+ffmpeg-python = "^0.2.0"
+ray = {extras = ["default"], version = "^2.47.1"}
+azure-storage-blob = "^12.26.0"
+azure-identity = "^1.23.1"
+azure-servicebus = "^7.14.2"
+
+[tool.poetry.group.dev.dependencies]
+bumpversion = "^0.6.0"
+pre-commit = "^3.8.0"
+pytest = "^8.3.2"
+pytest-env = "^1.1.1"
+pytest-mock = "^3.14.0"
+pytest-cov = "^5.0.0"
+pytest-dotenv = "^0.5.2"
+pytest-asyncio = "^0.23.8"
+ruff = "0.8.2"
+bandit = "^1.7.9"
+detect-secrets = "^1.5.0"
+playwright = "^1.45"
+pytest-playwright = "^0.5"
+diagrams = "^0.23.4"
+ipykernel = "^6.29.5"
+#needed for running llm related tests
+beautifulsoup4 = "^4.13.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff.format]
+exclude = ["data/*"]
+
+[tool.ruff.lint]
+select = [
+    "A", "B", "C", "E", "F", "G", "I", "N", "Q", "S", "T", "W",
+    "ARG", "ASYNC", "BLE", "COM", "DJ", "DTZ", "EM", "EXE", "FURB",
+    "ICN", "INT", "ISC", "LOG", "NPY", "PD", "PGH", "PIE", "PL",
+    "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "SLOT",
+    "TCH", "TD", "TID", "UP", "YTT"
+]
+exclude = ["out/*"]
+ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318","ISC001"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend", "frontend"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S106", "PLR0913", "PLR0915", "PLR2004", "TD003", "S311"]
+"*/tests/*" = ["S101", "S106", "PLR0913", "PLR0915", "PLR2004", "TD003"]
+"*/tests_playwright/*" = ["S101", "S106", "PLR0913", "PLR2004", "TD003"]

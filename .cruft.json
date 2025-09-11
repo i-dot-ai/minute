@@ -1,0 +1,25 @@
+{
+  "template": "git@github.com:i-dot-ai/i-dot-ai-cookiecutter.git",
+  "commit": "ee1ab0f1bd183d00b1c7fa4f264d2cac017eb83c",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_name": "Minute",
+      "app_name": "minute",
+      "_copy_without_render": [
+        "*.html",
+        "*.js",
+        "*.css"
+      ],
+      "frontend_framework": "nextjs",
+      "backend_framework": "fastapi",
+      "database_backend": "None",
+      "_integration_test": "false",
+      "__perms_boundary_app_name": "minute",
+      "owner": "samlhuillier",
+      "email_address": "sam.lhuillier@cabinetoffice.gov.uk",
+      "_template": "git@github.com:i-dot-ai/i-dot-ai-cookiecutter.git"
+    }
+  },
+  "directory": "templates/webapp-ecs"
+}

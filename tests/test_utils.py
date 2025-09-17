@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.app.audio.utils import convert_to_mp3, get_duration, get_num_audio_channels
+from common.audio.ffmpeg import convert_to_mp3, get_duration, get_num_audio_channels
 from tests.marks import requires_audio_data
 from tests.utils import FileTypeTests
 

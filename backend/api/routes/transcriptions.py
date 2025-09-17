@@ -7,7 +7,6 @@ from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import col, func, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
-from backend.app.audio.utils import get_file_s3_key
 from backend.app.minutes.types import (
     PaginatedTranscriptionsResponse,
     RecordingCreateRequest,
@@ -21,6 +20,7 @@ from backend.app.minutes.types import (
     TranscriptionPatchRequest,
     WorkerMessage,
 )
+from backend.utils.get_file_s3_key import get_file_s3_key
 from common.database.postgres_models import (
     Minute,
     MinuteVersion,

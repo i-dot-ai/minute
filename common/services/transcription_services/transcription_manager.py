@@ -5,8 +5,8 @@ from pathlib import Path
 
 import sentry_sdk
 
-from backend.app.audio.utils import convert_to_mp3, get_duration, get_num_audio_channels
 from backend.app.minutes.types import TranscriptionJobMessageData
+from common.audio.ffmpeg import convert_to_mp3, get_duration, get_num_audio_channels
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import Recording, Transcription
 from common.services.exceptions import TranscriptionFailedError

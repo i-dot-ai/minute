@@ -1,32 +1,9 @@
 import logging
 
-from backend.app.audio.speaker_recognition import generate_speaker_predictions as predict_speakers
 from backend.app.minutes.types import DialogueEntry
+from common.audio.generate_speaker_predictions import generate_speaker_predictions
 
 logger = logging.getLogger(__name__)
-
-
-def convert_input_dialogue_entries_to_dialogue_entries(
-    entries: list[dict],
-) -> list[DialogueEntry]:
-    """
-    Convert input dialogue entries to DialogueEntry objects.
-
-    Args:
-        entries: List of dictionary entries with speaker, text, offsetMilliseconds, and durationMilliseconds
-
-    Returns:
-        List of DialogueEntry objects
-    """
-    return [
-        DialogueEntry(
-            speaker=entry["speaker"],
-            text=entry["text"],
-            start_time=float(entry["offsetMilliseconds"]) / 1000,
-            end_time=(float(entry["offsetMilliseconds"]) + float(entry["durationMilliseconds"])) / 1000,
-        )
-        for entry in entries
-    ]
 
 
 def group_dialogue_entries_by_speaker(
@@ -121,7 +98,7 @@ def add_speaker_labels_to_dialogue_entries(
 
 
 async def process_speakers_and_dialogue_entries(
-    dialogue_entries: list[dict] | list[DialogueEntry],
+    dialogue_entries: list[DialogueEntry],
 ) -> list[DialogueEntry]:
     """
     Process dialogue entries by grouping, normalizing, labeling, and predicting speakers.
@@ -132,23 +109,9 @@ async def process_speakers_and_dialogue_entries(
     Returns:
         List of DialogueEntry objects with processed speaker labels
     """
-    # Convert dictionaries to DialogueEntry objects if needed
-    entries_as_objects = []
-    for entry in dialogue_entries:
-        if isinstance(entry, dict):
-            entries_as_objects.append(
-                DialogueEntry(
-                    speaker=entry.get("speaker", ""),
-                    text=entry.get("text", ""),
-                    start_time=entry.get("start_time", 0.0),
-                    end_time=entry.get("end_time", 0.0),
-                )
-            )
-        else:
-            entries_as_objects.append(entry)
 
     # Step 1: Group similar speakers together
-    grouped_dialogue_entries = group_dialogue_entries_by_speaker(entries_as_objects)
+    grouped_dialogue_entries = group_dialogue_entries_by_speaker(dialogue_entries)
 
     # Step 2: Normalize speaker labels to numbers
     normalised_dialogue_entries = normalize_speaker_labels(grouped_dialogue_entries)
@@ -158,7 +121,7 @@ async def process_speakers_and_dialogue_entries(
 
     try:
         # Step 4: Get speaker predictions
-        speaker_predictions = await predict_speakers(labelled_dialogue_entries)
+        speaker_predictions = await generate_speaker_predictions(labelled_dialogue_entries)
 
         # Step 5: Update entries with predicted names
         predicted_entries = []
@@ -177,7 +140,3 @@ async def process_speakers_and_dialogue_entries(
         logger.error("Error predicting speaker names: %s", str(e))
         # Return the labeled entries if prediction fails
         return labelled_dialogue_entries
-
-
-# Alias for backward compatibility
-process_dialogue_entries = process_speakers_and_dialogue_entries

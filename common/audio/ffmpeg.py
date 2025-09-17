@@ -3,34 +3,8 @@ import subprocess
 from pathlib import Path
 
 import ffmpeg
-import httpx
-
-from backend.app.minutes.types import DialogueEntry
 
 logger = logging.getLogger(__name__)
-
-
-def is_rate_limit_error(exception):
-    """Check if the exception is due to rate limiting (HTTP 429)"""
-    return (
-        isinstance(exception, httpx.HTTPStatusError) and exception.response.status_code == 429  # noqa: PLR2004
-    )
-
-
-def get_file_s3_key(user_email: str, file_name: str, file_type: str = "multimedia") -> str:
-    """
-    Generate a consistent S3 file key for user uploads.
-
-    Args:
-        user_email (str): The email of the user uploading the file
-        extension (str): The file extension
-
-    Returns:
-        str: The generated file key in the format 'user-uploads/{email}/{uuid}.{extension}'
-    """
-    if file_type == "document":
-        return f"app_data/document-uploads/{user_email}/{file_name}"
-    return f"app_data/user-uploads/{user_email}/{file_name}"
 
 
 def convert_to_mp3(input_file_path: Path) -> Path:
@@ -72,20 +46,6 @@ def convert_to_mp3(input_file_path: Path) -> Path:
         raise
     else:
         return output_file
-
-
-def convert_input_dialogue_entries_to_dialogue_entries(
-    entries: list,
-) -> list[DialogueEntry]:
-    return [
-        DialogueEntry(
-            speaker=str(entry["speaker"]),
-            text=entry["text"],
-            start_time=float(entry["offsetMilliseconds"]) / 1000,
-            end_time=(float(entry["offsetMilliseconds"]) + float(entry["durationMilliseconds"])) / 1000,
-        )
-        for entry in entries
-    ]
 
 
 def get_num_audio_channels(file_path: Path) -> int:

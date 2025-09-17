@@ -1,6 +1,6 @@
-from backend.services.queue_services.azure_service_bus import AzureServiceBusQueueService
-from backend.services.queue_services.base import QueueService
-from backend.services.queue_services.sqs import SQSQueueService
+from common.services.queue_services.azure_service_bus import AzureServiceBusQueueService
+from common.services.queue_services.base import QueueService
+from common.services.queue_services.sqs import SQSQueueService
 
 queue_services = {
     SQSQueueService.name: SQSQueueService(),

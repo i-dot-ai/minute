@@ -14,11 +14,11 @@ from backend.app.minutes.types import (
     TaskType,
     WorkerMessage,
 )
-from backend.services.queue_services import get_queue_service
 from common.database.postgres_models import (
     Chat,
     Transcription,
 )
+from common.services.queue_services import get_queue_service
 from common.settings import get_settings
 
 settings = get_settings()

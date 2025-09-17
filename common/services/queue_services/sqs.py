@@ -4,7 +4,7 @@ from typing import Any
 import boto3
 
 from backend.app.minutes.types import WorkerMessage
-from backend.services.queue_services.base import QueueService
+from common.services.queue_services.base import QueueService
 from common.settings import get_settings
 
 settings = get_settings()

@@ -7,11 +7,11 @@ from ray.util.queue import Empty, Queue
 from backend.app.minutes.types import TaskType, WorkerMessage
 from backend.services.exceptions import InteractionFailedError, TranscriptionFailedError
 from backend.services.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
-from backend.services.queue_services import get_queue_service
-from backend.services.queue_services.base import QueueService
 from backend.services.transcription_handler_service import TranscriptionHandlerService
 from backend.utils.signal_handler import SignalHandler
 from common.logger import setup_logger
+from common.services.queue_services import get_queue_service
+from common.services.queue_services.base import QueueService
 from common.settings import get_settings
 
 logger = logging.getLogger(__name__)

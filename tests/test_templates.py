@@ -1,6 +1,6 @@
 import pytest
 
-from backend.services.template_manager import TemplateManager
+from common.services.template_manager import TemplateManager
 from tests.utils import get_test_client
 
 

@@ -8,14 +8,14 @@ import sentry_sdk
 from backend.app.audio.utils import convert_to_mp3, get_duration, get_num_audio_channels
 from backend.app.minutes.types import TranscriptionJobMessageData
 from backend.services.exceptions import TranscriptionFailedError
-from backend.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
-from backend.services.transcription_services.aws import AWSTranscribeAdapter
-from backend.services.transcription_services.azure import AzureSpeechAdapter
-from backend.services.transcription_services.azure_async import AzureBatchTranscriptionAdapter
 from backend.utils.text_processing import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import Recording, Transcription
 from common.services.storage_services import get_storage_service
+from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
+from common.services.transcription_services.aws import AWSTranscribeAdapter
+from common.services.transcription_services.azure import AzureSpeechAdapter
+from common.services.transcription_services.azure_async import AzureBatchTranscriptionAdapter
 from common.settings import get_settings
 
 logger = logging.getLogger(__name__)

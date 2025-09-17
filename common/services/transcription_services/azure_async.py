@@ -13,9 +13,9 @@ from azure.storage.blob import BlobClient, ContainerClient, ContainerSasPermissi
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from backend.app.minutes.types import TranscriptionJobMessageData
-from backend.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.database.postgres_models import DialogueEntry, Recording
 from common.services.storage_services import get_storage_service
+from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.settings import get_settings
 
 async_session = aioboto3.Session()

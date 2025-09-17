@@ -6,10 +6,10 @@ import pytest
 
 from backend.app.minutes.types import TranscriptionJobMessageData
 from backend.services.exceptions import TranscriptionFailedError
-from backend.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
-from backend.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.database.postgres_models import Recording, Transcription
 from common.services.storage_services import StorageService
+from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
+from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 
 
 class MockStorageService(StorageService):

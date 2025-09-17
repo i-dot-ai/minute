@@ -8,8 +8,8 @@ from typing import Any
 import boto3
 
 from backend.app.minutes.types import TranscriptionJobMessageData
-from backend.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.database.postgres_models import DialogueEntry, Recording
+from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.settings import get_settings
 
 settings = get_settings()

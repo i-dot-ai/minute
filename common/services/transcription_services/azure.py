@@ -9,9 +9,9 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from backend.app.minutes.types import TranscriptionJobMessageData
 from backend.services.exceptions import TranscriptionFailedError
-from backend.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
-from backend.services.transcription_services.azure_common import TOO_MANY_REQUESTS, convert_to_dialogue_entries
 from common.database.postgres_models import Recording
+from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
+from common.services.transcription_services.azure_common import TOO_MANY_REQUESTS, convert_to_dialogue_entries
 from common.settings import get_settings
 
 settings = get_settings()

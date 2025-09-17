@@ -5,8 +5,8 @@ from unittest.mock import Mock, patch
 import pytest
 
 from backend.app.minutes.types import TranscriptionJobMessageData
-from backend.services.exceptions import TranscriptionFailedError
 from common.database.postgres_models import Recording, Transcription
+from common.services.exceptions import TranscriptionFailedError
 from common.services.storage_services import StorageService
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager

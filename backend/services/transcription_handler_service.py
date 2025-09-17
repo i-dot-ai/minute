@@ -8,9 +8,9 @@ from backend.app.audio.speakers import process_speakers_and_dialogue_entries
 from backend.app.llm.client import create_default_chatbot
 from backend.app.minutes.prompts import get_chat_with_transcript_system_message
 from backend.app.minutes.types import DialogueEntry, TranscriptionJobMessageData
-from backend.services.exceptions import InteractionFailedError, TranscriptionFailedError
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import Chat, JobStatus, Minute, Transcription
+from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.settings import get_settings
 

@@ -4,11 +4,11 @@ import ray
 from ray.util.queue import Empty, Queue
 
 from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
+from common.services.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
 from common.services.queue_services.base import QueueService
+from common.services.transcription_handler_service import TranscriptionHandlerService
 from common.settings import get_settings
 from common.types import TaskType, WorkerMessage
-from worker.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
-from worker.transcription_handler_service import TranscriptionHandlerService
 
 logger = logging.getLogger(__name__)
 ray_logger = logging.getLogger("ray")

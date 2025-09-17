@@ -109,7 +109,11 @@ function MicRecorderComponent({
       setError(null)
       mediaChunksRef.current = []
       const micStream = await navigator.mediaDevices.getUserMedia({
-        audio: { deviceId: selectedDeviceId },
+        audio: {
+          deviceId: selectedDeviceId,
+          noiseSuppression: false,
+          echoCancellation: false,
+        },
       })
       const options = { mimeType: 'audio/webm' }
       const mediaRecorder = new MediaRecorder(micStream, options)

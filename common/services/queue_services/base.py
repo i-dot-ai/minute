@@ -1,6 +1,6 @@
 from typing import Any, Protocol
 
-from backend.app.minutes.types import WorkerMessage
+from common.types import WorkerMessage
 
 
 class QueueService(Protocol):

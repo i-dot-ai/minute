@@ -1,7 +1,7 @@
 import logging
 
-from backend.app.minutes.types import DialogueEntry
 from common.audio.generate_speaker_predictions import generate_speaker_predictions
+from common.types import DialogueEntry
 
 logger = logging.getLogger(__name__)
 

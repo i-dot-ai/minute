@@ -7,10 +7,10 @@ from typing import Any
 
 import boto3
 
-from backend.app.minutes.types import TranscriptionJobMessageData
 from common.database.postgres_models import DialogueEntry, Recording
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.settings import get_settings
+from common.types import TranscriptionJobMessageData
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

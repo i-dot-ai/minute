@@ -1,10 +1,10 @@
 # flake8: noqa: E501, RUF001
-from backend.app.minutes.types import (
+from common.format_transcript import transcript_as_speaker_and_utterance
+from common.templates.types import SectionTemplate
+from common.types import (
     AgendaUsage,
     DialogueEntry,
 )
-from backend.app.minutes.utils import transcript_as_speaker_and_utterance
-from common.templates.types import SectionTemplate
 
 
 class PlanningCommittee(SectionTemplate):

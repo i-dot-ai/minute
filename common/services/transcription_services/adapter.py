@@ -3,8 +3,8 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import overload
 
-from backend.app.minutes.types import TranscriptionJobMessageData
 from common.database.postgres_models import Recording
+from common.types import TranscriptionJobMessageData
 
 
 class AdapterType(Enum):

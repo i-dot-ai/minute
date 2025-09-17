@@ -3,10 +3,10 @@ import logging
 import ray
 from ray.util.queue import Empty, Queue
 
-from backend.app.minutes.types import TaskType, WorkerMessage
 from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
 from common.services.queue_services.base import QueueService
 from common.settings import get_settings
+from common.types import TaskType, WorkerMessage
 from worker.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
 from worker.transcription_handler_service import TranscriptionHandlerService
 

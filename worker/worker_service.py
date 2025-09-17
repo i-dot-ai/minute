@@ -4,11 +4,11 @@ import logging
 import ray
 from ray.util.queue import Queue
 
-from backend.app.minutes.types import TaskType
 from common.logger import setup_logger
 from common.services.queue_services import get_queue_service
 from common.services.queue_services.base import QueueService
 from common.settings import get_settings
+from common.types import TaskType
 from worker.ray_recieve_service import HasBeenStopped, RayQueueReceiveService
 from worker.signal_handler import SignalHandler
 

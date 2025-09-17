@@ -5,8 +5,8 @@ import pkgutil
 import typing
 
 import common.templates as templates_package
-from backend.app.minutes.types import TemplateMetadata
 from common.templates.types import Template
+from common.types import TemplateMetadata
 
 logger = logging.getLogger(__name__)
 

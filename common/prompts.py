@@ -1,7 +1,7 @@
 # flake8: noqa: E501
 
-from backend.app.minutes.utils import transcript_as_index_speaker_and_utterance, transcript_as_speaker_and_utterance
 from common.database.postgres_models import DialogueEntry
+from common.format_transcript import transcript_as_index_speaker_and_utterance, transcript_as_speaker_and_utterance
 
 
 def get_transcript_messages(transcript: list[DialogueEntry]) -> dict[str, str]:

@@ -6,21 +6,21 @@ from uuid import UUID
 import mistune
 from sqlalchemy.orm import selectinload
 
-from backend.app.minutes.prompts import (
+from common.database.postgres_database import SessionLocal
+from common.database.postgres_models import DialogueEntry, Hallucination, JobStatus, Minute, MinuteVersion
+from common.format_transcript import transcript_as_speaker_and_utterance
+from common.llm.client import create_default_chatbot
+from common.prompts import (
     get_ai_edit_initial_messages,
     get_basic_minutes_prompt,
 )
-from backend.app.minutes.types import (
+from common.services.template_manager import TemplateManager
+from common.settings import get_settings
+from common.types import (
     LLMHallucination,
     MeetingType,
     MinuteAndHallucinations,
 )
-from backend.app.minutes.utils import transcript_as_speaker_and_utterance
-from common.database.postgres_database import SessionLocal
-from common.database.postgres_models import DialogueEntry, Hallucination, JobStatus, Minute, MinuteVersion
-from common.llm.client import create_default_chatbot
-from common.services.template_manager import TemplateManager
-from common.settings import get_settings
 from worker.utils.text_processing import convert_american_to_british_spelling
 
 settings = get_settings()

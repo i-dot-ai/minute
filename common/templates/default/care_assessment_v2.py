@@ -1,8 +1,8 @@
 # flake8: noqa: E501, RUF001
-from backend.app.minutes.types import AgendaUsage
-from backend.app.minutes.utils import transcript_as_speaker_and_utterance
 from common.database.postgres_models import DialogueEntry
+from common.format_transcript import transcript_as_speaker_and_utterance
 from common.templates.types import SimpleTemplate
+from common.types import AgendaUsage
 
 """Notes:
 

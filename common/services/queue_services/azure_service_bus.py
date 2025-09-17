@@ -4,9 +4,9 @@ from typing import Any
 
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
 
-from backend.app.minutes.types import WorkerMessage
 from common.services.queue_services.base import QueueService
 from common.settings import get_settings
+from common.types import WorkerMessage
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

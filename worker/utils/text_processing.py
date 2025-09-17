@@ -1,41 +1,9 @@
 import logging
 import re
-from functools import lru_cache
 
 from breame.spelling import american_spelling_exists, get_british_spelling
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
-
-
-class MinuteTextProcessingSettings(BaseSettings):
-    """
-    Encapsulates settings for text processing related to minute transcripts.
-
-    This class is a configuration holder to define specific thresholds for
-    processing transcript texts, particularly focusing on word count
-    requirements for generating summaries. These values help to guard against
-    hallucinations.
-
-    Attributes:
-        MIN_WORD_COUNT_FOR_SUMMARY (int): Minimum word count required for a transcript
-            to be eligible for the summary stage.
-        MIN_WORD_COUNT_FOR_FULL_SUMMARY (int): Minimum word count required
-            for a transcript to be eligible for the complex summary stage (i.e. a
-            more elaborate prompt.
-    """
-
-    #: transcript must have at least this many words to be passed to summary stage
-    MIN_WORD_COUNT_FOR_SUMMARY: int = 200
-    #: transcript must have at least this many words to be passed to complex summary stage. Note, this is
-    # disabled by default as is lower than the MIN_WORD_COUNT_FOR_SUMMARY
-    MIN_WORD_COUNT_FOR_FULL_SUMMARY: int = 199
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
-
-
-@lru_cache
-def get_settings() -> MinuteTextProcessingSettings:
-    return MinuteTextProcessingSettings()
 
 
 def convert_american_to_british_spelling(  # noqa: C901

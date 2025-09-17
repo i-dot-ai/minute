@@ -16,11 +16,12 @@ from backend.app.minutes.types import (
     MinuteAndHallucinations,
 )
 from backend.app.minutes.utils import transcript_as_speaker_and_utterance
-from backend.utils.text_processing import convert_american_to_british_spelling, get_settings
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import DialogueEntry, Hallucination, JobStatus, Minute, MinuteVersion
 from common.llm.client import create_default_chatbot
 from common.services.template_manager import TemplateManager
+from common.settings import get_settings
+from worker.utils.text_processing import convert_american_to_british_spelling
 
 settings = get_settings()
 

@@ -1,6 +1,6 @@
-from backend.app.llm.client import create_default_chatbot
 from backend.app.minutes.prompts import get_citations_prompt
 from common.database.postgres_models import DialogueEntry
+from common.llm.client import create_default_chatbot
 
 
 async def add_citations_to_minute(

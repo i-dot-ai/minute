@@ -1,8 +1,8 @@
 import logging
 
-from backend.app.llm.client import create_default_chatbot
 from backend.app.minutes.types import DialogueEntry, SpeakerPredictionOutput
 from backend.app.minutes.utils import transcript_as_speaker_and_utterance
+from common.llm.client import create_default_chatbot
 
 logger = logging.getLogger(__name__)
 

@@ -1,10 +1,10 @@
 # flake8: noqa: E501, RUF001
 from pydantic import BaseModel, Field
 
-from backend.app.llm.client import create_default_chatbot
 from backend.app.minutes.prompts import get_transcript_messages
 from backend.app.minutes.types import AgendaUsage, MinuteAndHallucinations
 from common.database.postgres_models import DialogueEntry, Minute
+from common.llm.client import create_default_chatbot
 from common.templates.template_utils import add_citations_to_minute
 from common.templates.types import Template
 

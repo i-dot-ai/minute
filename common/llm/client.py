@@ -9,9 +9,9 @@ from tenacity import (
     wait_random_exponential,
 )
 
-from backend.app.llm.adapters import GeminiModelAdapter, ModelAdapter, OpenAIModelAdapter
 from backend.app.minutes.prompts import get_hallucination_detection_messages
 from backend.app.minutes.types import LLMHallucination
+from common.llm.adapters import GeminiModelAdapter, ModelAdapter, OpenAIModelAdapter
 from common.settings import get_settings
 
 settings = get_settings()

@@ -6,7 +6,6 @@ from uuid import UUID
 import mistune
 from sqlalchemy.orm import selectinload
 
-from backend.app.llm.client import create_default_chatbot
 from backend.app.minutes.prompts import (
     get_ai_edit_initial_messages,
     get_basic_minutes_prompt,
@@ -20,6 +19,7 @@ from backend.app.minutes.utils import transcript_as_speaker_and_utterance
 from backend.utils.text_processing import convert_american_to_british_spelling, get_settings
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import DialogueEntry, Hallucination, JobStatus, Minute, MinuteVersion
+from common.llm.client import create_default_chatbot
 from common.services.template_manager import TemplateManager
 
 settings = get_settings()

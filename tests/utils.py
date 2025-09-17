@@ -4,8 +4,8 @@ from enum import StrEnum, auto
 from bs4 import BeautifulSoup
 from httpx import ASGITransport, AsyncClient
 
-from backend.app.llm.client import ChatBot, create_default_chatbot
 from backend.main import app
+from common.llm.client import ChatBot, create_default_chatbot
 
 
 @asynccontextmanager

@@ -18,13 +18,13 @@ from backend.app.minutes.types import (
     RecordingCreateRequest,
     TranscriptionCreateRequest,
 )
-from backend.services.queue_service import WorkerService, create_worker_service
 from common.database.postgres_models import ContentSource, JobStatus, Minute, MinuteVersion, Transcription
 from common.services.queue_services import get_queue_service
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings
 from tests.marks import costs_money
 from tests.utils import FileTypeTests, get_test_client
+from worker.worker_service import WorkerService, create_worker_service
 
 pytestmark = [costs_money]
 

@@ -4,8 +4,8 @@ from zoneinfo import ZoneInfo
 
 from backend.app.minutes.prompts import get_transcript_messages
 from backend.app.minutes.types import AgendaUsage
-from backend.templates.types import SimpleTemplate
 from common.database.postgres_models import DialogueEntry
+from common.templates.types import SimpleTemplate
 
 
 class General(SimpleTemplate):

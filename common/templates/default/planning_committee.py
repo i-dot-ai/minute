@@ -4,7 +4,7 @@ from backend.app.minutes.types import (
     DialogueEntry,
 )
 from backend.app.minutes.utils import transcript_as_speaker_and_utterance
-from backend.templates.types import SectionTemplate
+from common.templates.types import SectionTemplate
 
 
 class PlanningCommittee(SectionTemplate):

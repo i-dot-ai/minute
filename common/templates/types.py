@@ -3,9 +3,9 @@ from typing import Protocol
 from backend.app.llm.client import create_chatbot
 from backend.app.minutes.prompts import get_section_for_agenda_prompt, string_to_system_message
 from backend.app.minutes.types import AgendaUsage, MinuteAndHallucinations
-from backend.templates.template_utils import add_citations_to_minute
 from common.database.postgres_models import DialogueEntry, Minute
 from common.settings import get_settings
+from common.templates.template_utils import add_citations_to_minute
 
 settings = get_settings()
 

@@ -4,7 +4,7 @@ from backend.app.minutes.types import (
     DialogueEntry,
 )
 from backend.app.minutes.utils import transcript_as_speaker_and_utterance
-from backend.templates.types import SectionTemplate
+from common.templates.types import SectionTemplate
 
 style_guide_for_record_of_discussion = """### Style
 The Cabinet minute is written in past reported speech. In other words, it reports what people said, not what they did, or how they spoke. A few important style rules flow from this:

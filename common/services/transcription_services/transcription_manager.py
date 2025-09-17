@@ -6,6 +6,7 @@ from pathlib import Path
 import sentry_sdk
 
 from common.audio.ffmpeg import convert_to_mp3, get_duration, get_num_audio_channels
+from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import Recording, Transcription
 from common.services.exceptions import TranscriptionFailedError
@@ -16,7 +17,6 @@ from common.services.transcription_services.azure import AzureSpeechAdapter
 from common.services.transcription_services.azure_async import AzureBatchTranscriptionAdapter
 from common.settings import get_settings
 from common.types import TranscriptionJobMessageData
-from worker.utils.text_processing import convert_american_to_british_spelling
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,5 @@
 # ruff: noqa: S101
-from worker.utils.text_processing import convert_american_to_british_spelling
+from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 
 
 def test_basic_word_conversion():

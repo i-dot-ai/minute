@@ -6,6 +6,7 @@ from uuid import UUID
 import mistune
 from sqlalchemy.orm import selectinload
 
+from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import DialogueEntry, Hallucination, JobStatus, Minute, MinuteVersion
 from common.format_transcript import transcript_as_speaker_and_utterance
@@ -21,7 +22,6 @@ from common.types import (
     MeetingType,
     MinuteAndHallucinations,
 )
-from worker.utils.text_processing import convert_american_to_british_spelling
 
 settings = get_settings()
 

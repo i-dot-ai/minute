@@ -4,12 +4,12 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from backend.app.minutes.types import TranscriptionJobMessageData
-from backend.services.exceptions import TranscriptionFailedError
-from backend.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
-from backend.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.database.postgres_models import Recording, Transcription
+from common.services.exceptions import TranscriptionFailedError
 from common.services.storage_services import StorageService
+from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
+from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
+from common.types import TranscriptionJobMessageData
 
 
 class MockStorageService(StorageService):
@@ -59,7 +59,7 @@ class MockAdapter(TranscriptionAdapter):
 @pytest.fixture
 def mock_settings():
     """Mock settings for tests."""
-    with patch("backend.services.transcription_services.transcription_manager.settings") as mock_settings:
+    with patch("common.services.transcription_services.transcription_manager.settings") as mock_settings:
         mock_settings.TRANSCRIPTION_SERVICES = ["MockAdapter1", "MockAdapter2"]
         mock_settings.DATA_S3_BUCKET = "test-bucket"
         mock_settings.AWS_REGION = "us-east-1"
@@ -69,7 +69,7 @@ def mock_settings():
 @pytest.fixture
 def mock_storage_service():
     with patch(
-        "backend.services.transcription_services.transcription_manager.storage_service", new_callable=MockStorageService
+        "common.services.transcription_services.transcription_manager.storage_service", new_callable=MockStorageService
     ) as mock_storage_service:
         yield mock_storage_service
 
@@ -91,7 +91,7 @@ def mock_adapters():
         "MockAdapter3": adapter3,
     }
 
-    with patch("backend.services.transcription_services.transcription_manager._adapters", adapters):
+    with patch("common.services.transcription_services.transcription_manager._adapters", adapters):
         yield adapters
 
 
@@ -140,7 +140,7 @@ class TestTranscriptionServiceManager:
 
     def test_init_with_no_available_adapters(self, mock_adapters):  # noqa: ARG002
         """Test initialization when no adapters are available."""
-        with patch("backend.services.transcription_services.transcription_manager.settings") as mock_settings:
+        with patch("common.services.transcription_services.transcription_manager.settings") as mock_settings:
             mock_settings.TRANSCRIPTION_SERVICES = ["NonExistentAdapter"]
 
             manager = TranscriptionServiceManager()
@@ -156,7 +156,7 @@ class TestTranscriptionServiceManager:
 
     def test_get_available_services_with_unavailable_adapter(self, mock_adapters):  # noqa: ARG002
         """Test get_available_services when adapter is unavailable."""
-        with patch("backend.services.transcription_services.transcription_manager.settings") as mock_settings:
+        with patch("common.services.transcription_services.transcription_manager.settings") as mock_settings:
             mock_settings.TRANSCRIPTION_SERVICES = ["MockAdapter3"]  # This one is not available
 
             manager = TranscriptionServiceManager()
@@ -182,7 +182,7 @@ class TestTranscriptionServiceManager:
             manager.select_adaptor(5000)  # Exceeds all adapters' max length
 
     @pytest.mark.asyncio
-    @patch("backend.services.transcription_services.transcription_manager.convert_american_to_british_spelling")
+    @patch("common.services.transcription_services.transcription_manager.convert_american_to_british_spelling")
     async def test_check_transcription_success(self, mock_convert_spelling, manager, sample_message_data):
         """Test successful transcription check."""
         mock_convert_spelling.return_value = "Test transcript (British)"

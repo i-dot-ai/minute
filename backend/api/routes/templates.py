@@ -1,11 +1,11 @@
 from fastapi import APIRouter
 
 from backend.api.dependencies import UserDep
-from backend.app.minutes.types import (
+from common.services.template_manager import TemplateManager
+from common.settings import get_settings
+from common.types import (
     TemplateMetadata,
 )
-from backend.services.template_manager import TemplateManager
-from common.settings import get_settings
 
 templates_router = APIRouter(tags=["Templates"])
 all_template_metadata = TemplateManager.get_template_metadata()

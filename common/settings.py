@@ -122,6 +122,17 @@ class Settings(BaseSettings):
         default=False,
     )
 
+    MIN_WORD_COUNT_FOR_SUMMARY: int = Field(
+        default=200, description="Transcript must have at least this many words to be passed to summary stage"
+    )
+    MIN_WORD_COUNT_FOR_FULL_SUMMARY: int = Field(
+        default=199,
+        description=(
+            "Transcript must have at least this many words to be passed to complex summary stage. "
+            "Note, this is disabled by default as is lower than the MIN_WORD_COUNT_FOR_SUMMARY"
+        ),
+    )
+
     # use a dotenv file for local development
     if dotenv_detected:
         model_config = SettingsConfigDict(env_file=DOT_ENV_PATH, extra="ignore")

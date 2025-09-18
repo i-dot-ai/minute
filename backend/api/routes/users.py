@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, HTTPException
 
 from backend.api.dependencies import SQLSessionDep, UserDep
-from backend.app.minutes.types import DataRetentionUpdateResponse, GetUserResponse
+from common.types import DataRetentionUpdateResponse, GetUserResponse
 
 users_router = APIRouter(tags=["Users"])
 

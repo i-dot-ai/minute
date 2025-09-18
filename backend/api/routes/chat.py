@@ -6,7 +6,13 @@ from sqlalchemy import delete
 from sqlmodel import col, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
-from backend.app.minutes.types import (
+from common.database.postgres_models import (
+    Chat,
+    Transcription,
+)
+from common.services.queue_services import get_queue_service
+from common.settings import get_settings
+from common.types import (
     ChatCreateRequest,
     ChatCreateResponse,
     ChatGetAllResponse,
@@ -14,12 +20,6 @@ from backend.app.minutes.types import (
     TaskType,
     WorkerMessage,
 )
-from backend.services.queue_services import get_queue_service
-from common.database.postgres_models import (
-    Chat,
-    Transcription,
-)
-from common.settings import get_settings
 
 settings = get_settings()
 chat_router = APIRouter(tags=["Chat"])

@@ -21,9 +21,9 @@ RUN poetry config virtualenvs.create false
 RUN poetry install --with worker --without dev --no-interaction --no-ansi --no-root
 
 # Copy the FastAPI application code
-COPY backend backend
 COPY common common
-COPY worker/entrypoint.sh worker/entrypoint.sh
+COPY backend backend
+COPY worker worker
 
 RUN poetry install --only-root
 

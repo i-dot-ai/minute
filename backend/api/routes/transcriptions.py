@@ -7,8 +7,17 @@ from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import col, func, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
-from backend.app.audio.utils import get_file_s3_key
-from backend.app.minutes.types import (
+from backend.utils.get_file_s3_key import get_file_s3_key
+from common.database.postgres_models import (
+    Minute,
+    MinuteVersion,
+    Recording,
+    Transcription,
+)
+from common.services.queue_services import get_queue_service
+from common.services.storage_services import get_storage_service
+from common.settings import get_settings
+from common.types import (
     PaginatedTranscriptionsResponse,
     RecordingCreateRequest,
     RecordingCreateResponse,
@@ -21,15 +30,6 @@ from backend.app.minutes.types import (
     TranscriptionPatchRequest,
     WorkerMessage,
 )
-from backend.services.queue_services import get_queue_service
-from common.database.postgres_models import (
-    Minute,
-    MinuteVersion,
-    Recording,
-    Transcription,
-)
-from common.services.storage_services import get_storage_service
-from common.settings import get_settings
 
 settings = get_settings()
 

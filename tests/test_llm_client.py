@@ -1,7 +1,7 @@
 import pytest
 from pydantic import BaseModel
 
-from backend.app.llm.client import create_chatbot
+from common.llm.client import create_chatbot
 from tests.marks import costs_money
 
 pytestmark = [costs_money]

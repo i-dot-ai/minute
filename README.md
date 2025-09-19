@@ -3,7 +3,7 @@
 # Minute
 
 > [!IMPORTANT]
-> Incubation Project: This project is in active development and a work in progress.
+> Incubation Project: This project is in active development and a work in progress. Please create an Issue to report bugs or propose changes.
 
 Minute is an application that is designed to simplify the transcription and minuting of meetings in the public sector. Built with modern web technologies and AI-powered transcription and summarisation services, Minute transforms how government organisations handle meeting documentation by automating the conversion of audio recordings into structured, professional minutes.
 

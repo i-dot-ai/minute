@@ -1,6 +1,7 @@
 import { Alpha } from '@/components/layout/alpha'
-import { HomeButton } from '@/components/layout/home-button'
+import { NavButton } from '@/components/layout/nav-button'
 import { SettingsDialogue } from '@/components/layout/SettingsDialogue'
+import { FileText, Home } from 'lucide-react'
 import Link from 'next/link'
 
 export const Header = () => (
@@ -56,7 +57,12 @@ export const Header = () => (
     </header>
     <div className="flex flex-wrap-reverse items-center justify-between border-b px-6 py-1">
       <div className="flex items-center">
-        <HomeButton />
+        <NavButton href="/">
+          <Home size="1rem" />
+        </NavButton>
+        <NavButton href="/templates">
+          <FileText size="1rem" />
+        </NavButton>
         <SettingsDialogue />
       </div>
       <div className="mx-auto">

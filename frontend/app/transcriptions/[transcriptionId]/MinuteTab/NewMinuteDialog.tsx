@@ -1,6 +1,6 @@
 'use client'
 
-import { TemplateSelect } from '@/components/template-radio-group'
+import { TemplateSelect } from '@/components/template-select/template-select'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -14,17 +14,17 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
-  getTemplatesTemplatesGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Template } from '@/types/templates'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import posthog from 'posthog-js'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useController, useForm } from 'react-hook-form'
 
 type CreateMinuteForm = {
-  templateName: string
+  template: Template
   agenda?: string
 }
 
@@ -37,43 +37,36 @@ export function NewMinuteDialog({
 }) {
   const [open, setOpen] = useState(false)
   const form = useForm<CreateMinuteForm>({
-    defaultValues: { templateName: 'General', agenda },
+    defaultValues: {
+      template: { name: 'General', agenda_usage: 'optional', id: null },
+      agenda,
+    },
   })
   useEffect(() => {
     if (open) {
-      form.reset({ templateName: 'General', agenda })
+      form.reset({
+        template: { name: 'General', agenda_usage: 'optional', id: null },
+        agenda,
+      })
     }
   }, [agenda, form, open])
   const queryClient = useQueryClient()
 
-  // Fetch templates from API
-  const { data: templates = [], isLoading: isLoadingTemplates } = useQuery(
-    getTemplatesTemplatesGetOptions()
-  )
-  const templateName = form.watch('templateName')
-  const selectedTemplate = useMemo(
-    () =>
-      templates.length
-        ? templates.find((t) => t.name == templateName)
-        : undefined,
-    [templateName, templates]
-  )
+  const selectedTemplate = form.watch('template')
 
   const { mutate: createMinute } = useMutation({
     ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
   })
 
-  const onSubmit = ({ templateName, agenda }: CreateMinuteForm) => {
-    if (!templateName) {
-      return
-    }
+  const onSubmit = ({ template, agenda }: CreateMinuteForm) => {
     createMinute(
       {
         path: { transcription_id: transcriptionId },
         body: {
-          template_name: templateName,
+          template_name: template.name,
+          template_id: template.id,
           agenda:
-            selectedTemplate?.agenda_usage != 'not_used' ? agenda : undefined,
+            selectedTemplate.agenda_usage != 'not_used' ? agenda : undefined,
         },
       },
       {
@@ -85,7 +78,7 @@ export function NewMinuteDialog({
               ),
           })
           posthog.capture('generate_ai_minutes_started', {
-            style: templateName,
+            style: !!template.id ? 'User generated' : template.name,
           })
           setOpen(false)
         },
@@ -95,7 +88,7 @@ export function NewMinuteDialog({
 
   const { field } = useController({
     control: form.control,
-    name: 'templateName',
+    name: 'template',
   })
 
   return (
@@ -115,12 +108,7 @@ export function NewMinuteDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <TemplateSelect
-            value={field.value}
-            onChange={field.onChange}
-            templates={templates}
-            isLoading={isLoadingTemplates}
-          />
+          <TemplateSelect value={field.value} onChange={field.onChange} />
           {selectedTemplate && selectedTemplate.agenda_usage != 'not_used' && (
             <div className="mb-4 rounded">
               <h3 className="text-semibold m">
@@ -158,7 +146,6 @@ Agenda item 3
               type="submit"
               className="bg-blue-500 hover:bg-blue-800 active:bg-yellow-400"
               disabled={
-                isLoadingTemplates ||
                 !selectedTemplate ||
                 (selectedTemplate.agenda_usage == 'required' &&
                   !form.watch('agenda'))

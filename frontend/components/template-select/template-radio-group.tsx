@@ -2,9 +2,8 @@
 
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { TemplateMetadata } from '@/lib/client'
 
-export const TemplateSelect = ({
+export const TemplateRadioGroup = ({
   value,
   onChange,
   templates,
@@ -12,7 +11,7 @@ export const TemplateSelect = ({
 }: {
   value: string
   onChange: (value: string) => void
-  templates: TemplateMetadata[]
+  templates: { id: string; name: string; description: string }[]
   isLoading: boolean
 }) => {
   return (
@@ -32,13 +31,13 @@ export const TemplateSelect = ({
             className="flex items-center gap-2 rounded border p-4 has-checked:border-blue-300 has-checked:bg-blue-50 has-checked:text-blue-800"
           >
             <RadioGroupItem
-              value={option.name}
-              id={option.name}
+              value={option.id}
+              id={option.id}
               className="bg-fill-100"
             />
             <div className="min-h- block w-full">
               {option.name}
-              <div className="mt-1 w-full text-xs font-normal">
+              <div className="mt-1 line-clamp-4 w-full text-xs font-normal">
                 {option.description}
               </div>
             </div>

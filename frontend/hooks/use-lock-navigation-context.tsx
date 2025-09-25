@@ -9,8 +9,8 @@ import {
 } from 'react'
 
 type LockNavigationContextType = {
-  lockNavigation: boolean
-  setLockNavigation: Dispatch<SetStateAction<boolean>>
+  lockNavigation: boolean | string
+  setLockNavigation: Dispatch<SetStateAction<boolean | string>>
 }
 
 const LockNavigationContext = createContext<LockNavigationContextType>({
@@ -23,7 +23,7 @@ export const LockNavigationProvider = ({
 }: {
   children: React.ReactNode
 }) => {
-  const [lockNavigation, setLockNavigation] = useState(false)
+  const [lockNavigation, setLockNavigation] = useState<string | boolean>(false)
 
   return (
     <LockNavigationContext.Provider

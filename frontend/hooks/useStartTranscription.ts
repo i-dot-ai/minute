@@ -2,14 +2,13 @@ import { TranscriptionForm } from '@/components/audio/types'
 import {
   createRecordingRecordingsPostMutation,
   createTranscriptionTranscriptionsPostMutation,
-  getTemplatesTemplatesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { getFileExtension } from '@/lib/getFileExtension'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { useCallback, useMemo } from 'react'
+import { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 
 export const useStartTranscription = (
@@ -17,9 +16,6 @@ export const useStartTranscription = (
 ) => {
   const router = useRouter()
   const { removeRecording } = useRecordingDb()
-  const { data: templates = [], isLoading: isLoadingTemplates } = useQuery(
-    getTemplatesTemplatesGetOptions()
-  )
   const { mutateAsync: createTranscription, isPending: isCreating } =
     useMutation({
       ...createTranscriptionTranscriptionsPostMutation(),
@@ -50,20 +46,17 @@ export const useStartTranscription = (
     },
   })
 
-  const startTranscription = useCallback(
-    async ({
-      file,
-      template,
-      agenda,
-      recordingId,
-    }: {
-      file: Blob | File
-      template: string
-      agenda?: string
-      recordingId?: string
-    }) => {
+  const onSubmit = useCallback(
+    async ({ file, template, agenda, recordingId }: TranscriptionForm) => {
+      if (!file) {
+        return
+      }
       const isFile = file instanceof File
-      const source = isFile ? 'upload' : 'recording'
+      const source = !!defaultValues?.recordingId
+        ? 'offline-recording'
+        : isFile
+          ? 'upload'
+          : 'recording'
       const file_extension = isFile ? getFileExtension(file.name) : 'webm'
       posthog.capture('transcription_started', {
         file_type: file.type || '',
@@ -94,7 +87,8 @@ export const useStartTranscription = (
                       body: {
                         recording_id: recordingData.id,
                         title,
-                        template,
+                        template_id: template.id,
+                        template_name: template.name,
                         agenda,
                       },
                     },
@@ -114,36 +108,25 @@ export const useStartTranscription = (
         }
       )
     },
-    [createRecording, createTranscription, removeRecording, router, uploadBlob]
+    [
+      createRecording,
+      createTranscription,
+      defaultValues?.recordingId,
+      removeRecording,
+      router,
+      uploadBlob,
+    ]
   )
   const form = useForm<TranscriptionForm>({
-    defaultValues: { file: null, template: 'General', ...defaultValues },
-  })
-  const templateName = form.watch('template')
-  const selectedTemplate = useMemo(
-    () => templates.find((t) => t.name == templateName),
-    [templateName, templates]
-  )
-  const onSubmit = useCallback(
-    async ({ file, template, agenda, recordingId }: TranscriptionForm) => {
-      if (file && template) {
-        startTranscription({
-          file,
-          template,
-          agenda:
-            selectedTemplate?.agenda_usage != 'not_used' ? agenda : undefined,
-          recordingId,
-        })
-      }
+    defaultValues: {
+      file: null,
+      template: { name: 'General', agenda_usage: 'optional' },
+      ...defaultValues,
     },
-    [selectedTemplate?.agenda_usage, startTranscription]
-  )
+  })
   return {
     isPending: isCreating || isConfirming || isUploading,
     onSubmit,
     form,
-    templates,
-    isLoadingTemplates,
-    selectedTemplate,
   }
 }

@@ -1,25 +1,19 @@
 import { TranscriptionForm } from '@/components/audio/types'
-import { TemplateSelect } from '@/components/template-radio-group'
+import { TemplateSelect } from '@/components/template-select/template-select'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { TemplateMetadata } from '@/lib/client'
 import { Loader2 } from 'lucide-react'
 import { Controller, useFormContext } from 'react-hook-form'
 
 export const StartTranscriptionSection = ({
   isShowing,
   isPending,
-  templates,
-  isLoadingTemplates,
-  selectedTemplate,
 }: {
   isShowing: boolean
   isPending: boolean
-  templates: TemplateMetadata[]
-  isLoadingTemplates: boolean
-  selectedTemplate: TemplateMetadata | undefined
 }) => {
   const form = useFormContext<TranscriptionForm>()
+  const selectedTemplate = form.watch('template')
   // Fetch templates from API
 
   if (!isShowing) {
@@ -49,15 +43,10 @@ export const StartTranscriptionSection = ({
         control={form.control}
         name="template"
         render={({ field: { value, onChange } }) => (
-          <TemplateSelect
-            value={value}
-            onChange={onChange}
-            templates={templates}
-            isLoading={isLoadingTemplates}
-          />
+          <TemplateSelect value={value} onChange={onChange} />
         )}
       />
-      {selectedTemplate && selectedTemplate.agenda_usage != 'not_used' && (
+      {selectedTemplate.agenda_usage != 'not_used' && (
         <div className="mb-4 rounded">
           <h3 className="text-semibold m">
             Agenda (

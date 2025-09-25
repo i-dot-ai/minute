@@ -105,11 +105,9 @@ export function RecordingDbProvider({ children }: RecordingDbProviderProps) {
           .objectStore('recordings')
           .get(id)
         transaction.onsuccess = (event) => {
-          console.log('success', event)
           resolve((event.target as IDBRequest)?.result || undefined)
         }
         transaction.onerror = (ev) => {
-          console.log('failed', ev)
           reject(new Error('Error getting recording'))
         }
       })

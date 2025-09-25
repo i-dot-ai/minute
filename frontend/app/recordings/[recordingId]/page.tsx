@@ -54,14 +54,7 @@ export default function RecordingPage({
 }
 
 function RecordingUploadForm({ recording }: { recording: RecordingDbItem }) {
-  const {
-    form,
-    isPending,
-    onSubmit,
-    templates,
-    selectedTemplate,
-    isLoadingTemplates,
-  } = useStartTranscription({
+  const { form, isPending, onSubmit } = useStartTranscription({
     file: recording.blob,
     recordingId: recording.recording_id,
   })
@@ -70,13 +63,7 @@ function RecordingUploadForm({ recording }: { recording: RecordingDbItem }) {
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <AudioPlayerComponent audioBlob={recording.blob} />
-        <StartTranscriptionSection
-          isPending={isPending}
-          isShowing={true}
-          templates={templates}
-          selectedTemplate={selectedTemplate}
-          isLoadingTemplates={isLoadingTemplates}
-        />
+        <StartTranscriptionSection isPending={isPending} isShowing={true} />
       </form>
     </FormProvider>
   )

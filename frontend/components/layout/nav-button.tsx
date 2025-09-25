@@ -13,20 +13,23 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { useLockNavigationContext } from '@/hooks/use-lock-navigation-context'
-import { Home } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-export const HomeButton = () => {
+export const NavButton = ({
+  href,
+  children,
+}: {
+  href: string
+  children: React.ReactNode
+}) => {
   const { lockNavigation, setLockNavigation } = useLockNavigationContext()
   const router = useRouter()
   if (lockNavigation) {
     return (
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="ghost">
-            <Home size="1rem" />
-          </Button>
+          <Button variant="ghost">{children}</Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -34,9 +37,11 @@ export const HomeButton = () => {
               Are you sure you want to leave the page?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              You have a recording that has not been uploaded, are you sure you
+              {typeof lockNavigation == 'string'
+                ? lockNavigation
+                : `You have a recording that has not been uploaded, are you sure you
               want to leave this page? (Your recording will be discarded if you
-              do not upload it, or save a local copy.)
+              do not upload it, or save a local copy.)`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -44,7 +49,7 @@ export const HomeButton = () => {
             <AlertDialogAction
               onClick={() => {
                 setLockNavigation(false)
-                router.push('/')
+                router.push(href)
               }}
             >
               Continue
@@ -57,9 +62,7 @@ export const HomeButton = () => {
 
   return (
     <Button asChild variant="ghost">
-      <Link href="/">
-        <Home size="1rem" />
-      </Link>
+      <Link href={href}>{children}</Link>
     </Button>
   )
 }

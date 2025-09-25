@@ -30,14 +30,7 @@ import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import AudioPlayerComponent from '../audio-player'
 
 export const TabRecorderForm = () => {
-  const {
-    isPending,
-    onSubmit,
-    form,
-    templates,
-    isLoadingTemplates,
-    selectedTemplate,
-  } = useStartTranscription()
+  const { isPending, onSubmit, form } = useStartTranscription()
   const watchBlob = form.watch('file')
 
   return (
@@ -56,9 +49,6 @@ export const TabRecorderForm = () => {
         <StartTranscriptionSection
           isShowing={!!watchBlob}
           isPending={isPending}
-          templates={templates}
-          isLoadingTemplates={isLoadingTemplates}
-          selectedTemplate={selectedTemplate}
         />
       </form>
     </FormProvider>

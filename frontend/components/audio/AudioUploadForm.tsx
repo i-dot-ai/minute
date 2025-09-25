@@ -9,14 +9,7 @@ import Dropzone from 'react-dropzone'
 import { Controller, FormProvider } from 'react-hook-form'
 
 export const AudioUploadForm = () => {
-  const {
-    isPending,
-    onSubmit,
-    form,
-    templates,
-    isLoadingTemplates,
-    selectedTemplate,
-  } = useStartTranscription()
+  const { isPending, onSubmit, form } = useStartTranscription()
   const file = form.watch('file')
   return (
     <FormProvider {...form}>
@@ -112,13 +105,7 @@ export const AudioUploadForm = () => {
             </Dropzone>
           )}
         />
-        <StartTranscriptionSection
-          isShowing={!!file}
-          isPending={isPending}
-          templates={templates}
-          isLoadingTemplates={isLoadingTemplates}
-          selectedTemplate={selectedTemplate}
-        />
+        <StartTranscriptionSection isShowing={!!file} isPending={isPending} />
       </form>
     </FormProvider>
   )

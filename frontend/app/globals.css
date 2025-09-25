@@ -245,3 +245,18 @@
   margin-top: 1em;
   /* Add margin only between consecutive paragraphs */
 }
+
+.editor-content pre > code {
+  background-color: #444;
+  color: white;
+  width: 100%!;
+}
+.editor-content pre {
+  width: 100%!;
+  background-color: #444;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+}
+.editor-content code:not(pre code) {
+  color: red;
+}

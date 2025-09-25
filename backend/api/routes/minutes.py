@@ -59,7 +59,12 @@ async def create_minute(
     transcription = await session.get(Transcription, transcription_id)
     if not transcription or transcription.user_id != user.id:
         raise HTTPException(404, "Not found")
-    minute = Minute(transcription_id=transcription_id, template_name=request.template_name, agenda=request.agenda)
+    minute = Minute(
+        transcription_id=transcription_id,
+        template_name=request.template_name,
+        agenda=request.agenda,
+        user_template_id=request.template_id,
+    )
     session.add(minute)
     minute_version = MinuteVersion(id=uuid.uuid4(), minute_id=minute.id)
     session.add(minute_version)

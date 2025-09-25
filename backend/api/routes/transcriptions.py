@@ -121,7 +121,8 @@ async def create_transcription(
         )
 
     minute = Minute(
-        template_name=request.template,
+        template_name=request.template_name,
+        user_template_id=request.template_id,
         agenda=request.agenda,
         transcription_id=transcription.id,
     )

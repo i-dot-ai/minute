@@ -38,14 +38,7 @@ import AudioPlayerComponent from './audio-player'
 import { AudioDevice, MicrophonePermission } from './microphone-permission'
 
 export function MicRecorderForm() {
-  const {
-    isPending,
-    onSubmit,
-    form,
-    templates,
-    isLoadingTemplates,
-    selectedTemplate,
-  } = useStartTranscription()
+  const { isPending, onSubmit, form } = useStartTranscription()
   const watchBlob = form.watch('file')
   return (
     <FormProvider {...form}>
@@ -63,9 +56,6 @@ export function MicRecorderForm() {
         <StartTranscriptionSection
           isShowing={!!watchBlob}
           isPending={isPending}
-          templates={templates}
-          isLoadingTemplates={isLoadingTemplates}
-          selectedTemplate={selectedTemplate}
         />
       </form>
     </FormProvider>

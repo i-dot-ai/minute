@@ -42,6 +42,7 @@
     "lucide-react": "^0.514.0",
     "next": "^14.2",
     "posthog-js": "^1.252.0",
+    "posthog-node": "^5.9.1",
     "prosemirror-state": "^1.4.3",
     "prosemirror-view": "^1.40.0",
     "react": "^18.3.1",

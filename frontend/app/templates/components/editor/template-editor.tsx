@@ -35,11 +35,14 @@ export function TemplateEditor({
     if (
       defaultValues &&
       defaultValues.content != form.getValues('content') &&
+      defaultValues.description != form.getValues('description') &&
       defaultValues.name != form.getValues('name')
     ) {
-      form.setValue('name', defaultValues.name)
-      form.setValue('content', defaultValues.content)
-      form.setValue('description', defaultValues.description)
+      form.setValue('name', defaultValues.name, { shouldDirty: true })
+      form.setValue('content', defaultValues.content, { shouldDirty: true })
+      form.setValue('description', defaultValues.description, {
+        shouldDirty: true,
+      })
     }
   }, [defaultValues, form])
 

@@ -1454,6 +1454,45 @@ export type EditUserTemplateUserTemplatesTemplateIdPatchResponses = {
 export type EditUserTemplateUserTemplatesTemplateIdPatchResponse =
   EditUserTemplateUserTemplatesTemplateIdPatchResponses[keyof EditUserTemplateUserTemplatesTemplateIdPatchResponses]
 
+export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Accesstoken
+     */
+    'x-amzn-oidc-accesstoken'?: string | null
+  }
+  path: {
+    /**
+     * Template Id
+     */
+    template_id: string
+  }
+  query?: never
+  url: '/user-templates/{template_id}/duplicate'
+}
+
+export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError =
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostErrors[keyof DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostErrors]
+
+export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: UserTemplate
+  }
+
+export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse =
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses[keyof DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses]
+
 export type DeleteChatsTranscriptionsTranscriptionIdChatDeleteData = {
   body?: never
   headers?: {

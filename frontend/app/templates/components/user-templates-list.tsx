@@ -21,13 +21,26 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { UserTemplate } from '@/lib/client'
+import {
   deleteUserTemplateUserTemplatesTemplateIdDeleteMutation,
+  duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation,
   getUserTemplatesUserTemplatesGetOptions,
   getUserTemplatesUserTemplatesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
-import { cn } from '@/lib/utils'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Edit, FileText, FileWarning, Loader2, Trash2 } from 'lucide-react'
+import {
+  Copy,
+  Edit,
+  FileText,
+  FileWarning,
+  Loader2,
+  Trash2,
+} from 'lucide-react'
 import Link from 'next/link'
 
 export const UserTemplatesList = () => {
@@ -39,6 +52,14 @@ export const UserTemplatesList = () => {
   const queryClient = useQueryClient()
   const deleteMutation = useMutation({
     ...deleteUserTemplateUserTemplatesTemplateIdDeleteMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
+      })
+    },
+  })
+  const duplicationMutation = useMutation({
+    ...duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
@@ -73,15 +94,6 @@ export const UserTemplatesList = () => {
             <CardTitle>{template.name}</CardTitle>
             <CardDescription>
               <p className="text-sm text-gray-600">
-                Created{' '}
-                {new Date(template.created_datetime!).toLocaleDateString()}
-              </p>
-              <p
-                className={cn('invisible text-sm text-gray-500', {
-                  visible:
-                    template.updated_datetime !== template.created_datetime,
-                })}
-              >
                 Updated{' '}
                 {new Date(template.updated_datetime!).toLocaleDateString()}
               </p>
@@ -102,44 +114,72 @@ export const UserTemplatesList = () => {
                 Edit
               </Link>
             </Button>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <Button
+                  onClick={() => {
+                    duplicationMutation.mutate({
+                      path: { template_id: template.id! },
+                    })
+                  }}
                   variant="outline"
-                  size="sm"
-                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
                 >
-                  <Trash2 size={14} />
+                  <Copy />
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Template</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete &quot;{template.name}
-                    &quot;? This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() =>
-                      deleteMutation.mutate({
-                        path: { template_id: template.id! },
-                      })
-                    }
-                    className="bg-red-600 hover:bg-red-700"
-                    disabled={deleteMutation.isPending}
-                  >
-                    {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Make a copy</p>
+              </TooltipContent>
+            </Tooltip>
+            <DeleteConfirmDialog
+              template={template}
+              onConfirm={() => {
+                deleteMutation.mutate({
+                  path: { template_id: template.id! },
+                })
+              }}
+            />
           </CardFooter>
         </Card>
       ))}
     </div>
   )
 }
+
+const DeleteConfirmDialog = ({
+  template,
+  onConfirm,
+}: {
+  template: UserTemplate
+  onConfirm: () => void
+}) => (
+  <AlertDialog>
+    <AlertDialogTrigger asChild>
+      <Button
+        variant="outline"
+        size="sm"
+        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+      >
+        <Trash2 size={14} />
+      </Button>
+    </AlertDialogTrigger>
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Delete Template</AlertDialogTitle>
+        <AlertDialogDescription>
+          Are you sure you want to delete &quot;{template.name}
+          &quot;? This action cannot be undone.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Cancel</AlertDialogCancel>
+        <AlertDialogAction
+          onClick={onConfirm}
+          className="bg-red-600 hover:bg-red-700"
+        >
+          Delete
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+)

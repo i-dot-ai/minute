@@ -17,7 +17,7 @@ const GENERAL_TEMPLATE = `<h2>1. Meeting Overview</h2>
 <ul>
   <li><p>Attendee 1</p></li>
   <li><p>Attendee 2</p></li>
-<ul>
+</ul>
 <h2>3. Executive Summary</h2>
 <p>Three to five sentence summary of the meeting.</p>
 <h2>4. Discussion Points</h2>

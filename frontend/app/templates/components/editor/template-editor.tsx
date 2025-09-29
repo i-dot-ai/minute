@@ -4,6 +4,7 @@ import { TemplateEditorToolbar } from '@/app/templates/components/editor/editor-
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import Document from '@tiptap/extension-document'
 import HardBreak from '@tiptap/extension-hard-break'
@@ -15,19 +16,33 @@ import { Save } from 'lucide-react'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
-type TemplateData = {
+export type TemplateData = {
   name: string
   content: string
+  description: string
 }
 
 export function TemplateEditor({
   defaultValues,
   onSubmit,
 }: {
-  defaultValues?: { name?: string; content?: string }
+  defaultValues?: { name: string; content: string; description: string }
   onSubmit: (data: TemplateData) => void
 }) {
   const form = useForm<TemplateData>({ defaultValues })
+
+  useEffect(() => {
+    if (
+      defaultValues &&
+      defaultValues.content != form.getValues('content') &&
+      defaultValues.name != form.getValues('name')
+    ) {
+      form.setValue('name', defaultValues.name)
+      form.setValue('content', defaultValues.content)
+      form.setValue('description', defaultValues.description)
+    }
+  }, [defaultValues, form])
+
   useEffect(() => {
     if (form.formState.isSubmitSuccessful) {
       form.reset(form.getValues(), { keepValues: true })
@@ -57,6 +72,10 @@ export function TemplateEditor({
         <Label htmlFor="name">Template Name</Label>
         <Input {...form.register('name')} className="mt-2" />
       </div>
+      <div>
+        <Label htmlFor="name">Description</Label>
+        <Textarea {...form.register('description')} className="mt-2" />
+      </div>
       <Controller
         name="content"
         control={form.control}
@@ -82,6 +101,12 @@ const ControlledEditor = ({
     },
     content: value,
   })
+
+  useEffect(() => {
+    if (editor && value !== editor.getHTML()) {
+      editor.commands.setContent(value || '')
+    }
+  }, [editor, value])
   return (
     <div>
       <Label htmlFor="content">Template Content</Label>

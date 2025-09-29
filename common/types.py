@@ -236,8 +236,10 @@ class TemplateMetadata(BaseModel):
 class PatchUserTemplateRequest(BaseModel):
     name: str | None = None
     content: str | None = None
+    description: str | None = None
 
 
 class CreateUserTemplateRequest(BaseModel):
     name: str
     content: str
+    description: str

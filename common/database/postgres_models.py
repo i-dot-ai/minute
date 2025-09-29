@@ -192,6 +192,7 @@ class UserTemplate(BaseTableMixin, table=True):
 
     name: str
     content: str
+    description: str = ""
 
     user_id: UUID | None = Field(default=None, foreign_key="user.id")
 

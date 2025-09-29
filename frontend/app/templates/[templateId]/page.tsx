@@ -48,7 +48,11 @@ export default function EditTemplatePage({
       </NavButton>
       <h1 className="mb-6 text-3xl font-bold">Edit template</h1>
       <TemplateEditor
-        defaultValues={{ name: template.name, content: template.content }}
+        defaultValues={{
+          name: template.name,
+          content: template.content,
+          description: template.description || '',
+        }}
         onSubmit={(data) =>
           mutate({ path: { template_id: templateId }, body: data })
         }

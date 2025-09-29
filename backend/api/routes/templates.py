@@ -1,8 +1,9 @@
+import datetime
 from collections.abc import Sequence
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
-from sqlmodel import select
+from sqlmodel import col, select
 
 from backend.api.dependencies import UserDep
 from backend.api.dependencies.get_session import SQLSessionDep
@@ -34,7 +35,13 @@ def get_templates(user: UserDep) -> list[TemplateMetadata]:  # noqa: ARG001
 
 @templates_router.get("/user-templates")
 async def get_user_templates(user: UserDep, session: SQLSessionDep) -> Sequence[UserTemplate]:
-    return (await session.exec(select(UserTemplate).where(UserTemplate.user_id == user.id))).all()
+    return (
+        await session.exec(
+            select(UserTemplate)
+            .where(UserTemplate.user_id == user.id)
+            .order_by(col(UserTemplate.updated_datetime).desc())
+        )
+    ).all()
 
 
 @templates_router.get("/user-templates/{template_id}")
@@ -53,7 +60,9 @@ async def get_user_template(user: UserDep, session: SQLSessionDep, template_id: 
 async def create_user_template(
     user: UserDep, session: SQLSessionDep, request: CreateUserTemplateRequest
 ) -> UserTemplate:
-    template = UserTemplate(name=request.name, content=request.content, user_id=user.id)
+    template = UserTemplate(
+        name=request.name, content=request.content, description=request.description, user_id=user.id
+    )
     session.add(template)
     await session.commit()
     await session.refresh(template)
@@ -75,6 +84,10 @@ async def edit_user_template(
         template.name = request.name
     if request.content is not None:
         template.content = request.content
+    if request.description is not None:
+        template.description = request.description
+
+    template.updated_datetime = datetime.datetime.now(tz=datetime.UTC)
 
     await session.commit()
 

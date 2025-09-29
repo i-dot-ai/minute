@@ -12,12 +12,20 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   deleteUserTemplateUserTemplatesTemplateIdDeleteMutation,
   getUserTemplatesUserTemplatesGetOptions,
   getUserTemplatesUserTemplatesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { cn } from '@/lib/utils'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Edit, FileText, FileWarning, Loader2, Trash2 } from 'lucide-react'
 import Link from 'next/link'
@@ -60,39 +68,29 @@ export const UserTemplatesList = () => {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {templates.map((template) => (
-        <Card key={template.id} className="p-4">
-          <div className="mb-3 flex items-start justify-between">
-            <div className="flex-1">
-              <h3 className="mb-1 truncate text-lg font-semibold">
-                {template.name}
-              </h3>
+        <Card key={template.id}>
+          <CardHeader>
+            <CardTitle>{template.name}</CardTitle>
+            <CardDescription>
               <p className="text-sm text-gray-600">
                 Created{' '}
                 {new Date(template.created_datetime!).toLocaleDateString()}
               </p>
-              {template.updated_datetime !== template.created_datetime && (
-                <p className="text-sm text-gray-500">
-                  Updated{' '}
-                  {new Date(template.updated_datetime!).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="mb-4 flex-1">
-            <div
-              className="prose prose-sm max-w-none overflow-hidden text-sm text-gray-700"
-              style={{
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical',
-              }}
-            >
-              {template.content}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
+              <p
+                className={cn('invisible text-sm text-gray-500', {
+                  visible:
+                    template.updated_datetime !== template.created_datetime,
+                })}
+              >
+                Updated{' '}
+                {new Date(template.updated_datetime!).toLocaleDateString()}
+              </p>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="prose prose-sm max-w-none flex-1 overflow-hidden text-sm text-gray-700">
+            {template.description}
+          </CardContent>
+          <CardFooter className="gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -139,7 +137,7 @@ export const UserTemplatesList = () => {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          </div>
+          </CardFooter>
         </Card>
       ))}
     </div>

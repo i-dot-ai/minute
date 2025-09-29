@@ -43,6 +43,10 @@ export type UserTemplate = {
    */
   content: string
   /**
+   * Description
+   */
+  description?: string
+  /**
    * User Id
    */
   user_id?: string | null
@@ -295,6 +299,10 @@ export type PatchUserTemplateRequest = {
    * Content
    */
   content?: string | null
+  /**
+   * Description
+   */
+  description?: string | null
 }
 
 /**
@@ -574,6 +582,10 @@ export type CreateUserTemplateRequest = {
    * Content
    */
   content: string
+  /**
+   * Description
+   */
+  description: string
 }
 
 /**

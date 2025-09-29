@@ -24,6 +24,7 @@ import {
   deleteUserTemplateUserTemplatesTemplateIdDelete,
   getUserTemplateUserTemplatesTemplateIdGet,
   editUserTemplateUserTemplatesTemplateIdPatch,
+  duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost,
   deleteChatsTranscriptionsTranscriptionIdChatDelete,
   listChatTranscriptionsTranscriptionIdChatGet,
   createChatTranscriptionsTranscriptionIdChatPost,
@@ -80,6 +81,9 @@ import type {
   EditUserTemplateUserTemplatesTemplateIdPatchData,
   EditUserTemplateUserTemplatesTemplateIdPatchError,
   EditUserTemplateUserTemplatesTemplateIdPatchResponse,
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData,
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError,
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteData,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteError,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteResponse,
@@ -949,6 +953,71 @@ export const editUserTemplateUserTemplatesTemplateIdPatchMutation = (
   }
   return mutationOptions
 }
+
+export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostQueryKey =
+  (
+    options: Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
+  ) =>
+    createQueryKey(
+      'duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost',
+      options
+    )
+
+/**
+ * Duplicate User Template
+ */
+export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostOptions =
+  (
+    options: Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
+  ) => {
+    return queryOptions({
+      queryFn: async ({ queryKey, signal }) => {
+        const { data } =
+          await duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true,
+          })
+        return data
+      },
+      queryKey:
+        duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostQueryKey(
+          options
+        ),
+    })
+  }
+
+/**
+ * Duplicate User Template
+ */
+export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation =
+  (
+    options?: Partial<
+      Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
+    >
+  ): UseMutationOptions<
+    DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
+    DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError,
+    Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
+      DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError,
+      Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
+    > = {
+      mutationFn: async (localOptions) => {
+        const { data } =
+          await duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost({
+            ...options,
+            ...localOptions,
+            throwOnError: true,
+          })
+        return data
+      },
+    }
+    return mutationOptions
+  }
 
 /**
  * Delete Chats

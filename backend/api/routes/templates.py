@@ -105,3 +105,23 @@ async def delete_user_template(user: UserDep, session: SQLSessionDep, template_i
 
     await session.delete(template)
     await session.commit()
+
+
+@templates_router.post("/user-templates/{template_id}/duplicate")
+async def duplicate_user_template(user: UserDep, session: SQLSessionDep, template_id: UUID) -> UserTemplate:
+    template = (
+        await session.exec(select(UserTemplate).where(UserTemplate.id == template_id, UserTemplate.user_id == user.id))
+    ).first()
+
+    if not template:
+        raise HTTPException(404)
+
+    new_template = UserTemplate(
+        user_id=user.id, name=template.name + " (Copy)", description=template.description, content=template.content
+    )
+
+    session.add(new_template)
+    await session.commit()
+    await session.refresh(new_template)
+
+    return new_template

@@ -72,6 +72,9 @@ import type {
   EditUserTemplateUserTemplatesTemplateIdPatchData,
   EditUserTemplateUserTemplatesTemplateIdPatchResponses,
   EditUserTemplateUserTemplatesTemplateIdPatchErrors,
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData,
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses,
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostErrors,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteData,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteResponses,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteErrors,
@@ -573,6 +576,27 @@ export const editUserTemplateUserTemplatesTemplateIdPatch = <
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  })
+}
+
+/**
+ * Duplicate User Template
+ */
+export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData,
+    ThrowOnError
+  >
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses,
+    DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostErrors,
+    ThrowOnError
+  >({
+    url: '/user-templates/{template_id}/duplicate',
+    ...options,
   })
 }
 

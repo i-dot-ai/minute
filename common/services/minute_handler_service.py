@@ -173,7 +173,9 @@ class MinuteHandlerService:
 
         chatbot = create_default_chatbot()
         minutes = await chatbot.chat(
-            UserMarkdownTemplate.prompt(template.content, minute.transcription.dialogue_entries or [])
+            UserMarkdownTemplate.prompt(
+                template.content, minute.transcription.dialogue_entries or [], transcription=minute.transcription
+            )
         )
         hallucinations = await chatbot.hallucination_check()
         return minutes, hallucinations

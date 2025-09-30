@@ -88,7 +88,7 @@ export const UserTemplateSelect = ({
       templates={templates.map((t) => ({
         id: t.id!,
         name: t.name,
-        description: t.content,
+        description: t.description || '',
       }))}
       onChange={(id) => {
         const selectedTemplate = templates.find((t) => t.id === id)

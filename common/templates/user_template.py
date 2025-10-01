@@ -19,8 +19,7 @@ Transform the provided meeting content into structured minutes following the tem
 - Follow the structure outlined in the <template> section below exactly. \
 Do not add additonal sections if they are not specified.
 - Include as much detail as possible.
-- Follow any style guidelines exactly.
-- Write in British (UK) English unless otherwise specified.
+- Follow any style guidelines within the <template> section exactly.
 - Use clear, professional language unless otherwise specified.
 - Ensure proper use of UK government-specific terminology (e.g., "COBR" not "Cobra").
 </requirements>

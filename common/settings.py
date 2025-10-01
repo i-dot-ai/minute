@@ -71,11 +71,25 @@ class Settings(BaseSettings):
         description="List of service names to use for transcription. See backend/services/transcription_services",
         default_factory=list,
     )
-    LLM_PROVIDER: str = Field(description="LLM provider to use. Either openai or gemini.", default="gemini")
-    LLM_MODEL_NAME: str = Field(
-        description="LLM model name to use. Note that Minute has mainly been tested with gemini-2.0-flash and "
-        "gemini-2.5-flash. The Care Assessment Template currently depends on gemini-2.5-flash",
-        default="gemini-2.0-flash",
+
+    FAST_LLM_PROVIDER: str = Field(
+        description="Fast LLM provider to use. Currently 'openai' or 'gemini' are supported. Note that this should be "
+        "used for low complexity LLM tasks, like AI edits",
+        default="gemini",
+    )
+    FAST_LLM_MODEL_NAME: str = Field(
+        description="Fast LLM model name to use. Note that this should be used for low complexity LLM tasks",
+        default="gemini-2.5-flash-lite",
+    )
+    BEST_LLM_PROVIDER: str = Field(
+        description="Best LLM provider to use. Currently 'openai' or 'gemini' are supported. Note that this should be "
+        "used for higher complexity LLM tasks, like initial minute generation.",
+        default="gemini",
+    )
+    BEST_LLM_MODEL_NAME: str = Field(
+        description="Best LLM model name to use. Note that this should be used for higher complexity LLM tasks, like "
+        "initial minute generation.",
+        default="gemini-2.5-flash",
     )
 
     STORAGE_SERVICE_NAME: str = Field(

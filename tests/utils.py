@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 from httpx import ASGITransport, AsyncClient
 
 from backend.main import app
-from common.llm.client import ChatBot, create_default_chatbot
 
 
 @asynccontextmanager
@@ -25,9 +24,3 @@ def get_text_from_html(html: str) -> str:
     for script in soup(["script", "style"]):
         script.extract()
     return soup.get_text()
-
-
-def create_test_chatbot(messages: list[dict[str, str]]) -> ChatBot:
-    chatbot = create_default_chatbot()
-    chatbot.messages = messages
-    return chatbot

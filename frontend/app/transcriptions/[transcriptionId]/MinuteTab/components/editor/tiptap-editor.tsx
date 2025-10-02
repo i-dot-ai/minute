@@ -12,6 +12,8 @@ import { EditorState, Plugin, PluginKey } from 'prosemirror-state'
 import { Decoration, DecorationSet } from 'prosemirror-view'
 import { useCallback, useEffect } from 'react'
 
+import { CitationPopoverWrapper } from '@/components/ui/citation-popover-wrapper'
+import { useCitationPopover } from '@/hooks/use-citation-popover'
 import { Transcription } from '@/lib/client'
 import { cn } from '@/lib/utils'
 import posthog from 'posthog-js'
@@ -25,8 +27,6 @@ import {
   Strikethrough as StrikethroughIcon,
   List as UnorderedListIcon,
 } from './Icons'
-import { useCitationPopover } from '@/hooks/use-citation-popover'
-import { CitationPopoverWrapper } from '@/components/ui/citation-popover-wrapper'
 
 function SimpleEditor({
   initialContent,

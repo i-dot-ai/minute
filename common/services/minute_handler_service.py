@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
-from common.database.postgres_models import DialogueEntry, Hallucination, JobStatus, Minute, MinuteVersion
+from common.database.postgres_models import DialogueEntry, Hallucination, JobStatus, Minute, MinuteVersion, UserTemplate
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import (
@@ -17,6 +17,7 @@ from common.prompts import (
 )
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings
+from common.templates.user_template import UserMarkdownTemplate
 from common.types import (
     LLMHallucination,
     MeetingType,
@@ -163,6 +164,23 @@ class MinuteHandlerService:
             raise MinuteGenerationFailedError from e
 
     @classmethod
+    async def generate_minute_from_user_template(cls, minute: Minute):
+        with SessionLocal() as session:
+            template = session.get(UserTemplate, minute.user_template_id)
+        if not template:
+            msg = f"No template with id {minute.user_template_id}"
+            raise RuntimeError(msg)
+
+        chatbot = create_default_chatbot()
+        minutes = await chatbot.chat(
+            UserMarkdownTemplate.prompt(
+                template.content, minute.transcription.dialogue_entries or [], transcription=minute.transcription
+            )
+        )
+        hallucinations = await chatbot.hallucination_check()
+        return minutes, hallucinations
+
+    @classmethod
     async def generate_minutes(
         cls,
         meeting_type: MeetingType,
@@ -180,8 +198,11 @@ class MinuteHandlerService:
 
     @classmethod
     async def generate_full_minutes(cls, minute: Minute) -> MinuteAndHallucinations:
-        template = TemplateManager.get_template(minute.template_name)
-        result, hallucinations = await template.generate(minute)
+        if minute.user_template_id is not None:
+            result, hallucinations = await cls.generate_minute_from_user_template(minute)
+        else:
+            template = TemplateManager.get_template(minute.template_name)
+            result, hallucinations = await template.generate(minute)
         result = convert_american_to_british_spelling(result)
         return result, hallucinations
 

@@ -29,7 +29,8 @@ class PaginatedTranscriptionsResponse(BaseModel):
 
 class TranscriptionCreateRequest(BaseModel):
     recording_id: uuid.UUID
-    template: str
+    template_name: str
+    template_id: uuid.UUID | None = None
     agenda: str | None = None
     title: str | None = None
 
@@ -114,7 +115,8 @@ class MinuteListItem(BaseModel):
 
 
 class MinutesCreateRequest(BaseModel):
-    template_name: str = Field(description="Name of the template to use for the minutes", default="General")
+    template_name: str = Field(description="Name of the template to use for the minutes")
+    template_id: uuid.UUID | None = Field(description="Optional id of user template")
     agenda: str | None = Field(description="The agenda for the meeting", default=None)
 
 
@@ -229,3 +231,15 @@ class TemplateMetadata(BaseModel):
     description: str
     category: str
     agenda_usage: AgendaUsage
+
+
+class PatchUserTemplateRequest(BaseModel):
+    name: str | None = None
+    content: str | None = None
+    description: str | None = None
+
+
+class CreateUserTemplateRequest(BaseModel):
+    name: str
+    content: str
+    description: str

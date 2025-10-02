@@ -19,6 +19,12 @@ import {
   deleteMinuteVersionMinuteVersionsMinuteVersionIdDelete,
   getMinuteVersionMinuteVersionsMinuteVersionIdGet,
   getTemplatesTemplatesGet,
+  getUserTemplatesUserTemplatesGet,
+  createUserTemplateUserTemplatesPost,
+  deleteUserTemplateUserTemplatesTemplateIdDelete,
+  getUserTemplateUserTemplatesTemplateIdGet,
+  editUserTemplateUserTemplatesTemplateIdPatch,
+  duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost,
   deleteChatsTranscriptionsTranscriptionIdChatDelete,
   listChatTranscriptionsTranscriptionIdChatGet,
   createChatTranscriptionsTranscriptionIdChatPost,
@@ -65,6 +71,19 @@ import type {
   DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteError,
   GetMinuteVersionMinuteVersionsMinuteVersionIdGetData,
   GetTemplatesTemplatesGetData,
+  GetUserTemplatesUserTemplatesGetData,
+  CreateUserTemplateUserTemplatesPostData,
+  CreateUserTemplateUserTemplatesPostError,
+  CreateUserTemplateUserTemplatesPostResponse,
+  DeleteUserTemplateUserTemplatesTemplateIdDeleteData,
+  DeleteUserTemplateUserTemplatesTemplateIdDeleteError,
+  GetUserTemplateUserTemplatesTemplateIdGetData,
+  EditUserTemplateUserTemplatesTemplateIdPatchData,
+  EditUserTemplateUserTemplatesTemplateIdPatchError,
+  EditUserTemplateUserTemplatesTemplateIdPatchResponse,
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData,
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError,
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteData,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteError,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteResponse,
@@ -779,6 +798,226 @@ export const getTemplatesTemplatesGetOptions = (
     queryKey: getTemplatesTemplatesGetQueryKey(options),
   })
 }
+
+export const getUserTemplatesUserTemplatesGetQueryKey = (
+  options?: Options<GetUserTemplatesUserTemplatesGetData>
+) => createQueryKey('getUserTemplatesUserTemplatesGet', options)
+
+/**
+ * Get User Templates
+ */
+export const getUserTemplatesUserTemplatesGetOptions = (
+  options?: Options<GetUserTemplatesUserTemplatesGetData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getUserTemplatesUserTemplatesGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: getUserTemplatesUserTemplatesGetQueryKey(options),
+  })
+}
+
+export const createUserTemplateUserTemplatesPostQueryKey = (
+  options: Options<CreateUserTemplateUserTemplatesPostData>
+) => createQueryKey('createUserTemplateUserTemplatesPost', options)
+
+/**
+ * Create User Template
+ */
+export const createUserTemplateUserTemplatesPostOptions = (
+  options: Options<CreateUserTemplateUserTemplatesPostData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createUserTemplateUserTemplatesPost({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: createUserTemplateUserTemplatesPostQueryKey(options),
+  })
+}
+
+/**
+ * Create User Template
+ */
+export const createUserTemplateUserTemplatesPostMutation = (
+  options?: Partial<Options<CreateUserTemplateUserTemplatesPostData>>
+): UseMutationOptions<
+  CreateUserTemplateUserTemplatesPostResponse,
+  CreateUserTemplateUserTemplatesPostError,
+  Options<CreateUserTemplateUserTemplatesPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateUserTemplateUserTemplatesPostResponse,
+    CreateUserTemplateUserTemplatesPostError,
+    Options<CreateUserTemplateUserTemplatesPostData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await createUserTemplateUserTemplatesPost({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
+
+/**
+ * Delete User Template
+ */
+export const deleteUserTemplateUserTemplatesTemplateIdDeleteMutation = (
+  options?: Partial<
+    Options<DeleteUserTemplateUserTemplatesTemplateIdDeleteData>
+  >
+): UseMutationOptions<
+  unknown,
+  DeleteUserTemplateUserTemplatesTemplateIdDeleteError,
+  Options<DeleteUserTemplateUserTemplatesTemplateIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteUserTemplateUserTemplatesTemplateIdDeleteError,
+    Options<DeleteUserTemplateUserTemplatesTemplateIdDeleteData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await deleteUserTemplateUserTemplatesTemplateIdDelete({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
+
+export const getUserTemplateUserTemplatesTemplateIdGetQueryKey = (
+  options: Options<GetUserTemplateUserTemplatesTemplateIdGetData>
+) => createQueryKey('getUserTemplateUserTemplatesTemplateIdGet', options)
+
+/**
+ * Get User Template
+ */
+export const getUserTemplateUserTemplatesTemplateIdGetOptions = (
+  options: Options<GetUserTemplateUserTemplatesTemplateIdGetData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getUserTemplateUserTemplatesTemplateIdGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: getUserTemplateUserTemplatesTemplateIdGetQueryKey(options),
+  })
+}
+
+/**
+ * Edit User Template
+ */
+export const editUserTemplateUserTemplatesTemplateIdPatchMutation = (
+  options?: Partial<Options<EditUserTemplateUserTemplatesTemplateIdPatchData>>
+): UseMutationOptions<
+  EditUserTemplateUserTemplatesTemplateIdPatchResponse,
+  EditUserTemplateUserTemplatesTemplateIdPatchError,
+  Options<EditUserTemplateUserTemplatesTemplateIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    EditUserTemplateUserTemplatesTemplateIdPatchResponse,
+    EditUserTemplateUserTemplatesTemplateIdPatchError,
+    Options<EditUserTemplateUserTemplatesTemplateIdPatchData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await editUserTemplateUserTemplatesTemplateIdPatch({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
+
+export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostQueryKey =
+  (
+    options: Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
+  ) =>
+    createQueryKey(
+      'duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost',
+      options
+    )
+
+/**
+ * Duplicate User Template
+ */
+export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostOptions =
+  (
+    options: Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
+  ) => {
+    return queryOptions({
+      queryFn: async ({ queryKey, signal }) => {
+        const { data } =
+          await duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true,
+          })
+        return data
+      },
+      queryKey:
+        duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostQueryKey(
+          options
+        ),
+    })
+  }
+
+/**
+ * Duplicate User Template
+ */
+export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation =
+  (
+    options?: Partial<
+      Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
+    >
+  ): UseMutationOptions<
+    DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
+    DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError,
+    Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
+      DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError,
+      Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
+    > = {
+      mutationFn: async (localOptions) => {
+        const { data } =
+          await duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost({
+            ...options,
+            ...localOptions,
+            throwOnError: true,
+          })
+        return data
+      },
+    }
+    return mutationOptions
+  }
 
 /**
  * Delete Chats

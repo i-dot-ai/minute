@@ -80,6 +80,10 @@ class Minute(BaseTableMixin, table=True):
     transcription_id: UUID = Field(foreign_key="transcription.id", ondelete="CASCADE")
     transcription: Mapped["Transcription"] = Relationship(back_populates="minutes")
     template_name: str = Field(default="General")
+    user_template_id: UUID | None = Field(
+        foreign_key="user_template.id", nullable=True, ondelete="SET NULL", default=None
+    )
+    user_template: "UserTemplate" = Relationship(back_populates="minutes")
     agenda: str | None = Field(nullable=True, default=None)
     minute_versions: Mapped[list["MinuteVersion"]] = Relationship(
         back_populates="minute",
@@ -179,3 +183,17 @@ class Transcription(BaseTableMixin, table=True):
         cascade_delete=True,
         sa_relationship_kwargs={"order_by": col(Chat.created_datetime).desc()},
     )
+
+
+class UserTemplate(BaseTableMixin, table=True):
+    __tablename__ = "user_template"
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+
+    name: str
+    content: str
+    description: str = ""
+
+    user_id: UUID | None = Field(default=None, foreign_key="user.id")
+
+    minutes: list[Minute] = Relationship(back_populates="user_template")

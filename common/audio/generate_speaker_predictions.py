@@ -1,7 +1,7 @@
 import logging
 
 from common.format_transcript import transcript_as_speaker_and_utterance
-from common.llm.client import create_default_chatbot
+from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.types import DialogueEntry, SpeakerPredictionOutput
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ Conversation:
     """  # noqa: E501
 
     try:
-        chatbot = create_default_chatbot()
+        chatbot = create_default_chatbot(FastOrBestLLM.FAST)
         messages = [
             {"role": "system", "content": system_message},
             {"role": "user", "content": user_message},

@@ -2,7 +2,7 @@
 from pydantic import BaseModel, Field
 
 from common.database.postgres_models import DialogueEntry, Minute
-from common.llm.client import create_default_chatbot
+from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_transcript_messages
 from common.templates.template_utils import add_citations_to_minute
 from common.templates.types import Template
@@ -74,7 +74,7 @@ The sections should be in the order they appear in the transcript. Typically you
         cls,
         minute: Minute,
     ) -> MinuteAndHallucinations:
-        chatbot = create_default_chatbot()
+        chatbot = create_default_chatbot(FastOrBestLLM.BEST)
         initial_messages = cls.get_system_message_for_delivery(minute.transcription.dialogue_entries)
         # meeting sections
         initial_messages.append(cls.get_messages_for_sections())

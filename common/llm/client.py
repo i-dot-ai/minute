@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from typing import TypeVar
 
 from google.genai.types import (
@@ -107,7 +108,15 @@ def create_chatbot(model_type: str, model_name: str, temperature: float) -> Chat
         raise ValueError(msg)
 
 
-def create_default_chatbot() -> ChatBot:
+class FastOrBestLLM(Enum):
+    FAST = auto()
+    BEST = auto()
+
+
+def create_default_chatbot(fast_or_best: FastOrBestLLM) -> ChatBot:
     """Helper function to create an OpenAI client. Let's replace when we have something like OmegaConf/Hydra.cc to
     instantiate chatbot"""
-    return create_chatbot(settings.LLM_PROVIDER, settings.LLM_MODEL_NAME, temperature=0.0)
+    if fast_or_best == FastOrBestLLM.BEST:
+        return create_chatbot(settings.BEST_LLM_PROVIDER, settings.BEST_LLM_MODEL_NAME, temperature=0.0)
+    else:
+        return create_chatbot(settings.FAST_LLM_PROVIDER, settings.FAST_LLM_MODEL_NAME, temperature=0.0)

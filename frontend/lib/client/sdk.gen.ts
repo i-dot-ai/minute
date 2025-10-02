@@ -57,6 +57,24 @@ import type {
   GetTemplatesTemplatesGetData,
   GetTemplatesTemplatesGetResponses,
   GetTemplatesTemplatesGetErrors,
+  GetUserTemplatesUserTemplatesGetData,
+  GetUserTemplatesUserTemplatesGetResponses,
+  GetUserTemplatesUserTemplatesGetErrors,
+  CreateUserTemplateUserTemplatesPostData,
+  CreateUserTemplateUserTemplatesPostResponses,
+  CreateUserTemplateUserTemplatesPostErrors,
+  DeleteUserTemplateUserTemplatesTemplateIdDeleteData,
+  DeleteUserTemplateUserTemplatesTemplateIdDeleteResponses,
+  DeleteUserTemplateUserTemplatesTemplateIdDeleteErrors,
+  GetUserTemplateUserTemplatesTemplateIdGetData,
+  GetUserTemplateUserTemplatesTemplateIdGetResponses,
+  GetUserTemplateUserTemplatesTemplateIdGetErrors,
+  EditUserTemplateUserTemplatesTemplateIdPatchData,
+  EditUserTemplateUserTemplatesTemplateIdPatchResponses,
+  EditUserTemplateUserTemplatesTemplateIdPatchErrors,
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData,
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses,
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostErrors,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteData,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteResponses,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteErrors,
@@ -453,6 +471,131 @@ export const getTemplatesTemplatesGet = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     url: '/templates',
+    ...options,
+  })
+}
+
+/**
+ * Get User Templates
+ */
+export const getUserTemplatesUserTemplatesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<GetUserTemplatesUserTemplatesGetData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetUserTemplatesUserTemplatesGetResponses,
+    GetUserTemplatesUserTemplatesGetErrors,
+    ThrowOnError
+  >({
+    url: '/user-templates',
+    ...options,
+  })
+}
+
+/**
+ * Create User Template
+ */
+export const createUserTemplateUserTemplatesPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateUserTemplateUserTemplatesPostData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateUserTemplateUserTemplatesPostResponses,
+    CreateUserTemplateUserTemplatesPostErrors,
+    ThrowOnError
+  >({
+    url: '/user-templates',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+}
+
+/**
+ * Delete User Template
+ */
+export const deleteUserTemplateUserTemplatesTemplateIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DeleteUserTemplateUserTemplatesTemplateIdDeleteData,
+    ThrowOnError
+  >
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteUserTemplateUserTemplatesTemplateIdDeleteResponses,
+    DeleteUserTemplateUserTemplatesTemplateIdDeleteErrors,
+    ThrowOnError
+  >({
+    url: '/user-templates/{template_id}',
+    ...options,
+  })
+}
+
+/**
+ * Get User Template
+ */
+export const getUserTemplateUserTemplatesTemplateIdGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetUserTemplateUserTemplatesTemplateIdGetData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetUserTemplateUserTemplatesTemplateIdGetResponses,
+    GetUserTemplateUserTemplatesTemplateIdGetErrors,
+    ThrowOnError
+  >({
+    url: '/user-templates/{template_id}',
+    ...options,
+  })
+}
+
+/**
+ * Edit User Template
+ */
+export const editUserTemplateUserTemplatesTemplateIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    EditUserTemplateUserTemplatesTemplateIdPatchData,
+    ThrowOnError
+  >
+) => {
+  return (options.client ?? _heyApiClient).patch<
+    EditUserTemplateUserTemplatesTemplateIdPatchResponses,
+    EditUserTemplateUserTemplatesTemplateIdPatchErrors,
+    ThrowOnError
+  >({
+    url: '/user-templates/{template_id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+}
+
+/**
+ * Duplicate User Template
+ */
+export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData,
+    ThrowOnError
+  >
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses,
+    DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostErrors,
+    ThrowOnError
+  >({
+    url: '/user-templates/{template_id}/duplicate',
     ...options,
   })
 }

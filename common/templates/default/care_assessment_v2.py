@@ -1,6 +1,7 @@
 # flake8: noqa: E501, RUF001
 from common.database.postgres_models import DialogueEntry
 from common.format_transcript import transcript_as_speaker_and_utterance
+from common.settings import get_settings
 from common.templates.types import SimpleTemplate
 from common.types import AgendaUsage
 
@@ -15,6 +16,8 @@ removed this section as it seems to make LLM inclined to make judgements
 
 """
 
+settings = get_settings()
+
 
 class CareAssessmentV2(SimpleTemplate):
     name = "Care Assessment V2"
@@ -22,8 +25,6 @@ class CareAssessmentV2(SimpleTemplate):
     description = "Enhanced Social care assessment template based on Care Act Eligibility Criteria"
     citations_required = True
     agenda_usage = AgendaUsage.NOT_USED
-    provider = "gemini"
-    model = "gemini-2.5-flash"
     temperature = 0.0
 
     @classmethod

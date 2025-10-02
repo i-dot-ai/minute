@@ -10,7 +10,7 @@ from common.convert_american_to_british_spelling import convert_american_to_brit
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import DialogueEntry, Hallucination, JobStatus, Minute, MinuteVersion
 from common.format_transcript import transcript_as_speaker_and_utterance
-from common.llm.client import create_default_chatbot
+from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import (
     get_ai_edit_initial_messages,
     get_basic_minutes_prompt,
@@ -198,7 +198,7 @@ class MinuteHandlerService:
         cls,
         transcript: list[DialogueEntry],
     ) -> MinuteAndHallucinations:
-        chatbot = create_default_chatbot()
+        chatbot = create_default_chatbot(FastOrBestLLM.FAST)
         choice = await chatbot.chat(messages=get_basic_minutes_prompt(transcript))
         hallucinations = await chatbot.hallucination_check()
         return choice, hallucinations
@@ -221,7 +221,7 @@ class MinuteHandlerService:
         edit_instructions: str,
         transcript: list[DialogueEntry],
     ) -> MinuteAndHallucinations:
-        chatbot = create_default_chatbot()
+        chatbot = create_default_chatbot(FastOrBestLLM.FAST)
         edited_minutes = await chatbot.chat(
             messages=get_ai_edit_initial_messages(minutes, edit_instructions, transcript)
         )

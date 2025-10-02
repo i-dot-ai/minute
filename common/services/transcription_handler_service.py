@@ -7,7 +7,7 @@ from sqlmodel import col, select
 from common.audio.speakers import process_speakers_and_dialogue_entries
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import Chat, JobStatus, Minute, Transcription
-from common.llm.client import create_default_chatbot
+from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_chat_with_transcript_system_message
 from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
@@ -42,7 +42,7 @@ class TranscriptionHandlerService:
     async def process_interactive_message(chat_id: UUID) -> None:
         """Process an interactive message from the LLM and return the result."""
         try:
-            chatbot = create_default_chatbot()
+            chatbot = create_default_chatbot(FastOrBestLLM.FAST)
             with SessionLocal() as session:
                 chat = session.get(Chat, chat_id)
 

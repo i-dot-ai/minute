@@ -171,7 +171,7 @@ class MinuteHandlerService:
             msg = f"No template with id {minute.user_template_id}"
             raise RuntimeError(msg)
 
-        chatbot = create_default_chatbot()
+        chatbot = create_default_chatbot(FastOrBestLLM.BEST)
         minutes = await chatbot.chat(
             UserMarkdownTemplate.prompt(
                 template.content, minute.transcription.dialogue_entries or [], transcription=minute.transcription

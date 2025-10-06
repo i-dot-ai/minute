@@ -25,7 +25,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { UserTemplate } from '@/lib/client'
+import { TemplateResponse } from '@/lib/client'
 import {
   deleteUserTemplateUserTemplatesTemplateIdDeleteMutation,
   duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation,
@@ -36,7 +36,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Copy,
   Edit,
+  FileSpreadsheet,
   FileText,
+  FileType,
   FileWarning,
   Loader2,
   Trash2,
@@ -91,7 +93,14 @@ export const UserTemplatesList = () => {
       {templates.map((template) => (
         <Card key={template.id}>
           <CardHeader>
-            <CardTitle>{template.name}</CardTitle>
+            <CardTitle className="flex items-center gap-1">
+              {template.type === 'document' ? (
+                <FileType />
+              ) : (
+                <FileSpreadsheet />
+              )}
+              {template.name}
+            </CardTitle>
             <CardDescription>
               <p className="text-sm text-gray-600">
                 Updated{' '}
@@ -150,7 +159,7 @@ const DeleteConfirmDialog = ({
   template,
   onConfirm,
 }: {
-  template: UserTemplate
+  template: TemplateResponse
   onConfirm: () => void
 }) => (
   <AlertDialog>

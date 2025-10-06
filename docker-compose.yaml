@@ -29,8 +29,6 @@ services:
           action: sync+restart
         - path: ./poetry.lock
           action: rebuild
-        - path: ./alembic
-          action: rebuild
   worker:
     build:
       context: .

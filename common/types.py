@@ -4,7 +4,7 @@ from enum import IntEnum, StrEnum, auto
 
 from pydantic import BaseModel, Field
 
-from common.database.postgres_models import ContentSource, DialogueEntry, HallucinationType, JobStatus
+from common.database.postgres_models import ContentSource, DialogueEntry, HallucinationType, JobStatus, TemplateType
 
 
 class TranscriptionMetadata(BaseModel):
@@ -233,13 +233,36 @@ class TemplateMetadata(BaseModel):
     agenda_usage: AgendaUsage
 
 
+class CreateQuestion(BaseModel):
+    position: int
+    title: str
+    description: str
+
+
+class Question(CreateQuestion):
+    id: uuid.UUID
+
+
 class PatchUserTemplateRequest(BaseModel):
     name: str | None = None
     content: str | None = None
     description: str | None = None
+    questions: list[CreateQuestion | Question] | None = None
+
+
+class TemplateResponse(BaseModel):
+    id: uuid.UUID
+    updated_datetime: datetime
+    name: str
+    content: str
+    description: str
+    type: TemplateType
+    questions: list[Question] | None
 
 
 class CreateUserTemplateRequest(BaseModel):
     name: str
     content: str
     description: str
+    type: TemplateType
+    questions: list[CreateQuestion] | None = None

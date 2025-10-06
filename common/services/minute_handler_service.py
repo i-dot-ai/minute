@@ -17,7 +17,7 @@ from common.prompts import (
 )
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings
-from common.templates.user_template import UserMarkdownTemplate
+from common.templates.user_template import generate_user_template
 from common.types import (
     LLMHallucination,
     MeetingType,
@@ -166,18 +166,13 @@ class MinuteHandlerService:
     @classmethod
     async def generate_minute_from_user_template(cls, minute: Minute):
         with SessionLocal() as session:
-            template = session.get(UserTemplate, minute.user_template_id)
+            template = session.get(
+                UserTemplate, minute.user_template_id, options=[selectinload(UserTemplate.questions)]
+            )
         if not template:
             msg = f"No template with id {minute.user_template_id}"
             raise RuntimeError(msg)
-
-        chatbot = create_default_chatbot(FastOrBestLLM.BEST)
-        minutes = await chatbot.chat(
-            UserMarkdownTemplate.prompt(
-                template.content, minute.transcription.dialogue_entries or [], transcription=minute.transcription
-            )
-        )
-        hallucinations = await chatbot.hallucination_check()
+        minutes, hallucinations = await generate_user_template(template=template, transcription=minute.transcription)
         return minutes, hallucinations
 
     @classmethod

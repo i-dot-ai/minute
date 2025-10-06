@@ -185,6 +185,22 @@ class Transcription(BaseTableMixin, table=True):
     )
 
 
+class TemplateType(StrEnum):
+    DOCUMENT = auto()
+    FORM = auto()
+
+
+class TemplateQuestion(BaseTableMixin, table=True):
+    __tablename__ = "template_question"
+
+    position: int
+    title: str
+    description: str
+
+    user_template_id: UUID = Field(foreign_key="user_template.id", ondelete="CASCADE")
+    user_template: "UserTemplate" = Relationship(back_populates="questions")
+
+
 class UserTemplate(BaseTableMixin, table=True):
     __tablename__ = "user_template"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
@@ -194,6 +210,14 @@ class UserTemplate(BaseTableMixin, table=True):
     content: str
     description: str = ""
 
+    type: TemplateType = TemplateType.DOCUMENT
+
     user_id: UUID | None = Field(default=None, foreign_key="user.id")
 
     minutes: list[Minute] = Relationship(back_populates="user_template")
+
+    questions: list[TemplateQuestion] = Relationship(
+        back_populates="user_template",
+        passive_deletes="all",
+        sa_relationship_kwargs={"order_by": TemplateQuestion.position},
+    )

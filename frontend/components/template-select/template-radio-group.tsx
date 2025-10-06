@@ -27,7 +27,7 @@ export const TemplateRadioGroup = ({
       ) : (
         templates.map((option) => (
           <Label
-            key={option.name}
+            key={option.id}
             className="flex items-center gap-2 rounded border p-4 has-checked:border-blue-300 has-checked:bg-blue-50 has-checked:text-blue-800"
           >
             <RadioGroupItem

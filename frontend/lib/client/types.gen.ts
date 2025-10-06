@@ -19,40 +19,6 @@ export type ValidationError = {
 }
 
 /**
- * UserTemplate
- */
-export type UserTemplate = {
-  /**
-   * Id
-   */
-  id?: string
-  /**
-   * Created Datetime
-   */
-  created_datetime?: string
-  /**
-   * Updated Datetime
-   */
-  updated_datetime?: string
-  /**
-   * Name
-   */
-  name: string
-  /**
-   * Content
-   */
-  content: string
-  /**
-   * Description
-   */
-  description?: string
-  /**
-   * User Id
-   */
-  user_id?: string | null
-}
-
-/**
  * TranscriptionPatchRequest
  */
 export type TranscriptionPatchRequest = {
@@ -222,6 +188,64 @@ export type Transcription = {
 }
 
 /**
+ * TemplateType
+ */
+export type TemplateType = 'document' | 'form'
+
+/**
+ * TemplateResponse
+ */
+export type TemplateResponse = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Updated Datetime
+   */
+  updated_datetime: string
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Content
+   */
+  content: string
+  /**
+   * Description
+   */
+  description: string
+  type: TemplateType
+  /**
+   * Questions
+   */
+  questions: Array<Question> | null
+}
+
+/**
+ * Question
+ */
+export type Question = {
+  /**
+   * Position
+   */
+  position: number
+  /**
+   * Title
+   */
+  title: string
+  /**
+   * Description
+   */
+  description: string
+  /**
+   * Id
+   */
+  id: string
+}
+
+/**
  * TemplateMetadata
  */
 export type TemplateMetadata = {
@@ -303,6 +327,28 @@ export type PatchUserTemplateRequest = {
    * Description
    */
   description?: string | null
+  /**
+   * Questions
+   */
+  questions?: Array<CreateQuestion | Question> | null
+}
+
+/**
+ * CreateQuestion
+ */
+export type CreateQuestion = {
+  /**
+   * Position
+   */
+  position: number
+  /**
+   * Title
+   */
+  title: string
+  /**
+   * Description
+   */
+  description: string
 }
 
 /**
@@ -586,6 +632,11 @@ export type CreateUserTemplateRequest = {
    * Description
    */
   description: string
+  type: TemplateType
+  /**
+   * Questions
+   */
+  questions?: Array<CreateQuestion> | null
 }
 
 /**
@@ -1304,7 +1355,7 @@ export type GetUserTemplatesUserTemplatesGetResponses = {
    * Response Get User Templates User Templates Get
    * Successful Response
    */
-  200: Array<UserTemplate>
+  200: Array<TemplateResponse>
 }
 
 export type GetUserTemplatesUserTemplatesGetResponse =
@@ -1337,11 +1388,8 @@ export type CreateUserTemplateUserTemplatesPostResponses = {
   /**
    * Successful Response
    */
-  200: UserTemplate
+  200: unknown
 }
-
-export type CreateUserTemplateUserTemplatesPostResponse =
-  CreateUserTemplateUserTemplatesPostResponses[keyof CreateUserTemplateUserTemplatesPostResponses]
 
 export type DeleteUserTemplateUserTemplatesTemplateIdDeleteData = {
   body?: never
@@ -1410,7 +1458,7 @@ export type GetUserTemplateUserTemplatesTemplateIdGetResponses = {
   /**
    * Successful Response
    */
-  200: UserTemplate
+  200: TemplateResponse
 }
 
 export type GetUserTemplateUserTemplatesTemplateIdGetResponse =
@@ -1448,11 +1496,8 @@ export type EditUserTemplateUserTemplatesTemplateIdPatchResponses = {
   /**
    * Successful Response
    */
-  200: UserTemplate
+  200: unknown
 }
-
-export type EditUserTemplateUserTemplatesTemplateIdPatchResponse =
-  EditUserTemplateUserTemplatesTemplateIdPatchResponses[keyof EditUserTemplateUserTemplatesTemplateIdPatchResponses]
 
 export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData = {
   body?: never
@@ -1487,11 +1532,8 @@ export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses =
     /**
      * Successful Response
      */
-    200: UserTemplate
+    200: unknown
   }
-
-export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse =
-  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses[keyof DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses]
 
 export type DeleteChatsTranscriptionsTranscriptionIdChatDeleteData = {
   body?: never

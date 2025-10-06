@@ -45,12 +45,14 @@ export const DefaultTemplateSelect = ({
   return (
     <TemplateRadioGroup
       templates={templates.map((t) => ({
-        id: t.name,
+        id: `DEFAULT${t.name}`,
         name: t.name,
         description: t.description,
       }))}
-      onChange={(name) => {
-        const selectedTemplate = templates.find((t) => t.name === name)
+      onChange={(id) => {
+        const selectedTemplate = templates.find(
+          (t) => t.name === id.replace('DEFAULT', '')
+        )
         if (selectedTemplate) {
           onChange({
             id: null,

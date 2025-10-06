@@ -1,105 +1,114 @@
 'use client'
 
+import { DocumentTemplateEditor } from '@/app/templates/components/document-template-editor'
+import { ExampleTemplatesDialog } from '@/app/templates/components/example-templates-dialog'
+import { FormTemplateEditor } from '@/app/templates/components/form-template-editor'
+import {
+  exampleDocumentTemplates,
+  exampleFormTemplates,
+} from '@/app/templates/data/example-templates'
+import { TemplateTypeSelect } from '@/app/templates/new/template-type-select'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { FileText } from 'lucide-react'
-
-import {
-  TemplateData,
-  TemplateEditor,
-} from '@/app/templates/components/editor/template-editor'
+import { TemplateType } from '@/lib/client'
 import { createUserTemplateUserTemplatesPostMutation } from '@/lib/client/@tanstack/react-query.gen'
+import { TemplateData } from '@/types/templates'
 import { useMutation } from '@tanstack/react-query'
+import { ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { exampleTemplates } from '../data/example-templates'
+import { FormProvider, useForm } from 'react-hook-form'
 
-export default function NewTemplatePage() {
-  const navigation = useRouter()
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateData | null>(
-    null
+export default function Page() {
+  const [selectedType, setSelectedType] = useState<TemplateType | undefined>(
+    undefined
   )
-
+  const form = useForm<TemplateData>()
+  const navigation = useRouter()
   const { mutate: saveTemplate } = useMutation({
     ...createUserTemplateUserTemplatesPostMutation(),
     onSuccess: () => {
       navigation.push('/templates')
     },
   })
-  const [open, setOpen] = useState(false)
-  const handleSelectExample = (template: TemplateData) => {
-    setSelectedTemplate(template)
-    setOpen(false)
+  const onSubmit = (data: TemplateData) => {
+    saveTemplate({
+      body: {
+        ...data,
+        questions:
+          data.type === 'form' && data.questions
+            ? data.questions.map((q, i) => ({ ...q, position: i }))
+            : null,
+      },
+    })
   }
-
-  return (
-    <>
+  const templateType = form.watch('type')
+  const onSelectExample = (example: TemplateData) => {
+    form.setValue('name', example.name, { shouldDirty: true })
+    form.setValue('description', example.description, { shouldDirty: true })
+    form.setValue('type', example.type, { shouldDirty: true })
+    form.setValue('content', example.content, { shouldDirty: true })
+    if (example.questions) {
+      form.setValue('questions', example.questions, { shouldDirty: true })
+    } else {
+      form.setValue('questions', null, { shouldDirty: true })
+    }
+  }
+  if (!templateType) {
+    return (
       <div>
+        <h2>Template type</h2>
+        <TemplateTypeSelect value={selectedType} onChange={setSelectedType} />
+        <Button
+          type="button"
+          onClick={() => {
+            form.setValue('type', selectedType!)
+          }}
+          disabled={!selectedType}
+        >
+          Next <ArrowRight />
+        </Button>
+      </div>
+    )
+  }
+  if (templateType == 'document') {
+    return (
+      <FormProvider {...form}>
         <header className="mb-6">
           <div className="mb-1 flex items-center gap-2">
             <h1 className="text-3xl font-bold">New template</h1>
-            <Button variant="outline" onClick={() => setOpen(true)}>
-              <FileText className="mr-2 h-4 w-4" />
-              Use an example
-            </Button>
+            <ExampleTemplatesDialog
+              onSelectTemplate={onSelectExample}
+              examples={exampleDocumentTemplates}
+            />
           </div>
           <p className="text-muted-foreground">
             Design your minute template. You can describe a structure and
-            provide style guidance or{' '}
-            <span
-              className="underline hover:cursor-pointer hover:decoration-2"
-              onClick={() => setOpen(true)}
-            >
-              try an example
-            </span>{' '}
-            to get started.
+            provide style guidance. Try an example to get started.
           </p>
         </header>
-        <TemplateEditor
-          defaultValues={selectedTemplate || undefined}
-          onSubmit={(body) => {
-            saveTemplate({ body })
-          }}
-        />
-      </div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[80vh] min-w-3xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Choose an example template</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-3 gap-4">
-            {exampleTemplates.map((template, index) => (
-              <Card key={index} className="p-4">
-                <div>
-                  <h3 className="mb-1 text-lg font-semibold">
-                    {template.name}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {template.description}
-                  </p>
-                </div>
+        <DocumentTemplateEditor onSubmit={onSubmit} />
+      </FormProvider>
+    )
+  }
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSelectExample(template)}
-                    className="flex items-center gap-1"
-                  >
-                    Use this template
-                  </Button>
-                </div>
-              </Card>
-            ))}
+  if (selectedType == 'form') {
+    return (
+      <FormProvider {...form}>
+        <header className="mb-6">
+          <div className="mb-1 flex items-center gap-2">
+            <h1 className="text-3xl font-bold">New template</h1>
+            <ExampleTemplatesDialog
+              onSelectTemplate={onSelectExample}
+              examples={exampleFormTemplates}
+            />
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
-  )
+          <p className="text-muted-foreground">
+            Design your minute template. You can describe a structure and
+            provide style guidance. Try an example to get started.
+          </p>
+        </header>
+        <FormTemplateEditor onSubmit={onSubmit} />
+      </FormProvider>
+    )
+  }
 }

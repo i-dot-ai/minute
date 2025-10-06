@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
+import { TemplateData } from '@/types/templates'
 import Document from '@tiptap/extension-document'
 import HardBreak from '@tiptap/extension-hard-break'
 import Paragraph from '@tiptap/extension-paragraph'
@@ -14,70 +14,40 @@ import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Save } from 'lucide-react'
 import { useEffect } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useFormContext } from 'react-hook-form'
 
-export type TemplateData = {
-  name: string
-  content: string
-  description: string
-}
-
-export function TemplateEditor({
-  defaultValues,
+export const DocumentTemplateEditor = ({
   onSubmit,
 }: {
-  defaultValues?: { name: string; content: string; description: string }
   onSubmit: (data: TemplateData) => void
-}) {
-  const form = useForm<TemplateData>({ defaultValues })
-
-  useEffect(() => {
-    if (
-      defaultValues &&
-      defaultValues.content != form.getValues('content') &&
-      defaultValues.description != form.getValues('description') &&
-      defaultValues.name != form.getValues('name')
-    ) {
-      form.setValue('name', defaultValues.name, { shouldDirty: true })
-      form.setValue('content', defaultValues.content, { shouldDirty: true })
-      form.setValue('description', defaultValues.description, {
-        shouldDirty: true,
-      })
-    }
-  }, [defaultValues, form])
-
-  useEffect(() => {
-    if (form.formState.isSubmitSuccessful) {
-      form.reset(form.getValues(), { keepValues: true })
-    }
-  }, [form, form.formState.isSubmitSuccessful])
-  useTabCloseWarning(
-    form.formState.isDirty
-      ? 'Your changes to the template have not been saved.'
-      : false
-  )
+}) => {
+  const form = useFormContext<TemplateData>()
   return (
     <form
-      onSubmit={form.handleSubmit(onSubmit)}
       className="flex flex-col gap-4"
+      onSubmit={form.handleSubmit(onSubmit)}
     >
       <div className="flex">
         <Button type="submit" disabled={!form.formState.isDirty}>
           <Save />
-          {!form.formState.isDirty
-            ? 'Saved'
-            : form.formState.isLoading
-              ? 'Saving'
-              : 'Save'}
+          Save
         </Button>
       </div>
       <div>
         <Label htmlFor="name">Template Name</Label>
-        <Input {...form.register('name')} className="mt-2" />
+        <Input
+          {...form.register('name')}
+          className="mt-2"
+          placeholder="Name your template"
+        />
       </div>
       <div>
         <Label htmlFor="name">Description</Label>
-        <Textarea {...form.register('description')} className="mt-2" />
+        <Textarea
+          {...form.register('description')}
+          className="mt-2"
+          placeholder="A description to help identify the template."
+        />
       </div>
       <Controller
         name="content"

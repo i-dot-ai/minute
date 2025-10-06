@@ -9,18 +9,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { TemplateData } from '@/types/templates'
 import { FileText } from 'lucide-react'
 
-import { TemplateData } from '@/app/templates/components/editor/template-editor'
 import { useState } from 'react'
-import { exampleTemplates } from '../data/example-templates'
 
 interface ExampleTemplatesDialogProps {
   onSelectTemplate: (template: TemplateData) => void
+  examples: TemplateData[]
 }
 
 export function ExampleTemplatesDialog({
   onSelectTemplate,
+  examples,
 }: ExampleTemplatesDialogProps) {
   const [open, setOpen] = useState(false)
   const handleSelectExample = (template: TemplateData) => {
@@ -30,7 +31,7 @@ export function ExampleTemplatesDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger asChild type="button">
         <Button variant="outline">
           <FileText className="mr-2 h-4 w-4" />
           Use an example
@@ -41,7 +42,7 @@ export function ExampleTemplatesDialog({
           <DialogTitle>Choose an example template</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-3 gap-4">
-          {exampleTemplates.map((template, index) => (
+          {examples.map((template, index) => (
             <Card key={index} className="p-4">
               <div>
                 <h3 className="mb-1 text-lg font-semibold">{template.name}</h3>

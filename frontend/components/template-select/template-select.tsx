@@ -45,13 +45,13 @@ export const DefaultTemplateSelect = ({
   return (
     <TemplateRadioGroup
       templates={templates.map((t) => ({
-        id: `DEFAULT${t.name}`,
+        id: `DEFAULT::${t.name}`, // Prefix to stop name clashes between default and user templates
         name: t.name,
         description: t.description,
       }))}
       onChange={(id) => {
         const selectedTemplate = templates.find(
-          (t) => t.name === id.replace('DEFAULT', '')
+          (t) => `DEFAULT::${t.name}` === id
         )
         if (selectedTemplate) {
           onChange({
@@ -61,7 +61,7 @@ export const DefaultTemplateSelect = ({
           })
         }
       }}
-      value={value.name}
+      value={`DEFAULT::${value.name}`}
       isLoading={isLoadingTemplates}
     />
   )

@@ -60,7 +60,7 @@ services:
         condition: service_started
     develop:
       watch:
-        - path: ./backend
+        - path: ./worker
           target: /app/backend
           action: sync+restart
         - path: ./common
@@ -91,6 +91,10 @@ services:
         - path: ./frontend
           target: /app
           action: sync
+          ignore:
+            - node_modules/
+            - .next/
+
         - path: ./frontend/package.json
           action: rebuild
   db:

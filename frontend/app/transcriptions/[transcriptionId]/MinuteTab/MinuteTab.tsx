@@ -1,6 +1,6 @@
 'use client'
 
-import { MinuteEditor } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteEditor'
+import { MinuteEditor } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { AudioWav } from '@/components/icons/AudioWav'
 import {

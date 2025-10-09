@@ -23,6 +23,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Download,
   Edit,
+  Eye,
+  EyeOff,
   FilePenLine,
   FileQuestion,
   FileX2,
@@ -46,6 +48,7 @@ export function MinuteEditor({
   minute: MinuteListItem
 }) {
   const [version, setVersion] = useState(0)
+  const [hideCitations, setHideCitations] = useState(false)
   const { data: minuteVersions = [], isLoading } = useQuery({
     ...listMinuteVersionsMinutesMinuteIdVersionsGetOptions({
       path: { minute_id: minute.id! },
@@ -82,6 +85,12 @@ export function MinuteEditor({
     }
   }, [form, minuteVersion])
   const htmlContent = form.watch('html')
+  const contentToCopy = useMemo(() => {
+    return htmlContent?.replaceAll(/\s?\[(\d+)\]/g, '') || ''
+  }, [htmlContent])
+  const hasCitations = useMemo(() => {
+    return !!htmlContent?.match(/\[(\d+)\]/)
+  }, [htmlContent])
   useEffect(() => {}, [htmlContent])
   const { mutate: saveEdit } = useMutation({
     ...createMinuteVersionMinutesMinuteIdVersionsPostMutation(),
@@ -250,9 +259,29 @@ export function MinuteEditor({
             Download
           </Button>
           <CopyButton
-            textToCopy={htmlContent}
+            textToCopy={contentToCopy}
             posthogEvent="editor_content_copied"
           />
+          {hasCitations && (
+            <Button
+              variant="outline"
+              onClick={() => setHideCitations((h) => !h)}
+              disabled={isEditable}
+            >
+              {isEditable ? (
+                'Citations shown when editing'
+              ) : hideCitations ? (
+                <>
+                  <Eye /> Show Citations
+                </>
+              ) : (
+                <>
+                  <EyeOff />
+                  Hide Citations
+                </>
+              )}
+            </Button>
+          )}
         </div>
         <div className="flex gap-2">
           <RatingButton
@@ -272,6 +301,7 @@ export function MinuteEditor({
               initialContent={minuteVersion.html_content || ''}
               isEditing={isEditable}
               onContentChange={onChange}
+              hideCitations={hideCitations && !isEditable}
             />
           )}
         />

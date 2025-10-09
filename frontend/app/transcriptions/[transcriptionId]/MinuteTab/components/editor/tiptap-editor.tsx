@@ -33,11 +33,13 @@ function SimpleEditor({
   onContentChange,
   isEditing,
   currentTranscription,
+  hideCitations,
 }: {
   initialContent: string
   onContentChange: (newContent: string) => void
   isEditing: boolean
   currentTranscription: Transcription
+  hideCitations: boolean
 }) {
   const {
     citationPopover,
@@ -56,7 +58,7 @@ function SimpleEditor({
           props: {
             decorations(state) {
               const decorations: Decoration[] = []
-              const citationRegex = /\[(\d+)\]/g
+              const citationRegex = /(\s?)\[(\d+)\]/g
 
               state.doc.descendants((node, pos) => {
                 if (node.isText) {
@@ -67,6 +69,11 @@ function SimpleEditor({
                     const to = from + match[0].length
                     decorations.push(
                       Decoration.inline(from, to, {
+                        style: 'display: var(--citation-display);',
+                      })
+                    )
+                    decorations.push(
+                      Decoration.inline(from + match[1].length, to, {
                         class: 'citation-link',
                         style:
                           'color: blue; cursor: pointer; text-decoration: underline;',
@@ -266,7 +273,15 @@ function SimpleEditor({
         </div>
       )}
 
-      <EditorContent editor={editorObject} className={cn('editor-content')} />
+      <EditorContent
+        editor={editorObject}
+        className={cn('editor-content')}
+        style={
+          {
+            '--citation-display': hideCitations ? 'none' : 'unset',
+          } as React.CSSProperties
+        }
+      />
 
       {citationPopover && (
         <CitationPopoverWrapper

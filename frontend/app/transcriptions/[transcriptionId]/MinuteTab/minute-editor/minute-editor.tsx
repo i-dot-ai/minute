@@ -1,19 +1,13 @@
 'use client'
 
-import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/ai-edit-popover'
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
 import { RatingButton } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/rating-dialog/rating-dialog'
+import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/ai-edit-popover'
+import { MinuteVersionSelect } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-version-select'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { Button } from '@/components/ui/button'
 import CopyButton from '@/components/ui/copy-button'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from '@/components/ui/select'
-import {
-  ContentSource,
   MinuteListItem,
   MinuteVersionResponse,
   Transcription,
@@ -37,28 +31,11 @@ import {
   Undo,
 } from 'lucide-react'
 import posthog from 'posthog-js'
-import {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 type MinuteEditorForm = {
   html: string
-}
-
-const mapContentSource = (source: ContentSource): string => {
-  if (source === 'ai_edit') {
-    return 'AI edited'
-  } else if (source === 'manual_edit') {
-    return 'Manually edited'
-  } else {
-    return 'First version generated'
-  }
 }
 
 export function MinuteEditor({
@@ -300,39 +277,6 @@ export function MinuteEditor({
         />
       </form>
     </div>
-  )
-}
-
-const MinuteVersionSelect = ({
-  minuteVersions,
-  version,
-  setVersion,
-}: {
-  minuteVersions: MinuteVersionResponse[]
-  version: number
-  setVersion: Dispatch<SetStateAction<number>>
-}) => {
-  return (
-    <Select value={`${version}`} onValueChange={(v) => setVersion(Number(v))}>
-      <SelectTrigger className="inline-flex">Edits</SelectTrigger>
-      <SelectContent>
-        {minuteVersions.map((v, index) => {
-          const date = new Date(v.created_datetime!)
-          return (
-            <SelectItem key={v.id!} value={`${index}`}>
-              {mapContentSource(v.content_source)}
-              <div className="text-muted-foreground flex gap-1 text-xs">
-                {date.toLocaleDateString()}{' '}
-                {date.toLocaleTimeString(undefined, {
-                  hour: 'numeric',
-                  minute: 'numeric',
-                })}
-              </div>
-            </SelectItem>
-          )
-        })}
-      </SelectContent>
-    </Select>
   )
 }
 

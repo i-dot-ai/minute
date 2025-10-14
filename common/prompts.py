@@ -120,29 +120,36 @@ def get_section_for_agenda_prompt(section: str) -> dict[str, str]:
     return {"role": "user", "content": f"The item of the meeting that you will be contributing to is: {section}"}
 
 
-async def get_citations_prompt(initial_draft: str, transcript: list[DialogueEntry]):
+def get_citations_prompt(initial_draft: str, transcript: list[DialogueEntry]):
     return [
         {
-            "role": "system",
-            "content": """You are tasked with adding citations to a minutes document produced from the transcript of a meeting.
-
-Here is some guidance you must follow:
-Your goal is to add citations to the minutes document without changing the minutes document itself.
-Only return the minutes document with citations added. Do not return anything else.
-You will only change the minutes document if there are parts of it that are not coherent with each other, or if there is duplication.
-You must also ensure all spelling is British English, not American English.
-Government acronyms must be spelt correctly even if spelt incorrectly in the transcript. For example: "COBR" not "COBRA".
-Each citation should be of the form [n] where n is the index of the transcript item. Each citation should be one number surrounded by square brackets. For example, you must do [80][81] not [80, 81]
-""",
-        },
-        {
             "role": "user",
-            "content": f"""Here is the meeting transcript:
-{transcript_as_index_speaker_and_utterance(transcript)}
+            "content": f"""<task>
+Add citations to the provided meeting summary which reference items in the transcript.
+</task>
 
-And here is the minutes document which you will add citations to:
-{initial_draft}""",
-        },
+<transcript>
+{transcript_as_index_speaker_and_utterance(transcript)}
+</transcript>
+
+<meeting_summary>
+{initial_draft}
+</meeting_summary>
+
+<formatting_instructions>
+Each citation should be of the form [n] where n is the index of the transcript item. Each citation should be one number surrounded by square brackets. For example, you must do [80][81] not [80, 81].
+</formatting_instructions>
+
+<requirements>
+Each statement should have a maximum of 5 citations.
+Do not add citations to lists of attendees.
+</requirements>
+
+<output>
+Output the meeting summary unchanged except for the addition of citations.
+</output>
+""",
+        }
     ]
 
 

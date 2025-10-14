@@ -8,7 +8,7 @@ async def add_citations_to_minute(
     initial_draft: str,
 ) -> str:
     chatbot = create_default_chatbot(FastOrBestLLM.FAST)
-    messages = await get_citations_prompt(initial_draft, transcript)
+    messages = get_citations_prompt(initial_draft, transcript)
 
     choice = await chatbot.chat(messages)
 

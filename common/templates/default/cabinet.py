@@ -1,10 +1,21 @@
 # flake8: noqa: E501, RUF001,
+from pydantic import BaseModel, Field
+
 from common.format_transcript import transcript_as_speaker_and_utterance
+from common.llm.client import FastOrBestLLM, create_default_chatbot
+from common.prompts import get_sections_from_transcript_prompt
 from common.templates.types import SectionTemplate
 from common.types import (
     AgendaUsage,
     DialogueEntry,
 )
+
+
+class MeetingSections(BaseModel):
+    sections_list: list[str] = Field(
+        description="A list of distinct discussion topics or agenda items covered during a formal meeting, such as 'Opening Remarks', 'Previous Actions Review', 'Main Discussion Points', 'Action Items', or 'Closing Summary'. Must be in the order they appear in the transcript."
+    )
+
 
 style_guide_for_record_of_discussion = """### Style
 The Cabinet minute is written in past reported speech. In other words, it reports what people said, not what they did, or how they spoke. A few important style rules flow from this:
@@ -117,7 +128,7 @@ class Cabinet(SectionTemplate):
     category = "Formal Minutes"
     description = "Formal minutes following cabinet meeting structure"
     citations_required = True
-    agenda_usage = AgendaUsage.REQUIRED
+    agenda_usage = AgendaUsage.OPTIONAL
 
     @classmethod
     def system_prompt(
@@ -174,8 +185,14 @@ The transcript for the item you are contributing to is:
 {transcript_as_speaker_and_utterance(transcript)}"""
 
     @classmethod
-    async def sections(cls, transcript: list[DialogueEntry] | None = None, agenda: str | None = None) -> list[str]:  # noqa: ARG003
+    async def sections(cls, transcript: list[DialogueEntry] | None, agenda: str | None) -> list[str]:
         if not agenda:
-            msg = "Agenda is required"
-            raise ValueError(msg)
-        return agenda.splitlines()
+            chatbot = create_default_chatbot(FastOrBestLLM.FAST)
+            messages = get_sections_from_transcript_prompt(transcript=transcript)
+            response = await chatbot.structured_chat(
+                messages=messages,
+                response_format=MeetingSections,
+            )
+            return response.sections_list
+        else:
+            return agenda.splitlines()

@@ -15,7 +15,7 @@ class PlanningCommittee(SectionTemplate):
     agenda_usage = AgendaUsage.REQUIRED
 
     @classmethod
-    async def sections(cls, transcript: list[DialogueEntry] | None = None, agenda: str | None = None) -> list[str]:  # noqa: ARG003
+    async def sections(cls, transcript: list[DialogueEntry] | None, agenda: str | None) -> list[str]:  # noqa: ARG003
         if not agenda:
             msg = "Agenda is required"
             raise ValueError(msg)

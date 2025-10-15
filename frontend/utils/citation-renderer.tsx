@@ -1,9 +1,10 @@
+import { citationRegex } from '@/lib/citationRegex'
+
 export function linkCitations(content: string): string {
   const parts: string[] = []
-  const regex = /\[(\d+)\]/g
   let lastIndex = 0
   let match: RegExpExecArray | null
-
+  const regex = new RegExp(citationRegex, 'g')
   while ((match = regex.exec(content)) !== null) {
     const idx = match.index
     if (idx > lastIndex) {
@@ -11,7 +12,7 @@ export function linkCitations(content: string): string {
     }
     const citationNumber = parseInt(match[1], 10)
     const text = match[0]
-    parts.push(`[[${citationNumber}]](${citationNumber})`)
+    parts.push(`[${text}](${citationNumber})`)
     lastIndex = idx + text.length
   }
   if (lastIndex < content.length) {
@@ -32,7 +33,6 @@ export function CitationContent({
   const regex = /^\d+$/
   let match: RegExpExecArray | null
   match = regex.exec(href || '')
-
   if (match !== null) {
     const idx = match.index
     const text = match[0]
@@ -46,7 +46,7 @@ export function CitationContent({
           onCitationClick(citationNumber, rect)
         }}
       >
-        [{text}]
+        {linkChildren}
       </span>
     )
   }

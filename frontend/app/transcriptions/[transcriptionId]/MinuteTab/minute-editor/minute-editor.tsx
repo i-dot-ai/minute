@@ -7,6 +7,7 @@ import { MinuteVersionSelect } from '@/app/transcriptions/[transcriptionId]/Minu
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { Button } from '@/components/ui/button'
 import CopyButton from '@/components/ui/copy-button'
+import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import {
   MinuteListItem,
   MinuteVersionResponse,
@@ -86,10 +87,10 @@ export function MinuteEditor({
   }, [form, minuteVersion])
   const htmlContent = form.watch('html')
   const contentToCopy = useMemo(() => {
-    return htmlContent?.replaceAll(/\s?\[(\d+)\]/g, '') || ''
+    return htmlContent?.replaceAll(citationRegexWithSpace, '') || ''
   }, [htmlContent])
   const hasCitations = useMemo(() => {
-    return !!htmlContent?.match(/\[(\d+)\]/)
+    return !!htmlContent?.match(citationRegex)
   }, [htmlContent])
   useEffect(() => {}, [htmlContent])
   const { mutate: saveEdit } = useMutation({

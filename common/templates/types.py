@@ -4,7 +4,7 @@ from common.database.postgres_models import DialogueEntry, Minute
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_section_for_agenda_prompt, string_to_system_message
 from common.settings import get_settings
-from common.templates.template_utils import add_citations_to_minute
+from common.templates.citations import add_citations_to_minute
 from common.types import AgendaUsage, MinuteAndHallucinations
 
 settings = get_settings()

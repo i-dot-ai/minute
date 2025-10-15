@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from common.database.postgres_models import DialogueEntry, Minute
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_transcript_messages
-from common.templates.template_utils import add_citations_to_minute
+from common.templates.citations import add_citations_to_minute
 from common.templates.types import Template
 from common.types import AgendaUsage, MinuteAndHallucinations
 

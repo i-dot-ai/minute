@@ -12,6 +12,7 @@ from common.prompts import get_chat_with_transcript_system_message
 from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.settings import get_settings
+from common.templates.citations import combine_consecutive_citations
 from common.types import DialogueEntry, TranscriptionJobMessageData
 
 settings = get_settings()
@@ -76,6 +77,7 @@ class TranscriptionHandlerService:
                         )
 
                 chat_response = await chatbot.chat(messages=chat_history)
+                chat_response = combine_consecutive_citations(chat_response)
                 chat.assistant_content = chat_response
                 chat.status = JobStatus.COMPLETED
 

@@ -1,3 +1,4 @@
+import { citationRegexWithSpace } from '@/lib/citationRegex'
 import { DialogueEntry } from '@/lib/client'
 import { saveAs } from 'file-saver'
 import { asBlob } from 'html-docx-js-typescript'
@@ -110,19 +111,12 @@ async function convertHTMLToWordAndDownload(
   saveAs(blob, fileName)
 }
 
-export function removeCitations(text: string): string {
-  const citationRegex = /\s*\[\d+\](\s*\.)?/g
-  return text.replace(citationRegex, (match, punctuation) => {
-    return punctuation ? '.' : ''
-  })
-}
-
 async function convertAIMinutesToWordDoc(
   html: string,
   transcript: DialogueEntry[],
   fileName: string = 'document.docx'
 ): Promise<void> {
-  const cleanedHTML = removeCitations(html)
+  const cleanedHTML = html.replace(citationRegexWithSpace, '')
   await convertHTMLToWordAndDownload(cleanedHTML, transcript, fileName)
 }
 

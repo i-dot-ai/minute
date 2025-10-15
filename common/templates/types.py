@@ -141,7 +141,7 @@ class SectionTemplate(Template, Protocol):
         ...
 
     @classmethod
-    async def sections(cls, transcript: list[DialogueEntry] | None = None, agenda: str | None = None) -> list[str]:
+    async def sections(cls, transcript: list[DialogueEntry] | None, agenda: str | None) -> list[str]:
         """
         Generates a list of sections based on the provided transcript and agenda.
 

@@ -28,7 +28,7 @@ export const FormTemplateEditor = ({
       onSubmit={form.handleSubmit(onSubmit)}
     >
       <div className="flex gap-2">
-        <Button type="submit" disabled={!form.formState.isDirty}>
+        <Button type="submit">
           <Save />
           Save
         </Button>

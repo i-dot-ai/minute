@@ -53,20 +53,3 @@ module "app_bucket" {
 
   bucket_versioning_status = "Suspended"
 }
-
-resource "aws_s3_bucket_lifecycle_configuration" "lifecycle_rules" {
-  bucket = module.app_bucket.id
-
-  rule {
-    id     = "delete_after_30 days"
-    status = "Enabled"
-
-    expiration {
-      days = 30
-    }
-
-    noncurrent_version_expiration {
-      noncurrent_days = 30
-    }
-  }
-}

@@ -138,17 +138,6 @@ class MinutesPatchRequest(BaseModel):
     html_content: str | None = None
 
 
-class TranscriptionJobResponse(BaseModel):
-    status: JobStatus
-    dialogue_entries: list["DialogueEntry"] | None = None
-    error: str | None = None
-    message: str | None = None
-    id: uuid.UUID | None = None
-    uploaded_documents: list[dict] | None = None
-    upload_url: str | None = None
-    user_upload_s3_file_key: str | None = None
-
-
 class MinuteVersionResponse(BaseModel):
     id: uuid.UUID
     minute_id: uuid.UUID

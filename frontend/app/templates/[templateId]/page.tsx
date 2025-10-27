@@ -2,6 +2,7 @@
 
 import { DocumentTemplateEditor } from '@/app/templates/components/document-template-editor'
 import { FormTemplateEditor } from '@/app/templates/components/form-template-editor'
+import { Button } from '@/components/ui/button'
 import {
   editUserTemplateUserTemplatesTemplateIdPatchMutation,
   getUserTemplateUserTemplatesTemplateIdGetOptions,
@@ -14,9 +15,11 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import { useEffect } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 export default function EditTemplatePage({
   params: { templateId },
@@ -33,6 +36,11 @@ export default function EditTemplatePage({
   if (!template) {
     return (
       <>
+        <Button variant="link" asChild className="p-0!">
+          <Link href="/templates">
+            <ArrowLeft /> Back
+          </Link>
+        </Button>
         <header className="mb-6">
           <h1 className="text-3xl font-bold">Edit template</h1>
         </header>
@@ -42,6 +50,11 @@ export default function EditTemplatePage({
   }
   return (
     <>
+      <Button variant="link" asChild className="p-0!">
+        <Link href="/templates">
+          <ArrowLeft /> Back
+        </Link>
+      </Button>
       <header className="mb-6">
         <h1 className="text-3xl font-bold">Edit template</h1>
       </header>
@@ -78,6 +91,7 @@ const TemplateEditorForm = ({
   const { mutate } = useMutation({
     ...editUserTemplateUserTemplatesTemplateIdPatchMutation(),
     onSuccess: () => {
+      toast.success('Changes saved!', { position: 'top-center' })
       queryClient.invalidateQueries({
         queryKey: getUserTemplateUserTemplatesTemplateIdGetQueryKey({
           path: { template_id: templateId },

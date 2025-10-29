@@ -53,18 +53,7 @@ class WorkerService:
                     case _:
                         logger.warning("Message not recognised: %s , Sending to dead letter", message)
                         self.queue_service.deadletter_message(message, receipt_handle)
-            failed, pending = await asyncio.wait(futures, timeout=1)
-            for task in failed:
-                # Manually restart failed jobs
-                try:
-                    # exc_info=False as this comes from another process
-                    logger.error("Task has finished unexpectedly: error %s", task, exc_info=False)
-                    idx = futures.index(task)
-                    self.calls[idx] = self.actors[idx].process.remote()
-                    futures[idx] = asyncio.ensure_future(self.calls[idx])
-
-                except Exception as e:  # noqa: BLE001
-                    logger.error("Failed to restart worker %s", e)
+            await self._check_and_restart_tasks(futures)
 
         logger.info("Signal recieved. Setting stopped to True")
         await self.stopped.set.remote()
@@ -83,6 +72,20 @@ class WorkerService:
                 logger.info("No remaining jobs. Stopping.")
                 break
             logger.info("Waiting for %d jobs", len(pending))
+
+    async def _check_and_restart_tasks(self, futures):
+        failed, pending = await asyncio.wait(futures, timeout=1)
+        for task in failed:
+            # Manually restart failed jobs
+            try:
+                # exc_info=False as this comes from another process
+                logger.error("Task has finished unexpectedly: error %s", task, exc_info=False)
+                idx = futures.index(task)
+                self.calls[idx] = self.actors[idx].process.remote()
+                futures[idx] = asyncio.ensure_future(self.calls[idx])
+
+            except Exception as e:  # noqa: BLE001
+                logger.error("Failed to restart worker %s", e)
 
 
 def create_worker_service() -> WorkerService:

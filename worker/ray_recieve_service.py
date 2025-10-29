@@ -30,17 +30,23 @@ class HasBeenStopped:
 
 # restart indefinitely, try each task only once
 @ray.remote(max_restarts=-1, max_task_retries=0)
-class RayQueueReceiveService:
-    def __init__(self, queue_service: QueueService, stopped: HasBeenStopped) -> None:
+class RayTranscriptionService:
+    def __init__(
+        self,
+        queue_service: QueueService,
+        stopped: HasBeenStopped,
+        ray_queue: Queue,
+    ) -> None:
         self.stopped = stopped
         self.queue_service = queue_service
-        logger.info("Ray queue receive service initialised")
+        self.ray_queue = ray_queue
+        logger.info("Ray Transcription receive service initialised")
 
-    async def process_transcription_task(self, queue: Queue) -> None:
+    async def process(self) -> None:
         while True:
             try:
                 # if this throws an exception, it should be fatal
-                message, receipt_handle = await queue.get_async(block=True, timeout=1)
+                message, receipt_handle = await self.ray_queue.get_async(block=True, timeout=1)
                 try:
                     logger.info("Received minute id for transcription: %s", message.id)
                     transcription_job = await TranscriptionHandlerService.process_transcription(
@@ -54,7 +60,7 @@ class RayQueueReceiveService:
                         logger.info("Transcription complete for minute id %s complete", message.id)
                         # create a default minute with the general template after every transcription
                         minute_version = await MinuteHandlerService.get_only_minute_version_for_minute_id(message.id)
-                        await self.process_minute_task(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
+                        self.queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
                     else:
                         logger.info("Async transcription job not ready yet. Re-queueing minute id: %s", message.id)
                         self.queue_service.publish_message(
@@ -66,12 +72,21 @@ class RayQueueReceiveService:
                 if await self.stopped.get.remote():
                     break
 
-    async def process_llm_task(self, queue: Queue) -> None:
+
+@ray.remote(max_restarts=-1, max_task_retries=0)
+class RayLlmService:
+    def __init__(self, queue_service: QueueService, stopped: HasBeenStopped, ray_queue: Queue) -> None:
+        self.stopped = stopped
+        self.queue_service = queue_service
+        self.ray_queue = ray_queue
+        logger.info("Ray LLM receive service initialised")
+
+    async def process(self) -> None:
         logger.info("receiving LLM messages from Ray queue")
         while True:
             try:
                 # if this throws an exception, it should be fatal
-                message, receipt_handle = await queue.get_async(block=True, timeout=10)
+                message, receipt_handle = await self.ray_queue.get_async(block=True, timeout=10)
                 try:
                     match message.type:
                         case TaskType.MINUTE:

@@ -64,14 +64,25 @@ class SQSQueueService(QueueService):
         self.sqs.send_message(QueueUrl=self.queue_url, MessageBody=message.model_dump_json())
 
     def complete_message(self, receipt_handle: Any):
-        self.sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=receipt_handle)
+        try:
+            self.sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=receipt_handle)
+        except self.sqs.exceptions.ReceiptHandleIsInvalid:
+            logger.warning("ReceiptHandleIsInvalid raised when completing message")
 
     def deadletter_message(self, message: WorkerMessage, receipt_handle: Any):
-        self.sqs.send_message(QueueUrl=self.dead_letter_queue_url, MessageBody=message.model_dump_json())
-        self.sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=receipt_handle)
+        try:
+            self.sqs.send_message(QueueUrl=self.dead_letter_queue_url, MessageBody=message.model_dump_json())
+            self.sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=receipt_handle)
+        except self.sqs.exceptions.ReceiptHandleIsInvalid:
+            logger.warning("ReceiptHandleIsInvalid raised when deadlettering message. Message=%s", message.model_dump())
 
     def abandon_message(self, receipt_handle: Any):
-        self.sqs.change_message_visibility(QueueUrl=self.queue_url, ReceiptHandle=receipt_handle, VisibilityTimeout=0)
+        try:
+            self.sqs.change_message_visibility(
+                QueueUrl=self.queue_url, ReceiptHandle=receipt_handle, VisibilityTimeout=0
+            )
+        except self.sqs.exceptions.ReceiptHandleIsInvalid:
+            logger.warning("ReceiptHandleIsInvalid raised when abandoning message")
 
     def purge_messages(self):
         self.sqs.purge_queue(QueueUrl=self.queue_url)

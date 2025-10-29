@@ -33,8 +33,8 @@ export function ExampleTemplatesDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild type="button">
         <Button variant="outline">
-          <FileText className="mr-2 h-4 w-4" />
-          Use an example
+          <FileText className="h-4 w-4" />
+          Try an example
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[80vh] min-w-3xl overflow-y-auto">

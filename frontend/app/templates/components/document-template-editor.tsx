@@ -12,7 +12,7 @@ import Paragraph from '@tiptap/extension-paragraph'
 import Text from '@tiptap/extension-text'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import { Save } from 'lucide-react'
+import { Loader2, Save } from 'lucide-react'
 import { useEffect } from 'react'
 import { Controller, useFormContext } from 'react-hook-form'
 
@@ -27,11 +27,33 @@ export const DocumentTemplateEditor = ({
       className="flex flex-col gap-4"
       onSubmit={form.handleSubmit(onSubmit)}
     >
-      <div className="flex">
-        <Button type="submit" disabled={!form.formState.isDirty}>
-          <Save />
-          Save
+      <div className="flex gap-2">
+        <Button type="submit">
+          <Save /> Save
         </Button>
+        {form.formState.isSubmitting && (
+          <div>
+            <Loader2 className="animate-spin" />
+            Submitting...
+          </div>
+        )}
+        <div className="flex-1 text-xs text-red-600">
+          <p>
+            {form.formState.errors.content?.message
+              ? form.formState.errors.content.message
+              : null}
+          </p>
+          <p>
+            {form.formState.errors.name?.message
+              ? form.formState.errors.name?.message
+              : null}
+          </p>
+          <p>
+            {form.formState.errors.description?.message
+              ? form.formState.errors.description?.message
+              : null}
+          </p>
+        </div>
       </div>
       <div>
         <Label htmlFor="name">Template Name</Label>
@@ -44,7 +66,9 @@ export const DocumentTemplateEditor = ({
       <div>
         <Label htmlFor="name">Description</Label>
         <Textarea
-          {...form.register('description')}
+          {...form.register('description', {
+            required: { value: true, message: 'Description required' },
+          })}
           className="mt-2"
           placeholder="A description to help identify the template."
         />
@@ -52,6 +76,9 @@ export const DocumentTemplateEditor = ({
       <Controller
         name="content"
         control={form.control}
+        rules={{
+          required: { value: true, message: 'Template content required.' },
+        }}
         render={({ field: { onChange, value } }) => (
           <ControlledEditor onChange={onChange} value={value} />
         )}

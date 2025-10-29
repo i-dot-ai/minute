@@ -1,7 +1,4 @@
 import { UserTemplatesList } from '@/app/templates/components/user-templates-list'
-import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
-import Link from 'next/link'
 
 export default function TemplatesPage() {
   return (
@@ -14,14 +11,9 @@ export default function TemplatesPage() {
               Experimental
             </span>
           </div>
-          <Button asChild>
-            <Link href="/templates/new">
-              <Plus /> New
-            </Link>
-          </Button>
         </div>
         <p className="text-muted-foreground">
-          Create templates that you can use when generating a Minute.
+          Use templates to customise the structure and style of your minutes.
         </p>
       </header>
       <UserTemplatesList />

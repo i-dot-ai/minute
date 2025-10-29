@@ -51,6 +51,7 @@ services:
       - AWS_SESSION_TOKEN
       - AWS_DEFAULT_REGION=eu-west-2
       - POSTGRES_HOST=db
+      - RAY_DASHBOARD_HOST=0.0.0.0
       - LOCALSTACK_URL=http://localstack:4566
     stop_grace_period: 10s
     depends_on:

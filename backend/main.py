@@ -9,6 +9,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from backend.api.routes import router as api_router
 from common.database.postgres_database import init_cleanup_scheduler
+from common.services.storage_services.local import mock_storage_app
 from common.settings import get_settings
 
 settings = get_settings()
@@ -57,6 +58,9 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+
+if settings.STORAGE_SERVICE_NAME == "local":
+    app.mount("/mock_storage", mock_storage_app)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8080)  # noqa: S104

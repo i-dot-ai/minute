@@ -147,6 +147,10 @@ class Settings(BaseSettings):
         ),
     )
 
+    LOCAL_STORAGE_PATH: str = Field(
+        default="", description="The folder where the data directory is mounted for the local storage service."
+    )
+
     # use a dotenv file for local development
     if dotenv_detected:
         model_config = SettingsConfigDict(env_file=DOT_ENV_PATH, extra="ignore")

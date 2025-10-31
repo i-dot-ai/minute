@@ -8,17 +8,19 @@ services:
     env_file:
       - .env
     environment:
-      - AWS_ACCESS_KEY_ID
-      - AWS_SECRET_ACCESS_KEY
-      - AWS_SESSION_TOKEN
-      - AWS_DEFAULT_REGION=eu-west-2
       - POSTGRES_HOST=db
       - LOCALSTACK_URL=http://localstack:4566
+      - STORAGE_SERVICE_NAME=local
+      - LOCAL_STORAGE_PATH=/static
     depends_on:
       db:
         condition: service_healthy
       localstack:
         condition: service_started
+    volumes:
+      - type: bind
+        source: ./.data
+        target: /static
     develop:
       watch:
         - path: ./backend
@@ -45,14 +47,15 @@ services:
       - "8265:8265"
     volumes:
       - /tmp:/tmp
+      - type: bind
+        source: ./.data
+        target: /static
     environment:
-      - AWS_ACCESS_KEY_ID
-      - AWS_SECRET_ACCESS_KEY
-      - AWS_SESSION_TOKEN
-      - AWS_DEFAULT_REGION=eu-west-2
       - POSTGRES_HOST=db
       - RAY_DASHBOARD_HOST=0.0.0.0
       - LOCALSTACK_URL=http://localstack:4566
+      - STORAGE_SERVICE_NAME=local
+      - LOCAL_STORAGE_PATH=/static
     stop_grace_period: 10s
     depends_on:
       db:

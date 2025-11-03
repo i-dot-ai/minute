@@ -1,5 +1,4 @@
 import shutil
-from contextlib import suppress
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -39,9 +38,8 @@ class LocalStorageService(StorageService):
 
     @classmethod
     async def delete(cls, key: str) -> None:
-        with suppress(FileNotFoundError):
-            storage_path = Path(settings.LOCAL_STORAGE_PATH) / key
-            storage_path.unlink()
+        storage_path = Path(settings.LOCAL_STORAGE_PATH) / key
+        storage_path.unlink(missing_ok=True)
 
 
 mock_storage_app = FastAPI(title="Mock storage service")

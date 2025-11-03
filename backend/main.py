@@ -60,6 +60,10 @@ app.add_middleware(
 app.include_router(api_router)
 
 if settings.STORAGE_SERVICE_NAME == "local":
+    log.info(
+        "Using 'local' storage service. We recommend only using this for development. "
+        "Uploaded files are stored in .data/",
+    )
     app.mount("/mock_storage", mock_storage_app)
 
 if __name__ == "__main__":

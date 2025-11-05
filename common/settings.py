@@ -148,7 +148,8 @@ class Settings(BaseSettings):
     )
 
     LOCAL_STORAGE_PATH: str = Field(
-        default="", description="The folder where the data directory is mounted for the local storage service."
+        default="/tmp",  # noqa: S108
+        description="The folder where the data directory is mounted for the local storage service.",
     )
 
     # use a dotenv file for local development

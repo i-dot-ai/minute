@@ -68,7 +68,7 @@ class AzureBlobStorageService(StorageService):
                 expiry=expiry_time,
                 content_disposition=f"attachment; filename={filename}",
             )
-            return f"{container_client.url}?{sas_token}"
+            return f"{container_client.url}/{key}?{sas_token}"
 
     @classmethod
     async def check_object_exists(cls, key: str) -> bool:

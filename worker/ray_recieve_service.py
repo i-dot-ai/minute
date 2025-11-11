@@ -42,6 +42,7 @@ class RayTranscriptionService:
         self.llm_queue_service = llm_queue_service
         actor_id = ray.get_runtime_context().get_actor_id()
         self.heartbeat_path = Path(HEARTBEAT_DIR) / f"worker_{actor_id}.heartbeat"
+        self.heartbeat_path.touch()
         logger.info("Ray Transcription receive service initialised")
 
     async def process(self) -> None:
@@ -82,6 +83,7 @@ class RayLlmService:
         self.queue_service = queue_service
         actor_id = ray.get_runtime_context().get_actor_id()
         self.heartbeat_path = Path(HEARTBEAT_DIR) / f"worker_{actor_id}.heartbeat"
+        self.heartbeat_path.touch()
         logger.info("Ray LLM receive service initialised")
 
     async def process(self) -> None:

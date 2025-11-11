@@ -49,7 +49,6 @@ async def get_current_user(
             )
 
         # Try to find existing user
-        
 
         statement = select(User).where(User.email == email)
         user = (await session.exec(statement)).first()
@@ -72,5 +71,6 @@ async def get_current_user(
             detail="Unhandled Authorisation Error",
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
+
 
 UserDep = Annotated[User, Depends(get_current_user)]

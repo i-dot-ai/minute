@@ -1,5 +1,6 @@
-from functools import lru_cache
 import logging
+from functools import lru_cache
+
 from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
 
 from common.settings import get_settings
@@ -12,6 +13,7 @@ def setup_logger():
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
+
 def setup_structured_logger(level: str | None = None) -> StructuredLogger:
     return StructuredLogger(
         level=level or "info",
@@ -20,6 +22,7 @@ def setup_structured_logger(level: str | None = None) -> StructuredLogger:
             "log_format": get_settings().LOGGING_FORMAT,
         },
     )
+
 
 @lru_cache
 def get_structured_logger() -> StructuredLogger:

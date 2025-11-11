@@ -8,9 +8,9 @@ queue_services: dict[str, type[QueueService]] = {
 }
 
 
-def get_queue_service(storage_service_name: str, queue_name: str, deadletter_queue_name: str) -> QueueService:
-    service = queue_services.get(storage_service_name)
+def get_queue_service(queue_service_name: str, queue_name: str, deadletter_queue_name: str) -> QueueService:
+    service = queue_services.get(queue_service_name)
     if not service:
-        msg = f"Invalid storage service name: {storage_service_name}"
+        msg = f"Invalid storage service name: {queue_service_name}"
         raise ValueError(msg)
     return service(queue_name, deadletter_queue_name)

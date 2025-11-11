@@ -158,7 +158,7 @@ module "worker" {
 
   # checkov:skip=CKV_SECRET_4:Skip secret check as these have to be used within the Github Action
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
-  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v5.0.0-ecs"
+  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v5.7.0-ecs"
   desired_app_count            = terraform.workspace == "prod" ? 2 : 1
   image_tag                    = var.image_tag
   ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-worker"
@@ -191,6 +191,13 @@ module "worker" {
   cpu    = terraform.workspace == "prod" ? 4096 : 2048
 
   http_healthcheck = false
+  container_healthcheck = {
+    command     = ["CMD-SHELL", "curl", "--fail", "http://localhost:8080/healthcheck"]
+    interval    = 60
+    retries     = 3
+    startPeriod = 60
+    timeout     = 5
+  }
 }
 
 resource "aws_service_discovery_private_dns_namespace" "private_dns_namespace" {

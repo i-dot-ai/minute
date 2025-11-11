@@ -19,8 +19,8 @@ locals {
     "AZURE_OPENAI_API_VERSION" : "2024-10-21"
     "TRANSCRIPTION_QUEUE_NAME" : aws_sqs_queue.transcription_queue.name
     "TRANSCRIPTION_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name
-    "LLM_QUEUE_NAME" : aws_sqs_queue.transcription_queue.name
-    "LLM_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name
+    "LLM_QUEUE_NAME" : aws_sqs_queue.llm_queue.name
+    "LLM_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.llm_queue_deadletter.name
     "TRANSCRIPTION_SERVICES" : "[\"azure_stt_synchronous\",\"azure_stt_batch\"]"
     "MAX_TRANSCRIPTION_PROCESSES" : local.MAX_TRANSCRIPTION_PROCESSES
     "MAX_LLM_PROCESSES" : local.MAX_LLM_PROCESSES

@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from pathlib import Path
 from typing import Any
 
 import ray
@@ -41,7 +40,7 @@ class RayTranscriptionService:
         self.transcription_queue_service = transcription_queue_service
         self.llm_queue_service = llm_queue_service
         actor_id = ray.get_runtime_context().get_actor_id()
-        self.heartbeat_path = Path(HEARTBEAT_DIR) / f"worker_{actor_id}.heartbeat"
+        self.heartbeat_path = HEARTBEAT_DIR / f"worker_{actor_id}.heartbeat"
         self.heartbeat_path.touch()
         logger.info("Ray Transcription receive service initialised")
 
@@ -82,7 +81,7 @@ class RayLlmService:
         self.stopped = stopped
         self.queue_service = queue_service
         actor_id = ray.get_runtime_context().get_actor_id()
-        self.heartbeat_path = Path(HEARTBEAT_DIR) / f"worker_{actor_id}.heartbeat"
+        self.heartbeat_path = HEARTBEAT_DIR / f"worker_{actor_id}.heartbeat"
         self.heartbeat_path.touch()
         logger.info("Ray LLM receive service initialised")
 

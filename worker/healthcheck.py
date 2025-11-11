@@ -6,9 +6,12 @@ from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
-HEARTBEAT_DIR = "/tmp/worker_heartbeats"  # noqa: S108
+HEARTBEAT_DIR = Path("/tmp/worker_heartbeats")  # noqa: S108
 HEARTBEAT_TIMEOUT = 1200  # 20 minutes
-Path(HEARTBEAT_DIR).mkdir(exist_ok=True)
+HEARTBEAT_DIR.mkdir(exist_ok=True)
+for file_path in HEARTBEAT_DIR.glob("*"):
+    if file_path.is_file():
+        file_path.unlink()
 
 
 @app.get("/healthcheck")

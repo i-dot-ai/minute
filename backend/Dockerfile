@@ -11,11 +11,6 @@ RUN pip install --no-cache-dir poetry
 # Set the working directory
 WORKDIR /app
 
-RUN cat <<EOF > ./health.sh
-curl --fail http://localhost:8080/healthcheck
-EOF
-RUN chmod +x ./health.sh
-
 # Copy only requirements to cache them in docker layer
 COPY pyproject.toml poetry.lock README.md ./
 

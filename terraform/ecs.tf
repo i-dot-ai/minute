@@ -17,8 +17,10 @@ locals {
     "POSTGRES_HOST" : module.rds.db_instance_address,
     "AUTH_PROVIDER_PUBLIC_KEY" : data.aws_ssm_parameter.auth_provider_public_key.value,
     "AZURE_OPENAI_API_VERSION" : "2024-10-21"
-    "QUEUE_NAME" : aws_sqs_queue.transcription_queue.name
-    "DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name
+    "TRANSCRIPTION_QUEUE_NAME" : aws_sqs_queue.transcription_queue.name
+    "TRANSCRIPTION_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name
+    "LLM_QUEUE_NAME" : aws_sqs_queue.llm_queue.name
+    "LLM_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.llm_queue_deadletter.name
     "TRANSCRIPTION_SERVICES" : "[\"azure_stt_synchronous\",\"azure_stt_batch\"]"
     "MAX_TRANSCRIPTION_PROCESSES" : local.MAX_TRANSCRIPTION_PROCESSES
     "MAX_LLM_PROCESSES" : local.MAX_LLM_PROCESSES
@@ -37,7 +39,7 @@ module "backend" {
   # checkov:skip=CKV_SECRET_4:Skip secret check as these have to be used within the Github Action
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   #source                      = "../../i-dot-ai-core-terraform-modules//modules/ecs" # For testing local changes
-  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v5.4.0-ecs"
+  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v5.7.0-ecs"
   image_tag                    = var.image_tag
   ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-backend"
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
@@ -81,15 +83,12 @@ module "backend" {
   cpu            = terraform.workspace == "prod" ? 4096 : 2048
 
   http_healthcheck = false
-
-  health_check = {
-    accepted_response   = 200
-    path                = "/healthcheck"
-    interval            = 60
-    timeout             = 70
-    healthy_threshold   = 2
-    unhealthy_threshold = 5
-    port                = local.backend_port
+  container_healthcheck = {
+    command     = ["CMD-SHELL", "curl --fail http://localhost:8080/healthcheck"]
+    interval    = 60
+    retries     = 3
+    startPeriod = 30
+    timeout     = 5
   }
 }
 
@@ -156,7 +155,7 @@ module "worker" {
 
   # checkov:skip=CKV_SECRET_4:Skip secret check as these have to be used within the Github Action
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
-  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v5.0.0-ecs"
+  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v5.7.0-ecs"
   desired_app_count            = terraform.workspace == "prod" ? 2 : 1
   image_tag                    = var.image_tag
   ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-worker"
@@ -187,6 +186,15 @@ module "worker" {
 
   memory = terraform.workspace == "prod" ? 8192 : 4096
   cpu    = terraform.workspace == "prod" ? 4096 : 2048
+
+  http_healthcheck = false
+  container_healthcheck = {
+    command     = ["CMD-SHELL", "poetry run python worker/healthcheck.py"]
+    interval    = 60
+    retries     = 3
+    startPeriod = 60
+    timeout     = 5
+  }
 }
 
 resource "aws_service_discovery_private_dns_namespace" "private_dns_namespace" {

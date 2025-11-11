@@ -2,13 +2,11 @@ import asyncio
 import logging
 
 import ray
-from ray.util.queue import Queue
 
 from common.logger import setup_logger
 from common.services.queue_services import get_queue_service
 from common.services.queue_services.base import QueueService
 from common.settings import get_settings
-from common.types import TaskType
 from worker.ray_recieve_service import HasBeenStopped, RayLlmService, RayTranscriptionService
 from worker.signal_handler import SignalHandler
 
@@ -17,24 +15,23 @@ settings = get_settings()
 
 
 class WorkerService:
-    def __init__(self, queue_service: QueueService):
-        self.queue_service = queue_service
+    def __init__(self, transcription_queue_service: QueueService, llm_queue_service: QueueService):
+        self.transcription_queue_service = transcription_queue_service
+        self.llm_queue_service = llm_queue_service
         self.actors = []
         self.calls = []
         self.signal_handler = SignalHandler()
-        self.llm_queue = Queue()
-        self.transcription_queue = Queue()
         self.stopped = HasBeenStopped.remote()
         for _ in range(settings.MAX_TRANSCRIPTION_PROCESSES):
             transcription_worker = RayTranscriptionService.remote(
-                self.queue_service, self.stopped, self.transcription_queue
+                self.transcription_queue_service, self.llm_queue_service, self.stopped
             )
             transcription_worker_call = transcription_worker.process.remote()
             self.actors.append(transcription_worker)
             self.calls.append(transcription_worker_call)
 
         for _ in range(settings.MAX_LLM_PROCESSES):
-            llm_worker = RayLlmService.remote(self.queue_service, self.stopped, self.llm_queue)
+            llm_worker = RayLlmService.remote(self.llm_queue_service, self.stopped)
             llm_worker_call = llm_worker.process.remote()
             self.actors.append(llm_worker)
             self.calls.append(llm_worker_call)
@@ -43,28 +40,10 @@ class WorkerService:
         # note, currently a bug in python 3.12/ray that means we need to wrap the ObjectRefs in asyncio.ensure_future
         futures = [asyncio.ensure_future(call) for call in self.calls]
         while not self.signal_handler.signal_received:
-            messages = self.queue_service.receive_message()
-            for message, receipt_handle in messages:
-                match message.type:
-                    case TaskType.TRANSCRIPTION:
-                        self.transcription_queue.put((message, receipt_handle))
-                    case TaskType.MINUTE | TaskType.EDIT | TaskType.INTERACTIVE:
-                        self.llm_queue.put((message, receipt_handle))
-                    case _:
-                        logger.warning("Message not recognised: %s , Sending to dead letter", message)
-                        self.queue_service.deadletter_message(message, receipt_handle)
             await self._check_and_restart_tasks(futures)
 
         logger.info("Signal recieved. Setting stopped to True")
         await self.stopped.set.remote()
-
-        logger.info("Requeuing messages in Ray queues")
-        while not self.transcription_queue.empty():
-            _message, receipt_handle = self.transcription_queue.get(block=False)
-            self.queue_service.abandon_message(receipt_handle)
-        while not self.llm_queue.empty():
-            _message, receipt_handle = self.llm_queue.get(block=False)
-            self.queue_service.abandon_message(receipt_handle)
 
         while True:
             done, pending = await asyncio.wait(futures, timeout=1)
@@ -90,7 +69,12 @@ class WorkerService:
 
 def create_worker_service() -> WorkerService:
     settings = get_settings()
-    sqs_service = get_queue_service(settings.QUEUE_SERVICE_NAME)
+    transcription_sqs_service = get_queue_service(
+        settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
+    )
+    llm_sqs_service = get_queue_service(
+        settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
+    )
     # max concurrent ray processes
     # +4 as we need 2 for the ray Queues, 1 for the HasBeenStopped Actor, plus one 'spare'
     # we init ray here so we can handle its init in testing
@@ -102,4 +86,4 @@ def create_worker_service() -> WorkerService:
         dashboard_port=8265,
         runtime_env={"worker_process_setup_hook": setup_logger},
     )
-    return WorkerService(queue_service=sqs_service)
+    return WorkerService(transcription_queue_service=transcription_sqs_service, llm_queue_service=llm_sqs_service)

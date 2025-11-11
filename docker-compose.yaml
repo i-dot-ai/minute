@@ -16,11 +16,17 @@ services:
       db:
         condition: service_healthy
       localstack:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - type: bind
         source: ./.data
         target: /static
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:8080/healthcheck"]
+      interval: 60s
+      retries: 3
+      start_period: 30s
+      timeout: 5s
     develop:
       watch:
         - path: ./backend
@@ -31,6 +37,7 @@ services:
           action: sync+restart
         - path: ./poetry.lock
           action: rebuild
+
   worker:
     build:
       context: .
@@ -40,7 +47,6 @@ services:
       resources:
         limits:
           cpus: "2.0" # Set CPU limit to 2 cores
-
     env_file:
       - .env
     ports:
@@ -61,7 +67,13 @@ services:
       db:
         condition: service_healthy
       localstack:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "poetry run python worker/healthcheck.py"]
+      interval: 60s
+      retries: 3
+      start_period: 60s
+      timeout: 5s
     develop:
       watch:
         - path: ./worker
@@ -72,6 +84,7 @@ services:
           action: sync+restart
         - path: ./poetry.lock
           action: rebuild
+
   frontend:
     build:
       context: .
@@ -90,6 +103,8 @@ services:
       - BACKEND_HOST=http://backend:8080
       - NEXT_PUBLIC_SENTRY_DSN=$SENTRY_DSN
       - NEXT_PUBLIC_POSTHOG_API_KEY=$POSTHOG_API_KEY
+    volumes:
+      - next_data:/app/.next
     develop:
       watch:
         - path: ./frontend
@@ -98,9 +113,9 @@ services:
           ignore:
             - node_modules/
             - .next/
-
         - path: ./frontend/package.json
           action: rebuild
+
   db:
     image: postgres:13
     user: postgres
@@ -116,6 +131,7 @@ services:
       timeout: 30s
       retries: 24
       start_period: 30s
+
   localstack: # LocalStack container
     image: localstack/localstack:latest
     env_file:
@@ -129,6 +145,13 @@ services:
       - ./localstack-setup.sh:/etc/localstack/init/ready.d/script.sh
     environment:
       - AWS_DEFAULT_REGION=eu-west-2
+    healthcheck:
+      test: ["CMD", "test", "-f", "/ready.txt"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
 
 volumes:
   local_postgres_data: {}
+  next_data: {}

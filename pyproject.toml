@@ -25,7 +25,7 @@ skip = [
 minversion = "8.3"
 addopts = "-ra -q"
 testpaths = [
-    "backend/tests"
+    "tests"
 ]
 
 [tool.poetry]
@@ -34,6 +34,7 @@ authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
 license = "MIT"
 readme = "README.md"
 packages = [
+    {include = "worker"},
     {include = "backend"},
     {include = "common"},
 ]
@@ -60,15 +61,12 @@ sqlalchemy = {extras = ["asyncio"], version = "^2.0.42"}
 asyncpg = "^0.30.0"
 markdownify = "^1.2.0"
 python-multipart = "^0.0.20"
+azure-servicebus = "^7.14.2"
 
 [tool.poetry.group.backend.dependencies]
-uvicorn = "^0.31.0"
 pyjwt = "^2.9.0"
-cryptography = "^44.0.2"
-sqlalchemy = {extras = ["asyncio"], version = "^2.0.42"}
-asyncpg = "^0.30.0"
 posthog = "^6.6.1"
-azure-servicebus = "^7.14.2"
+uvicorn = "^0.31.0"
 
 [tool.poetry.group.worker.dependencies]
 google-genai = "^1.10.0"
@@ -77,7 +75,6 @@ ffmpeg-python = "^0.2.0"
 ray = {extras = ["default"], version = "^2.47.1"}
 azure-storage-blob = "^12.26.0"
 azure-identity = "^1.23.1"
-azure-servicebus = "^7.14.2"
 
 [tool.poetry.group.dev.dependencies]
 bumpversion = "^0.6.0"

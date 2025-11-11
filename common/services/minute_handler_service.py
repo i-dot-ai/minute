@@ -119,7 +119,7 @@ class MinuteHandlerService:
         except Exception as e:
             raise MinuteGenerationFailedError from e
         try:
-            meeting_type = await cls.predict_meeting(minute_version.minute.transcription.dialogue_entries)
+            meeting_type = cls.predict_meeting(minute_version.minute.transcription.dialogue_entries)
             html_content, hallucinations = await cls.generate_minutes(meeting_type, minute_version.minute)
             cls.update_minute_version(
                 minute_version.id,
@@ -220,7 +220,7 @@ class MinuteHandlerService:
         return choice, hallucinations
 
     @classmethod
-    async def predict_meeting(cls, dialogue_entries: list[DialogueEntry]) -> MeetingType:
+    def predict_meeting(cls, dialogue_entries: list[DialogueEntry]) -> MeetingType:
         word_count = sum(len(entry["text"].split()) for entry in dialogue_entries)
         match word_count:
             case n if n < settings.MIN_WORD_COUNT_FOR_SUMMARY:

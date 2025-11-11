@@ -37,8 +37,23 @@ def worker_service() -> Generator[WorkerService, Any, None]:
 
 
 @pytest.fixture(autouse=True)
-async def queue_service():
-    queue_service = get_queue_service(get_settings().QUEUE_SERVICE_NAME)
+async def transcription_queue_service():
+    settings = get_settings()
+    queue_service = get_queue_service(
+        settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
+    )
+    queue_service.purge_messages()
+    # needed to ensure sqs queue is purged (not sure if this long is needed for localstack)
+    await asyncio.sleep(1)
+    return queue_service
+
+
+@pytest.fixture(autouse=True)
+async def llm_queue_service():
+    settings = get_settings()
+    queue_service = get_queue_service(
+        settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
+    )
     queue_service.purge_messages()
     # needed to ensure sqs queue is purged (not sure if this long is needed for localstack)
     await asyncio.sleep(1)

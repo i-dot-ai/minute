@@ -189,7 +189,7 @@ module "worker" {
 
   http_healthcheck = false
   container_healthcheck = {
-    command     = ["CMD-SHELL", "curl --fail http://localhost:8080/healthcheck"]
+    command     = ["CMD-SHELL", "poetry run python worker/healthcheck.py"]
     interval    = 60
     retries     = 3
     startPeriod = 60

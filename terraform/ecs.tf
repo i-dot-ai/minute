@@ -84,7 +84,7 @@ module "backend" {
 
   http_healthcheck = false
   container_healthcheck = {
-    command     = ["CMD-SHELL", "curl", "--fail", "http://localhost:8080/healthcheck"]
+    command     = ["CMD-SHELL", "curl --fail http://localhost:8080/healthcheck"]
     interval    = 60
     retries     = 3
     startPeriod = 30
@@ -189,7 +189,7 @@ module "worker" {
 
   http_healthcheck = false
   container_healthcheck = {
-    command     = ["CMD-SHELL", "curl", "--fail", "http://localhost:8080/healthcheck"]
+    command     = ["CMD-SHELL", "curl --fail http://localhost:8080/healthcheck"]
     interval    = 60
     retries     = 3
     startPeriod = 60

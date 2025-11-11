@@ -6,15 +6,10 @@ ENV RAY_ROTATION_BACKUP_COUNT=1
 ENV PYTHONUNBUFFERED=1
 
 # Install system dependencies and Poetry
-RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ffmpeg curl && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir poetry
 
 WORKDIR /app
-
-RUN cat <<EOF > ./health.sh
-curl --fail http://localhost:8080/healthcheck
-EOF
-RUN chmod +x ./health.sh
 
 # Copy only requirements to cache them in docker layer
 COPY pyproject.toml poetry.lock README.md ./

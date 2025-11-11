@@ -6,10 +6,15 @@ ENV RAY_ROTATION_BACKUP_COUNT=1
 ENV PYTHONUNBUFFERED=1
 
 # Install system dependencies and Poetry
-RUN apt-get update && apt-get install -y ffmpeg
+RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir poetry
 
 WORKDIR /app
+
+RUN cat <<EOF > ./health.sh
+curl --fail http://localhost:8080/healthcheck
+EOF
+RUN chmod +x ./health.sh
 
 # Copy only requirements to cache them in docker layer
 COPY pyproject.toml poetry.lock README.md ./
@@ -22,7 +27,7 @@ RUN poetry install --with worker --without dev --no-interaction --no-ansi --no-r
 
 # Copy the FastAPI application code
 COPY common common
-COPY backend backend
+COPY backend/__init__.py backend/__init__.py
 COPY worker worker
 
 RUN poetry install --only-root

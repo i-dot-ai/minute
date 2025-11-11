@@ -23,7 +23,9 @@ from common.types import (
 
 settings = get_settings()
 chat_router = APIRouter(tags=["Chat"])
-queue_service = get_queue_service(settings.QUEUE_SERVICE_NAME)
+llm_queue_service = get_queue_service(
+    settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
+)
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +74,7 @@ async def create_chat(
     session.add(chat)
     await session.commit()
     await session.refresh(chat)
-    queue_service.publish_message(WorkerMessage(id=chat.id, type=TaskType.INTERACTIVE))
+    llm_queue_service.publish_message(WorkerMessage(id=chat.id, type=TaskType.INTERACTIVE))
     return ChatCreateResponse(id=chat.id)
 
 

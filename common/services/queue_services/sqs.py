@@ -29,23 +29,25 @@ class SQSQueueService(QueueService):
 
     def __init__(
         self,
+        queue_name: str,
+        deadletter_queue_name: str,
         polling_interval: int = 20,
     ):
+        self.queue_name = queue_name
+        self.deadletter_queue_name = deadletter_queue_name
         self.sqs = get_sqs_client()
-        self.queue_url = self.sqs.get_queue_url(QueueName=settings.QUEUE_NAME)["QueueUrl"]
-        self.dead_letter_queue_url = self.sqs.get_queue_url(QueueName=settings.DEADLETTER_QUEUE_NAME)["QueueUrl"]
+        self.queue_url = self.sqs.get_queue_url(QueueName=self.queue_name)["QueueUrl"]
+        self.dead_letter_queue_url = self.sqs.get_queue_url(QueueName=self.deadletter_queue_name)["QueueUrl"]
         self.polling_interval = polling_interval
 
     def __reduce__(self):
         """Required so that Ray can deserialize the queue service by instantiated a new one."""
-        deserializer = SQSQueueService
-        serialized_data = ("queue_service",)
-        return deserializer, serialized_data
+        return SQSQueueService, (self.queue_name, self.deadletter_queue_name)
 
-    def receive_message(self) -> list[tuple[WorkerMessage, Any]]:
+    def receive_message(self, max_messages: int = 10) -> list[tuple[WorkerMessage, Any]]:
         response = self.sqs.receive_message(
             QueueUrl=self.queue_url,
-            MaxNumberOfMessages=10,
+            MaxNumberOfMessages=max_messages,
             WaitTimeSeconds=self.polling_interval,  # Long polling
         )
 

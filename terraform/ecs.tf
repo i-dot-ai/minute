@@ -17,8 +17,10 @@ locals {
     "POSTGRES_HOST" : module.rds.db_instance_address,
     "AUTH_PROVIDER_PUBLIC_KEY" : data.aws_ssm_parameter.auth_provider_public_key.value,
     "AZURE_OPENAI_API_VERSION" : "2024-10-21"
-    "QUEUE_NAME" : aws_sqs_queue.transcription_queue.name
-    "DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name
+    "TRANSCRIPTION_QUEUE_NAME" : aws_sqs_queue.transcription_queue.name
+    "TRANSCRIPTION_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name
+    "LLM_QUEUE_NAME" : aws_sqs_queue.transcription_queue.name
+    "LLM_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name
     "TRANSCRIPTION_SERVICES" : "[\"azure_stt_synchronous\",\"azure_stt_batch\"]"
     "MAX_TRANSCRIPTION_PROCESSES" : local.MAX_TRANSCRIPTION_PROCESSES
     "MAX_LLM_PROCESSES" : local.MAX_LLM_PROCESSES
@@ -187,6 +189,8 @@ module "worker" {
 
   memory = terraform.workspace == "prod" ? 8192 : 4096
   cpu    = terraform.workspace == "prod" ? 4096 : 2048
+
+  http_healthcheck = false
 }
 
 resource "aws_service_discovery_private_dns_namespace" "private_dns_namespace" {

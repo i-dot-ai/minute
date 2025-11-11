@@ -1,5 +1,4 @@
 import logging
-from functools import lru_cache
 
 import dotenv
 from pydantic import Field
@@ -37,8 +36,12 @@ class Settings(BaseSettings):
     )
     SENTRY_DSN: str | None = Field(description="Sentry DSN if using Sentry for telemetry", default=None)
 
-    QUEUE_NAME: str = Field(description="queue name to use for SQS/Azure Service Bus queues")
-    DEADLETTER_QUEUE_NAME: str = Field(
+    TRANSCRIPTION_QUEUE_NAME: str = Field(description="queue name to use for SQS/Azure Service Bus queues")
+    TRANSCRIPTION_DEADLETTER_QUEUE_NAME: str = Field(
+        description="deadletter queue name to use for SQS. Ignored if using Azure Service Bus "
+    )
+    LLM_QUEUE_NAME: str = Field(description="queue name to use for SQS/Azure Service Bus queues")
+    LLM_DEADLETTER_QUEUE_NAME: str = Field(
         description="deadletter queue name to use for SQS. Ignored if using Azure Service Bus "
     )
 
@@ -157,6 +160,5 @@ class Settings(BaseSettings):
         model_config = SettingsConfigDict(env_file=DOT_ENV_PATH, extra="ignore")
 
 
-@lru_cache
 def get_settings():
     return Settings()  # type: ignore  # noqa: PGH003

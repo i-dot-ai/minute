@@ -21,7 +21,9 @@ from common.types import (
 
 settings = get_settings()
 
-queue_service = get_queue_service(settings.QUEUE_SERVICE_NAME)
+llm_queue_service = get_queue_service(
+    settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
+)
 
 minutes_router = APIRouter(tags=["Minutes"])
 
@@ -70,7 +72,7 @@ async def create_minute(
     session.add(minute_version)
     await session.commit()
     await session.refresh(minute_version)
-    queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
+    llm_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
 
 
 @minutes_router.get("/minutes/{minutes_id}")
@@ -134,7 +136,7 @@ async def create_minute_version(
     await session.commit()
     await session.refresh(minute_version)
     if request.ai_edit_instructions:
-        queue_service.publish_message(
+        llm_queue_service.publish_message(
             WorkerMessage(
                 id=minute_version.id,
                 data=EditMessageData(source_id=request.ai_edit_instructions.source_id),

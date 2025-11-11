@@ -37,7 +37,9 @@ storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
 transcriptions_router = APIRouter(tags=["Transcriptions"])
-queue_service = get_queue_service(settings.QUEUE_SERVICE_NAME)
+transcription_queue_service = get_queue_service(
+    settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
+)
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +134,7 @@ async def create_transcription(
     session.add(minute_version)
     recording.transcription_id = transcription.id
     await session.commit()
-    queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
+    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
 
     return TranscriptionCreateResponse(id=transcription.id)
 

@@ -7,4 +7,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=/app/config/google-credentials.json
 
 # Main execution
 echo "Starting queue service..."
+
+poetry run uvicorn worker.healthcheck:app --host 0.0.0.0 --port 8080 &
+
 exec poetry run python worker/main.py

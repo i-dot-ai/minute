@@ -58,7 +58,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   } catch (error) {
     console.error('Error authorising token:', error)
-    return redirectToUnauthorised(req)
+    return redirectToGenericError(req)
   }
 }
 
@@ -68,11 +68,17 @@ function redirectToUnauthorised(req: NextRequest) {
   return NextResponse.redirect(url)
 }
 
+function redirectToGenericError(req: NextRequest) {
+  const url = req.nextUrl.clone();
+  url.pathname = "/generic-error";
+  return NextResponse.redirect(url);
+}
+
 // Configure which paths this middleware should run on
 export const config = {
   matcher: [
     // Match all paths except those starting with excluded paths
     // You can customize this as needed
-    '/((?!unauthorised|_next/static|_next/image|favicon.ico|api/health).*)',
+    '/((?!unauthorised|generic-error|_next/static|_next/image|favicon.ico|api/health).*)',
   ],
 }

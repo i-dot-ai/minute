@@ -12,7 +12,6 @@ locals {
     "PORT" : local.backend_port,
     "REPO" : "minute",
     "APP_URL" : aws_route53_record.type_a_record.fqdn,
-    "AUTH_API_URL" : data.aws_ssm_parameter.auth_api_invoke_url.value,
     "AWS_ACCOUNT_ID" : data.aws_caller_identity.current.account_id,
     "DOCKER_BUILDER_CONTAINER" : "minute",
     "POSTGRES_HOST" : module.rds.db_instance_address,
@@ -67,7 +66,8 @@ module "backend" {
   ]
 
   environment_variables = merge(local.shared_environment_variables, {
-    "APP_NAME" : "${local.name}-backend"
+    "APP_NAME" : "${local.name}-backend",
+    "AUTH_API_URL" : data.aws_ssm_parameter.auth_api_invoke_url.value,
   })
 
   secrets = [
@@ -121,6 +121,7 @@ module "frontend" {
     "REPO" : "minute",
     "BACKEND_HOST" : "http://${aws_service_discovery_service.service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}:${local.backend_port}"
     "AUTH_PROVIDER_PUBLIC_KEY" : data.aws_ssm_parameter.auth_provider_public_key.value,
+    "AUTH_API_URL" : data.aws_ssm_parameter.auth_api_invoke_url.value,
   }
 
   secrets = [

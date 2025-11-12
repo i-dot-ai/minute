@@ -6,8 +6,7 @@ from sqlmodel import select
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
 from common.database.postgres_models import User
-from common.logger import get_structured_logger
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 
 settings = get_settings()
 

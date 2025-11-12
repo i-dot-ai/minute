@@ -1,4 +1,3 @@
-
 from i_dot_ai_utilities.auth.auth_api import AuthApiClient, UserAuthorisationResult
 
 from common.settings import get_settings, get_structured_logger

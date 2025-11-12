@@ -2,11 +2,11 @@ import logging
 from functools import lru_cache
 
 import dotenv
+from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
 from i_dot_ai_utilities.logging.types.enrichment_types import ExecutionEnvironmentType
 from i_dot_ai_utilities.logging.types.log_output_format import LogOutputFormat
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
 
 from common.logger import setup_logger, setup_structured_logger
 
@@ -182,5 +182,5 @@ def get_structured_logger() -> StructuredLogger:
     return setup_structured_logger(
         level=get_settings().LOG_LEVEL or "info",
         execution_environment=get_settings().EXECUTION_ENVIRONMENT,
-        logging_format = get_settings().LOGGING_FORMAT,
+        logging_format=get_settings().LOGGING_FORMAT,
     )

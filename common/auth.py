@@ -1,11 +1,10 @@
 
 from i_dot_ai_utilities.auth.auth_api import AuthApiClient, UserAuthorisationResult
 
-from common.logger import setup_structured_logger
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 
 settings = get_settings()
-logger = setup_structured_logger(level=settings.LOG_LEVEL)
+logger = get_structured_logger()
 
 auth_client = AuthApiClient(
     app_name=settings.REPO,

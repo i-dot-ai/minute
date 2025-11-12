@@ -6,8 +6,9 @@ from i_dot_ai_utilities.logging.types.enrichment_types import ExecutionEnvironme
 from i_dot_ai_utilities.logging.types.log_output_format import LogOutputFormat
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
 
-from common.logger import setup_logger
+from common.logger import setup_logger, setup_structured_logger
 
 setup_logger()
 logger = logging.getLogger(__name__)
@@ -176,3 +177,12 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings():
     return Settings()  # type: ignore  # noqa: PGH003
+
+
+@lru_cache
+def get_structured_logger() -> StructuredLogger:
+    return setup_structured_logger(
+        level=get_settings().LOG_LEVEL or "info",
+        execution_environment=get_settings().EXECUTION_ENVIRONMENT,
+        logging_format = get_settings().LOGGING_FORMAT,
+    )

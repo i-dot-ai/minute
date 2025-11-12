@@ -1,9 +1,8 @@
 import { Alpha } from '@/components/layout/alpha'
 import { NavButton } from '@/components/layout/nav-button'
-import { SettingsDialogue } from '@/components/layout/SettingsDialogue'
 import { FeatureFlags } from '@/lib/feature-flags'
 import { getServerSideFeatureFlag } from '@/lib/posthog'
-import { FileText, Home } from 'lucide-react'
+import { FileText, Home, Settings } from 'lucide-react'
 import Link from 'next/link'
 
 export const Header = async () => {
@@ -68,20 +67,26 @@ export const Header = async () => {
           </Link>
         </div>
       </header>
-      <div className="flex flex-wrap-reverse items-center justify-between border-b px-6 py-1">
-        <div className="flex items-center">
+
+      <div className="header-grid w-full items-center border-b px-6 py-1">
+        <div
+          className="flex items-center justify-center"
+          style={{ gridArea: 'alpha' }}
+        >
+          <Alpha />
+        </div>
+        <div className="flex items-center" style={{ gridArea: 'nav' }}>
           <NavButton href="/">
-            <Home size="1rem" />
+            <Home size="1rem" /> Home
           </NavButton>
           {userTemplatesEnabled && (
             <NavButton href="/templates">
-              <FileText size="1rem" />
+              <FileText size="1rem" /> Templates
             </NavButton>
           )}
-          <SettingsDialogue />
-        </div>
-        <div className="mx-auto">
-          <Alpha />
+          <NavButton href="/settings">
+            <Settings size="1rem" /> Settings
+          </NavButton>
         </div>
       </div>
     </>

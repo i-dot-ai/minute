@@ -79,7 +79,7 @@ export const TranscriptionTitleEditor = ({
   }
 
   return (
-    <div className="flex items-baseline">
+    <div className="flex items-baseline gap-2">
       <h1 className={cn('text-3xl font-bold', { 'text-gray-400': !title })}>
         {form.watch('title') || 'Add title'}
       </h1>
@@ -88,8 +88,9 @@ export const TranscriptionTitleEditor = ({
           setEditing(true)
         }}
         variant="ghost"
+        className="text-slate-500"
       >
-        <Edit className="text-slate-500" />
+        <Edit /> Rename
       </Button>
     </div>
   )

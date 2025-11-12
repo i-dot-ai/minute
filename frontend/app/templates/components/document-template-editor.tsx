@@ -55,34 +55,56 @@ export const DocumentTemplateEditor = ({
           </p>
         </div>
       </div>
-      <div>
-        <Label htmlFor="name">Template Name</Label>
-        <Input
-          {...form.register('name')}
-          className="mt-2"
-          placeholder="Name your template"
+      <div className="flex flex-col gap-4 rounded-lg border p-4">
+        <div>
+          <h4 className="font-semibold">Template details</h4>
+          <p className="text-muted-foreground text-sm">
+            Add a name and description so you can find your template later. Name
+            and description are not used to generate your minute, any structure
+            and style instructions should be added to the template content
+            field.
+          </p>
+        </div>
+        <div>
+          <Label htmlFor="name">Template Name</Label>
+          <Input
+            {...form.register('name')}
+            className="mt-2"
+            placeholder="Name your template"
+          />
+        </div>
+        <div>
+          <Label htmlFor="name">Description</Label>
+          <Textarea
+            {...form.register('description', {
+              required: { value: true, message: 'Description required' },
+            })}
+            className="mt-2"
+            placeholder="A description to help identify the template."
+          />
+        </div>
+      </div>
+      <div className="rounded-md border p-4">
+        <Label htmlFor="content" className="text-md font-semibold">
+          Template Content
+        </Label>
+        <p className="text-muted-foreground mt-1 mb-2 text-sm">
+          The template content should look how you would like the minutes to
+          look. Use placeholder text to describe what you would like in each
+          section and provide style guidance, including examples if necessary.
+          You may need to iterate on your template to get the best results.
+        </p>
+        <Controller
+          name="content"
+          control={form.control}
+          rules={{
+            required: { value: true, message: 'Template content required.' },
+          }}
+          render={({ field: { onChange, value } }) => (
+            <ControlledEditor onChange={onChange} value={value} />
+          )}
         />
       </div>
-      <div>
-        <Label htmlFor="name">Description</Label>
-        <Textarea
-          {...form.register('description', {
-            required: { value: true, message: 'Description required' },
-          })}
-          className="mt-2"
-          placeholder="A description to help identify the template."
-        />
-      </div>
-      <Controller
-        name="content"
-        control={form.control}
-        rules={{
-          required: { value: true, message: 'Template content required.' },
-        }}
-        render={({ field: { onChange, value } }) => (
-          <ControlledEditor onChange={onChange} value={value} />
-        )}
-      />
     </form>
   )
 }
@@ -109,12 +131,9 @@ const ControlledEditor = ({
   }, [editor, value])
   return (
     <div>
-      <Label htmlFor="content">Template Content</Label>
-      <div className="mt-2">
-        <TemplateEditorToolbar editor={editor} />
-        <div className="rounded-xl rounded-t-none border border-t-0 shadow">
-          <EditorContent editor={editor} className="editor-content" />
-        </div>
+      <TemplateEditorToolbar editor={editor} />
+      <div className="rounded-xl rounded-t-none border border-t-0 shadow">
+        <EditorContent editor={editor} className="editor-content" />
       </div>
     </div>
   )

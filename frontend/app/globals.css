@@ -122,6 +122,18 @@
   }
 }
 
+.header-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    'alpha'
+    'nav';
+  @media (width > 72rem) {
+    grid-template-areas: 'nav alpha';
+    grid-template-columns: 1fr max-content 1fr;
+  }
+}
+
 @theme {
   --animate-updown: updown 1s infinite;
 

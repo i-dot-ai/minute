@@ -7,7 +7,7 @@ import Link from 'next/link'
 
 export default function Home() {
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-3xl p-6">
       <DataRetentionNotice />
       <PosthogBanner />
       <div className="mb-4">

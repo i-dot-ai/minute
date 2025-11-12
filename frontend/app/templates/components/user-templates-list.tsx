@@ -25,11 +25,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 import { TemplateResponse } from '@/lib/client'
 import {
   deleteUserTemplateUserTemplatesTemplateIdDeleteMutation,
@@ -97,9 +92,6 @@ export const UserTemplatesList = () => {
         </p>
       </div>
       <div className="mb-6 grid auto-rows-fr gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {documentTemplates.map((template) => (
-          <TemplateCard template={template} key={template.id} />
-        ))}
         <Card>
           <CardContent className="flex h-full min-h-45 flex-col gap-2">
             <Button asChild className="flex-1" variant="outline">
@@ -115,6 +107,9 @@ export const UserTemplatesList = () => {
             />
           </CardContent>
         </Card>
+        {documentTemplates.map((template) => (
+          <TemplateCard template={template} key={template.id} />
+        ))}
       </div>
       <div className="mb-2">
         <div className="flex items-center gap-4">
@@ -127,9 +122,6 @@ export const UserTemplatesList = () => {
         </p>
       </div>
       <div className="grid auto-rows-fr gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {formTemplates.map((template) => (
-          <TemplateCard template={template} key={template.id} />
-        ))}
         <Card>
           <CardContent className="flex h-full min-h-45 flex-col justify-evenly gap-2">
             <Button asChild className="flex-1" variant="outline">
@@ -145,6 +137,9 @@ export const UserTemplatesList = () => {
             />
           </CardContent>
         </Card>
+        {formTemplates.map((template) => (
+          <TemplateCard template={template} key={template.id} />
+        ))}
       </div>
     </div>
   )
@@ -183,7 +178,7 @@ const TemplateCard = ({ template }: { template: TemplateResponse }) => {
       <CardContent className="prose prose-sm max-w-none flex-1 overflow-hidden text-sm text-gray-700">
         {template.description}
       </CardContent>
-      <CardFooter className="gap-2">
+      <CardFooter className="flex-wrap gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -192,26 +187,20 @@ const TemplateCard = ({ template }: { template: TemplateResponse }) => {
         >
           <Link href={`/templates/${template.id}`}>
             <Edit size={14} />
-            Edit
+            Edit template
           </Link>
         </Button>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={() => {
-                duplicationMutation.mutate({
-                  path: { template_id: template.id },
-                })
-              }}
-              variant="outline"
-            >
-              <Copy />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Make a copy</p>
-          </TooltipContent>
-        </Tooltip>
+
+        <Button
+          onClick={() => {
+            duplicationMutation.mutate({
+              path: { template_id: template.id },
+            })
+          }}
+          variant="outline"
+        >
+          <Copy /> Make a copy
+        </Button>
         <DeleteConfirmDialog
           template={template}
           onConfirm={() => {
@@ -239,7 +228,7 @@ const DeleteConfirmDialog = ({
         size="sm"
         className="text-red-600 hover:bg-red-50 hover:text-red-700"
       >
-        <Trash2 size={14} />
+        <Trash2 size={14} /> Delete
       </Button>
     </AlertDialogTrigger>
     <AlertDialogContent>

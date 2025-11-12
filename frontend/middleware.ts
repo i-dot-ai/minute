@@ -12,14 +12,23 @@ const PUBLIC_PATHS = [
 ]
 
 export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl
-
-  // Check if the requested path is public
-  if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
-    return NextResponse.next()
-  }
-
   try {
+    const { pathname } = req.nextUrl
+
+    // Check if the requested path is public
+    if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
+      return NextResponse.next()
+    }
+
+    // Proxy directly to the backend for API requests
+    if (pathname.startsWith(API_PROXY_PATH)) {
+      const url = new URL(req.url)
+      const newPath = `${url.pathname.replace(API_PROXY_PATH, '')}`
+      const newUrl = process.env.BACKEND_HOST + newPath + url.search + url.hash
+      return NextResponse.rewrite(newUrl, { request: req })
+    }
+
+    // Authorise user for frontend access
     let authResult: UserAuthorisationResult | null = null;
 
     if (process.env.ENVIRONMENT != "local") {
@@ -47,13 +56,6 @@ export async function middleware(req: NextRequest) {
     console.info(
       `User ${authResult.email} authorisation result: ${authResult.isAuthorised}`
     );
-
-    if (pathname.startsWith(API_PROXY_PATH)) {
-      const url = new URL(req.url)
-      const newPath = `${url.pathname.replace(API_PROXY_PATH, '')}`
-      const newUrl = process.env.BACKEND_HOST + newPath + url.search + url.hash
-      return NextResponse.rewrite(newUrl, { request: req })
-    }
 
     return NextResponse.next()
   } catch (error) {

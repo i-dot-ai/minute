@@ -42,9 +42,7 @@ class Settings(BaseSettings):
         description="The timeout in seconds to wait for auth response", default=None
     )
 
-    ENVIRONMENT: str = Field(
-        description='use "local" for local development, or dev,preprod or prod as appropriate', default="local"
-    )
+    ENVIRONMENT: str = "local"
     SENTRY_DSN: str | None = Field(description="Sentry DSN if using Sentry for telemetry", default=None)
 
     # Structured logger setup

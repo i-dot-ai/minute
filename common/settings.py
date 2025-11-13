@@ -52,7 +52,6 @@ class Settings(BaseSettings):
     LOGGING_FORMAT: LogOutputFormat = LogOutputFormat.TEXT if ENVIRONMENT.lower() == "local" else LogOutputFormat.JSON
     LOG_LEVEL: str = Field(description="The level at which to emit structured logs", default="info")
 
-    QUEUE_NAME: str = Field(description="queue name to use for SQS/Azure Service Bus queues")
     TRANSCRIPTION_QUEUE_NAME: str = Field(description="queue name to use for SQS/Azure Service Bus queues")
     TRANSCRIPTION_DEADLETTER_QUEUE_NAME: str = Field(
         description="deadletter queue name to use for SQS. Ignored if using Azure Service Bus "

@@ -9,6 +9,9 @@ const PUBLIC_PATHS = [
   '/unauthorised',
   '/health',
   '/generic-error',
+  '/monitoring',
+  '/privacy',
+  '/support',
 ]
 
 export async function middleware(req: NextRequest) {
@@ -48,7 +51,7 @@ export async function middleware(req: NextRequest) {
       }
     }
 
-    if (!authResult?.isAuthorised) {
+    if (authResult?.isAuthorised != true) {
       console.error(`User is not authorised to access ${pathname}`);
       return redirectToUnauthorised(req);
     }
@@ -81,6 +84,6 @@ export const config = {
   matcher: [
     // Match all paths except those starting with excluded paths
     // You can customize this as needed
-    '/((?!unauthorised|generic-error|_next/static|_next/image|favicon.ico|api/health).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/health).*)',
   ],
 }

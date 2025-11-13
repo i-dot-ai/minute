@@ -59,7 +59,9 @@ data "aws_iam_policy_document" "ecs_exec_custom_policy" {
     ]
     resources = [
       aws_sqs_queue.transcription_queue.arn,
-      aws_sqs_queue.transcription_queue_deadletter.arn
+      aws_sqs_queue.transcription_queue_deadletter.arn,
+      aws_sqs_queue.llm_queue.arn,
+      aws_sqs_queue.llm_queue_deadletter.arn
     ]
   }
 }

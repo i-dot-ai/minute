@@ -2,15 +2,15 @@ from common.services.queue_services.azure_service_bus import AzureServiceBusQueu
 from common.services.queue_services.base import QueueService
 from common.services.queue_services.sqs import SQSQueueService
 
-queue_services = {
-    SQSQueueService.name: SQSQueueService(),
-    AzureServiceBusQueueService.name: AzureServiceBusQueueService(),
+queue_services: dict[str, type[QueueService]] = {
+    SQSQueueService.name: SQSQueueService,
+    AzureServiceBusQueueService.name: AzureServiceBusQueueService,
 }
 
 
-def get_queue_service(storage_service_name: str) -> QueueService:
-    service = queue_services.get(storage_service_name)
+def get_queue_service(queue_service_name: str, queue_name: str, deadletter_queue_name: str) -> QueueService:
+    service = queue_services.get(queue_service_name)
     if not service:
-        msg = f"Invalid storage service name: {storage_service_name}"
+        msg = f"Invalid storage service name: {queue_service_name}"
         raise ValueError(msg)
-    return service
+    return service(queue_name, deadletter_queue_name)

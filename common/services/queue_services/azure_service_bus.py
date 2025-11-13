@@ -23,24 +23,24 @@ class AzureServiceBusQueueService(QueueService):
 
     def __init__(
         self,
+        queue_name: str,
+        deadletter_queue_name: str | None = None,  # noqa: ARG002
         polling_interval: int = 20,
     ):
         self.polling_interval = polling_interval
-        self.queue_name = settings.QUEUE_NAME
+        self.queue_name = queue_name
 
     def __reduce__(self):
         """Required so that Ray can deserialize the queue service by instantiated a new one."""
-        deserializer = AzureServiceBusQueueService
-        serialized_data = ("queue_service",)
-        return deserializer, serialized_data
+        return AzureServiceBusQueueService, (self.queue_name,)
 
-    def receive_message(self) -> list[tuple[WorkerMessage, Any]]:
+    def receive_message(self, max_messages: int = 10) -> list[tuple[WorkerMessage, Any]]:
         out = []
         with (
             get_sb_client() as client,
             client.get_queue_receiver(self.queue_name) as receiver,
         ):
-            messages = receiver.receive_messages(max_wait_time=self.polling_interval)
+            messages = receiver.receive_messages(max_message_count=max_messages, max_wait_time=self.polling_interval)
 
             for message in messages:
                 try:

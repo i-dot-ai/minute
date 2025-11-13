@@ -1,4 +1,5 @@
 import logging
+from functools import lru_cache
 
 import dotenv
 from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
@@ -52,7 +53,6 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = Field(description="The level at which to emit structured logs", default="info")
 
     QUEUE_NAME: str = Field(description="queue name to use for SQS/Azure Service Bus queues")
-    DEADLETTER_QUEUE_NAME: str = Field(
     TRANSCRIPTION_QUEUE_NAME: str = Field(description="queue name to use for SQS/Azure Service Bus queues")
     TRANSCRIPTION_DEADLETTER_QUEUE_NAME: str = Field(
         description="deadletter queue name to use for SQS. Ignored if using Azure Service Bus "

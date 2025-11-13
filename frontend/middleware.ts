@@ -1,8 +1,8 @@
 import { isAuthorisedUser } from '@/lib/auth'
 import { API_PROXY_PATH } from '@/providers/TanstackQueryProvider'
 import { NextRequest, NextResponse } from 'next/server'
-import { type UserAuthorisationResult } from "@i-dot-ai-npm/utilities"
-import { parseAuthToken } from './utils/auth';
+import { type UserAuthorisationResult } from '@i-dot-ai-npm/utilities'
+import { parseAuthToken } from './utils/auth'
 
 // Define paths that should be public (no authorisation required)
 const PUBLIC_PATHS = [
@@ -32,33 +32,35 @@ export async function middleware(req: NextRequest) {
     }
 
     // Authorise user for frontend access
-    let authResult: UserAuthorisationResult | null = null;
+    let authResult: UserAuthorisationResult | null = null
 
-    if (process.env.ENVIRONMENT != "local") {
-      const token = req.headers.get("x-amzn-oidc-data");
+    if (process.env.ENVIRONMENT != 'local') {
+      const token = req.headers.get('x-amzn-oidc-data')
 
       if (!token) {
-        console.error(`No auth token found in headers when accessing ${pathname}`);
-        return redirectToUnauthorised(req);
+        console.error(
+          `No auth token found in headers when accessing ${pathname}`
+        )
+        return redirectToUnauthorised(req)
       }
 
-      authResult = await parseAuthToken(token);
+      authResult = await parseAuthToken(token)
     } else {
       authResult = {
-        email: "test@test.co.uk",
+        email: 'test@test.co.uk',
         isAuthorised: true,
-        authReason: "LOCAL_TESTING"
+        authReason: 'LOCAL_TESTING',
       }
     }
 
     if (authResult?.isAuthorised != true) {
-      console.error(`User is not authorised to access ${pathname}`);
-      return redirectToUnauthorised(req);
+      console.error(`User is not authorised to access ${pathname}`)
+      return redirectToUnauthorised(req)
     }
 
     console.info(
       `User ${authResult.email} authorisation result: ${authResult.isAuthorised}`
-    );
+    )
 
     return NextResponse.next()
   } catch (error) {
@@ -74,9 +76,9 @@ function redirectToUnauthorised(req: NextRequest) {
 }
 
 function redirectToGenericError(req: NextRequest) {
-  const url = req.nextUrl.clone();
-  url.pathname = "/generic-error";
-  return NextResponse.redirect(url);
+  const url = req.nextUrl.clone()
+  url.pathname = '/generic-error'
+  return NextResponse.redirect(url)
 }
 
 // Configure which paths this middleware should run on

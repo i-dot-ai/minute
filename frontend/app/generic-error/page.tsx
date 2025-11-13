@@ -46,8 +46,8 @@ function genericError(): React.JSX.Element {
             marginBottom: '1.5rem',
           }}
         >
-          Something went wrong when accessing this page. Please
-          try again later, or contact i.AI support if the issue persists.
+          Something went wrong when accessing this page. Please try again later,
+          or contact i.AI support if the issue persists.
         </p>
       </div>
     </div>

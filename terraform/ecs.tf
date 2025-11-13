@@ -144,19 +144,12 @@ module "frontend" {
     unhealthy_threshold = 5
     port                = local.frontend_port
   }
-  authenticate_keycloak = {
-    enabled : true,
-    realm_name : data.terraform_remote_state.keycloak.outputs.realm_name,
-    client_id : var.project_name,
-    client_secret : data.aws_ssm_parameter.client_secret.value,
-    keycloak_dns : data.terraform_remote_state.keycloak.outputs.keycloak_dns
-  }
 
-  # authenticate_gds_internal_access = {
-  #   enabled : true,
-  #   client_id : aws_ssm_parameter.oidc_secrets["client_id"].value,
-  #   client_secret : aws_ssm_parameter.oidc_secrets["client_secret"].value,
-  # }
+  authenticate_gds_internal_access = {
+    enabled : true,
+    client_id : aws_ssm_parameter.oidc_secrets["client_id"].value,
+    client_secret : aws_ssm_parameter.oidc_secrets["client_secret"].value,
+  }
 }
 
 module "worker" {

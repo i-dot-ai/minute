@@ -58,16 +58,16 @@ jobs:
     needs: set-vars
     permissions: write-all
     with:
-        EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
-        RUNNER_SIZE: ${{ needs.set-vars.outputs.runner-size }}
-        ENVIRONMENT: ${{ needs.set-vars.outputs.environment }}
-        USE_OIDC: true
+      EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
+      RUNNER_SIZE: ${{ needs.set-vars.outputs.runner-size }}
+      ENVIRONMENT: ${{ needs.set-vars.outputs.environment }}
+      USE_OIDC: true
     secrets:
-        AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
-        AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
-        AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
-        AWS_REGION: ${{ secrets.AWS_REGION }}
-        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
+      AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
   apply-infra:
     needs:
@@ -97,9 +97,9 @@ jobs:
       - apply-infra
     with:
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
-      WORKFLOW_PASSED: ${{ needs.determine-success.outputs.success == 'true' }}
-      SUCCESS_PAYLOAD: "{\"blocks\":[{\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\":airplane: ${{ github.repository }} - Deployment to ${{ needs.set-vars.outputs.environment }} Succeeded :large_green_circle:\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${{ github.sha }} successfully deployed to ${{ needs.set-vars.outputs.environment }}\"}}]}"
-      FAILURE_PAYLOAD: "{\"blocks\":[{\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\":x: ${{ github.repository }} - Deployment to ${{ needs.set-vars.outputs.environment }} Failed :x:\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${{ github.sha }} failed to deploy to ${{ needs.set-vars.outputs.environment }}\"}}]}"
+      WORKFLOW_PASSED: "${{ needs.apply-infra.result  == 'success' }}"
+      SUCCESS_PAYLOAD: '{"blocks":[{"type":"header","text":{"type":"plain_text","text":":airplane: ${{ github.repository }} - Deployment to ${{ needs.set-vars.outputs.environment }} Succeeded :large_green_circle:"}},{"type":"section","text":{"type":"mrkdwn","text":"${{ github.sha }} successfully deployed to ${{ needs.set-vars.outputs.environment }}"}}]}'
+      FAILURE_PAYLOAD: '{"blocks":[{"type":"header","text":{"type":"plain_text","text":":x: ${{ github.repository }} - Deployment to ${{ needs.set-vars.outputs.environment }} Failed :x:"}},{"type":"section","text":{"type":"mrkdwn","text":"${{ github.sha }} failed to deploy to ${{ needs.set-vars.outputs.environment }}"}}]}'
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
@@ -123,5 +123,4 @@ jobs:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT }}
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-
 #

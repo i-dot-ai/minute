@@ -15,7 +15,10 @@ export const TranscriptionCard = ({
   return (
     <div className={className}>
       <div className="mb-1 line-clamp-1 items-center gap-2 font-semibold overflow-ellipsis">
-        {transcription.title || 'No title'}
+        {transcription.title ||
+          (['awaiting_start', 'in_progress'].includes(transcription.status)
+            ? 'Generating title'
+            : 'No title')}
       </div>
       <div className="text-muted-foreground flex items-center gap-2 text-xs">
         <div className="line-clamp-1 flex items-center gap-1">

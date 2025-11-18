@@ -62,18 +62,6 @@ export const useStartTranscription = (
         file_type: file.type || '',
         source,
       })
-      const now = new Date()
-      const day = now.toLocaleDateString('en-GB', { weekday: 'long' })
-      const hours = now.getHours()
-      const period =
-        hours < 5 || hours >= 21
-          ? 'night'
-          : hours < 12
-            ? 'morning'
-            : hours < 19
-              ? 'afternoon'
-              : 'evening'
-      const title = `${day} ${period} ${source}`
       await createRecording(
         { body: { file_extension } },
         {
@@ -86,7 +74,6 @@ export const useStartTranscription = (
                     {
                       body: {
                         recording_id: recordingData.id,
-                        title,
                         template_id: template.id,
                         template_name: template.name,
                         agenda,

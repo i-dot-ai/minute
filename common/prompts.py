@@ -155,3 +155,14 @@ Output the meeting summary unchanged except for the addition of citations.
 
 def string_to_system_message(string: str) -> dict[str, str]:
     return {"role": "system", "content": string}
+
+
+def get_meeting_title_prompt(transcript: list[DialogueEntry]) -> list[dict[str, str]]:
+    prompt = f"""<task>
+Generate a short title for the meeting
+</task>
+
+<transcript>
+{transcript_as_speaker_and_utterance(transcript)}
+</transcript>"""
+    return [{"role": "user", "content": prompt}]

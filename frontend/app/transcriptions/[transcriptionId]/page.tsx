@@ -1,7 +1,7 @@
 'use client'
+import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
-import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { DownloadButton } from '@/components/download-button'
 import { AudioWav } from '@/components/icons/AudioWav'
 import { TranscriptionTitleEditor } from '@/components/transcription-title-editor'
@@ -10,9 +10,9 @@ import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { FeatureFlags } from '@/lib/feature-flags'
 import { useQuery } from '@tanstack/react-query'
 import { Clock, Frown, LoaderCircle, SearchX } from 'lucide-react'
-import { FeatureFlags } from '@/lib/feature-flags'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
 
 export default function TranscriptionPage({
@@ -62,6 +62,7 @@ export default function TranscriptionPage({
         <TranscriptionTitleEditor
           title={transcription.title}
           transcriptionId={transcription.id}
+          status={transcription.status}
         />
         <div className="flex items-center gap-1 text-xs text-slate-500">
           <Clock size="0.8rem" />
@@ -80,13 +81,24 @@ export default function TranscriptionPage({
 
   if (transcription.status == 'failed') {
     return (
-      <div className="flex flex-col items-center justify-center gap-2">
-        <Frown size={100} />
-        <p>
-          Something went wrong with your transcription. You may need to try
-          again.
-        </p>
-        <AudioPlayer transcriptionId={transcription.id} />
+      <div>
+        <TranscriptionTitleEditor
+          title={transcription.title}
+          transcriptionId={transcription.id}
+          status={transcription.status}
+        />
+        <div className="flex items-center gap-1 text-xs text-slate-500">
+          <Clock size="0.8rem" />
+          {dateLabel}
+        </div>
+        <div className="flex flex-col items-center justify-center gap-2">
+          <Frown size={100} />
+          <p>
+            Something went wrong with your transcription. You may need to try
+            again.
+          </p>
+          <AudioPlayer transcriptionId={transcription.id} />
+        </div>
       </div>
     )
   }
@@ -95,6 +107,7 @@ export default function TranscriptionPage({
       <TranscriptionTitleEditor
         title={transcription.title}
         transcriptionId={transcription.id}
+        status={transcription.status}
       />
       <div className="mb-4 flex items-center gap-1 text-xs text-slate-500">
         <Clock size="0.8rem" />

@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { JobStatus } from '@/lib/client'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
   saveTranscriptionTranscriptionsTranscriptionIdPatchMutation,
@@ -13,14 +14,17 @@ import { useForm } from 'react-hook-form'
 export const TranscriptionTitleEditor = ({
   transcriptionId,
   title,
+  status,
 }: {
   transcriptionId: string
   title: string | null
+  status: JobStatus
 }) => {
   const [editing, setEditing] = useState(false)
   const queryClient = useQueryClient()
   const form = useForm<{ title: string }>({
-    defaultValues: { title: title || '' },
+    defaultValues: { title: '' },
+    values: { title: title || '' },
     mode: 'onBlur',
   })
   const { mutate: saveTranscription } = useMutation({
@@ -57,6 +61,10 @@ export const TranscriptionTitleEditor = ({
     }
   }, [editing, form])
 
+  const placeholder = ['awaiting_start', 'in_progress'].includes(status)
+    ? 'Generating title'
+    : 'Add title'
+
   if (editing) {
     return (
       <input
@@ -67,7 +75,7 @@ export const TranscriptionTitleEditor = ({
           },
         })}
         className="rounded-md border-2 border-slate-400 text-3xl font-bold"
-        placeholder="Add title"
+        placeholder={placeholder}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             form.handleSubmit(onSubmit)()
@@ -81,7 +89,7 @@ export const TranscriptionTitleEditor = ({
   return (
     <div className="flex items-baseline gap-2">
       <h1 className={cn('text-3xl font-bold', { 'text-gray-400': !title })}>
-        {form.watch('title') || 'Add title'}
+        {form.watch('title') || placeholder}
       </h1>
       <Button
         onClick={() => {

@@ -55,10 +55,14 @@ data "terraform_remote_state" "keycloak" {
 locals {
   name              = "${var.team_name}-${var.env}-${var.project_name}"
   host              = terraform.workspace == "prod" ? "${var.project_name}.ai.cabinetoffice.gov.uk" : "${var.project_name}-${terraform.workspace}.ai.cabinetoffice.gov.uk"
-  host_backend      = terraform.workspace == "prod" ? "${var.project_name}-backend-external.ai.cabinetoffice.gov.uk" : "${var.project_name}-backend-external-${terraform.workspace}.ai.cabinetoffice.gov.uk" 
+  host_backend      = terraform.workspace == "prod" ? "${var.project_name}-backend-external.ai.cabinetoffice.gov.uk" : "${var.project_name}-backend-external-${terraform.workspace}.ai.cabinetoffice.gov.uk"
   record_prefix     = terraform.workspace == "prod" ? var.project_name : "${var.project_name}-${terraform.workspace}"
   auth_from_address = "${local.record_prefix}@auth-notify.${var.domain_name}"
   auth_ses_identity = "arn:aws:ses:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:identity/auth-notify.ai.cabinetoffice.gov.uk"
+}
+
+data "aws_ssm_parameter" "auth_api_invoke_url" {
+  name = "/i-dot-ai-${terraform.workspace}-core-auth-api/auth/INVOKE_URL"
 }
 
 data "aws_ssm_parameter" "client_secret" {

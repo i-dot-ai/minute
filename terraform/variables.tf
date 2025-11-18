@@ -63,3 +63,9 @@ variable "security_level" {
   default     = "base"
   description = "Security Level of the infrastructure."
 }
+
+variable "scope" {
+  description = "Scope of the WAF, either 'CLOUDFRONT' or 'REGIONAL'"
+  type        = string
+  default     = "REGIONAL"
+}

@@ -3,7 +3,6 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from pydantic import computed_field
 from sqlalchemy import TIMESTAMP, Column
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped
@@ -119,15 +118,6 @@ class User(BaseTableMixin, table=True):
     email: str = Field(index=True)
     data_retention_days: int | None = Field(default=30)
     transcriptions: list["Transcription"] = Relationship(back_populates="user")
-
-    @computed_field
-    @property
-    def strict_data_retention(self) -> bool:
-        try:
-            username, domain = self.email.split("@", maxsplit=1)
-            return "cabinetoffice" in domain.lower() or "dsit" in domain.lower()
-        except ValueError:
-            return False
 
 
 class Recording(BaseTableMixin, table=True):

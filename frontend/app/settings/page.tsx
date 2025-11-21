@@ -1,6 +1,5 @@
 'use client'
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -11,7 +10,7 @@ import {
   updateDataRetentionUsersDataRetentionPatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, Loader, Loader2, TriangleAlert } from 'lucide-react'
+import { ChevronLeft, Loader, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback } from 'react'
 import { Controller, useForm } from 'react-hook-form'
@@ -98,24 +97,12 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
           After this period the transcriptions, minutes and audio recording will
           be permentantly deleted.
         </p>
-        {user.strict_data_retention && (
-          <Alert className="my-2">
-            <TriangleAlert />
-            <AlertTitle>Your retention period cannot be changed.</AlertTitle>
-            <AlertDescription>
-              Due to your organisation&apos;s retention policy you cannot adjust
-              your data retention preferences. Transcripts and summaries will be
-              kept for 24 hours.
-            </AlertDescription>
-          </Alert>
-        )}
         <Controller
-          disabled={user.strict_data_retention}
           control={form.control}
           name="dataRetention"
           render={({ field: { onChange, value, ref, disabled } }) => (
             <RadioGroup
-              value={user.strict_data_retention ? '1' : value}
+              value={value}
               onValueChange={onChange}
               disabled={disabled}
               ref={ref}
@@ -142,7 +129,6 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
       </div>
       <div>
         <Button
-          disabled={user.strict_data_retention}
           type="submit"
           className="hover:bg-blue-800 active:bg-yellow-400"
         >

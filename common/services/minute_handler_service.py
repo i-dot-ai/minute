@@ -116,10 +116,12 @@ class MinuteHandlerService:
     async def process_minute_generation_message(cls, minute_version_id: UUID) -> None:
         try:
             minute_version = await cls.get_minute_version(minute_version_id=minute_version_id)
+            logger.info("%s: Successfully found MinuteVersion", minute_version.minute_id)
         except Exception as e:
             raise MinuteGenerationFailedError from e
         try:
             meeting_type = cls.predict_meeting(minute_version.minute.transcription.dialogue_entries)
+            logger.info("%s: Predicted minute version %s", minute_version.minute_id, meeting_type)
             html_content, hallucinations = await cls.generate_minutes(meeting_type, minute_version.minute)
             cls.update_minute_version(
                 minute_version.id,
@@ -172,6 +174,7 @@ class MinuteHandlerService:
         if not template:
             msg = f"No template with id {minute.user_template_id}"
             raise RuntimeError(msg)
+        logger.info("%s: Found template id=%s, name=%s", minute.id, template.id, template.name)
         minutes, hallucinations = await generate_user_template(template=template, transcription=minute.transcription)
         return minutes, hallucinations
 
@@ -194,10 +197,15 @@ class MinuteHandlerService:
     @classmethod
     async def generate_full_minutes(cls, minute: Minute) -> MinuteAndHallucinations:
         if minute.user_template_id is not None:
+            logger.info(
+                "%s: Generating minute from user template user_template_id=%s", minute.id, minute.user_template_id
+            )
             result, hallucinations = await cls.generate_minute_from_user_template(minute)
         else:
+            logger.info("%s: Generating minute from default template: %s", minute.id, minute.template_name)
             template = TemplateManager.get_template(minute.template_name)
             result, hallucinations = await template.generate(minute)
+        logger.info("%s: Successfully generated minute", minute.id)
         result = convert_american_to_british_spelling(result)
         return result, hallucinations
 

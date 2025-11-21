@@ -84,7 +84,6 @@ class GetUserResponse(BaseModel):
     updated_datetime: datetime
     email: str
     data_retention_days: int | None
-    strict_data_retention: bool
 
 
 class DataRetentionUpdateResponse(BaseModel):

@@ -1,4 +1,3 @@
-import { DataRetentionNotice } from '@/components/layout/DataRententionNotice'
 import { PosthogBanner } from '@/components/posthog-banner'
 import { PaginatedTranscriptions } from '@/components/recent-meetings/paginated-transcriptions'
 import { Button } from '@/components/ui/button'
@@ -8,7 +7,6 @@ import Link from 'next/link'
 export default function Home() {
   return (
     <div className="mx-auto max-w-3xl p-6">
-      <DataRetentionNotice />
       <PosthogBanner />
       <div className="mb-4">
         <h1 className="mb-4 text-4xl font-bold">

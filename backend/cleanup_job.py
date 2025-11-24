@@ -89,8 +89,8 @@ async def cleanup_jobs():
 
 async def init_cleanup_scheduler():
     """Initialize the scheduler to run cleanup daily."""
-    # Run cleanup immediately on startup
+    next_run_time = datetime.now(tz=UTC).replace(hour=23, minute=0, second=0, microsecond=0)
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(cleanup_jobs, "interval", days=1, next_run_time=datetime.now(tz=UTC))
+    scheduler.add_job(cleanup_jobs, "interval", days=1, next_run_time=next_run_time)
     scheduler.start()
     logger.info("cleanup scheduler initialized")

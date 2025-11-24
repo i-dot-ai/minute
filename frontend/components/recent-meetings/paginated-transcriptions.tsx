@@ -10,11 +10,13 @@ import {
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Info } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 export const PaginatedTranscriptions = () => {
   const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
+  const pathname = usePathname()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const currentPage = Number(searchParams.get('page')) || 1
   const pageSize = 10
   const {
@@ -35,6 +37,9 @@ export const PaginatedTranscriptions = () => {
     placeholderData: keepPreviousData,
   })
 
+  if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
+    router.replace(pathname + `?page=${paginatedResponse.total_pages}`)
+  }
   const transcriptions = paginatedResponse?.items || []
   const totalPages = paginatedResponse?.total_pages || 1
   const totalCount = paginatedResponse?.total_count || 0
@@ -54,8 +59,6 @@ export const PaginatedTranscriptions = () => {
     }
     return pages
   }
-
-  const pathname = usePathname()
 
   return (
     <div>

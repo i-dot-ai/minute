@@ -69,9 +69,7 @@ class S3StorageService(StorageService):
         async with _create_boto3_s3_client() as session:
             try:
                 await session.head_object(Bucket=cls.DATA_S3_BUCKET, Key=key)
-            except ClientError as e:
-                error_msg = f"File not found in S3: {e!s}"
-                logger.exception(error_msg)
+            except ClientError:
                 return False
             else:
                 return True

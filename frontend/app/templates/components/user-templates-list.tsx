@@ -45,6 +45,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import posthog from 'posthog-js'
 import { useMemo } from 'react'
 
 export const UserTemplatesList = () => {
@@ -152,6 +153,7 @@ const TemplateCard = ({ template }: { template: TemplateResponse }) => {
       queryClient.invalidateQueries({
         queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
       })
+      posthog.capture('template_deleted')
     },
   })
   const duplicationMutation = useMutation({
@@ -160,6 +162,7 @@ const TemplateCard = ({ template }: { template: TemplateResponse }) => {
       queryClient.invalidateQueries({
         queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
       })
+      posthog.capture('template_duplicated')
     },
   })
   return (

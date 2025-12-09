@@ -15,6 +15,7 @@ import { TemplateData } from '@/types/templates'
 import { useMutation } from '@tanstack/react-query'
 import { ArrowRight } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import posthog from 'posthog-js'
 import { useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -50,6 +51,7 @@ export default function Page() {
     ...createUserTemplateUserTemplatesPostMutation(),
     onSuccess: () => {
       toast.success('Saved template!')
+      posthog.capture('template_created')
       navigation.push('/templates')
     },
   })

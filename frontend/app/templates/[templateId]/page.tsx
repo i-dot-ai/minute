@@ -15,6 +15,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
+import posthog from 'posthog-js'
 import { useEffect } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -85,6 +86,7 @@ const TemplateEditorForm = ({
           path: { template_id: templateId },
         }),
       })
+      posthog.capture('template_edited')
     },
   })
   if (defaultValues.type === 'document') {

@@ -600,10 +600,6 @@ export type GetUserResponse = {
    * Data Retention Days
    */
   data_retention_days: number | null
-  /**
-   * Strict Data Retention
-   */
-  strict_data_retention: boolean
 }
 
 /**

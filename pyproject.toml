@@ -5,17 +5,6 @@ fix = true
 
 [tool.cruft]
 skip = [
-    # fastapi_paths
-    "backend/fastapi/settings.py",
-    "backend/fastapi/tests.py",
-    
-    # nextjs_paths
-    "frontend/nextjs/pages/api/health.ts",
-    "frontend/nextjs/pages/api/info.ts",
-    "frontend/nextjs/app/globals.css",
-    "frontend/nextjs/app/favicon.ico",
-    "frontend/nextjs/app/layout.tsx",
-    "frontend/nextjs/app/page.tsx",
     # general_paths
     ".env.*",
     "data",
@@ -46,8 +35,7 @@ python = ">=3.12,<3.13"
 cryptography = "^44.0.2"
 pydantic-settings = "^2.5.2"
 alembic = "^1.13.3"
-sqlmodel = "^0.0.24"
-apscheduler = "^3.11.0"
+sqlmodel = "^0.0.27"
 tenacity = "^9.1.2"
 aioboto3 = "^14.3.0"
 breame = "^0.1.2"
@@ -68,6 +56,7 @@ azure-servicebus = "^7.14.2"
 pyjwt = "^2.9.0"
 posthog = "^6.6.1"
 uvicorn = "^0.31.0"
+apscheduler = "^3.11.0"
 
 [tool.poetry.group.worker.dependencies]
 google-genai = "^1.10.0"

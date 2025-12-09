@@ -17,6 +17,7 @@ import {
 import { Loader2 } from 'lucide-react'
 import { useEffect } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 export default function EditTemplatePage({
   params: { templateId },
@@ -78,6 +79,7 @@ const TemplateEditorForm = ({
   const { mutate } = useMutation({
     ...editUserTemplateUserTemplatesTemplateIdPatchMutation(),
     onSuccess: () => {
+      toast.success('Changes saved!', { position: 'top-center' })
       queryClient.invalidateQueries({
         queryKey: getUserTemplateUserTemplatesTemplateIdGetQueryKey({
           path: { template_id: templateId },

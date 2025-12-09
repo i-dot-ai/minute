@@ -3,15 +3,22 @@
 import { OfflineRecordings } from '@/components/recent-meetings/offline-recordings'
 import { TranscriptionListItem } from '@/components/recent-meetings/transcription-list-item'
 import { Button } from '@/components/ui/button'
-import { listTranscriptionsTranscriptionsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+import {
+  getUserUsersMeGetOptions,
+  listTranscriptionsTranscriptionsGetOptions,
+} from '@/lib/client/@tanstack/react-query.gen'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useState } from 'react'
+import { ChevronLeft, ChevronRight, Info } from 'lucide-react'
+import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 export const PaginatedTranscriptions = () => {
-  const [currentPage, setCurrentPage] = useState(1)
+  const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const currentPage = Number(searchParams.get('page')) || 1
   const pageSize = 10
-
   const {
     data: paginatedResponse,
     isLoading,
@@ -30,21 +37,12 @@ export const PaginatedTranscriptions = () => {
     placeholderData: keepPreviousData,
   })
 
+  if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
+    router.replace(pathname + `?page=${paginatedResponse.total_pages}`)
+  }
   const transcriptions = paginatedResponse?.items || []
   const totalPages = paginatedResponse?.total_pages || 1
   const totalCount = paginatedResponse?.total_count || 0
-
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1)
-    }
-  }
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1)
-    }
-  }
 
   const getPageNumbers = () => {
     const pages = []
@@ -65,11 +63,32 @@ export const PaginatedTranscriptions = () => {
   return (
     <div>
       <OfflineRecordings />
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Recent meetings:</h1>
-        <div className="text-sm text-gray-600">
-          {totalCount} transcription{totalCount !== 1 ? 's' : ''}
+      <div className="pb-2">
+        <div className="flex items-center justify-between pb-2">
+          <h1 className="text-2xl font-bold">Recent meetings:</h1>
+          <div className="text-sm text-gray-600">
+            {totalCount} transcription{totalCount !== 1 ? 's' : ''}
+          </div>
         </div>
+        {user && user.data_retention_days && (
+          <div className="text-muted-foreground flex items-center gap-1 py-1 text-sm">
+            <div className="mb-[2px]">
+              <Info className="inline h-4 w-4" />
+            </div>
+            <div>
+              Your data retention period is set to {user.data_retention_days}{' '}
+              day
+              {user.data_retention_days > 1 ? 's' : ''}. Change this in{' '}
+              <Link
+                href="/settings"
+                className="inline text-sky-700 underline hover:decoration-2"
+              >
+                settings
+              </Link>
+              .
+            </div>
+          </div>
+        )}
       </div>
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
@@ -95,37 +114,41 @@ export const PaginatedTranscriptions = () => {
           </ul>
           {totalPages > 1 && (
             <div className="flex items-center justify-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePreviousPage}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-
+              {currentPage > 1 && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link
+                    href={pathname + `?page=${currentPage - 1}`}
+                    scroll={false}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Link>
+                </Button>
+              )}
               {getPageNumbers().map((page) => (
                 <Button
                   key={page}
                   variant={currentPage === page ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setCurrentPage(page)}
                   className="min-w-10"
+                  asChild
                 >
-                  {page}
+                  <Link href={pathname + `?page=${page}`} scroll={false}>
+                    {page}
+                  </Link>
                 </Button>
               ))}
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+              {currentPage < totalPages && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link
+                    href={pathname + `?page=${currentPage + 1}`}
+                    scroll={false}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
             </div>
           )}
           <div className="mt-4 text-center text-sm text-gray-500">

@@ -1,9 +1,22 @@
-import { Mic, MonitorPlay, Upload } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { ChevronLeft, Mic, MonitorPlay, Upload } from 'lucide-react'
 import Link from 'next/link'
 
 export default function NewTranscriptPage() {
   return (
     <div className="flex flex-col gap-2">
+      <Button
+        asChild
+        variant="link"
+        className="mb-4 self-start px-0! underline hover:decoration-2"
+      >
+        <Link href="/">
+          <span className="flex items-center">
+            <ChevronLeft />
+            Back
+          </span>
+        </Link>
+      </Button>
       <Link
         href="/new/upload"
         className="flex items-center gap-2 rounded-xl border p-6 hover:bg-blue-100"

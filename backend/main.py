@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 
 from backend.api.routes import router as api_router
-from common.database.postgres_database import init_cleanup_scheduler
+from backend.cleanup_job import init_cleanup_scheduler
 from common.settings import get_settings
 
 settings = get_settings()
@@ -19,7 +19,7 @@ log = logging.getLogger("uvicorn")
 async def lifespan(app_: FastAPI):  # noqa: ARG001
     log.info("Starting up...")
 
-    init_cleanup_scheduler()
+    await init_cleanup_scheduler()
 
     yield
 

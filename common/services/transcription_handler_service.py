@@ -7,6 +7,7 @@ from sqlmodel import col, select
 from common.audio.speakers import process_speakers_and_dialogue_entries
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import Chat, JobStatus, Minute, Transcription
+from common.generate_meeting_title import generate_meeting_title
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_chat_with_transcript_system_message
 from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
@@ -121,6 +122,7 @@ class TranscriptionHandlerService:
         transcription_id: UUID,
         status: JobStatus | None = None,
         transcript: list[DialogueEntry] | None = None,
+        title: str | None = None,
         error: str | None = None,
     ) -> None:
         with SessionLocal() as session:
@@ -134,6 +136,8 @@ class TranscriptionHandlerService:
                 transcription.dialogue_entries = transcript
             if error:
                 transcription.error = error
+            if title:
+                transcription.title = title
             session.add(transcription)
             session.commit()
 
@@ -160,7 +164,10 @@ class TranscriptionHandlerService:
 
             if transcription_job.transcript:
                 dialogue_entries = await cls.identify_speakers(transcription_job.transcript)
-                cls.update_transcription(transcription.id, status=JobStatus.COMPLETED, transcript=dialogue_entries)
+                meeting_title = await generate_meeting_title(transcript=dialogue_entries)
+                cls.update_transcription(
+                    transcription.id, status=JobStatus.COMPLETED, transcript=dialogue_entries, title=meeting_title
+                )
 
         except Exception as e:
             msg = f"Transcription failed: {e!s}"

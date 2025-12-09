@@ -78,7 +78,7 @@ async def list_transcriptions(
         for t in transcriptions
     ]
 
-    total_pages = math.ceil(total_count / page_size)
+    total_pages = math.ceil(total_count / page_size) or 1
 
     return PaginatedTranscriptionsResponse(
         items=items,

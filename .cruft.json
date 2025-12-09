@@ -6,18 +6,14 @@
     "cookiecutter": {
       "project_name": "Minute",
       "app_name": "minute",
-      "_copy_without_render": [
-        "*.html",
-        "*.js",
-        "*.css"
-      ],
+      "_copy_without_render": ["*.html", "*.js", "*.css"],
       "frontend_framework": "nextjs",
       "backend_framework": "fastapi",
       "database_backend": "None",
       "_integration_test": "false",
       "__perms_boundary_app_name": "minute",
-      "owner": "samlhuillier",
-      "email_address": "sam.lhuillier@cabinetoffice.gov.uk",
+      "owner": "Aydin Utting",
+      "email_address": "aydin.utting@ai.gov.uk",
       "_template": "git@github.com:i-dot-ai/i-dot-ai-cookiecutter.git"
     }
   },

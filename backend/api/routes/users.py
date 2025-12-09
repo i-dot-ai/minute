@@ -19,7 +19,6 @@ def get_user(user: UserDep) -> GetUserResponse:
         updated_datetime=user.updated_datetime,
         email=user.email,
         data_retention_days=user.data_retention_days,
-        strict_data_retention=user.strict_data_retention,
     )
 
 
@@ -35,11 +34,6 @@ async def update_data_retention(
         data: Request body containing data_retention_days
         current_user: The current authenticated user
     """
-    if user.strict_data_retention:
-        raise HTTPException(
-            status_code=403, detail="Strict data retention enabled, you cannot update your data retention."
-        )
-
     if data.data_retention_days is not None and data.data_retention_days < 1:
         raise HTTPException(
             status_code=400,
@@ -64,5 +58,4 @@ async def update_data_retention(
         updated_datetime=user.updated_datetime,
         email=user.email,
         data_retention_days=user.data_retention_days,
-        strict_data_retention=user.strict_data_retention,
     )

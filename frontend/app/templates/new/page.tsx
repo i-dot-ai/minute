@@ -14,24 +14,47 @@ import { createUserTemplateUserTemplatesPostMutation } from '@/lib/client/@tanst
 import { TemplateData } from '@/types/templates'
 import { useMutation } from '@tanstack/react-query'
 import { ArrowRight } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 export default function Page() {
   const [selectedType, setSelectedType] = useState<TemplateType | undefined>(
     undefined
   )
-  const form = useForm<TemplateData>()
+  const searchParams = useSearchParams()
+  const templateTypeParam = searchParams.get('type')
+  const templateExampleParam = searchParams.get('example')
+  const foundExample = [
+    ...exampleDocumentTemplates,
+    ...exampleFormTemplates,
+  ].find((v) => v.name == templateExampleParam)
+  const form = useForm<TemplateData>({
+    defaultValues: foundExample
+      ? foundExample
+      : {
+          name: '',
+          description: '',
+          content: '',
+          questions: [],
+          type:
+            templateTypeParam &&
+            ['document', 'form'].includes(templateTypeParam)
+              ? (templateTypeParam as TemplateType)
+              : undefined,
+        },
+  })
   const navigation = useRouter()
-  const { mutate: saveTemplate } = useMutation({
+  const { mutateAsync: saveTemplate } = useMutation({
     ...createUserTemplateUserTemplatesPostMutation(),
     onSuccess: () => {
+      toast.success('Saved template!')
       navigation.push('/templates')
     },
   })
-  const onSubmit = (data: TemplateData) => {
-    saveTemplate({
+  const onSubmit = async (data: TemplateData) => {
+    await await saveTemplate({
       body: {
         ...data,
         questions:
@@ -53,23 +76,7 @@ export default function Page() {
       form.setValue('questions', null, { shouldDirty: true })
     }
   }
-  if (!templateType) {
-    return (
-      <div>
-        <h2>Template type</h2>
-        <TemplateTypeSelect value={selectedType} onChange={setSelectedType} />
-        <Button
-          type="button"
-          onClick={() => {
-            form.setValue('type', selectedType!)
-          }}
-          disabled={!selectedType}
-        >
-          Next <ArrowRight />
-        </Button>
-      </div>
-    )
-  }
+
   if (templateType == 'document') {
     return (
       <FormProvider {...form}>
@@ -91,7 +98,7 @@ export default function Page() {
     )
   }
 
-  if (selectedType == 'form') {
+  if (templateType == 'form') {
     return (
       <FormProvider {...form}>
         <header className="mb-6">
@@ -111,4 +118,19 @@ export default function Page() {
       </FormProvider>
     )
   }
+  return (
+    <div>
+      <h2>Template type</h2>
+      <TemplateTypeSelect value={selectedType} onChange={setSelectedType} />
+      <Button
+        type="button"
+        onClick={() => {
+          form.setValue('type', selectedType!)
+        }}
+        disabled={!selectedType}
+      >
+        Next <ArrowRight />
+      </Button>
+    </div>
+  )
 }

@@ -1,3 +1,4 @@
+import { HistoryBackButton } from '@/components/ui/history-back-button'
 import { FeatureFlags } from '@/lib/feature-flags'
 import { getServerSideFeatureFlag } from '@/lib/posthog'
 import { redirect } from 'next/navigation'
@@ -14,5 +15,10 @@ export default async function TemplatesLayout({
   if (!userTemplatesEnabled) {
     redirect('/')
   }
-  return children
+  return (
+    <div className="p-6 pt-1">
+      <HistoryBackButton />
+      {children}
+    </div>
+  )
 }

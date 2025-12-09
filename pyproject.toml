@@ -5,17 +5,6 @@ fix = true
 
 [tool.cruft]
 skip = [
-    # fastapi_paths
-    "backend/fastapi/settings.py",
-    "backend/fastapi/tests.py",
-    
-    # nextjs_paths
-    "frontend/nextjs/pages/api/health.ts",
-    "frontend/nextjs/pages/api/info.ts",
-    "frontend/nextjs/app/globals.css",
-    "frontend/nextjs/app/favicon.ico",
-    "frontend/nextjs/app/layout.tsx",
-    "frontend/nextjs/app/page.tsx",
     # general_paths
     ".env.*",
     "data",

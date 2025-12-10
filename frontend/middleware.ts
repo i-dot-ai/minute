@@ -34,7 +34,7 @@ export async function middleware(req: NextRequest) {
     // Authorise user for frontend access
     let authResult: UserAuthorisationResult | null = null
 
-    if (process.env.ENVIRONMENT != 'local') {
+    if (process.env.ENVIRONMENT !== 'local') {
       const token = req.headers.get('x-amzn-oidc-data')
 
       if (!token) {
@@ -53,7 +53,7 @@ export async function middleware(req: NextRequest) {
       }
     }
 
-    if (authResult?.isAuthorised != true) {
+    if (authResult?.isAuthorised !== true) {
       console.error(`User is not authorised to access ${pathname}`)
       return redirectToUnauthorised(req)
     }

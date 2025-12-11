@@ -3,11 +3,9 @@ import {
   getTemplatesTemplatesGetOptions,
   getUserTemplatesUserTemplatesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
-import { FeatureFlags } from '@/lib/feature-flags'
 import { Template } from '@/types/templates'
 import { useQuery } from '@tanstack/react-query'
 import { FileText } from 'lucide-react'
-import { useFeatureFlagEnabled } from 'posthog-js/react'
 
 export const TemplateSelect = ({
   value,
@@ -16,18 +14,11 @@ export const TemplateSelect = ({
   onChange: (template: Template) => void
   value: Template
 }) => {
-  const isUserTemplatesEnabled = useFeatureFlagEnabled(
-    FeatureFlags.UserTemplatesEnabled
-  )
   return (
     <div>
       <DefaultTemplateSelect value={value} onChange={onChange} />
-      {isUserTemplatesEnabled && (
-        <>
-          <h4 className="font-bold">Your templates</h4>
-          <UserTemplateSelect value={value} onChange={onChange} />
-        </>
-      )}
+      <h4 className="font-bold">Your templates</h4>
+      <UserTemplateSelect value={value} onChange={onChange} />
     </div>
   )
 }

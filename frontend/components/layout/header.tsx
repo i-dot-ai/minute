@@ -1,14 +1,9 @@
 import { Alpha } from '@/components/layout/alpha'
 import { NavButton } from '@/components/layout/nav-button'
-import { FeatureFlags } from '@/lib/feature-flags'
-import { getServerSideFeatureFlag } from '@/lib/posthog'
 import { FileText, Home, Settings } from 'lucide-react'
 import Link from 'next/link'
 
 export const Header = async () => {
-  const userTemplatesEnabled = await getServerSideFeatureFlag(
-    FeatureFlags.UserTemplatesEnabled
-  )
   return (
     <>
       <header className="flex h-[64px] items-center justify-between border-b border-gray-200 bg-black px-8 dark:border-gray-800">
@@ -79,11 +74,9 @@ export const Header = async () => {
           <NavButton href="/">
             <Home size="1rem" /> Home
           </NavButton>
-          {userTemplatesEnabled && (
-            <NavButton href="/templates">
-              <FileText size="1rem" /> Templates
-            </NavButton>
-          )}
+          <NavButton href="/templates">
+            <FileText size="1rem" /> Templates
+          </NavButton>
           <NavButton href="/settings">
             <Settings size="1rem" /> Settings
           </NavButton>

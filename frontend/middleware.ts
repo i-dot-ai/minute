@@ -8,6 +8,9 @@ const PUBLIC_PATHS = [
   '/unauthorised',
   '/health',
   '/generic-error',
+  '/monitoring',
+  '/privacy',
+  '/support',
 ]
 
 export async function middleware(req: NextRequest) {

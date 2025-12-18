@@ -29,6 +29,7 @@ locals {
     "FAST_LLM_MODEL_NAME" = "gemini-2.5-flash-lite"
     "BEST_LLM_PROVIDER"   = "gemini"
     "BEST_LLM_MODEL_NAME" = "gemini-2.5-flash"
+    "AUTH_API_URL" : data.aws_ssm_parameter.auth_api_invoke_url.value
   }
 
 }
@@ -69,7 +70,6 @@ module "backend" {
 
   environment_variables = merge(local.shared_environment_variables, {
     "APP_NAME" : "${local.name}-backend",
-    "AUTH_API_URL" : data.aws_ssm_parameter.auth_api_invoke_url.value,
   })
 
   secrets = [
@@ -120,7 +120,6 @@ module "frontend" {
     "REPO" : "minute",
     "BACKEND_HOST" : "http://${aws_service_discovery_service.service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}:${local.backend_port}"
     "AUTH_PROVIDER_PUBLIC_KEY" : data.aws_ssm_parameter.auth_provider_public_key.value,
-    "AUTH_API_URL" : data.aws_ssm_parameter.auth_api_invoke_url.value,
   }
 
   secrets = [

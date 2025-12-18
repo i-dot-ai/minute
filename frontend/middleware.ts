@@ -1,4 +1,3 @@
-import { isAuthorisedUser } from '@/lib/auth'
 import { API_PROXY_PATH } from '@/providers/TanstackQueryProvider'
 import { NextRequest, NextResponse } from 'next/server'
 import { type UserAuthorisationResult } from '@i-dot-ai-npm/utilities'
@@ -9,9 +8,6 @@ const PUBLIC_PATHS = [
   '/unauthorised',
   '/health',
   '/generic-error',
-  '/monitoring',
-  '/privacy',
-  '/support',
 ]
 
 export async function middleware(req: NextRequest) {

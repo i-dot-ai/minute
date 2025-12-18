@@ -1,10 +1,14 @@
 import logging
+from functools import lru_cache
 
 import dotenv
+from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
+from i_dot_ai_utilities.logging.types.enrichment_types import ExecutionEnvironmentType
+from i_dot_ai_utilities.logging.types.log_output_format import LogOutputFormat
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from common.logger import setup_logger
+from common.logger import setup_logger, setup_structured_logger
 
 setup_logger()
 logger = logging.getLogger(__name__)
@@ -31,10 +35,22 @@ class Settings(BaseSettings):
     AWS_ACCOUNT_ID: str | None = Field(description="AWS account ID", default=None)
     AWS_REGION: str | None = Field(description="AWS region", default=None)
 
-    ENVIRONMENT: str = Field(
-        description='use "local" for local development, or dev,preprod or prod as appropriate', default="local"
+    # if using i.AI Auth API
+    REPO: str = Field(description="The name of the GitHub repository")
+    AUTH_API_URL: str = Field(description="The hostname of the Auth API")
+    AUTH_API_REQUEST_TIMEOUT: int | None = Field(
+        description="The timeout in seconds to wait for auth response", default=None
     )
+
+    ENVIRONMENT: str = "local"
     SENTRY_DSN: str | None = Field(description="Sentry DSN if using Sentry for telemetry", default=None)
+
+    # Structured logger setup
+    EXECUTION_ENVIRONMENT: ExecutionEnvironmentType = (
+        ExecutionEnvironmentType.LOCAL if ENVIRONMENT.lower() == "local" else ExecutionEnvironmentType.FARGATE
+    )
+    LOGGING_FORMAT: LogOutputFormat = LogOutputFormat.TEXT if ENVIRONMENT.lower() == "local" else LogOutputFormat.JSON
+    LOG_LEVEL: str = Field(description="The level at which to emit structured logs", default="info")
 
     TRANSCRIPTION_QUEUE_NAME: str = Field(description="queue name to use for SQS/Azure Service Bus queues")
     TRANSCRIPTION_DEADLETTER_QUEUE_NAME: str = Field(
@@ -162,3 +178,12 @@ class Settings(BaseSettings):
 
 def get_settings():
     return Settings()  # type: ignore  # noqa: PGH003
+
+
+@lru_cache
+def get_structured_logger() -> StructuredLogger:
+    return setup_structured_logger(
+        level=get_settings().LOG_LEVEL or "info",
+        execution_environment=get_settings().EXECUTION_ENVIRONMENT,
+        logging_format=get_settings().LOGGING_FORMAT,
+    )

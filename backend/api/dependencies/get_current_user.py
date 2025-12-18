@@ -1,68 +1,47 @@
-import logging
 from typing import Annotated
 
-import jwt
 from fastapi import Depends, Header, HTTPException
 from sqlmodel import select
 
 from backend.api.dependencies.get_session import SQLSessionDep
-from common.auth import parse_auth_token
+from common.auth import get_user_info
 from common.database.postgres_models import User
-from common.settings import get_settings
+from common.services.exceptions import MissingAuthTokenError
+from common.settings import get_settings, get_structured_logger
 
 settings = get_settings()
 
-logger = logging.getLogger(__name__)
+logger = get_structured_logger()
 
 
 async def get_current_user(
     session: SQLSessionDep,
-    x_amzn_oidc_accesstoken: Annotated[str | None, Header()] = None,
+    x_amzn_oidc_data: Annotated[str | None, Header()] = None,
 ) -> User:
     """
     Called on every endpoint to decode JWT passed in every request.
     Gets or creates the user based on the email in the JWT
     Args:
-        x_amzn_oidc_accesstoken: The incoming JWT from the auth provider, passed via the frontend app
+        x_amzn_oidc_data: The incoming JWT from the auth provider, passed via the frontend app
     Returns:
         User: The user matching the username in the token
     """
-    authorization: str | None = x_amzn_oidc_accesstoken
-
-    if settings.ENVIRONMENT in ["local", "integration-test"]:
-        # A JWT for local testing, an example JWT from cognito, for user test@test.com
-        jwt_dict = {
-            "sub": "90429234-4031-7077-b9ba-60d1af121245",
-            "aud": "account",
-            "email_verified": "true",
-            "preferred_username": "test@test.co.uk",
-            "email": "test@test.co.uk",
-            "username": "test@test.co.uk",
-            "exp": 1727262399,
-            "iss": "https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_example",
-            "realm_access": {"roles": ["minute"]},
-        }
-        jwt_headers = {
-            "typ": "JWT",
-            "kid": "1234947a-59d3-467c-880c-f005c6941ffg",
-            "alg": "HS256",
-            "iss": "https://auth.dev.i.ai.gov.uk/realms/i_ai",
-            "exp": 1727262399,
-        }
-        authorization = jwt.encode(jwt_dict, "secret", algorithm="HS256", headers=jwt_headers)
-
-    if not authorization:
-        logger.info("No authorization header provided")
-        raise HTTPException(
-            status_code=401,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    authorization: str | None = x_amzn_oidc_data
 
     try:
-        email, _ = parse_auth_token(authorization)
+        user_auth_info = get_user_info(authorization)
+        email = user_auth_info.email
+
+        if not user_auth_info.is_authorised:
+            logger.info("User {email} does not have the required permissions", email=email)
+            raise HTTPException(
+                status_code=401,
+                detail="User does not have the required permissions to access this resource",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
         # Try to find existing user
+
         statement = select(User).where(User.email == email)
         user = (await session.exec(statement)).first()
 
@@ -74,14 +53,23 @@ async def get_current_user(
             await session.refresh(user)
 
         return user
-
-    except Exception:
-        logger.exception("Failed to decode token")
-        raise HTTPException(  # noqa: B904
+    except MissingAuthTokenError as e:
+        logger.warning("No authorization header provided")
+        raise HTTPException(
             status_code=401,
-            detail="Failed to decode token",
+            detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
+    except HTTPException:
+        logger.exception("Unhandled HTTP exception")
+        raise
+    except Exception as e:
+        logger.exception("Unhandled exception when getting user")
+        raise HTTPException(
+            status_code=500,
+            detail="Unhandled Authorisation Error",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
 
 
 UserDep = Annotated[User, Depends(get_current_user)]

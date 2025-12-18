@@ -68,7 +68,8 @@ module "backend" {
   ]
 
   environment_variables = merge(local.shared_environment_variables, {
-    "APP_NAME" : "${local.name}-backend"
+    "APP_NAME" : "${local.name}-backend",
+    "AUTH_API_URL" : data.aws_ssm_parameter.auth_api_invoke_url.value,
   })
 
   secrets = [
@@ -96,7 +97,7 @@ module "frontend" {
   # checkov:skip=CKV_SECRET_4:Skip secret check as these have to be used within the Github Action
   name = "${local.name}-frontend"
   # source = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
-  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v5.4.0-ecs"
+  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v5.7.0-ecs"
   image_tag                    = var.image_tag
   ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-frontend"
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
@@ -119,6 +120,7 @@ module "frontend" {
     "REPO" : "minute",
     "BACKEND_HOST" : "http://${aws_service_discovery_service.service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}:${local.backend_port}"
     "AUTH_PROVIDER_PUBLIC_KEY" : data.aws_ssm_parameter.auth_provider_public_key.value,
+    "AUTH_API_URL" : data.aws_ssm_parameter.auth_api_invoke_url.value,
   }
 
   secrets = [
@@ -141,12 +143,11 @@ module "frontend" {
     unhealthy_threshold = 5
     port                = local.frontend_port
   }
-  authenticate_keycloak = {
+
+  authenticate_gds_internal_access = {
     enabled : true,
-    realm_name : data.terraform_remote_state.keycloak.outputs.realm_name,
-    client_id : var.project_name,
-    client_secret : data.aws_ssm_parameter.client_secret.value,
-    keycloak_dns : data.terraform_remote_state.keycloak.outputs.keycloak_dns
+    client_id : aws_ssm_parameter.oidc_secrets["client_id"].value,
+    client_secret : aws_ssm_parameter.oidc_secrets["client_secret"].value,
   }
 }
 
@@ -174,7 +175,8 @@ module "worker" {
   create_listener   = false
 
   environment_variables = merge(local.shared_environment_variables, {
-    "APP_NAME" : "${local.name}-worker"
+    "APP_NAME" : "${local.name}-worker",
+    "AUTH_API_URL" : "unused", # Worker settings need refactoring so we can remove this
   })
 
   secrets = [

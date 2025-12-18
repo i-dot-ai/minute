@@ -4,3 +4,6 @@ class TranscriptionFailedError(Exception):
 
 class InteractionFailedError(Exception):
     """Exception raised when a transcription fails."""
+
+class MissingAuthTokenError(Exception):
+    pass

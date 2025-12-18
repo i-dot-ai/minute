@@ -1,5 +1,6 @@
 from i_dot_ai_utilities.auth.auth_api import AuthApiClient, UserAuthorisationResult
 
+from common.services.exceptions import MissingAuthTokenError
 from common.settings import get_settings, get_structured_logger
 
 settings = get_settings()
@@ -25,14 +26,17 @@ def __load_dummy_user_info() -> UserAuthorisationResult:
     )
 
 
-def get_user_info(auth_token: str) -> UserAuthorisationResult:
+def get_user_info(auth_token: str | None) -> UserAuthorisationResult:
     """
     Retrieve user metadata, including the user email and whether they should have access to the app.
     """
-    try:
-        if settings.ENVIRONMENT == "local":
-            return __load_dummy_user_info()
+    if settings.ENVIRONMENT == "local":
+        return __load_dummy_user_info()
 
+    if not auth_token:
+        raise MissingAuthTokenError
+
+    try:
         return auth_client.get_user_authorisation_info(auth_token)
     except Exception:
         logger.exception("Error occurred when authorising user")

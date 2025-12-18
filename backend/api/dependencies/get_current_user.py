@@ -6,6 +6,7 @@ from sqlmodel import select
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
 from common.database.postgres_models import User
+from common.services.exceptions import MissingAuthTokenError
 from common.settings import get_settings, get_structured_logger
 
 settings = get_settings()
@@ -26,14 +27,6 @@ async def get_current_user(
         User: The user matching the username in the token
     """
     authorization: str | None = x_amzn_oidc_data
-
-    if not authorization:
-        logger.info("No authorization header provided")
-        raise HTTPException(
-            status_code=401,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
 
     try:
         user_auth_info = get_user_info(authorization)
@@ -60,6 +53,13 @@ async def get_current_user(
             await session.refresh(user)
 
         return user
+    except MissingAuthTokenError as e:
+        logger.warning("No authorization header provided")
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
     except HTTPException:
         logger.exception("Unhandled HTTP exception")
         raise

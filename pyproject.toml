@@ -61,7 +61,7 @@ apscheduler = "^3.11.0"
 google-genai = "^1.10.0"
 openai = "^1.42.0"
 ffmpeg-python = "^0.2.0"
-ray = {extras = ["default"], version = "^2.47.1"}
+ray = {extras = ["default"], version = "^2.53.0"}
 azure-storage-blob = "^12.26.0"
 azure-identity = "^1.23.1"
 

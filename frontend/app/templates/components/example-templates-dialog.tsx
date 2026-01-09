@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { TemplateData } from '@/types/templates'
 import { FileText } from 'lucide-react'
+import posthog from 'posthog-js'
 
 import { useState } from 'react'
 
@@ -27,6 +28,9 @@ export function ExampleTemplatesDialog({
   const handleSelectExample = (template: TemplateData) => {
     onSelectTemplate(template)
     setOpen(false)
+    posthog.capture('template_example_selected', {
+      example_name: template.name,
+    })
   }
 
   return (

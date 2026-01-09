@@ -15,11 +15,12 @@ import { TemplateData } from '@/types/templates'
 import { useMutation } from '@tanstack/react-query'
 import { ArrowRight } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import posthog from 'posthog-js'
+import { Suspense, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
-export default function Page() {
+function NewTemplateContent() {
   const [selectedType, setSelectedType] = useState<TemplateType | undefined>(
     undefined
   )
@@ -50,6 +51,7 @@ export default function Page() {
     ...createUserTemplateUserTemplatesPostMutation(),
     onSuccess: () => {
       toast.success('Saved template!')
+      posthog.capture('template_created')
       navigation.push('/templates')
     },
   })
@@ -132,5 +134,13 @@ export default function Page() {
         Next <ArrowRight />
       </Button>
     </div>
+  )
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <NewTemplateContent />
+    </Suspense>
   )
 }

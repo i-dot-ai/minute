@@ -1,8 +1,9 @@
 import { PosthogBanner } from '@/components/posthog-banner'
 import { PaginatedTranscriptions } from '@/components/recent-meetings/paginated-transcriptions'
 import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
 import Link from 'next/link'
+import { Suspense } from 'react'
 
 export default function Home() {
   return (
@@ -27,7 +28,15 @@ export default function Home() {
           New meeting
         </Link>
       </Button>
-      <PaginatedTranscriptions />
+      <Suspense
+        fallback={
+          <div className="flex w-full items-center justify-center">
+            <Loader2 className="animate-spin" />
+          </div>
+        }
+      >
+        <PaginatedTranscriptions />
+      </Suspense>
     </div>
   )
 }

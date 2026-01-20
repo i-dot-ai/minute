@@ -74,7 +74,7 @@ Minute was developed to run on AWS and/or Azure, with abstractions available for
 
 #### Sentry setup (optional)
 
-To set up sentry for telemetry, create an account at [sentry.io](sentry.io).
+To set up sentry for telemetry, create an account at [sentry.io](https://sentry.io).
 
 - Navigate to the `projects` page
 - Click `Create project`
@@ -116,5 +116,5 @@ different tests (see [test_queues_e2e.py](tests/test_queues_e2e.py) for an examp
 
 ## Adding custom templates
 
-You can add your own templates by implementing either the `SimpleTemplate` or `SectionTemplate` protocols (see [here](backend/templates/types.py))
-Simply put them in the [templates](backend/templates) directory, and they will automatically be discovered when the backend starts.
+You can add your own templates by implementing either the `SimpleTemplate` or `SectionTemplate` protocols (see [here](common/templates/types.py))
+Simply put them in the [templates](common/templates) directory, and they will automatically be discovered when the backend starts.

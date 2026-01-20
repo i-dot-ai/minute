@@ -13,7 +13,7 @@ TARGET_SAMPLE_RATE = 16000
 STEREO_CHANNELS = 2
 
 
-def load_benchmark_dataset(num_samples: int):
+def load_benchmark_dataset(num_samples: float):
     logger.info("Loading AMI dataset with %d samples...", num_samples)
     logger.info("Using cache directory: %s", CACHE_DIR)
     

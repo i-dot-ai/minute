@@ -9,7 +9,7 @@ from core.runner import run_engine, save_results
 logger = logging.getLogger(__name__)
 
 
-def run_evaluation(num_samples: int = 10, prepare_only: bool = False):
+def run_evaluation(num_samples: float = 10, prepare_only: bool = False):
     output_dir = WORKDIR / "results"
     output_path = output_dir / "evaluation_results.json"
 
@@ -70,9 +70,10 @@ def main():
     parser = argparse.ArgumentParser(description="Run transcription evaluation")
     parser.add_argument(
         "--num-samples",
-        type=int,
+        type=float,
         default=10,
-        help="Number of meetings to evaluate from AMI dataset (default: 10)"
+        help="Number of meetings to evaluate from AMI dataset (default: 10). "
+             "If < 1.0, treated as fraction of first meeting duration (e.g., 0.1 = 10%% of first meeting)"
     )
     parser.add_argument(
         "--prepare-only",

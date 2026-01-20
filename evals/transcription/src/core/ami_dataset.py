@@ -17,7 +17,7 @@ STEREO_CHANNELS = 2
 
 
 class AMIDatasetLoader:
-    def __init__(self, cache_dir: Path, num_samples: int):
+    def __init__(self, cache_dir: Path, num_samples: float):
         self.cache_dir = cache_dir
         self.num_samples = num_samples
         self.raw_cache_dir = cache_dir / "raw"
@@ -48,13 +48,19 @@ class AMIDatasetLoader:
         
         sorted_meetings = sorted(meeting_utterances.items(), key=lambda x: x[0])
         
-        logger.info("Processing first %d meetings...", self.num_samples)
-        
-        for idx, (meeting_id, utterances) in enumerate(sorted_meetings[:self.num_samples]):
-            self._process_meeting(meeting_id, utterances, idx)
+        if self.num_samples < 1.0:
+            logger.info("Fractional num_samples detected: %.2f", self.num_samples)
+            logger.info("Will collect chunks totaling %.1f%% of first meeting duration", self.num_samples * 100)
+            self._process_fractional_samples(sorted_meetings)
+        else:
+            num_meetings = int(self.num_samples)
+            logger.info("Processing first %d meetings...", num_meetings)
             
-            if (idx + 1) % 5 == 0 or (idx + 1) == self.num_samples:
-                logger.info("Combined %d/%d meetings", idx + 1, self.num_samples)
+            for idx, (meeting_id, utterances) in enumerate(sorted_meetings[:num_meetings]):
+                self._process_meeting(meeting_id, utterances, idx)
+                
+                if (idx + 1) % 5 == 0 or (idx + 1) == num_meetings:
+                    logger.info("Combined %d/%d meetings", idx + 1, num_meetings)
         
         logger.info("Dataset preparation complete: %d meetings ready", len(self.samples))
         return self.samples
@@ -63,6 +69,33 @@ class AMIDatasetLoader:
         utterances_sorted = sorted(utterances, key=lambda x: x.get("begin_time", 0))
         
         if not utterances_sorted:
+            return
+        
+        processed_path = self.processed_cache_dir / f"{meeting_id}_{idx:06d}.wav"
+        
+        if processed_path.exists():
+            logger.info("Found cached file for %s, loading from cache", meeting_id)
+            mixed_audio, sr = sf.read(processed_path)
+            
+            full_text = " ".join(utt["text"] for utt in utterances_sorted)
+            duration = float(len(mixed_audio) / TARGET_SAMPLE_RATE)
+            
+            sample = {
+                "audio": {
+                    "array": mixed_audio,
+                    "sampling_rate": TARGET_SAMPLE_RATE,
+                    "path": str(processed_path),
+                },
+                "text": full_text,
+                "meeting_id": meeting_id,
+                "dataset_index": idx,
+                "duration_sec": duration,
+                "num_utterances": len(utterances_sorted),
+            }
+            
+            self.samples.append(sample)
+            logger.info("Loaded cached meeting %s: %d utterances, %.2f sec, %d words", 
+                       meeting_id, len(utterances_sorted), duration, len(full_text.split()))
             return
         
         max_end_time = max(utt.get("end_time", 0) for utt in utterances_sorted)
@@ -101,7 +134,6 @@ class AMIDatasetLoader:
         
         full_text = " ".join(combined_text)
         
-        processed_path = self.processed_cache_dir / f"{meeting_id}_{idx:06d}.wav"
         sf.write(processed_path, mixed_audio, TARGET_SAMPLE_RATE, subtype="PCM_16")
         
         duration = float(len(mixed_audio) / TARGET_SAMPLE_RATE)
@@ -123,6 +155,73 @@ class AMIDatasetLoader:
         logger.info("Mixed meeting %s: %d utterances, %.2f sec, %d words", 
                    meeting_id, len(utterances_sorted), duration, len(full_text.split()))
     
+    def _process_fractional_samples(self, sorted_meetings: list):
+        if not sorted_meetings:
+            return
+        
+        first_meeting_id, first_utterances = sorted_meetings[0]
+        first_utterances_sorted = sorted(first_utterances, key=lambda x: x.get("begin_time", 0))
+        
+        if not first_utterances_sorted:
+            return
+        
+        first_meeting_duration = max(utt.get("end_time", 0) for utt in first_utterances_sorted)
+        target_duration = first_meeting_duration * self.num_samples
+        
+        logger.info("First meeting (%s) duration: %.2f sec", first_meeting_id, first_meeting_duration)
+        logger.info("Target total duration: %.2f sec (%.1f%% of first meeting)", 
+                   target_duration, self.num_samples * 100)
+        
+        accumulated_duration = 0.0
+        chunk_idx = 0
+        
+        for meeting_id, utterances in sorted_meetings:
+            utterances_sorted = sorted(utterances, key=lambda x: x.get("begin_time", 0))
+            
+            if not utterances_sorted:
+                continue
+            
+            meeting_duration = max(utt.get("end_time", 0) for utt in utterances_sorted)
+            
+            if accumulated_duration + meeting_duration <= target_duration:
+                self._process_meeting(meeting_id, utterances, chunk_idx)
+                accumulated_duration += meeting_duration
+                chunk_idx += 1
+                
+                logger.info("Added meeting %s (%.2f sec), total: %.2f/%.2f sec", 
+                           meeting_id, meeting_duration, accumulated_duration, target_duration)
+                
+                if accumulated_duration >= target_duration:
+                    logger.info("Reached target duration, stopping collection")
+                    break
+            else:
+                remaining_duration = target_duration - accumulated_duration
+                
+                if remaining_duration > 0:
+                    partial_utterances = []
+                    partial_duration = 0.0
+                    
+                    for utt in utterances_sorted:
+                        utt_duration = utt.get("end_time", 0) - utt.get("begin_time", 0)
+                        if partial_duration + utt_duration <= remaining_duration:
+                            partial_utterances.append(utt)
+                            partial_duration += utt_duration
+                        else:
+                            break
+                    
+                    if partial_utterances:
+                        fraction_str = f"{self.num_samples:.2f}".replace(".", "_")
+                        partial_meeting_id = f"{meeting_id}_frac{fraction_str}"
+                        self._process_meeting(partial_meeting_id, partial_utterances, chunk_idx)
+                        accumulated_duration += partial_duration
+                        logger.info("Added partial meeting %s (%.2f sec), total: %.2f/%.2f sec", 
+                                   partial_meeting_id, partial_duration, accumulated_duration, target_duration)
+                
+                break
+        
+        logger.info("Fractional collection complete: %d chunks, %.2f sec total", 
+                   len(self.samples), accumulated_duration)
+    
     
     def get_sample(self, idx: int) -> dict:
         if idx < 0 or idx >= len(self.samples):
@@ -136,7 +235,7 @@ class AMIDatasetLoader:
         return self.get_sample(idx)
 
 
-def load_ami_dataset(cache_dir: Path, num_samples: int):
+def load_ami_dataset(cache_dir: Path, num_samples: float):
     loader = AMIDatasetLoader(cache_dir, num_samples)
     samples = loader.load_and_prepare_samples()
     

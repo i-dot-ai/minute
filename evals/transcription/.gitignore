@@ -29,3 +29,4 @@ env/
 *.m4a
 results/
 outputs/
+cache/

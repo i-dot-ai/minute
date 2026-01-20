@@ -5,21 +5,25 @@ from adapters import AzureSTTAdapter, WhisperAdapter
 from core.config import AZURE_SPEECH_KEY, AZURE_SPEECH_REGION, WORKDIR
 from core.dataset import audio_duration_seconds, load_benchmark_dataset, to_wav_16k_mono
 from core.runner import run_engine, save_results
-from utils.sample_selection import select_longest_samples
 
 logger = logging.getLogger(__name__)
 
 
-def run_evaluation(num_samples: int = 10):
+def run_evaluation(num_samples: int = 10, prepare_only: bool = False):
     output_dir = WORKDIR / "results"
     output_path = output_dir / "evaluation_results.json"
 
     logger.info("Loading dataset...")
-    ds = load_benchmark_dataset()
+    ds = load_benchmark_dataset(num_samples=num_samples)
 
-    logger.info("Selecting %d longest samples...", num_samples)
-    indices, stats = select_longest_samples(ds, num_samples=num_samples)
-    logger.info("Selected samples: total_sec=%.2f, mean_sec=%.2f", stats["total_sec"], stats["mean_sec"])
+    indices = list(range(len(ds)))
+    logger.info("Loaded %d samples from AMI dataset", len(indices))
+    
+    if prepare_only:
+        logger.info("=== Dataset Preparation Complete ===")
+        logger.info("Prepared %d meetings", len(indices))
+        logger.info("Audio files cached in: %s", WORKDIR / "cache" / "processed")
+        return
 
     azure_adapter = AzureSTTAdapter(
         speech_key=AZURE_SPEECH_KEY,
@@ -68,11 +72,16 @@ def main():
         "--num-samples",
         type=int,
         default=10,
-        help="Number of longest samples to evaluate (default: 10)"
+        help="Number of meetings to evaluate from AMI dataset (default: 10)"
+    )
+    parser.add_argument(
+        "--prepare-only",
+        action="store_true",
+        help="Only prepare and cache the dataset without running transcription"
     )
     args = parser.parse_args()
 
-    run_evaluation(num_samples=args.num_samples)
+    run_evaluation(num_samples=args.num_samples, prepare_only=args.prepare_only)
 
 
 if __name__ == "__main__":

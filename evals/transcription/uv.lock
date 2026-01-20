@@ -3415,6 +3415,7 @@ dependencies = [
     { name = "openai-whisper" },
     { name = "python-dotenv" },
     { name = "soundfile" },
+    { name = "tqdm" },
 ]
 
 [package.metadata]
@@ -3427,6 +3428,7 @@ requires-dist = [
     { name = "openai-whisper", specifier = "==20231117" },
     { name = "python-dotenv", specifier = ">=1.0.0,<2.0.0" },
     { name = "soundfile", specifier = ">=0.12.0,<0.13.0" },
+    { name = "tqdm", specifier = ">=4.0.0,<5.0.0" },
 ]
 
 [[package]]

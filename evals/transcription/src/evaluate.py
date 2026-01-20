@@ -4,7 +4,7 @@ import logging
 from adapters import AzureSTTAdapter, WhisperAdapter
 from core.config import AZURE_SPEECH_KEY, AZURE_SPEECH_REGION, WORKDIR
 from core.dataset import audio_duration_seconds, load_benchmark_dataset, to_wav_16k_mono
-from core.runner import run_engine, save_results
+from core.runner import run_engine, run_engines_parallel, save_results
 
 logger = logging.getLogger(__name__)
 
@@ -36,33 +36,25 @@ def run_evaluation(num_samples: float = 10, prepare_only: bool = False):
         language="en",
     )
 
-    logger.info("Running Azure Speech-to-Text on %d samples...", len(indices))
-    azure_results = run_engine(
-        adapter=azure_adapter,
+    adapters_config = [
+        {"adapter": azure_adapter, "label": "Azure Speech-to-Text", "is_azure": True},
+        {"adapter": whisper_adapter, "label": "Whisper (base)", "is_azure": False},
+    ]
+
+    logger.info("Running %d adapters in parallel on %d samples...", len(adapters_config), len(indices))
+    results = run_engines_parallel(
+        adapters_config=adapters_config,
         indices=indices,
-        label="Azure Speech-to-Text",
         dataset=ds,
         wav_write_fn=to_wav_16k_mono,
         duration_fn=audio_duration_seconds,
-        is_azure=True,
     )
 
-    logger.info("Running Whisper on %d samples...", len(indices))
-    whisper_results = run_engine(
-        adapter=whisper_adapter,
-        indices=indices,
-        label="Whisper (base)",
-        dataset=ds,
-        wav_write_fn=to_wav_16k_mono,
-        duration_fn=audio_duration_seconds,
-        is_azure=False,
-    )
-
-    save_results([azure_results, whisper_results], output_path)
+    save_results(results, output_path)
 
     logger.info("=== Evaluation Complete ===")
-    logger.info("Azure WER: %.2f%%", azure_results["summary"]["overall_wer_pct"])
-    logger.info("Whisper WER: %.2f%%", whisper_results["summary"]["overall_wer_pct"])
+    for result in results:
+        logger.info("%s WER: %.2f%%", result["summary"]["engine"], result["summary"]["overall_wer_pct"])
     logger.info("Results saved to: %s", output_path)
 
 

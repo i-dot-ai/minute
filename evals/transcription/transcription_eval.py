@@ -217,7 +217,7 @@ def _token_ops(a: str, b: str) -> dict:
     return ops
 
 def run_engine(adapter, indices, label, *, dataset, wav_write_fn, duration_fn,
-               is_azure=False, json_out_path="/content/stt_debug.json", print_examples=3):
+               json_out_path="/content/stt_debug.json", print_examples=3):
     rows = []
     timing = TimingAccumulator()
 
@@ -230,11 +230,7 @@ def run_engine(adapter, indices, label, *, dataset, wav_write_fn, duration_fn,
         ref_raw = ex["text"]
         aud_sec = float(duration_fn(wav_path))
 
-        if is_azure:
-            hyp_raw, proc_sec, dbg = adapter.transcribe_with_debug(wav_path)
-        else:
-            hyp_raw, proc_sec = adapter.transcribe(wav_path)
-            dbg = {}
+        hyp_raw, proc_sec, dbg = adapter.transcribe_with_debug(wav_path)
 
         proc_sec = float(proc_sec)
         timing.add(aud_sec, proc_sec)
@@ -263,10 +259,6 @@ def run_engine(adapter, indices, label, *, dataset, wav_write_fn, duration_fn,
         rows.append(row)
 
         print(f"[{label}] {n}/{len(indices)} idx={idx} aud_sec={aud_sec:.2f} proc_sec={proc_sec:.2f} WER={per_wer:.2f}")
-        if is_azure:
-            print("  Azure reason:", dbg.get("reason"),
-                  "no_match:", dbg.get("no_match_reason"),
-                  "cancel:", dbg.get("cancel_reason"))
 
         if n <= print_examples:
             print("  ref_norm:", ref_n[:200])
@@ -500,7 +492,6 @@ azure_out = run_engine(
     dataset=ds,
     wav_write_fn=to_wav_16k_mono,
     duration_fn=audio_duration_seconds,
-    is_azure=True,
     json_out_path="/content/azure_debug.json",
     print_examples=len(azure_indices),
 )
@@ -508,11 +499,10 @@ azure_out = run_engine(
 whisper_out = run_engine(
     adapter=whisper_adapter,
     indices=whisper_indices,
-    label=f"Whisper (base) (selected {len(whisper_indices)})",
+    label=f"Whisper (selected {len(whisper_indices)})",
     dataset=ds,
     wav_write_fn=to_wav_16k_mono,
     duration_fn=audio_duration_seconds,
-    is_azure=False,
     json_out_path="/content/whisper_debug.json",
     print_examples=len(whisper_indices),
 )

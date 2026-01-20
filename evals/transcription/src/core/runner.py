@@ -13,7 +13,7 @@ from .metrics import TimingAccumulator, compute_wer_pct, normalise_text, token_o
 logger = logging.getLogger(__name__)
 
 
-def run_engine(adapter, indices, label, *, dataset, wav_write_fn, duration_fn, is_azure=False):
+def run_engine(adapter, indices, label, *, dataset, wav_write_fn, duration_fn):
     rows = []
     timing = TimingAccumulator()
 
@@ -23,11 +23,7 @@ def run_engine(adapter, indices, label, *, dataset, wav_write_fn, duration_fn, i
         ref_raw = ex["text"]
         aud_sec = float(duration_fn(wav_path))
 
-        if is_azure:
-            hyp_raw, proc_sec, dbg = adapter.transcribe_with_debug(wav_path)
-        else:
-            hyp_raw, proc_sec = adapter.transcribe(wav_path)
-            dbg = {}
+        hyp_raw, proc_sec, dbg = adapter.transcribe_with_debug(wav_path)
 
         proc_sec = float(proc_sec)
         timing.add(aud_sec, proc_sec)
@@ -77,7 +73,7 @@ def run_engines_parallel(adapters_config, indices, *, dataset, wav_write_fn, dur
     """
     Run multiple adapters in parallel with a shared progress bar.
     
-    adapters_config: list of dicts with keys: adapter, label, is_azure
+    adapters_config: list of dicts with keys: adapter, label
     """
     total_tasks = len(indices) * len(adapters_config)
     pbar = tqdm(total=total_tasks, desc="Processing all engines", unit="task")
@@ -88,18 +84,13 @@ def run_engines_parallel(adapters_config, indices, *, dataset, wav_write_fn, dur
     def process_sample(adapter_cfg, idx):
         adapter = adapter_cfg["adapter"]
         label = adapter_cfg["label"]
-        is_azure = adapter_cfg.get("is_azure", False)
         
         ex = dataset[int(idx)]
         wav_path = wav_write_fn(ex, int(idx))
         ref_raw = ex["text"]
         aud_sec = float(duration_fn(wav_path))
 
-        if is_azure:
-            hyp_raw, proc_sec, dbg = adapter.transcribe_with_debug(wav_path)
-        else:
-            hyp_raw, proc_sec = adapter.transcribe(wav_path)
-            dbg = {}
+        hyp_raw, proc_sec, dbg = adapter.transcribe_with_debug(wav_path)
 
         proc_sec = float(proc_sec)
         ref_n = normalise_text(ref_raw)

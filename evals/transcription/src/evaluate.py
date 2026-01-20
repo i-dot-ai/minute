@@ -34,13 +34,13 @@ def run_evaluation(num_samples: float = 10, prepare_only: bool = False):
     )
 
     whisper_adapter = WhisperAdapter(
-        model_name="base",
+        model_name="large-v3",
         language="en",
     )
 
     adapters_config = [
-        {"adapter": azure_adapter, "label": "Azure Speech-to-Text", "is_azure": True},
-        {"adapter": whisper_adapter, "label": "Whisper (base)", "is_azure": False},
+        {"adapter": azure_adapter, "label": "Azure Speech-to-Text"},
+        {"adapter": whisper_adapter, "label": "Whisper"},
     ]
 
     logger.info("Running %d adapters in parallel on %d samples...", len(adapters_config), len(indices))

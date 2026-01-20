@@ -1,5 +1,6 @@
 import argparse
 import logging
+from datetime import datetime
 
 from adapters import AzureSTTAdapter, WhisperAdapter
 from core.config import AZURE_SPEECH_KEY, AZURE_SPEECH_REGION, WORKDIR
@@ -11,7 +12,8 @@ logger = logging.getLogger(__name__)
 
 def run_evaluation(num_samples: float = 10, prepare_only: bool = False):
     output_dir = WORKDIR / "results"
-    output_path = output_dir / "evaluation_results.json"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_path = output_dir / f"evaluation_results_{timestamp}.json"
 
     logger.info("Loading dataset...")
     ds = load_benchmark_dataset(num_samples=num_samples)

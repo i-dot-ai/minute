@@ -725,6 +725,145 @@ Total:         0.028 kg CO₂e/user
 
 ---
 
+# Appendix F: Speech-to-Text Training Impact — OWSM Case Study
+
+## F.1 Context and Relevance
+
+This appendix examines the training energy requirements for **Open Whisper-style Speech Models (OWSM)** [19], which represent open-source alternatives to proprietary ASR systems like OpenAI's Whisper. Understanding S2T training costs provides important context for the transcription services used in this system.
+
+**Why OWSM as a case study:**
+- OWSM models explicitly reproduce Whisper-style training using open-source toolkits
+- Training methodology and resource requirements are publicly documented
+- Represents realistic energy costs for state-of-the-art multilingual ASR systems
+- Provides transparency unavailable from commercial ASR providers
+
+**Relationship to this system:**
+While this system uses commercial transcription services (not OWSM), this case study illustrates the one-time training costs that underpin modern ASR capabilities. Similar to LLM training costs (Appendix D), these costs are amortized across all users of the technology.
+
+---
+
+## F.2 OWSM Training Configurations
+
+Peng et al. [19] trained three OWSM model versions with increasing scale and capability:
+
+| Model | Parameters | GPUs | Duration | Training Data |
+|-------|-----------|------|----------|---------------|
+| **OWSM v1** | ~1B | 32 A100s | 7 days | 180k hours |
+| **OWSM v2** | ~1B | 64 A100s | 10 days | 180k hours |
+| **OWSM v3** | ~1B | 64 A100s | 10 days | 180k hours |
+
+All models use NVIDIA A100 40GB PCIe GPUs with 250W TDP [20].
+
+---
+
+## F.3 Energy Calculation Methodology
+
+### Base GPU Energy
+
+**OWSM v1:**
+```
+32 GPUs × 250W × 24h × 7 days = 1,344 kWh
+```
+
+**OWSM v2:**
+```
+64 GPUs × 250W × 24h × 10 days = 3,840 kWh
+```
+
+**OWSM v3:**
+```
+64 GPUs × 250W × 24h × 10 days = 3,840 kWh
+```
+
+**Total GPU-only energy: 9,024 kWh**
+
+### System Overhead
+
+GPUs do not operate in isolation. According to Netrality Data Centers [22]:
+> "A server with eight A100 GPUs draws 3,200 watts just for GPUs, plus another 500-1,000 watts for CPUs, memory, and other components."
+
+**Calculation:**
+- Midpoint: 750W / 3,200W = additional **23.44%**
+- **System overhead multiplier: 1.2344×**
+
+This accounts for CPUs, memory, networking, storage, and other server components required to support GPU training.
+
+### Datacenter Infrastructure (PUE)
+
+The Uptime Institute Global Data Center Survey 2024 [21] reports:
+> "In the 2024 survey results, the industry average PUE of 1.56 reveals a continuing trend of inertia"
+
+**PUE multiplier: 1.56×**
+
+PUE (Power Usage Effectiveness) captures cooling, power distribution losses, lighting, and other facility-level overhead. A PUE of 1.56 means that for every 1 kWh consumed by IT equipment, an additional 0.56 kWh is consumed by datacenter infrastructure.
+
+---
+
+## F.4 Complete Training Energy Impact
+
+| Tier | Description | OWSM v1 | OWSM v2 | OWSM v3 | **Total** |
+|------|-------------|---------|---------|---------|-----------|
+| **Tier 1** | GPU only | 1,344 kWh | 3,840 kWh | 3,840 kWh | **9,024 kWh** |
+| **Tier 2** | + System overhead (×1.2344) | 1,659 kWh | 4,740 kWh | 4,740 kWh | **11,139 kWh** |
+| **Tier 3** | + Datacenter PUE (×1.56) | **2,488 kWh** | **7,110 kWh** | **7,110 kWh** | **16,708 kWh** |
+
+**Estimated training cost (at $0.12/kWh):**
+- Tier 1 (GPU only): $1,083
+- Tier 2 (+ System): $1,337
+- Tier 3 (+ Datacenter): **$2,005**
+
+---
+
+## F.5 Interpretation and Context
+
+### Scale of S2T Training
+
+The complete OWSM training program (all three versions) consumed **16,708 kWh** including datacenter overhead. This represents:
+- **85% increase** over GPU-only baseline due to system and infrastructure overhead
+- Approximately **1.85× multiplier** from GPU power to total datacenter energy
+- Realistic representation of actual training costs in production datacenter environments
+
+### Comparison to Operational Costs
+
+From Section 6, transcription of a 1-hour meeting consumes **0.022 kWh**. The OWSM training energy (16,708 kWh) could theoretically support:
+```
+16,708 kWh ÷ 0.022 kWh/hour ≈ 759,000 hours of transcription
+```
+
+This illustrates how training costs, while substantial in absolute terms, are amortized across massive usage volumes in production ASR systems.
+
+### Comparison to LLM Training
+
+| Model Type | Training Energy | Use Case |
+|------------|----------------|----------|
+| OWSM (all versions) | 16,708 kWh | Multilingual ASR |
+| GPT-4 (estimated) | 57,000,000 kWh | General-purpose LLM |
+| GPT-4o (estimated) | 1,151,000 kWh | Efficient LLM |
+
+**Key observations:**
+- S2T training is **3,400× less energy-intensive** than GPT-4 training
+- S2T training is **69× less energy-intensive** than GPT-4o training
+- This reflects the relative complexity: LLMs require understanding and generating natural language across all domains, while ASR focuses on the more constrained task of speech-to-text conversion
+
+### Implications for System Assessment
+
+**Training transparency:**
+- Commercial ASR providers (including those used by this system) do not publish training energy data
+- OWSM provides a rare transparent benchmark for modern multilingual ASR training costs
+- Actual commercial systems may have higher or lower training costs depending on scale and methodology
+
+**Amortization considerations:**
+- Training is a one-time cost distributed across all users and all transcription hours
+- With millions of hours of transcription served, per-hour training impact becomes negligible
+- Operational inference energy (Section 6) dominates the environmental footprint for ASR services
+
+**System design implications:**
+- ASR training costs are substantially lower than LLM training costs
+- This supports the finding that LLM inference (not transcription) drives system environmental impact
+- Template selection (Section 7) remains the most impactful environmental decision for users
+
+---
+
 # Appendix E: LLM Energy Consumption Benchmarks
 
 This appendix provides empirical energy consumption data for major LLM models, derived from independent research measurements [1]. These values are used throughout this assessment to calculate operational energy costs.
@@ -859,3 +998,7 @@ These rates assume linear scaling with token count, which is a reasonable approx
 [19] Y. Peng et al., "Reproducing Whisper-Style Training Using an Open-Source Toolkit and Publicly Available Data," arXiv:2309.13876v1 [cs.CL], 2023. [Online]. Available: https://arxiv.org/abs/2309.13876v1
 
 [20] NVIDIA Corporation, "NVIDIA A100 40GB PCIe GPU Accelerator Product Brief," NVIDIA, 2020. [Online]. Available: https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/a100/pdf/A100-PCIE-Prduct-Brief.pdf
+
+[21] Uptime Institute, "Uptime Institute Global Data Center Survey 2024," UII Keynote Report 146M, 2024. [Online]. Available: https://datacenter.uptimeinstitute.com/rs/711-RIA-145/images/2024.GlobalDataCenterSurvey.Report.pdf
+
+[22] Netrality Data Centers, "High-Density Colocation for AI and GPU Workloads," 2025. [Online]. Available: https://www.netrality.com/colocation/high-density-colocation/

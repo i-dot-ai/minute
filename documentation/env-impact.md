@@ -397,126 +397,43 @@ Additional template types (UserTemplate FORM, UserTemplate DOCUMENT, AI Edit, an
 
 ---
 
-## 10. Large Language Model Training Impact
+## 10. AI Model Training Impact
 
-### 10.1 Context and Methodology
+Model training represents a substantial one-time energy investment amortized across all users. Following the Final Discovery Report methodology, we distribute training costs equally across all users on a subscription basis. Training emissions are one-time costs, unlike inference costs which recur with each use.
 
-While operational inference energy (covered in Sections 4 and 8-9) represents the recurring environmental cost of using AI systems, model training represents a substantial one-time energy investment that is amortized across all users of the model.
+This system uses two types of AI models: Large Language Models (LLMs) for summarization and Speech-to-Text (ASR) models for transcription. Both contribute to the overall training footprint.
 
-This section estimates the per-user environmental impact of training the LLM models used in this system. Following the methodology established in the Final Discovery Report, we distribute training costs equally across all users on a **subscription basis**—each user of the technology bears an equal share of the training impact.
+### 10.1 Per-User Training Impact
 
-**Important limitations:**
-* This equal-distribution approach is not representative of actual usage patterns but provides a tractable estimation framework in the absence of detailed usage data
-* Training emissions are one-time costs amortized over the model's lifetime, unlike inference costs which recur with each use
-* Estimates are based on published research and may not reflect actual training configurations used by model providers
-* AI companies have commercial incentives to underreport training costs; independent peer-reviewed estimates are preferred where available
+**LLM models:** The system uses GPT-4 Turbo (BEST pathway) and GPT-4o (FAST pathway). GPT-4 is a large model (~1.76 trillion parameters) with training energy estimated at ~57,000 MWh [11]. GPT-4o is a smaller, more efficient model (~200 billion parameters) using Gopher as a training proxy (~1,151 MWh) [11] [12]. Training costs are amortized across 800 million weekly active users [13].
 
-### 10.2 GPT-4 Training Impact
+**ASR models:** Using OWSM v3 as a proxy for Whisper-style ASR models, training energy is estimated at ~7.4 MWh [19]. Training costs are amortized across 300 million Microsoft Teams monthly active users [23].
 
-**Training energy estimate:**
+**Per-user training impacts:**
 
-Based on peer-reviewed research by Ji & Jiang [11], GPT-4's training energy consumption is estimated between 52,000 MWh and 62,000 MWh. Using the midpoint as a conservative estimate:
+| Model | Training Energy | Per-User Energy | Per-User CO₂e |
+|-------|----------------|-----------------|---------------|
+| GPT-4 (Turbo) | ~57,000 MWh | 0.071 kWh | 0.027 kg |
+| GPT-4o | ~1,151 MWh | 0.0014 kWh | 0.00054 kg |
+| ASR (OWSM v3 proxy) | ~7.4 MWh | 0.000025 kWh | 0.0000095 kg |
+| **System Total** | - | **0.072 kWh** | **0.028 kg** |
 
-**GPT-4 training energy: ~57,000 MWh (57,000,000 kWh)**
+*ASR training represents only 0.034% of combined training impact and is negligible.*
 
-**User base:**
+*See Appendices D and E for detailed calculation methodology and data sources.*
 
-Assuming that GPT-4 (via ChatGPT) reached approximately 800 million weekly active users at its peak [13], this figure represents the user base over which training costs can be amortized.
+### 10.2 Training vs. Inference Comparison
 
-**Per-user training impact:**
+**Combined training impact (both models):** 0.072 kWh, 0.028 kg CO₂e per user
 
-Energy per user:
-```
-57,000,000 kWh ÷ 800,000,000 users = 0.071 kWh/user
-```
+**1-hour SimpleTemplate meeting:** 0.234 kWh, 0.072 kg CO₂e
 
-CO₂e per user (using US average carbon intensity: 0.386 kg CO₂e/kWh from EPA eGRID [14]):
-```
-0.071 kWh × 0.386 kg CO₂e/kWh = 0.027 kg CO₂e/user
-```
+**Key finding:** Processing a single 1-hour meeting with SimpleTemplate consumes **3.2× the combined training cost** amortized per user (GPT-4 + GPT-4o). This means:
+* Training represents only ~31% of a single meeting's inference cost
+* After processing just one meeting, inference costs exceed the user's share of training costs
+* Inference costs accumulate with each use, rapidly dominating the environmental impact
 
-**GPT-4 training impact per user: ~0.071 kWh, ~0.027 kg CO₂e**
-
-### 10.3 GPT-4o Training Impact
-
-**Model characteristics:**
-
-GPT-4o is a smaller, more efficient model estimated at approximately 200 billion parameters [12]. This places it in a similar size category to DeepMind's Gopher model (280 billion parameters), which provides a training energy benchmark [11].
-
-**Training energy estimate:**
-
-Based on the same research methodology [11], Gopher's training consumed approximately 1,151 MWh. Using this as a proxy for GPT-4o:
-
-**GPT-4o training energy: ~1,151 MWh (1,151,000 kWh)**
-
-**User base:**
-
-Assuming that GPT-4o also reached approximately 800 million weekly active users at its peak [13], this represents a similar amortization base.
-
-**Per-user training impact:**
-
-Energy per user:
-```
-1,151,000 kWh ÷ 800,000,000 users = 0.0014 kWh/user
-```
-
-CO₂e per user (using US average carbon intensity: 0.386 kg CO₂e/kWh from EPA eGRID [14]):
-```
-0.0014 kWh × 0.386 kg CO₂e/kWh = 0.00054 kg CO₂e/user
-```
-
-**GPT-4o training impact per user: ~0.0014 kWh, ~0.00054 kg CO₂e**
-
-### 10.4 Combined System Training Impact
-
-Based on the model usage patterns identified in Sections 8.1 and 8.2, the system uses both GPT-4 Turbo (BEST pathway) and GPT-4o (FAST pathway). For a user processing meetings with this system:
-
-**Training impact per system user:**
-```
-GPT-4 (Turbo):  0.071 kWh,   0.027 kg CO₂e
-GPT-4o:         0.0014 kWh,  0.00054 kg CO₂e
-Total:          0.0724 kWh,  0.028 kg CO₂e
-```
-
-### 10.5 Training vs. Inference Comparison
-
-To contextualize the training impact, we can compare it to the operational inference costs calculated earlier:
-
-| Impact Type | SimpleTemplate | SectionTemplate | Training (per user) |
-|-------------|----------------|-----------------|---------------------|
-| Energy (kWh) | 0.234 | 0.580 | 0.072 |
-| CO₂e (kg) | 0.072 | 0.161 | 0.028 |
-
-**Key observations:**
-
-* **Inference dominates operational costs**: Processing a single 1-hour meeting with SimpleTemplate (0.234 kWh) consumes 3.2× the amortized training cost per user (~0.072 kWh)
-* **Training impact is relatively small**: Even for the more intensive SectionTemplate (0.580 kWh), training represents only ~12% of a single meeting's inference cost
-* **Inference costs accumulate rapidly**: Any user who processes more than one meeting will see inference costs far exceed their share of training costs
-* **One-time vs. recurring**: Training is a one-time cost per user, while inference costs accumulate with each use
-* **Scale matters**: With 800 million users, training costs are well-amortized; for models with smaller user bases, per-user training impact would be proportionally higher
-* **Corrected values show larger gap**: Previous underestimated inference values suggested training and inference were comparable; corrected values show inference dominates by a significant margin
-
-### 10.6 Methodological Considerations
-
-**Equal distribution limitations:**
-
-The equal-distribution approach treats all users equivalently, which has significant limitations:
-* Heavy users generate more inference demand and arguably should bear more training cost
-* Many registered users may have minimal or no actual usage
-* Enterprise users may have substantially different usage patterns than casual users
-* The model does not account for temporal aspects (early vs. late adopters)
-
-**Alternative approaches could include:**
-* Usage-weighted distribution based on token consumption
-* Time-based amortization over expected model lifetime
-* Marginal cost allocation where training is attributed only to incremental users beyond a baseline
-
-However, in the absence of detailed usage data, equal distribution provides a simple, transparent, and defensible baseline estimate.
-
-**Data quality considerations:**
-
-* User figures represent weekly active users at peak, not total lifetime users
-* Training energy estimates are based on independent research, not company-reported figures
+**Limitations:** Equal-distribution approach does not reflect actual usage patterns but provides a tractable baseline. Training estimates are based on independent research and may not reflect actual configurations. With 800 million users, training costs are well-amortized; smaller user bases would see proportionally higher per-user impact.
 * Actual training may have included multiple runs, failed attempts, or iterative improvements not captured in published estimates
 * The GPT-4o estimate uses Gopher as a proxy due to similar parameter counts, but architectural differences may affect actual training costs
 
@@ -697,7 +614,6 @@ These patterns represent specialized workflows not used in typical meeting proce
 Training energy total: 57,000,000 kWh
 User base: 800,000,000 users
 Energy per user = 57,000,000 ÷ 800,000,000 = 0.071 kWh
-
 CO₂e per user = 0.071 kWh × 0.386 kg CO₂e/kWh = 0.027 kg CO₂e
 ```
 
@@ -707,84 +623,73 @@ CO₂e per user = 0.071 kWh × 0.386 kg CO₂e/kWh = 0.027 kg CO₂e
 Training energy total: 1,151,000 kWh
 User base: 800,000,000 users
 Energy per user = 1,151,000 ÷ 800,000,000 = 0.0014 kWh
-
 CO₂e per user = 0.0014 kWh × 0.386 kg CO₂e/kWh = 0.00054 kg CO₂e
 ```
 
 **Combined system impact:**
 
 ```
-GPT-4 (BEST):  0.071 kWh/user
-GPT-4o (FAST): 0.0014 kWh/user
-Total:         0.0724 kWh/user
+GPT-4 + GPT-4o total: 0.072 kWh/user, 0.028 kg CO₂e/user
+```
 
-GPT-4 (BEST):  0.027 kg CO₂e/user
-GPT-4o (FAST): 0.00054 kg CO₂e/user
-Total:         0.028 kg CO₂e/user
+**Comparison to 1-hour SimpleTemplate meeting:**
+
+```
+SimpleTemplate (1h meeting): 0.234 kWh, 0.072 kg CO₂e
+Training (per user):         0.072 kWh, 0.028 kg CO₂e
+Ratio: 0.234 ÷ 0.072 = 3.2×
+
+Inference consumes 3.2× the amortized training cost per user.
 ```
 
 ---
 
-# Appendix F: Speech-to-Text Training Impact — OWSM Case Study
+# Appendix E: Speech-to-Text Training Impact — OWSM Case Study
 
-## F.1 Context and Relevance
+## E.1 Context and Relevance
 
 This appendix examines the training energy requirements for **Open Whisper-style Speech Models (OWSM)** [19], which represent open-source alternatives to proprietary ASR systems like OpenAI's Whisper. Understanding S2T training costs provides important context for the transcription services used in this system.
 
 **Why OWSM as a case study:**
 - OWSM models explicitly reproduce Whisper-style training using open-source toolkits
 - Training methodology and resource requirements are publicly documented
-- Represents realistic energy costs for state-of-the-art multilingual ASR systems
-- Provides transparency unavailable from commercial ASR providers
 
 **Relationship to this system:**
 While this system uses commercial transcription services (not OWSM), this case study illustrates the one-time training costs that underpin modern ASR capabilities. Similar to LLM training costs (Appendix D), these costs are amortized across all users of the technology.
 
----
-
-## F.2 OWSM Training Configurations
-
-Peng et al. [19] trained three OWSM model versions with increasing scale and capability:
-
-| Model | Parameters | GPUs | Duration | Training Data |
-|-------|-----------|------|----------|---------------|
-| **OWSM v1** | ~1B | 32 A100s | 7 days | 180k hours |
-| **OWSM v2** | ~1B | 64 A100s | 10 days | 180k hours |
-| **OWSM v3** | ~1B | 64 A100s | 10 days | 180k hours |
-
-All models use NVIDIA A100 40GB PCIe GPUs with 250W TDP [20].
+**Limitation:**
+This analysis does not account for the energy used by auxialiary AI systems (e.g. diarization, content moderation) that are bundled in the transcription services used in this system.
 
 ---
 
-## F.3 Energy Calculation Methodology
+## E.2 OWSM v3 Training Configuration
+
+This analysis focuses on OWSM v3 [19], which represents a standard medium-sized Whisper-style model:
+
+| Model | GPUs | Duration | Training Data |
+|-------|------|----------|---------------|
+| OWSM v3 | 64 A100s | 10 days | 180k hours |
+
+The model uses NVIDIA A100 40GB PCIe GPUs with 250W TDP [20].
+
+---
+
+## E.3 Energy Calculation Methodology
 
 ### Base GPU Energy
 
-**OWSM v1:**
-```
-32 GPUs × 250W × 24h × 7 days = 1,344 kWh
-```
-
-**OWSM v2:**
 ```
 64 GPUs × 250W × 24h × 10 days = 3,840 kWh
 ```
-
-**OWSM v3:**
-```
-64 GPUs × 250W × 24h × 10 days = 3,840 kWh
-```
-
-**Total GPU-only energy: 9,024 kWh**
 
 ### System Overhead
 
 GPUs do not operate in isolation. According to Netrality Data Centers [22]:
 > "A server with eight A100 GPUs draws 3,200 watts just for GPUs, plus another 500-1,000 watts for CPUs, memory, and other components."
 
-**Calculation:**
-- Midpoint: 750W / 3,200W = additional **23.44%**
-- **System overhead multiplier: 1.2344×**
+Calculation:
+- Midpoint: 750W / 3,200W = additional 23.44%
+- System overhead multiplier: 1.2344×
 
 This accounts for CPUs, memory, networking, storage, and other server components required to support GPU training.
 
@@ -793,74 +698,64 @@ This accounts for CPUs, memory, networking, storage, and other server components
 The Uptime Institute Global Data Center Survey 2024 [21] reports:
 > "In the 2024 survey results, the industry average PUE of 1.56 reveals a continuing trend of inertia"
 
-**PUE multiplier: 1.56×**
+PUE multiplier: 1.56×
 
-PUE (Power Usage Effectiveness) captures cooling, power distribution losses, lighting, and other facility-level overhead. A PUE of 1.56 means that for every 1 kWh consumed by IT equipment, an additional 0.56 kWh is consumed by datacenter infrastructure.
-
----
-
-## F.4 Complete Training Energy Impact
-
-| Tier | Description | OWSM v1 | OWSM v2 | OWSM v3 | **Total** |
-|------|-------------|---------|---------|---------|-----------|
-| **Tier 1** | GPU only | 1,344 kWh | 3,840 kWh | 3,840 kWh | **9,024 kWh** |
-| **Tier 2** | + System overhead (×1.2344) | 1,659 kWh | 4,740 kWh | 4,740 kWh | **11,139 kWh** |
-| **Tier 3** | + Datacenter PUE (×1.56) | **2,488 kWh** | **7,110 kWh** | **7,110 kWh** | **16,708 kWh** |
-
-**Estimated training cost (at $0.12/kWh):**
-- Tier 1 (GPU only): $1,083
-- Tier 2 (+ System): $1,337
-- Tier 3 (+ Datacenter): **$2,005**
+PUE (Power Usage Effectiveness) captures cooling, power distribution losses, lighting, and other facility-level overhead. A PUE of 1.56 means that for every 1 kWh consumed by IT equipment providing value directly to users, an additional 0.56 kWh is consumed by everything else.
 
 ---
 
-## F.5 Interpretation and Context
+## E.4 Complete Training Energy Impact
 
-### Scale of S2T Training
+| Tier | Description | OWSM v3 |
+|------|-------------|----------|
+| Tier 1 | GPU only | 3,840 kWh |
+| Tier 2 | + System overhead (×1.2344) | 4,740 kWh |
+| Tier 3 | + Datacenter PUE (×1.56) | 7,395 kWh |
 
-The complete OWSM training program (all three versions) consumed **16,708 kWh** including datacenter overhead. This represents:
-- **85% increase** over GPU-only baseline due to system and infrastructure overhead
-- Approximately **1.85× multiplier** from GPU power to total datacenter energy
-- Realistic representation of actual training costs in production datacenter environments
+---
 
-### Comparison to Operational Costs
-
-From Section 6, transcription of a 1-hour meeting consumes **0.022 kWh**. The OWSM training energy (16,708 kWh) could theoretically support:
-```
-16,708 kWh ÷ 0.022 kWh/hour ≈ 759,000 hours of transcription
-```
-
-This illustrates how training costs, while substantial in absolute terms, are amortized across massive usage volumes in production ASR systems.
+## E.5 Interpretation and Context
 
 ### Comparison to LLM Training
 
-| Model Type | Training Energy | Use Case |
-|------------|----------------|----------|
-| OWSM (all versions) | 16,708 kWh | Multilingual ASR |
-| GPT-4 (estimated) | 57,000,000 kWh | General-purpose LLM |
-| GPT-4o (estimated) | 1,151,000 kWh | Efficient LLM |
+| Model Type | Training Energy |
+|------------|----------------|
+| OWSM v3 | 7,395 kWh |
+| GPT-4 (estimated) | 57,000,000 kWh |
+| GPT-4o (estimated) | 1,151,000 kWh |
 
-**Key observations:**
-- S2T training is **3,400× less energy-intensive** than GPT-4 training
-- S2T training is **69× less energy-intensive** than GPT-4o training
-- This reflects the relative complexity: LLMs require understanding and generating natural language across all domains, while ASR focuses on the more constrained task of speech-to-text conversion
+Key observations:
+- S2T training is 7,700× less energy-intensive than GPT-4 training
+- S2T training is 156× less energy-intensive than GPT-4o training
 
-### Implications for System Assessment
+---
 
-**Training transparency:**
-- Commercial ASR providers (including those used by this system) do not publish training energy data
-- OWSM provides a rare transparent benchmark for modern multilingual ASR training costs
-- Actual commercial systems may have higher or lower training costs depending on scale and methodology
+## E.6 Per-User Training Impact
 
-**Amortization considerations:**
-- Training is a one-time cost distributed across all users and all transcription hours
-- With millions of hours of transcription served, per-hour training impact becomes negligible
-- Operational inference energy (Section 6) dominates the environmental footprint for ASR services
+**User base:** Training costs amortized across 300 million Microsoft Teams monthly active users [23], representing a conservative estimate for Azure Speech-to-Text service reach.
 
-**System design implications:**
-- ASR training costs are substantially lower than LLM training costs
-- This supports the finding that LLM inference (not transcription) drives system environmental impact
-- Template selection (Section 7) remains the most impactful environmental decision for users
+**Carbon intensity:** US average 0.386 kg CO₂e/kWh (EPA eGRID) [14], as most large-scale AI training occurs in US data centers.
+
+## E.7 Calculation Methodology
+
+**OWSM v3 per-user calculations:**
+
+```
+Training energy total: 7,395 kWh
+User base: 300,000,000 users
+Energy per user = 7,395 ÷ 300,000,000 = 0.000025 kWh
+CO₂e per user = 0.000025 kWh × 0.386 kg CO₂e/kWh = 0.0000095 kg CO₂e
+```
+
+**Combined system training impact (LLM + ASR):**
+
+```
+GPT-4 + GPT-4o:  0.072 kWh/user,    0.028 kg CO₂e/user
+OWSM v3 (ASR):   0.000025 kWh/user, 0.0000095 kg CO₂e/user
+Total:           0.072 kWh/user,    0.028 kg CO₂e/user
+```
+
+**Key observation:** ASR training represents only 0.034% of the combined training impact per user, making it negligible in the overall training footprint.
 
 ---
 
@@ -933,27 +828,6 @@ From the medium (1k/1k) measurements:
 
 These rates assume linear scaling with token count, which is a reasonable approximation for inference workloads of similar size to the benchmark conditions.
 
-## E.5 Limitations and Uncertainties
-
-**Measurement variability:**
-* Standard deviations range from ~10% to ~50% of mean values
-* Variability reflects differences in hardware, batching, and execution conditions
-* This assessment uses mean values without propagating uncertainty
-
-**Scaling assumptions:**
-* Linear scaling with token count is approximate
-* Actual energy may vary with prompt structure, model state, and infrastructure
-* Batch processing and caching can reduce per-token costs in production
-
-**Model versions:**
-* Energy consumption can vary between model versions and deployments
-* Provider infrastructure improvements may reduce energy over time
-* These measurements represent a snapshot from 2025 research
-
-**Conservative approach:**
-* Using empirical measurements rather than provider-reported figures
-* Independent research preferred over commercial claims
-* Acknowledging uncertainty ranges in source data
 
 ---
 
@@ -1001,4 +875,7 @@ These rates assume linear scaling with token count, which is a reasonable approx
 
 [21] Uptime Institute, "Uptime Institute Global Data Center Survey 2024," UII Keynote Report 146M, 2024. [Online]. Available: https://datacenter.uptimeinstitute.com/rs/711-RIA-145/images/2024.GlobalDataCenterSurvey.Report.pdf
 
-[22] Netrality Data Centers, "High-Density Colocation for AI and GPU Workloads," 2025. [Online]. Available: https://www.netrality.com/colocation/high-density-colocation/
+[22] Netrality Data Centers, "High-Density Colocation for AI and GPU Workloads," 2025. [Online]. Available: https://netrality.com/blog/high-density-colocation-ai-gpu-infrastructure/
+
+[23] Microsoft, “Microsoft Teams surpasses 300 million monthly active users,” *Microsoft FY2023 Q3 Earnings Conference Call Transcript*, Apr. 2023. [Online]. Available: https://www.microsoft.com/en-us/investor/events/fy-2023/earnings-fy-2023-q3/ :contentReference[oaicite:0]{index=0}
+

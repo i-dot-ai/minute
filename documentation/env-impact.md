@@ -120,8 +120,8 @@ Most data centre water use is non-consumptive—water is returned to the source 
 
 * Transcript length: **X = 9,000 words** (1-hour meeting baseline)
 * Token conversion: **2 tokens per word**
-* Carbon intensity (inference): **EU-27 average = 0.258 kg CO₂e/kWh** [10]
-* Carbon intensity (training): **US average = 0.386 kg CO₂e/kWh** [14]
+* Carbon intensity (inference): **EU-27 average = 258 g CO₂e/kWh** [10]
+* Carbon intensity (training): **US average = 386 g CO₂e/kWh** [14]
 * ASR emissions from academic measurements [15]
 * LLM inference energy from published benchmarking [1]
 * LLM training energy from academic papers [11]
@@ -144,18 +144,18 @@ From the ASR study [15], using Whisper as a proxy (similar open-source ASR syste
 * Average: 0.49 kWh for 22 hours of processing
 
 **Per hour calculation:**
-* Energy: 0.49 ÷ 22 ≈ **0.0223 kWh per hour**
+* Energy: 0.49 ÷ 22 ≈ **22.3 Wh (0.0223 kWh)**
 
 **CO₂e emissions:**
-* Total: 0.38 kg CO₂e for 22 hours
-* Per hour: 0.38 ÷ 22 ≈ **0.0173 kg CO₂e per hour**
+* Total: 380 g CO₂e for 22 hours
+* Per hour: 380 ÷ 22 ≈ **17.3 g CO₂e**
 
 **Summary**
 
 | Metric |      Value |
 | ------ | ---------: |
-| Energy | ~0.022 kWh |
-| CO₂e   |  ~0.017 kg |
+| Energy | ~22 Wh (0.022 kWh) |
+| CO₂e   |  ~17 g |
 
 ---
 
@@ -174,11 +174,11 @@ From the ASR study [15], using Whisper as a proxy (similar open-source ASR syste
 * GPT-4o: 45.43 Wh (74,778 tokens × 0.6075 Wh/1k tokens)
 * GPT-4 Turbo: 166.07 Wh (55,916 tokens × 2.970 Wh/1k tokens)
 
-**Total LLM energy:** **0.2115 kWh**
+**Total LLM energy:** **211.5 Wh (0.2115 kWh)**
 
 **CO₂e**
 
-* 0.2115 × 0.258 = **0.0546 kg CO₂e**
+* 211.5 Wh × 0.258 kg/kWh = **54.6 g CO₂e**
 
 ---
 
@@ -195,11 +195,11 @@ From the ASR study [15], using Whisper as a proxy (similar open-source ASR syste
 * GPT-4o: 29.59 Wh (48,702 tokens × 0.6075 Wh/1k tokens)
 * GPT-4 Turbo: 527.95 Wh (177,762 tokens × 2.970 Wh/1k tokens)
 
-**Total LLM energy:** **0.5575 kWh**
+**Total LLM energy:** **557.5 Wh (0.5575 kWh)**
 
 **CO₂e**
 
-* 0.5575 × 0.258 = **0.1438 kg CO₂e**
+* 557.5 Wh × 0.258 kg/kWh = **143.8 g CO₂e**
 
 ---
 
@@ -216,11 +216,11 @@ From the ASR study [15], using Whisper as a proxy (similar open-source ASR syste
 * GPT-4o: 42.43 Wh (69,846 tokens × 0.6075 Wh/1k tokens)
 * GPT-4 Turbo: 151.33 Wh (50,952 tokens × 2.970 Wh/1k tokens)
 
-**Total LLM energy:** **0.1938 kWh**
+**Total LLM energy:** **193.8 Wh (0.1938 kWh)**
 
 **CO₂e**
 
-* 0.1938 × 0.258 = **0.0500 kg CO₂e**
+* 193.8 Wh × 0.258 kg/kWh = **50.0 g CO₂e**
 
 ---
 
@@ -236,11 +236,11 @@ From the ASR study [15], using Whisper as a proxy (similar open-source ASR syste
 
 * GPT-4o: 50.67 Wh (83,406 tokens × 0.6075 Wh/1k tokens)
 
-**Total LLM energy:** **0.0507 kWh**
+**Total LLM energy:** **50.7 Wh (0.0507 kWh)**
 
 **CO₂e**
 
-* 0.0507 × 0.258 = **0.0131 kg CO₂e**
+* 50.7 Wh × 0.258 kg/kWh = **13.1 g CO₂e**
 
 ---
 
@@ -252,12 +252,12 @@ Additional AI modes, including UserTemplate FORM, UserTemplate DOCUMENT, AI Edit
 
 ### 7.6 Template Comparison Summary
 
-| Template Type | Invocations | Total Tokens | Energy (kWh) | CO₂e (kg) |
-|---------------|-------------|--------------|--------------|-----------|
-| Basic Minutes | 4 | 83,406 | 0.0507 | 0.0131 |
-| Delivery | 6 | 120,798 | 0.1938 | 0.0500 |
-| SimpleTemplate | 6 | 130,694 | 0.2115 | 0.0546 |
-| SectionTemplate (Y=6) | 17 | 226,464 | 0.5575 | 0.1438 |
+| Template Type | Invocations | Total Tokens | Energy | CO₂e |
+|---------------|-------------|--------------|--------|------|
+| Basic Minutes | 4 | 83,406 | 50.7 Wh (0.051 kWh) | 13.1 g |
+| Delivery | 6 | 120,798 | 193.8 Wh (0.194 kWh) | 50.0 g |
+| SimpleTemplate | 6 | 130,694 | 211.5 Wh (0.212 kWh) | 54.6 g |
+| SectionTemplate (Y=6) | 17 | 226,464 | 557.5 Wh (0.558 kWh) | 143.8 g |
 
 **Key observations:**
 * Model selection, FAST versus BEST, has a greater impact than token count alone
@@ -270,35 +270,35 @@ Additional AI modes, including UserTemplate FORM, UserTemplate DOCUMENT, AI Edit
 
 ### 8.1 SimpleTemplate
 
-| Component      | Energy (kWh) | % of Total |  CO₂e (kg) | % of Total |
-| -------------- | -----------: | ---------: | ---------: | ---------: |
-| Transcription  |       0.0223 |       9.5% |     0.0173 |      24.1% |
-| LLM processing |       0.2115 |      90.5% |     0.0546 |      75.9% |
-| **Total**      |   **0.2338** | **100.0%** | **0.0719** | **100.0%** |
+| Component      | Energy | % of Total |  CO₂e | % of Total |
+| -------------- | -----: | ---------: | ----: | ---------: |
+| Transcription  | 22.3 Wh (0.022 kWh) |       9.5% | 17.3 g |      24.1% |
+| LLM processing | 211.5 Wh (0.212 kWh) |      90.5% | 54.6 g |      75.9% |
+| **Total**      | **233.8 Wh (0.234 kWh)** | **100.0%** | **72 g** | **100.0%** |
 
 ### 8.2 SectionTemplate (Y=6)
 
-| Component      | Energy (kWh) | % of Total |  CO₂e (kg) | % of Total |
-| -------------- | -----------: | ---------: | ---------: | ---------: |
-| Transcription  |       0.0223 |       3.8% |     0.0173 |      10.7% |
-| LLM processing |       0.5575 |      96.2% |     0.1438 |      89.3% |
-| **Total**      |   **0.5798** | **100.0%** | **0.1611** | **100.0%** |
+| Component      | Energy | % of Total |  CO₂e | % of Total |
+| -------------- | -----: | ---------: | ----: | ---------: |
+| Transcription  | 22.3 Wh (0.022 kWh) |       3.8% | 17.3 g |      10.7% |
+| LLM processing | 557.5 Wh (0.558 kWh) |      96.2% | 143.8 g |      89.3% |
+| **Total**      | **579.8 Wh (0.580 kWh)** | **100.0%** | **161 g** | **100.0%** |
 
 ### 8.3 Delivery Template
 
-| Component      | Energy (kWh) | % of Total |  CO₂e (kg) | % of Total |
-| -------------- | -----------: | ---------: | ---------: | ---------: |
-| Transcription  |       0.0223 |      10.3% |     0.0173 |      25.7% |
-| LLM processing |       0.1938 |      89.7% |     0.0500 |      74.3% |
-| **Total**      |   **0.2161** | **100.0%** | **0.0673** | **100.0%** |
+| Component      | Energy | % of Total |  CO₂e | % of Total |
+| -------------- | -----: | ---------: | ----: | ---------: |
+| Transcription  | 22.3 Wh (0.022 kWh) |      10.3% | 17.3 g |      25.7% |
+| LLM processing | 193.8 Wh (0.194 kWh) |      89.7% | 50.0 g |      74.3% |
+| **Total**      | **216.1 Wh (0.216 kWh)** | **100.0%** | **67 g** | **100.0%** |
 
 ### 8.4 Basic Minutes
 
-| Component      | Energy (kWh) | % of Total |  CO₂e (kg) | % of Total |
-| -------------- | -----------: | ---------: | ---------: | ---------: |
-| Transcription  |       0.0223 |      30.5% |     0.0173 |      56.9% |
-| LLM processing |       0.0507 |      69.5% |     0.0131 |      43.1% |
-| **Total**      |   **0.0730** | **100.0%** | **0.0304** | **100.0%** |
+| Component      | Energy | % of Total |  CO₂e | % of Total |
+| -------------- | -----: | ---------: | ----: | ---------: |
+| Transcription  | 22.3 Wh (0.022 kWh) |      30.5% | 17.3 g |      56.9% |
+| LLM processing | 50.7 Wh (0.051 kWh) |      69.5% | 13.1 g |      43.1% |
+| **Total**      | **73.0 Wh (0.073 kWh)** | **100.0%** | **30 g** | **100.0%** |
 
 ---
 
@@ -308,11 +308,11 @@ Additional AI modes, including UserTemplate FORM, UserTemplate DOCUMENT, AI Edit
 * LLM inference dominates operational energy use across all template types, representing 70-96% of total energy consumption depending on template complexity
 * Basic Minutes shows the most balanced distribution (70% LLM, 30% transcription) due to minimal processing
 * SectionTemplate shows highest LLM dominance (96%) due to multiple BEST model invocations
-* Transcription represents a fixed cost of 0.0223 kWh regardless of template type
+* Transcription represents a fixed cost of 22.3 Wh (0.022 kWh) regardless of template type
 
 **Total system impact:**
-* The combined transcription and processing workflow for a 1-hour meeting produces **0.03-0.16 kg CO₂e** depending on template choice
-* Range spans from Basic Minutes (0.030 kg) to SectionTemplate (0.161 kg) - a 5.3× difference
+* The combined transcription and processing workflow for a 1-hour meeting produces **30-161 g CO₂e** depending on template choice
+* Range spans from Basic Minutes (30 g) to SectionTemplate (161 g) - a 5.4× difference
 * Template selection is the single most impactful factor for environmental footprint
 
 ---
@@ -333,10 +333,10 @@ This system uses two types of AI models: Large Language Models (LLMs) for summar
 
 | Model | Training Energy | Per-User Energy | Per-User CO₂e |
 |-------|----------------|-----------------|---------------|
-| GPT-4 (Turbo) | ~57,000 MWh | 0.071 kWh | 0.027 kg |
-| GPT-4o | ~1,151 MWh | 0.0014 kWh | 0.00054 kg |
-| ASR (OWSM v3 proxy) | ~7.4 MWh | 0.000025 kWh | 0.0000095 kg |
-| **System Total** | - | **0.072 kWh** | **0.028 kg** |
+| GPT-4 (Turbo) | ~57,000 MWh | 71 Wh (0.071 kWh) | 27 g |
+| GPT-4o | ~1,151 MWh | 1.4 Wh (0.0014 kWh) | 0.54 g |
+| ASR (OWSM v3 proxy) | ~7.4 MWh | 0.025 Wh (0.000025 kWh) | 0.0095 g |
+| **System Total** | - | **72 Wh (0.072 kWh)** | **28 g** |
 
 *ASR training represents only 0.034% of combined training impact and is negligible.*
 
@@ -344,9 +344,9 @@ This system uses two types of AI models: Large Language Models (LLMs) for summar
 
 ### 10.2 Training vs. Inference Comparison
 
-**Combined training impact (both models):** 0.072 kWh, 0.028 kg CO₂e per user
+**Combined training impact (both models):** 72 Wh (0.072 kWh), 28 g CO₂e per user
 
-**1-hour SimpleTemplate meeting:** 0.234 kWh, 0.072 kg CO₂e
+**1-hour SimpleTemplate meeting:** 233.8 Wh (0.234 kWh), 72 g CO₂e
 
 **Key finding:** Processing a single 1-hour meeting with SimpleTemplate consumes **3.2× the combined training cost** amortized per user (GPT-4 + GPT-4o). This means:
 * Training represents only ~31% of a single meeting's inference cost
@@ -359,7 +359,7 @@ This system uses two types of AI models: Large Language Models (LLMs) for summar
 
 **Carbon intensity for training:**
 
-Training calculations use US average carbon intensity (0.386 kg CO₂e/kWh) from EPA eGRID data [14], as most large-scale AI training is conducted in US data centres. This is significantly higher than the EU-27 average (0.258 kg CO₂e/kWh) used for inference calculations, reflecting the carbon-intensive nature of US electricity generation.
+Training calculations use US average carbon intensity (386 g CO₂e/kWh) from EPA eGRID data [14], as most large-scale AI training is conducted in US data centres. This is significantly higher than the EU-27 average (258 g CO₂e/kWh) used for inference calculations, reflecting the carbon-intensive nature of US electricity generation.
 
 **Scope boundaries:**
 
@@ -415,8 +415,8 @@ This appendix documents all LLM invocations in the i-ai-minute system with per-i
 
 ### Geographic Scope and Carbon Intensity
 
-* **Inference**: EU-27 average (0.258 kg CO₂e/kWh) as baseline for operational use
-* **Training**: US average (0.386 kg CO₂e/kWh) from EPA eGRID data, as most large-scale AI training occurs in US data centres
+* **Inference**: EU-27 average (258 g CO₂e/kWh) as baseline for operational use
+* **Training**: US average (386 g CO₂e/kWh) from EPA eGRID data, as most large-scale AI training occurs in US data centres
 * Actual carbon intensity varies significantly by region, provider, and time of day
 * Many AI providers route queries to various global data centres with different carbon intensities
 * Organizations in different regions will see proportionally different CO₂e impacts
@@ -565,9 +565,9 @@ These patterns represent specialized workflows not used in typical meeting proce
 * Note: This likely underestimates total lifetime users but provides a conservative estimate
 
 **Carbon Intensity:**
-* US average: 0.386 kg CO₂e/kWh (EPA eGRID) [14]
+* US average: 386 g CO₂e/kWh (EPA eGRID) [14]
 * Note: Training calculations use US carbon intensity as most large-scale AI training occurs in US data centers
-* This is significantly higher than EU-27 average (0.258 kg CO₂e/kWh) used for inference
+* This is significantly higher than EU-27 average (258 g CO₂e/kWh) used for inference
 
 ## D.2 Calculation Methodology
 
@@ -576,8 +576,8 @@ These patterns represent specialized workflows not used in typical meeting proce
 ```
 Training energy total: 57,000,000 kWh
 User base: 800,000,000 users
-Energy per user = 57,000,000 ÷ 800,000,000 = 0.071 kWh
-CO₂e per user = 0.071 kWh × 0.386 kg CO₂e/kWh = 0.027 kg CO₂e
+Energy per user = 57,000,000 ÷ 800,000,000 = 71 Wh (0.071 kWh)
+CO₂e per user = 71 Wh × 386 g/kWh = 27 g
 ```
 
 **GPT-4o per-user calculations:**
@@ -585,22 +585,22 @@ CO₂e per user = 0.071 kWh × 0.386 kg CO₂e/kWh = 0.027 kg CO₂e
 ```
 Training energy total: 1,151,000 kWh
 User base: 800,000,000 users
-Energy per user = 1,151,000 ÷ 800,000,000 = 0.0014 kWh
-CO₂e per user = 0.0014 kWh × 0.386 kg CO₂e/kWh = 0.00054 kg CO₂e
+Energy per user = 1,151,000 ÷ 800,000,000 = 1.4 Wh (0.0014 kWh)
+CO₂e per user = 1.4 Wh × 386 g/kWh = 0.54 g
 ```
 
 **Combined system impact:**
 
 ```
-GPT-4 + GPT-4o total: 0.072 kWh/user, 0.028 kg CO₂e/user
+GPT-4 + GPT-4o total: 72 Wh (0.072 kWh) per user, 28 g per user
 ```
 
 **Comparison to 1-hour SimpleTemplate meeting:**
 
 ```
-SimpleTemplate (1h meeting): 0.234 kWh, 0.072 kg CO₂e
-Training (per user):         0.072 kWh, 0.028 kg CO₂e
-Ratio: 0.234 ÷ 0.072 = 3.2×
+SimpleTemplate (1h meeting): 233.8 Wh (0.234 kWh), 72 g CO₂e
+Training (per user):         72 Wh (0.072 kWh), 28 g CO₂e
+Ratio: 233.8 ÷ 72 = 3.2×
 
 Inference consumes 3.2× the amortized training cost per user.
 ```
@@ -697,7 +697,7 @@ Key observations:
 
 **User base:** Training costs amortized across 300 million Microsoft Teams monthly active users [23], representing a conservative estimate for Azure Speech-to-Text service reach.
 
-**Carbon intensity:** US average 0.386 kg CO₂e/kWh (EPA eGRID) [14], as most large-scale AI training occurs in US data centers.
+**Carbon intensity:** US average 386 g CO₂e/kWh (EPA eGRID) [14], as most large-scale AI training occurs in US data centers.
 
 ## E.7 Calculation Methodology
 
@@ -706,16 +706,16 @@ Key observations:
 ```
 Training energy total: 7,395 kWh
 User base: 300,000,000 users
-Energy per user = 7,395 ÷ 300,000,000 = 0.000025 kWh
-CO₂e per user = 0.000025 kWh × 0.386 kg CO₂e/kWh = 0.0000095 kg CO₂e
+Energy per user = 7,395 ÷ 300,000,000 = 0.025 Wh (0.000025 kWh)
+CO₂e per user = 0.025 Wh × 386 g/kWh = 0.0095 g
 ```
 
 **Combined system training impact (LLM + ASR):**
 
 ```
-GPT-4 + GPT-4o:  0.072 kWh/user,    0.028 kg CO₂e/user
-OWSM v3 (ASR):   0.000025 kWh/user, 0.0000095 kg CO₂e/user
-Total:           0.072 kWh/user,    0.028 kg CO₂e/user
+GPT-4 + GPT-4o:  72 Wh (0.072 kWh) per user,    28 g per user
+OWSM v3 (ASR):   0.025 Wh (0.000025 kWh) per user, 0.0095 g per user
+Total:           72 Wh (0.072 kWh) per user,    28 g per user
 ```
 
 **Key observation:** ASR training represents only 0.034% of the combined training impact per user, making it negligible in the overall training footprint.

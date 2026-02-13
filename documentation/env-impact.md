@@ -92,27 +92,25 @@ For this reason, a **token usage analysis** of each system invocation is used to
 
 ## 4. Water Usage Considerations
 
-### 4.1 Context
+### 4.1 Context and scale
 
-Water consumption in data centres is a recognised environmental concern. In some regions, high water use has contributed to local water stress and ecosystem impact [3], [5], [6].
+Water consumption in data centres is driven primarily by cooling system design. Evaporative cooling is the dominant source of consumptive water use, while dry or closed-loop systems can substantially reduce or eliminate it [1], [6].
 
-### 4.2 European context
+In the UK, 51% of data centres use waterless cooling, 44% use hybrid systems, and only 5% use water-based cooling exclusively [6]. Among those that do use water, consumption is relatively modest: 64% use less than 10 million litres per year (approximately equivalent to 200 people) [6].
 
-Operational water consumption is driven primarily by cooling system design. Industry guidance distinguishes between water withdrawal and water consumption, noting that evaporative cooling is the dominant source of consumptive water use, while dry or closed-loop systems can substantially reduce or eliminate it [1], [6].
+At continental scale, data centres do not represent a major water-consuming sector compared to agriculture and heavy industry [4], [6]. However, 32% of the European population lives in water-stressed areas [5], and England faces a projected 5 billion litre public water shortage by 2055 [3].
 
-In the UK specifically, 51% of data centres use waterless cooling, 44% use hybrid systems, and only 5% use water-based cooling exclusively [6]. Among those that do use water, consumption levels are relatively modest: 33% of UK data centres use less than 1 million litres per year (approximately equivalent to 20 people's annual consumption), and 64% use less than 10 million litres per year (approximately equivalent to 200 people) [6].
+### 4.2 Water cycle and local impact
 
-It has to be noted that hardware used to train and use AI does require water in the production process [1]. This was not taken into account in the calculations of this report.
+Most data centre water use is non-consumptive—water is returned to the source or hydrologic system shortly after withdrawal, with minimal atmospheric loss and minimal chemical contamination compared to other industrial uses [7], [4].
 
-### 4.3 Local vs. continental perspective
+**The primary concern is placement**: locating high water-use data centres in water-stressed regions compounds existing problems [3], [5]. Water impact is **local and contextual**, not permanent loss.
 
-While 32% of the European population lives in water-stressed areas [5], and water stress is a serious concern in England too (which faces a projected 5 billion litre public water shortage by 2055 [3]), at continental scale, data centres do not represent a major water-consuming sector compared to agriculture and heavy industry [4], [6].
+**Note:** Hardware manufacturing for AI infrastructure requires water in the production process [1], which is not accounted for in this report.
 
-### 4.4 Water cycle considerations
+### 4.3 Recommendation
 
-In evaporative cooling systems, water ultimately returns to the broader hydrological cycle through evaporation and precipitation processes [8], [9]. Most data centre water use is non-consumptive—water is returned to the source or hydrologic system shortly after withdrawal, with minimal atmospheric loss and minimal chemical contamination compared to other industrial uses [7], [4].
-
-While this does not negate local water-stress concerns, it supports careful framing of impacts as **local and contextual**, rather than permanent loss. The primary concern is placement: locating high water-use data centres in water-stressed regions compounds existing problems [3], [5].
+**Infrastructure provider selection should consider water ethics.** Organizations should evaluate whether their cloud providers operate data centres in water-stressed regions and prioritize providers with transparent water usage reporting and responsible placement strategies.
 
 ---
 
@@ -165,7 +163,7 @@ From the ASR study [15], using Whisper as a proxy (similar open-source ASR syste
 
 ### 7.1 SimpleTemplate (General / Executive Summary)
 
-**Token usage** (calculated from Appendix B.2 formulas with X = 9,000)
+**Token usage** (calculated from Appendix B.2 formulas)
 
 * GPT-4o (FAST): 74,778 tokens
 * GPT-4 Turbo (BEST): 55,916 tokens
@@ -186,7 +184,7 @@ From the ASR study [15], using Whisper as a proxy (similar open-source ASR syste
 
 ### 7.2 SectionTemplate (Y = 6 sections)
 
-**Token usage** (calculated from Appendix B.3 formulas with X = 9,000, Y = 6)
+**Token usage** (calculated from Appendix B.3 formulas)
 
 * GPT-4o (FAST): 48,702 tokens
 * GPT-4 Turbo (BEST): 177,762 tokens
@@ -207,7 +205,7 @@ From the ASR study [15], using Whisper as a proxy (similar open-source ASR syste
 
 ### 7.3 Delivery Template
 
-**Token usage** (calculated from Appendix B.4 formulas with X = 9,000)
+**Token usage** (calculated from Appendix B.4 formulas)
 
 * GPT-4o (FAST): 69,846 tokens
 * GPT-4 Turbo (BEST): 50,952 tokens
@@ -228,7 +226,7 @@ From the ASR study [15], using Whisper as a proxy (similar open-source ASR syste
 
 ### 7.4 Basic Minutes (Fallback)
 
-**Token usage** (calculated from Appendix B.5 formulas with X = 9,000)
+**Token usage** (calculated from Appendix B.5 formulas)
 
 * GPT-4o (FAST): 83,406 tokens
 * GPT-4 Turbo (BEST): 0 tokens (FAST only)
@@ -301,15 +299,6 @@ Additional AI modes, including UserTemplate FORM, UserTemplate DOCUMENT, AI Edit
 | Transcription  |       0.0223 |      30.5% |     0.0173 |      56.9% |
 | LLM processing |       0.0507 |      69.5% |     0.0131 |      43.1% |
 | **Total**      |   **0.0730** | **100.0%** | **0.0304** | **100.0%** |
-
-### 8.5 Comprehensive Template Comparison (Total System Impact)
-
-| Template Type | Total Energy (kWh) | Total CO₂e (kg) | Relative to Basic |
-|---------------|-------------------:|----------------:|------------------:|
-| Basic Minutes | 0.0730 | 0.0304 | 1.0× |
-| Delivery | 0.2161 | 0.0673 | 3.0× |
-| SimpleTemplate | 0.2338 | 0.0719 | 3.2× |
-| SectionTemplate (Y=6) | 0.5798 | 0.1611 | 7.9× |
 
 ---
 

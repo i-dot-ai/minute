@@ -150,6 +150,8 @@ From the ASR study [15], using Whisper as a proxy (similar open-source ASR syste
 * Total: 380 g CO₂e for 22 hours
 * Per hour: 380 ÷ 22 ≈ **17.3 g CO₂e**
 
+**Note:** Transcription CO₂e is taken directly from the source study [15] (implied carbon intensity: ~776 g/kWh), not calculated using EU-27 average (258 g/kWh) like LLM processing. This explains differing energy vs. CO₂e percentages in combined totals.
+
 **Summary**
 
 | Metric |      Value |
@@ -267,6 +269,8 @@ Additional AI modes, including UserTemplate FORM, UserTemplate DOCUMENT, AI Edit
 ---
 
 ## 8. Combined Impact per 1-Hour Meeting
+
+**Note:** Transcription CO₂e uses source study's carbon intensity (~776 g/kWh); LLM uses EU-27 average (258 g/kWh). Energy and CO₂e percentages differ accordingly.
 
 ### 8.1 SimpleTemplate
 

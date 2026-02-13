@@ -118,68 +118,23 @@ While this does not negate local water-stress concerns, it supports careful fram
 
 ## 5. Quantitative Impact for a 1-Hour Meeting
 
-### 5.1 Assumptions
+### 5.1 Key Assumptions
 
-The following assumptions are applied consistently throughout:
-
-* Transcript length: **X = 9,000 words**, corresponding to approximately **1 hour of meeting audio**
+* Transcript length: **X = 9,000 words** (1-hour meeting baseline)
 * Token conversion: **2 tokens per word**
-* Electricity carbon intensity for inference: **EU-27 average = 0.258 kg CO₂e/kWh** [10]
-* Electricity carbon intensity for training: **US average = 0.386 kg CO₂e/kWh** [14]
-* ASR emissions derived from measurements in academic papers [15]
-* LLM inference energy derived from published benchmarking [1]
-* LLM training energy derived from academic papers [11]
-* Model selection is intentionally enviornmentally pessimistic (higher energy/CO2e) (Appendix A)
+* Carbon intensity (inference): **EU-27 average = 0.258 kg CO₂e/kWh** [10]
+* Carbon intensity (training): **US average = 0.386 kg CO₂e/kWh** [14]
+* ASR emissions from academic measurements [15]
+* LLM inference energy from published benchmarking [1]
+* LLM training energy from academic papers [11]
+* Model selection intentionally pessimistic (Appendix A)
+* Token usage formulas assume optimal AI behaviour (no retries/failures)
 
-### 5.2 Important Limitations and Disclaimers
+**See Appendix B.1 for detailed parameters, assumptions, and important limitations.**
 
-**Transcript length estimation:**
-The 9,000-word estimate is based on typical conversation speed and may vary significantly depending on speaking pace, silences, and meeting dynamics. Actual transcripts could range from 5,000 to 15,000 words per hour.
+### 5.2 Confidence Level
 
-**Token-to-word conversion:**
-The 2× multiplier (2 tokens per word) is a rough guide appropriate for English text in 2025. Different models use different tokenization schemes, and actual token counts will vary depending on the specific model and content characteristics.
-
-**Energy scaling assumptions:**
-- For ASR: Energy is assumed to scale linearly with audio duration, which is reasonable for transcription services
-- For LLMs: Energy scaling with token count is approximately proportional but more nuanced in reality due to factors such as batch processing, attention mechanisms, and model architecture
-- These assumptions provide reasonable estimates but should not be treated as precise measurements
-
-**Geographic scope and carbon intensity:**
-- **Inference calculations use EU-27 average carbon intensity (0.258 kg CO₂e/kWh)** as a baseline for operational use
-- **Training calculations use US average carbon intensity (0.386 kg CO₂e/kWh)** from EPA eGRID data, as most large-scale AI training occurs in US data centres
-- Actual carbon intensity varies significantly by region, provider, and time of day
-- Many AI providers route queries to various global data centres with different carbon intensities
-- Organizations in regions with different grid carbon intensity will see proportionally different CO₂e impacts
-- The relative energy consumption patterns remain valid regardless of location
-
-**Training impact methodology:**
-- Training costs are distributed equally across all users (subscription basis approach)
-- This equal-distribution method is not representative of actual usage patterns but provides a tractable estimation framework
-- Training is a one-time cost amortized over the model's lifetime, unlike inference costs which recur with each use
-- User base estimates are based on peak active users and may underestimate total lifetime users
-
-**Word usage estimates:**
-The formulas in Appendix B assume optimal AI behaviour (no retries, no failures, no regenerations). They were derived through automated analysis and are susceptible to calculation errors. Actual production usage may include additional invocations due to quality checks, retries, or edge cases.
-
-**Scope limitations:**
-- This assessment covers both operational inference and training energy. Data collection and experimentation is not included.
-    - FacebookAI reported that data collection contributed 31% of their lifetime ML power use [18]
-    - In the same study, experiments accounted for a further 10% of their lifetime ML power use [18]
-- It excludes model development iterations, infrastructure manufacturing, and ongoing fine-tuning
-- Hardware manufacturing emissions for training infrastructure are not included
-- For comprehensive lifecycle assessment, these factors could increase estimates by a factor of 2-10×
-
-**Research quality considerations:**
-Both primary studies used for estimation [1], [11], and [15] represent the decent available research but have limitations:
-- Neither represents cutting-edge peer-reviewed research from top-tier venues 
-    - It has to be said that this is a field that is still in its infancy, often overlooked by main academic venues
-- Methodologies are sound with no major red flags identified
-- These sources were selected because independent research in this area is extremely limited
-- AI company self-reported figures were avoided due to falsification incentives those companies have to underreport environmental impacts. There is presendence for this scepticism [16], [17], 
-- As more rigorous independent research emerges, these estimates should be updated
-
-**Confidence level:**
-These estimates should be considered **order-of-magnitude approximations** rather than precise measurements. They are suitable for comparative analysis and strategic decision-making but not for precise carbon accounting.
+These estimates are **order-of-magnitude approximations** suitable for comparative analysis and strategic decision-making, not precise carbon accounting. Actual values may vary significantly based on speaking pace, model selection, geographic location, and operational conditions.
 
 ---
 
@@ -366,29 +321,10 @@ Additional AI modes, including UserTemplate FORM, UserTemplate DOCUMENT, AI Edit
 * SectionTemplate shows highest LLM dominance (96%) due to multiple BEST model invocations
 * Transcription represents a fixed cost of 0.0223 kWh regardless of template type
 
-**Template efficiency insights:**
-* **Basic Minutes** (0.073 kWh) is the most efficient option, suitable for simple meeting summaries
-* **Delivery** (0.216 kWh) and **SimpleTemplate** (0.234 kWh) offer similar efficiency for standard meetings
-* **UserTemplate FORM** (0.268 kWh with Q=20) scales linearly with question count but uses efficient FAST model
-* **SectionTemplate** (0.580 kWh with Y=6) is 7.9× more intensive than Basic Minutes due to structured section processing
-
-**Model selection impact:**
-* The FAST (GPT-4o) vs BEST (GPT-4 Turbo) split has substantial environmental impact
-* GPT-4 Turbo consumes 4.9× more energy per token than GPT-4o (2.970 vs 0.6075 Wh/1k tokens)
-* Templates using FAST-only (Basic Minutes, UserTemplate FORM) show better energy efficiency despite higher token counts
-* SectionTemplate's heavy BEST usage (177,762 tokens) drives its high energy consumption
-
 **Total system impact:**
 * The combined transcription and processing workflow for a 1-hour meeting produces **0.03-0.16 kg CO₂e** depending on template choice
 * Range spans from Basic Minutes (0.030 kg) to SectionTemplate (0.161 kg) - a 5.3× difference
 * Template selection is the single most impactful factor for environmental footprint
-
-**Comparative context:**
-* LLM-powered approaches use significantly more energy than deterministic alternatives
-* Thoughtful template selection can reduce environmental impact by 80% (Basic vs Section)
-* The system's flexible template architecture enables users to balance functionality with environmental considerations
-
-**Note:** These values are based on corrected energy consumption rates from empirical research [1] (Jegham et al., Table 4) rather than proxy estimates, providing defensible upper-bound assessments.
 
 ---
 
@@ -458,31 +394,74 @@ To avoid underestimating environmental impact, this assessment assumes comparati
 
 This appendix documents all LLM invocations in the i-ai-minute system with per-invocation token estimates and source file references.
 
-**Note:** Original Gemini model estimates have been replaced with GPT counterparts for consistency with research benchmarks.
-
 ## B.1 Parameters and Assumptions
 
-**Parameters:**
+### Parameters
+
 * **X** = words in meeting transcript (9,000 words baseline for 1-hour meeting)
 * **Y** = number of sections (SectionTemplate only, typically 6)
 * **Q** = number of questions (UserTemplate FORM type)
-The formulas for estimating token usage are based on the rough estimate of AIs behaviour and assume non-reasoning models.
 
-**Token conversion assumptions:**
-* 2 tokens per word (conservative estimate for English text)
-* Transcript length (X): 7,500-9,000 words for 1-hour meeting
-* Retry logic with exponential backoff (max 6 attempts) not counted in estimates
+### Token Conversion Assumptions
 
-**Key assumptions:**
+* **2 tokens per word** (conservative estimate for English text)
+* **Transcript length (X)**: 7,500-9,000 words for 1-hour meeting, based on typical conversation speed
+* Actual transcripts may vary significantly (5,000-15,000 words/hour) depending on speaking pace, silences, and meeting dynamics
+* Different models use different tokenization schemes; actual token counts will vary
+
+### Key Assumptions
+
 * SimpleTemplate and SectionTemplate are mutually exclusive per meeting
-* Hallucination checks follow their corresponding LLM invocations when enabled, assumed to be on
-* Citations are added only when `citations_required = True`, assumed to be on
-* Formulas assume optimal AI behavior (no retries, failures, or regenerations)
+* Hallucination checks follow their corresponding LLM invocations when enabled (assumed on)
+* Citations added only when `citations_required = True` (assumed on)
+* Formulas assume optimal AI behaviour (no retries, failures, or regenerations)
+* Retry logic with exponential backoff (max 6 attempts) not counted in estimates
+* Formulas based on rough estimates of AI behaviour and assume non-reasoning models
 
-**Excluded from calculations:**
-* **LLM usage for evaluation and template creation**: The system uses LLMs to assist with template creation and quality evaluation during development and configuration. These administrative functions are not included in the per-meeting calculations as most end users never interact with this part of the system. This represents a small, one-time cost during system setup rather than recurring operational costs.
+### Energy Scaling Assumptions
 
-**Model definitions:**
+* **ASR**: Energy scales linearly with audio duration (reasonable for transcription services)
+* **LLMs**: Energy scaling with token count is approximately proportional but nuanced due to batch processing, attention mechanisms, and model architecture
+* These provide reasonable estimates but should not be treated as precise measurements
+
+### Geographic Scope and Carbon Intensity
+
+* **Inference**: EU-27 average (0.258 kg CO₂e/kWh) as baseline for operational use
+* **Training**: US average (0.386 kg CO₂e/kWh) from EPA eGRID data, as most large-scale AI training occurs in US data centres
+* Actual carbon intensity varies significantly by region, provider, and time of day
+* Many AI providers route queries to various global data centres with different carbon intensities
+* Organizations in different regions will see proportionally different CO₂e impacts
+* Relative energy consumption patterns remain valid regardless of location
+
+### Training Impact Methodology
+
+* Training costs distributed equally across all users (subscription basis approach)
+* This equal-distribution method is not representative of actual usage patterns but provides tractable estimation framework
+* Training is one-time cost amortized over model lifetime, unlike recurring inference costs
+* User base estimates based on peak active users and may underestimate total lifetime users
+
+### Scope Limitations
+
+* **Included**: Operational inference and training energy
+* **Excluded**:
+  * Data collection and experimentation (FacebookAI reported 31% of lifetime ML power use [18])
+  * Experiments (FacebookAI reported 10% of lifetime ML power use [18])
+  * Model development iterations, infrastructure manufacturing, ongoing fine-tuning
+  * Hardware manufacturing emissions for training infrastructure
+  * LLM usage for evaluation and template creation (small one-time cost during system setup)
+* For comprehensive lifecycle assessment, excluded factors could increase estimates by 2-10×
+
+### Research Quality Considerations
+
+Primary studies [1], [11], [15] represent decent available research but have limitations:
+* Neither represents cutting-edge peer-reviewed research from top-tier venues (field still in infancy, often overlooked by main academic venues)
+* Methodologies are sound with no major red flags identified
+* Selected because independent research in this area is extremely limited
+* AI company self-reported figures avoided due to falsification incentives and precedence for underreporting [16], [17]
+* As more rigorous independent research emerges, these estimates should be updated
+
+### Model Definitions
+
 * **FAST**: GPT-4o (configured via `FAST_LLM_PROVIDER` and `FAST_LLM_MODEL_NAME`)
 * **BEST**: GPT-4 Turbo (configured via `BEST_LLM_PROVIDER` and `BEST_LLM_MODEL_NAME`)
 

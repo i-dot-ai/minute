@@ -71,7 +71,7 @@ The most effective lever for reducing environmental impact in this area is infra
 ### 3.1 Service categories
 
 **Transcription services (ASR)**
-Peer-reviewed measurements indicate that cloud-based ASR systems exhibit relatively low energy use and CO₂e per hour of audio, particularly when operated in modern data centres [4], [8].
+Peer-reviewed measurements indicate that cloud-based ASR systems exhibit relatively low energy use and CO₂e per hour of audio, particularly when operated in modern data centres [15].
 
 **Large Language Model services**
 LLM inference represents a substantial increase in energy consumption compared to traditional web services. Research indicates that an LLM conversation (500 words in, 500 words out) uses approximately 7 Wh [1], which is roughly 23 times more energy than a comparable Google search (~0.3 Wh) [2].
@@ -156,7 +156,7 @@ The 2× multiplier (2 tokens per word) is a rough guide appropriate for English 
 - Training costs are distributed equally across all users (subscription basis approach)
 - This equal-distribution method is not representative of actual usage patterns but provides a tractable estimation framework
 - Training is a one-time cost amortized over the model's lifetime, unlike inference costs which recur with each use
-- User base estimates are based on peak weekly active users and may underestimate total lifetime users
+- User base estimates are based on peak active users and may underestimate total lifetime users
 
 **Word usage estimates:**
 The formulas in Appendix B assume optimal AI behaviour (no retries, no failures, no regenerations). They were derived through automated analysis and are susceptible to calculation errors. Actual production usage may include additional invocations due to quality checks, retries, or edge cases.
@@ -188,9 +188,6 @@ These estimates should be considered **order-of-magnitude approximations** rathe
 From the ASR study [15], using Whisper as a proxy (similar open-source ASR system):
 
 **Energy measurements:**
-* Power API: 0.43 kWh
-* PyJoules: 0.51 kWh  
-* CodeCarbon: 0.53 kWh
 * Average: 0.49 kWh for 22 hours of processing
 
 **Per hour calculation:**
@@ -296,7 +293,7 @@ From the ASR study [15], using Whisper as a proxy (similar open-source ASR syste
 
 ### 7.5 Additional Template Types
 
-Additional template types (UserTemplate FORM, UserTemplate DOCUMENT, AI Edit, and Chat/Interactive Message) are documented in Appendix B.6 but excluded from main calculations as they represent specialized workflows not used in typical meeting processing. These are generally quicker estimates than the primary templates, using fewer invocations and FAST-only processing.
+Additional AI modes, including UserTemplate FORM, UserTemplate DOCUMENT, AI Edit, and Chat or Interactive Message, are documented in Appendix B.6 but excluded from the main calculations, as they generally require fewer invocations and or FAST-only processing, making them more environmentally friendly.
 
 ---
 
@@ -310,11 +307,9 @@ Additional template types (UserTemplate FORM, UserTemplate DOCUMENT, AI Edit, an
 | SectionTemplate (Y=6) | 17 | 226,464 | 0.5575 | 0.1438 |
 
 **Key observations:**
-* Basic Minutes is most efficient with only 4 invocations and FAST-only processing
-* SimpleTemplate and Delivery have similar invocation counts (6) but different token usage patterns
-* SectionTemplate is most intensive due to multiple BEST invocations per section (Y=6)
-* Model selection (FAST vs BEST) has greater impact than token count alone
-* SectionTemplate uses nearly 2.6× the energy of SimpleTemplate despite only 2.8× more invocations
+* Model selection, FAST versus BEST, has a greater impact than token count alone
+* The architectural decision in Minute to separate these two types of invocation is the primary driver of emissions reduction
+* Emissions can vary greatly between templates
 
 ---
 
@@ -405,7 +400,7 @@ This system uses two types of AI models: Large Language Models (LLMs) for summar
 
 ### 10.1 Per-User Training Impact
 
-**LLM models:** The system uses GPT-4 Turbo (BEST pathway) and GPT-4o (FAST pathway). GPT-4 is a large model (~1.76 trillion parameters) with training energy estimated at ~57,000 MWh [11]. GPT-4o is a smaller, more efficient model (~200 billion parameters) using Gopher as a training proxy (~1,151 MWh) [11] [12]. Training costs are amortized across 800 million weekly active users [13].
+**LLM models:** Assuming that the system uses GPT-4 Turbo (BEST pathway) and GPT-4o (FAST pathway). GPT-4 is a large model (~1.76 trillion parameters) with training energy estimated at ~57,000 MWh [11]. GPT-4o is a smaller, more efficient model (~200 billion parameters) using Gopher as a training proxy (~1,151 MWh) [11] [12]. Training costs are amortized across 800 million weekly active users [13].
 
 **ASR models:** Using OWSM v3 as a proxy for Whisper-style ASR models, training energy is estimated at ~7.4 MWh [19]. Training costs are amortized across 300 million Microsoft Teams monthly active users [23].
 
@@ -453,9 +448,9 @@ For comprehensive lifecycle assessment, these additional factors would need to b
 
 ---
 
-# Appendix A: Model Selection and Conservatism
+# Appendix A: Model Selection
 
-To avoid underestimating environmental impact, this assessment assumes comparatively energy-intensive but commonly used models for inference, based on published benchmarking [7]. This produces **pessimistic but defensible estimates**. Actual emissions will vary with deployed models, prompt structure, and batching behaviour.
+To avoid underestimating environmental impact, this assessment assumes comparatively energy-intensive but commonly used models for inference, based on published benchmarking. This produces **pessimistic but defensible estimates**. Actual emissions will vary with deployed models, prompt structure, and batching behaviour.
 
 ---
 

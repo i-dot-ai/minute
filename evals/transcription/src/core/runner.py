@@ -1,20 +1,32 @@
 import json
 import logging
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from threading import Lock
 
-import numpy as np
 from tqdm import tqdm
 
-from evals.transcription.src.adapters.base import AdapterConfig
-from evals.transcription.src.core.metrics import compute_wer_metrics, normalise_text
+from evals.transcription.src.adapters.base import EvalsTranscriptionAdapter
+from evals.transcription.src.core.formatting_helpers import (
+    format_segments_with_speakers,
+)
+from evals.transcription.src.core.metrics import (
+    aggregate_metrics,
+    compute_jaccard_wer,
+    compute_speaker_count_metrics,
+    compute_wder,
+    compute_wer_metrics,
+    normalise_text,
+)
 from evals.transcription.src.models import (
+    AggregatedMetricStats,
     DatasetProtocol,
-    DiffOps,
+    DiarizationSegment,
     DurationFn,
     EngineOutput,
     EngineResults,
+    SampleMetrics,
     SampleRow,
     Summary,
     TimingAccumulator,
@@ -24,8 +36,8 @@ from evals.transcription.src.models import (
 logger = logging.getLogger(__name__)
 
 
-def run_engines_parallel(
-    adapters_config: list[AdapterConfig],
+def run_engines_parallel(  # noqa: PLR0915
+    adapters_config: Sequence[EvalsTranscriptionAdapter],
     indices: list[int],
     *,
     dataset: DatasetProtocol,
@@ -33,9 +45,6 @@ def run_engines_parallel(
     duration_fn: DurationFn,
     max_workers: int | None = None,
 ) -> list[EngineOutput]:
-    """
-    Runs multiple transcription adapters in parallel on dataset samples and computes WER metrics.
-    """
     total_tasks = len(indices) * len(adapters_config)
     progress_bar = tqdm(total=total_tasks, desc="Processing all engines", unit="task")
     progress_bar_lock = Lock()
@@ -43,13 +52,9 @@ def run_engines_parallel(
     results: dict[str, EngineResults] = {}
 
     def process_sample(
-        adapter_config: AdapterConfig,
+        adapter: EvalsTranscriptionAdapter,
         index: int,
     ) -> tuple[str, int, SampleRow, float, float]:
-        """
-        Transcribes a single sample and computes WER metrics.
-        """
-        adapter = adapter_config["adapter"]
         label = adapter.name
 
         example = dataset[int(index)]
@@ -60,17 +65,45 @@ def run_engines_parallel(
         result = adapter.transcribe(wav_path)
         hyp_raw = result.text
         process_seconds = float(result.duration_sec)
-        debug_info = result.debug_info
+
+        dialogue_entries = result.dialogue_entries if hasattr(result, "dialogue_entries") else []
+        reference_diarization = example.reference_diarization if hasattr(example, "reference_diarization") else []
 
         reference_normalized = normalise_text(ref_raw)
         hypothesis_normalized = normalise_text(hyp_raw)
-        per_metrics = compute_wer_metrics([reference_normalized], [hypothesis_normalized])
-        per_sample_wer = per_metrics.wer * 100.0
-        diff_operations = DiffOps(
-            equal=per_metrics.hits,
-            replace=per_metrics.substitutions,
-            delete=per_metrics.deletions,
-            insert=per_metrics.insertions,
+
+        wer_metrics = compute_wer_metrics([reference_normalized], [hypothesis_normalized])
+        jaccard_metrics = compute_jaccard_wer([ref_raw], [hyp_raw])
+
+        metrics = SampleMetrics(
+            wer=wer_metrics.wer,
+            hits=wer_metrics.hits,
+            substitutions=wer_metrics.substitutions,
+            deletions=wer_metrics.deletions,
+            insertions=wer_metrics.insertions,
+            jaccard_wer=jaccard_metrics["jaccard_wer"],
+        )
+
+        if reference_diarization and dialogue_entries:
+            ref_diar_dicts = _convert_to_diarization_format(reference_diarization)
+            hyp_diar_dicts = _convert_to_diarization_format(dialogue_entries)
+            wder_metrics = compute_wder(ref_diar_dicts, hyp_diar_dicts)
+            metrics.wder = wder_metrics["wder"]
+            metrics.speaker_errors = wder_metrics["speaker_errors"]
+            metrics.total_words = wder_metrics["total_words"]
+
+            speaker_metrics = compute_speaker_count_metrics(ref_diar_dicts, hyp_diar_dicts)
+            metrics.speaker_count_deviation = 1.0 - speaker_metrics["speaker_count_accuracy"]
+            metrics.ref_speaker_count = int(speaker_metrics["ref_speaker_count"])
+            metrics.hyp_speaker_count = int(speaker_metrics["hyp_speaker_count"])
+
+        ref_normalized_with_speakers = (
+            format_segments_with_speakers(reference_diarization) if reference_diarization else ""
+        )
+        hyp_normalized_with_speakers = (
+            format_segments_with_speakers(dialogue_entries, reference_segments=reference_diarization)
+            if dialogue_entries
+            else ""
         )
 
         row = SampleRow(
@@ -80,13 +113,11 @@ def run_engines_parallel(
             audio_sec=audio_seconds,
             process_sec=process_seconds,
             processing_speed_ratio=(process_seconds / audio_seconds) if audio_seconds else None,
-            wer_pct=float(per_sample_wer),
-            diff_ops=diff_operations,
+            metrics=metrics,
             ref_raw=ref_raw,
             hyp_raw=hyp_raw,
-            ref_norm=reference_normalized,
-            hyp_norm=hypothesis_normalized,
-            engine_debug=debug_info,
+            ref_normalized_with_speakers=ref_normalized_with_speakers,
+            hyp_normalized_with_speakers=hyp_normalized_with_speakers,
         )
 
         with progress_bar_lock:
@@ -95,15 +126,15 @@ def run_engines_parallel(
 
         return label, index, row, audio_seconds, process_seconds
 
-    for adapter_config in adapters_config:
-        results[adapter_config["adapter"].name] = EngineResults(rows=[], timing=TimingAccumulator())
+    for adapter in adapters_config:
+        results[adapter.name] = EngineResults(rows=[], timing=TimingAccumulator())
 
     workers = max_workers if max_workers is not None else len(adapters_config)
     with ThreadPoolExecutor(max_workers=workers) as executor:
         futures = []
-        for adapter_config in adapters_config:
+        for adapter in adapters_config:
             for index in indices:
-                future = executor.submit(process_sample, adapter_config, index)
+                future = executor.submit(process_sample, adapter, index)
                 futures.append(future)
 
         for future in as_completed(futures):
@@ -114,28 +145,45 @@ def run_engines_parallel(
     progress_bar.close()
 
     output_results: list[EngineOutput] = []
-    for adapter_config in adapters_config:
-        label = adapter_config["adapter"].name
+    for adapter in adapters_config:
+        label = adapter.name
         rows = sorted(results[label].rows, key=lambda row: row.dataset_index)
         timing = results[label].timing
 
-        overall_metrics = compute_wer_metrics(
-            [row.ref_raw for row in rows],
-            [row.hyp_raw for row in rows],
+        metrics_list = [row.metrics.model_dump() for row in rows]
+        aggregated_dict = aggregate_metrics(metrics_list)
+
+        aggregated = {key: AggregatedMetricStats(**stats) for key, stats in aggregated_dict.items()}
+
+        total_hits = sum(row.metrics.hits for row in rows)
+        total_substitutions = sum(row.metrics.substitutions for row in rows)
+        total_deletions = sum(row.metrics.deletions for row in rows)
+        total_insertions = sum(row.metrics.insertions for row in rows)
+        total_speaker_errors = sum(row.metrics.speaker_errors or 0 for row in rows)
+
+        speaker_count_deviations = [
+            row.metrics.speaker_count_deviation for row in rows if row.metrics.speaker_count_deviation is not None
+        ]
+        speaker_count_accuracy = (
+            1.0 - (sum(speaker_count_deviations) / len(speaker_count_deviations)) if speaker_count_deviations else 0.0
         )
-        overall_wer = overall_metrics.wer * 100.0
-        per_sample_wers = [row.wer_pct for row in rows]
+
+        overall_wer_pct = aggregated["wer"].mean * 100.0 if "wer" in aggregated else 0.0
 
         summary = Summary(
             engine=label,
-            num_samples=len(indices),
-            overall_wer_pct=float(overall_wer),
+            num_samples=len(rows),
+            overall_wer_pct=float(overall_wer_pct),
             processing_speed_ratio=float(timing.processing_speed_ratio),
             process_sec=float(timing.process_sec),
             audio_sec=float(timing.audio_sec),
-            per_sample_wer_min=float(np.min(per_sample_wers)),
-            per_sample_wer_max=float(np.max(per_sample_wers)),
-            per_sample_wer_mean=float(np.mean(per_sample_wers)),
+            aggregated_metrics=aggregated,
+            speaker_count_accuracy=speaker_count_accuracy,
+            total_hits=total_hits,
+            total_substitutions=total_substitutions,
+            total_deletions=total_deletions,
+            total_insertions=total_insertions,
+            total_speaker_errors=total_speaker_errors,
         )
 
         output_results.append(EngineOutput(summary=summary, samples=rows))
@@ -143,13 +191,39 @@ def run_engines_parallel(
     return output_results
 
 
-def save_results(results: list[EngineOutput], output_path: Path) -> None:
-    """
-    Saves evaluation results to JSON file with summaries and per-sample details.
-    """
+def _convert_to_diarization_format(segments: list) -> list[DiarizationSegment]:
+    result: list[DiarizationSegment] = []
+    for seg in segments:
+        if isinstance(seg, dict):
+            result.append(
+                {
+                    "speaker": seg.get("speaker", ""),
+                    "text": seg.get("text", ""),
+                    "start": float(seg.get("start", 0.0) or seg.get("start_time", 0.0)),
+                    "end": float(seg.get("end", 0.0) or seg.get("end_time", 0.0)),
+                }
+            )
+        else:
+            result.append(
+                {
+                    "speaker": getattr(seg, "speaker", ""),
+                    "text": getattr(seg, "text", ""),
+                    "start": float(getattr(seg, "start", 0.0) or getattr(seg, "start_time", 0.0)),
+                    "end": float(getattr(seg, "end", 0.0) or getattr(seg, "end_time", 0.0)),
+                }
+            )
+    return result
+
+
+def save_results(
+    results: list[EngineOutput],
+    output_path: Path,
+    run_info: dict[str, float | int | str],
+) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     combined = {
+        "run_info": run_info,
         "summaries": [result.summary.model_dump() for result in results],
         "engines": {result.summary.engine: [s.model_dump() for s in result.samples] for result in results},
     }

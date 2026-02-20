@@ -7,8 +7,7 @@ from pathlib import Path
 
 from common.audio.ffmpeg import get_duration
 from common.settings import get_settings
-from evals.transcription.src.adapters import azure_st_adapter, whisper_st_adapter
-from evals.transcription.src.adapters.base import AdapterConfig
+from evals.transcription.src.adapters import AzureSTTAdapter, WhisperAdapter
 from evals.transcription.src.core.dataset import (
     load_benchmark_dataset,
     prepare_audio_for_transcription,
@@ -49,22 +48,18 @@ def run_evaluation(
         logger.info("Audio files cached in: %s", WORKDIR / "cache" / "processed")
         return
 
-    azure_adapter = azure_st_adapter()
+    azure_adapter = AzureSTTAdapter()
+    whisper_adapter = WhisperAdapter()
 
-    whisper_adapter = whisper_st_adapter()
-
-    adapters_config: list[AdapterConfig] = [
-        {"adapter": azure_adapter},
-        {"adapter": whisper_adapter},
-    ]
+    adapters = [azure_adapter, whisper_adapter]
 
     logger.info(
         "Running %d adapters in parallel on %d samples...",
-        len(adapters_config),
+        len(adapters),
         len(indices),
     )
     results = run_engines_parallel(
-        adapters_config=adapters_config,
+        adapters_config=adapters,
         indices=indices,
         dataset=dataset,
         wav_write_fn=prepare_audio_for_transcription,
@@ -72,9 +67,17 @@ def run_evaluation(
         max_workers=max_workers,
     )
 
-    save_results(results, output_path)
+    run_info: dict[str, str | float | int] = {
+        "dataset_version": dataset.dataset_version,
+        "total_audio_sec": dataset.total_audio_sec,
+        "total_words": dataset.total_words,
+    }
+
+    save_results(results, output_path, run_info)
 
     logger.info("=== Evaluation Complete ===")
+    logger.info("Dataset: %s", run_info["dataset_version"])
+    logger.info("")
     for result in results:
         logger.info(
             "%s WER: %.2f%%",

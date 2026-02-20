@@ -1,3 +1,4 @@
+import json
 import logging
 from collections import defaultdict
 from pathlib import Path
@@ -66,6 +67,7 @@ def _build_sample(
     index: int,
     wav_path: Path,
     num_utterances: int,
+    reference_diarization: list[dict],
 ) -> AMIDatasetSample:
     """
     Builds a dataset sample dictionary containing the mixed audio, transcript text, and metadata.
@@ -81,6 +83,7 @@ def _build_sample(
         dataset_index=index,
         duration_sec=audio.compute_duration(mixed_audio),
         num_utterances=num_utterances,
+        reference_diarization=reference_diarization,
     )
 
 
@@ -97,9 +100,6 @@ class AMIDatasetLoader(DatasetProtocol):
         split: str = "test",
         config: str = "ihm",
     ):
-        """
-        Initializes the AMI dataset loader with cache directory and sampling parameters.
-        """
         self.cache_dir = cache_dir
         self.num_samples = num_samples
         self.sample_duration_fraction = sample_duration_fraction
@@ -168,10 +168,10 @@ class AMIDatasetLoader(DatasetProtocol):
         """
         paths = cache.get_cache_paths(self.processed_cache_dir, segment, index)
 
-        if paths.is_complete():
-            return self._load_from_cache(paths, segment, index)
-
         utterances = utterances_by_meeting.get(segment.meeting_id, [])
+
+        if paths.is_complete():
+            return self._load_from_cache(utterances, paths, segment, index)
         if not utterances:
             logger.warning("No utterances for meeting %s, skipping", segment.meeting_id)
             return None
@@ -180,6 +180,7 @@ class AMIDatasetLoader(DatasetProtocol):
 
     def _load_from_cache(
         self,
+        utterances: list[RawDatasetRow],
         paths: cache.CachePaths,
         segment: MeetingSegment,
         index: int,
@@ -189,14 +190,27 @@ class AMIDatasetLoader(DatasetProtocol):
         """
         mixed_audio = cache.load_audio(paths.audio)
         text = cache.load_transcript(paths.transcript)
+
+        diarization_path = paths.audio.parent / f"{paths.audio.stem}_ref_diarization.json"
+        if not diarization_path.exists():
+            msg = (
+                f"Cache entry exists at {paths.audio} but diarization file not found at "
+                f"{diarization_path}. Cache entry exists but diarization transcript is missing."
+            )
+            raise FileNotFoundError(msg)
+
+        with diarization_path.open("r") as f:
+            reference_diarization = json.load(f)
+
         word_count = len(text.split())
-        sample = _build_sample(mixed_audio, text, segment, index, paths.audio, word_count)
+        sample = _build_sample(mixed_audio, text, segment, index, paths.audio, len(utterances), reference_diarization)
 
         logger.info(
-            "Cache hit: %s (%.2f sec, %d words)",
+            "Cache hit: %s (%.2f sec, %d words, %d speakers)",
             segment.meeting_id,
             sample.duration_sec,
             word_count,
+            len({d["speaker"] for d in reference_diarization}) if reference_diarization else 0,
         )
         return sample
 
@@ -214,18 +228,32 @@ class AMIDatasetLoader(DatasetProtocol):
         utterances = _apply_cutoff(utterances, segment.utterance_cutoff_time)
         mixed_audio, text = audio.mix_utterances(utterances)
 
+        reference_diarization: list[dict] = [
+            {
+                "speaker": utt.speaker_id,
+                "start_time": utt.begin_time,
+                "end_time": utt.end_time,
+                "text": utt.text,
+            }
+            for utt in utterances
+        ]
+
         cache.save_audio(paths.audio, mixed_audio, TARGET_SAMPLE_RATE)
         cache.save_transcript(paths.transcript, text)
+        diarization_path = paths.audio.parent / f"{paths.audio.stem}_ref_diarization.json"
+        with diarization_path.open("w") as f:
+            json.dump(reference_diarization, f)
 
-        sample = _build_sample(mixed_audio, text, segment, index, paths.audio, len(utterances))
+        sample = _build_sample(mixed_audio, text, segment, index, paths.audio, len(utterances), reference_diarization)
 
         word_count = len(text.split())
         logger.info(
-            "Cache miss: mixed %s (%d utterances, %.2f sec, %d words)",
+            "Cache miss: mixed %s (%d utterances, %.2f sec, %d words, %d speakers)",
             segment.meeting_id,
             sample.num_utterances,
             sample.duration_sec,
             word_count,
+            len({d["speaker"] for d in reference_diarization}),
         )
         return sample
 
@@ -239,15 +267,26 @@ class AMIDatasetLoader(DatasetProtocol):
 
     @property
     def num_of_samples(self) -> int:
-        """
-        Returns the total number of prepared samples.
-        """
         return len(self.samples)
 
+    @property
+    def dataset_version(self) -> str:
+        parts = ["AMI"]
+        if self.num_samples is not None:
+            parts.append(f"n{self.num_samples}")
+        if self.sample_duration_fraction is not None:
+            parts.append(f"f{self.sample_duration_fraction}")
+        return "_".join(parts)
+
+    @property
+    def total_audio_sec(self) -> float:
+        return sum(sample.duration_sec for sample in self.samples)
+
+    @property
+    def total_words(self) -> int:
+        return sum(len(sample.text.split()) for sample in self.samples)
+
     def __len__(self) -> int:
-        """
-        Returns the number of samples in the dataset.
-        """
         return self.num_of_samples
 
     def __getitem__(self, index: int) -> AMIDatasetSample:

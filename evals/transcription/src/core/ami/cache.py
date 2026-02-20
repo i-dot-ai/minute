@@ -7,7 +7,7 @@ import numpy as np
 import soundfile
 
 from common.audio.ffmpeg import convert_to_mp3
-from evals.transcription.src.core.ami.selection import MeetingSegment
+from evals.transcription.src.models import MeetingSegment
 
 logger = logging.getLogger(__name__)
 
@@ -18,16 +18,10 @@ class CachePaths:
     """
 
     def __init__(self, audio_path: Path, transcript_path: Path):
-        """
-        Initializes cache paths for audio and transcript files.
-        """
         self.audio = audio_path
         self.transcript = transcript_path
 
     def is_complete(self) -> bool:
-        """
-        Checks if both audio and transcript files exist in the cache.
-        """
         return self.audio.exists() and self.transcript.exists()
 
 

@@ -35,3 +35,15 @@ class FakeDataset:
 
     def __getitem__(self, idx: int) -> DatasetItem:
         return self._samples[idx]
+
+    @property
+    def dataset_version(self) -> str:
+        return "FakeDataset_test"
+
+    @property
+    def total_audio_sec(self) -> float:
+        return 0.0
+
+    @property
+    def total_words(self) -> int:
+        return sum(len(s.text.split()) for s in self._samples)

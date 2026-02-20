@@ -19,7 +19,7 @@ def test_run_engines_parallel_bookkeeping(tmp_path):
         ]
     )
 
-    adapters_config = [{"adapter": FakeAdapter("A", "hello world", proc_sec=0.5), "label": "Adapter A"}]
+    adapters_config = [FakeAdapter("A", "hello world", proc_sec=0.5)]
 
     results = run_engines_parallel(
         adapters_config=adapters_config,

@@ -1,13 +1,26 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Protocol
+from typing import Protocol, TypedDict
 
 import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict
 
 AudioArray = NDArray[np.floating]
+
+
+class DiarizationSegment(TypedDict):
+    speaker: str
+    text: str
+    start: float
+    end: float
+
+
+class RunInfo(TypedDict):
+    dataset_version: str
+    total_audio_sec: float
+    total_words: int
 
 
 class MeetingMetadata(BaseModel):
@@ -93,6 +106,7 @@ class AMIDatasetSample(DatasetItem):
     dataset_index: int
     duration_sec: float
     num_utterances: int
+    reference_diarization: list[dict] = []
 
 
 class TranscriptionResult(BaseModel):
@@ -103,6 +117,7 @@ class TranscriptionResult(BaseModel):
     text: str
     duration_sec: float
     debug_info: dict[str, object]
+    dialogue_entries: list[dict] = []
 
 
 class DiffOps(BaseModel):
@@ -128,6 +143,21 @@ class Metrics(BaseModel):
     insertions: int
 
 
+class SampleMetrics(BaseModel):
+    wer: float
+    hits: int
+    substitutions: int
+    deletions: int
+    insertions: int
+    jaccard_wer: float | None = None
+    wder: float | None = None
+    speaker_errors: int | None = None
+    total_words: int | None = None
+    speaker_count_deviation: float | None = None
+    ref_speaker_count: int | None = None
+    hyp_speaker_count: int | None = None
+
+
 class SampleRow(BaseModel):
     """
     Detailed transcription results for a single sample.
@@ -139,13 +169,18 @@ class SampleRow(BaseModel):
     audio_sec: float
     process_sec: float
     processing_speed_ratio: float | None
-    wer_pct: float
-    diff_ops: DiffOps
+    metrics: SampleMetrics
     ref_raw: str
     hyp_raw: str
-    ref_norm: str
-    hyp_norm: str
-    engine_debug: dict[str, object]
+    ref_normalized_with_speakers: str
+    hyp_normalized_with_speakers: str
+
+
+class AggregatedMetricStats(BaseModel):
+    mean: float
+    std: float
+    min: float
+    max: float
 
 
 class Summary(BaseModel):
@@ -159,9 +194,13 @@ class Summary(BaseModel):
     processing_speed_ratio: float
     process_sec: float
     audio_sec: float
-    per_sample_wer_min: float
-    per_sample_wer_max: float
-    per_sample_wer_mean: float
+    aggregated_metrics: dict[str, AggregatedMetricStats]
+    speaker_count_accuracy: float
+    total_hits: int
+    total_substitutions: int
+    total_deletions: int
+    total_insertions: int
+    total_speaker_errors: int
 
 
 class EngineOutput(BaseModel):
@@ -193,6 +232,24 @@ class MeetingSegment(BaseModel):
     utterance_cutoff_time: float | None = None
 
 
+class TimingAccumulator:
+    """
+    Accumulates processing and audio duration for processing speed ratio calculation.
+    """
+
+    def __init__(self) -> None:
+        self.process_sec = 0.0
+        self.audio_sec = 0.0
+
+    def add(self, audio_sec: float, process_sec: float) -> None:
+        self.audio_sec += float(audio_sec)
+        self.process_sec += float(process_sec)
+
+    @property
+    def processing_speed_ratio(self) -> float:
+        return self.process_sec / self.audio_sec if self.audio_sec else float("nan")
+
+
 class DatasetProtocol(Protocol):
     """
     Protocol for dataset objects supporting indexing and length operations.
@@ -203,25 +260,6 @@ class DatasetProtocol(Protocol):
 
     def __getitem__(self, index: int) -> DatasetItem:
         pass
-
-
-class TimingAccumulator:
-    """Accumulates processing and audio duration for processing speed ratio calculation."""
-
-    def __init__(self) -> None:
-        """Initializes the timing accumulator with zero values."""
-        self.process_sec = 0.0
-        self.audio_sec = 0.0
-
-    def add(self, audio_sec: float, process_sec: float) -> None:
-        """Adds audio and processing duration to the accumulated totals."""
-        self.audio_sec += float(audio_sec)
-        self.process_sec += float(process_sec)
-
-    @property
-    def processing_speed_ratio(self) -> float:
-        """Calculates the ratio of processing time to audio duration."""
-        return self.process_sec / self.audio_sec if self.audio_sec else float("nan")
 
 
 WavWriteFn = Callable[[DatasetItem, int], str]

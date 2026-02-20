@@ -100,6 +100,9 @@ class AMIDatasetLoader(DatasetProtocol):
         split: str = "test",
         config: str = "ihm",
     ):
+        """
+        Initializes the AMI dataset loader with cache directory and sampling parameters.
+        """
         self.cache_dir = cache_dir
         self.num_samples = num_samples
         self.sample_duration_fraction = sample_duration_fraction
@@ -267,6 +270,9 @@ class AMIDatasetLoader(DatasetProtocol):
 
     @property
     def num_of_samples(self) -> int:
+        """
+        Returns the total number of prepared samples.
+        """
         return len(self.samples)
 
     @property
@@ -287,6 +293,9 @@ class AMIDatasetLoader(DatasetProtocol):
         return sum(len(sample.text.split()) for sample in self.samples)
 
     def __len__(self) -> int:
+        """
+        Returns the number of samples in the dataset.
+        """
         return self.num_of_samples
 
     def __getitem__(self, index: int) -> AMIDatasetSample:

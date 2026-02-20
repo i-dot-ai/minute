@@ -149,7 +149,6 @@ class SampleMetrics(BaseModel):
     substitutions: int
     deletions: int
     insertions: int
-    jaccard_wer: float | None = None
     wder: float | None = None
     speaker_errors: int | None = None
     total_words: int | None = None
@@ -238,15 +237,18 @@ class TimingAccumulator:
     """
 
     def __init__(self) -> None:
+        """Initializes the timing accumulator with zero values."""
         self.process_sec = 0.0
         self.audio_sec = 0.0
 
     def add(self, audio_sec: float, process_sec: float) -> None:
+        """Adds audio and processing duration to the accumulated totals."""
         self.audio_sec += float(audio_sec)
         self.process_sec += float(process_sec)
 
     @property
     def processing_speed_ratio(self) -> float:
+        """Calculates the ratio of processing time to audio duration."""
         return self.process_sec / self.audio_sec if self.audio_sec else float("nan")
 
 

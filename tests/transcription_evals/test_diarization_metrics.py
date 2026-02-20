@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from evals.transcription.src.core.metrics.diarization import compute_wder
-from evals.transcription.src.core.metrics.jaccard import compute_jaccard_wer
 from evals.transcription.src.core.metrics.speaker_count import compute_speaker_count_metrics
 
 
@@ -52,21 +51,6 @@ def test_compute_wder_missing_hypothesis():
     assert result["wder"] == 0.0
     assert result["speaker_errors"] == 0
     assert result["total_words"] == 2
-
-
-def test_compute_jaccard_wer_perfect_match():
-    result = compute_jaccard_wer(["hello world"], ["hello world"])
-    assert result["jaccard_wer"] == 0.0
-
-
-def test_compute_jaccard_wer_partial_overlap():
-    result = compute_jaccard_wer(["hello world test"], ["hello world example"])
-    assert 0.0 < result["jaccard_wer"] < 1.0
-
-
-def test_compute_jaccard_wer_no_overlap():
-    result = compute_jaccard_wer(["hello world"], ["goodbye universe"])
-    assert result["jaccard_wer"] == 1.0
 
 
 def test_compute_speaker_count_metrics_perfect_match():
@@ -214,42 +198,6 @@ def test_compute_wder_with_transcription_errors():
     result = compute_wder(ref_segments, hyp_segments)
     assert result["total_words"] == 3
     assert result["speaker_errors"] == 0
-
-
-def test_compute_jaccard_wer_empty_inputs():
-    result = compute_jaccard_wer([], [])
-    assert result["jaccard_wer"] == 0.0
-
-
-def test_compute_jaccard_wer_empty_reference():
-    result = compute_jaccard_wer([], ["hello world"])
-    assert result["jaccard_wer"] == 0.0
-
-
-def test_compute_jaccard_wer_empty_hypothesis():
-    result = compute_jaccard_wer(["hello world"], [])
-    assert result["jaccard_wer"] == 0.0
-
-
-def test_compute_jaccard_wer_case_insensitive():
-    result = compute_jaccard_wer(["Hello World"], ["hello world"])
-    assert result["jaccard_wer"] == 0.0
-
-
-def test_compute_jaccard_wer_punctuation_handling():
-    result = compute_jaccard_wer(["Hello, world!"], ["Hello world"])
-    assert result["jaccard_wer"] == 0.0
-
-
-def test_compute_jaccard_wer_duplicate_words():
-    result = compute_jaccard_wer(["hello hello world"], ["hello world world"])
-    assert result["jaccard_wer"] == 0.0
-
-
-def test_compute_jaccard_wer_subset():
-    result = compute_jaccard_wer(["hello world test"], ["hello world"])
-    assert result["jaccard_wer"] > 0.0
-    assert result["jaccard_wer"] < 1.0
 
 
 def test_compute_speaker_count_metrics_more_hyp_speakers():

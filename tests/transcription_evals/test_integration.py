@@ -66,7 +66,6 @@ def test_run_evaluation_with_fake_adapters(tmp_path, monkeypatch):
         assert summary["process_sec"] >= 0.0
         assert "aggregated_metrics" in summary
         assert "wer" in summary["aggregated_metrics"]
-        assert "jaccard_wer" in summary["aggregated_metrics"]
         assert summary["speaker_count_accuracy"] >= 0.0
         assert summary["total_hits"] >= 0
         assert summary["total_substitutions"] >= 0
@@ -84,7 +83,6 @@ def test_run_evaluation_with_fake_adapters(tmp_path, monkeypatch):
             assert sample["hyp_raw"]
             assert isinstance(sample["metrics"], dict)
             assert "wer" in sample["metrics"]
-            assert "jaccard_wer" in sample["metrics"]
             assert isinstance(sample["metrics"]["wer"], float)
             assert "hits" in sample["metrics"]
             assert "substitutions" in sample["metrics"]

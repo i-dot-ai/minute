@@ -8,7 +8,7 @@ from evals.transcription.src.core.metrics.diarization import (
     flatten_segments_to_word_speaker_pairs,
 )
 from evals.transcription.src.core.metrics.transforms import jiwer_transform, normalise_text
-from evals.transcription.src.models import DiarizationSegment, SampleRow
+from evals.transcription.src.models import DiarizationSegment
 
 
 class SegmentDict(TypedDict):
@@ -31,8 +31,8 @@ class WordSpeakerPair(TypedDict):
 
 
 def format_segments_with_speakers(
-    segments: list[DialogueEntry] | list[SegmentDict],
-    reference_segments: list[DialogueEntry] | list[SegmentDict] | None = None,
+    segments: list[DialogueEntry] | list[SegmentDict] | list[DiarizationSegment],
+    reference_segments: (list[DialogueEntry] | list[SegmentDict] | list[DiarizationSegment] | None) = None,
 ) -> str:
     """
     Format segments with speaker labels and normalized text.
@@ -78,7 +78,7 @@ def format_segments_with_speakers(
 
 
 def _segments_to_diarization_format(
-    segments: list[DialogueEntry] | list[SegmentDict],
+    segments: list[DialogueEntry] | list[SegmentDict] | list[DiarizationSegment],
 ) -> list[DiarizationSegment]:
     """
     Convert segments to diarization format, using dummy timing if not available.
@@ -118,10 +118,3 @@ def convert_segments_to_diarization_format(
         }
         for seg in segments
     ]
-
-
-def calculate_speaker_count_accuracy(_rows: list[SampleRow]) -> float:
-    """
-    Calculate speaker count accuracy from rows with speaker_count_deviation metrics.
-    """
-    return 0.0

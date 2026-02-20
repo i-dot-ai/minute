@@ -9,7 +9,6 @@ def aggregate_metrics(all_sample_metrics: list[dict]) -> dict[str, dict[str, flo
 
     metric_keys = [
         "wer",
-        "jaccard_wer",
         "wder",
     ]
 

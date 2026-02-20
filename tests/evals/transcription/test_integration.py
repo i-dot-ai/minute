@@ -67,7 +67,6 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
         assert summary["overall_wer_pct"] >= 0.0
         assert "aggregated_metrics" in summary
         assert "wer" in summary["aggregated_metrics"]
-        assert "jaccard_wer" in summary["aggregated_metrics"]
 
         engine = summary["engine"]
         samples = results["engines"][engine]
@@ -87,7 +86,6 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
             assert "substitutions" in sample["metrics"]
             assert "deletions" in sample["metrics"]
             assert "insertions" in sample["metrics"]
-            assert "jaccard_wer" in sample["metrics"]
             assert "ref_normalized_with_speakers" in sample
             assert "hyp_normalized_with_speakers" in sample
 

@@ -270,39 +270,39 @@ Additional AI modes, including UserTemplate FORM, UserTemplate DOCUMENT, AI Edit
 
 ## 8. Combined Impact per 1-Hour Meeting
 
-**Note:** Transcription CO₂e uses source study's carbon intensity (~776 g/kWh); LLM uses EU-27 average (258 g/kWh). Energy and CO₂e percentages differ accordingly.
+**Note:** For consistency in percentage calculations, CO₂e values below use EU-27 carbon intensity (258 g CO₂e/kWh) for both transcription and LLM processing. The transcription absolute emissions in Section 6 (17.3 g) reflect the source study's measured carbon intensity (~776 g/kWh) and remain unchanged.
 
 ### 8.1 SimpleTemplate
 
-| Component      | Energy | % of Total |  CO₂e | % of Total |
-| -------------- | -----: | ---------: | ----: | ---------: |
-| Transcription  | 22.3 Wh (0.022 kWh) |       9.5% | 17.3 g |      24.1% |
-| LLM processing | 211.5 Wh (0.212 kWh) |      90.5% | 54.6 g |      75.9% |
-| **Total**      | **233.8 Wh (0.234 kWh)** | **100.0%** | **72 g** | **100.0%** |
+| Component      | Energy | CO₂e | % of Total |
+| -------------- | -----: | ---: | ---------: |
+| Transcription  | 22.3 Wh (0.022 kWh) | 5.8 g | 9.5% |
+| LLM processing | 211.5 Wh (0.212 kWh) | 54.6 g | 90.5% |
+| **Total**      | **233.8 Wh (0.234 kWh)** | **60 g** | **100.0%** |
 
 ### 8.2 SectionTemplate (Y=6)
 
-| Component      | Energy | % of Total |  CO₂e | % of Total |
-| -------------- | -----: | ---------: | ----: | ---------: |
-| Transcription  | 22.3 Wh (0.022 kWh) |       3.8% | 17.3 g |      10.7% |
-| LLM processing | 557.5 Wh (0.558 kWh) |      96.2% | 143.8 g |      89.3% |
-| **Total**      | **579.8 Wh (0.580 kWh)** | **100.0%** | **161 g** | **100.0%** |
+| Component      | Energy | CO₂e | % of Total |
+| -------------- | -----: | ---: | ---------: |
+| Transcription  | 22.3 Wh (0.022 kWh) | 5.8 g | 3.8% |
+| LLM processing | 557.5 Wh (0.558 kWh) | 143.8 g | 96.2% |
+| **Total**      | **579.8 Wh (0.580 kWh)** | **150 g** | **100.0%** |
 
 ### 8.3 Delivery Template
 
-| Component      | Energy | % of Total |  CO₂e | % of Total |
-| -------------- | -----: | ---------: | ----: | ---------: |
-| Transcription  | 22.3 Wh (0.022 kWh) |      10.3% | 17.3 g |      25.7% |
-| LLM processing | 193.8 Wh (0.194 kWh) |      89.7% | 50.0 g |      74.3% |
-| **Total**      | **216.1 Wh (0.216 kWh)** | **100.0%** | **67 g** | **100.0%** |
+| Component      | Energy | CO₂e | % of Total |
+| -------------- | -----: | ---: | ---------: |
+| Transcription  | 22.3 Wh (0.022 kWh) | 5.8 g | 10.3% |
+| LLM processing | 193.8 Wh (0.194 kWh) | 50.0 g | 89.7% |
+| **Total**      | **216.1 Wh (0.216 kWh)** | **56 g** | **100.0%** |
 
 ### 8.4 Basic Minutes
 
-| Component      | Energy | % of Total |  CO₂e | % of Total |
-| -------------- | -----: | ---------: | ----: | ---------: |
-| Transcription  | 22.3 Wh (0.022 kWh) |      30.5% | 17.3 g |      56.9% |
-| LLM processing | 50.7 Wh (0.051 kWh) |      69.5% | 13.1 g |      43.1% |
-| **Total**      | **73.0 Wh (0.073 kWh)** | **100.0%** | **30 g** | **100.0%** |
+| Component      | Energy | CO₂e | % of Total |
+| -------------- | -----: | ---: | ---------: |
+| Transcription  | 22.3 Wh (0.022 kWh) | 5.8 g | 30.5% |
+| LLM processing | 50.7 Wh (0.051 kWh) | 13.1 g | 69.5% |
+| **Total**      | **73.0 Wh (0.073 kWh)** | **19 g** | **100.0%** |
 
 ---
 
@@ -315,8 +315,8 @@ Additional AI modes, including UserTemplate FORM, UserTemplate DOCUMENT, AI Edit
 * Transcription represents a fixed cost of 22.3 Wh (0.022 kWh) regardless of template type
 
 **Total system impact:**
-* The combined transcription and processing workflow for a 1-hour meeting produces **30-161 g CO₂e** depending on template choice
-* Range spans from Basic Minutes (30 g) to SectionTemplate (161 g) - a 5.4× difference
+* The combined transcription and processing workflow for a 1-hour meeting produces **19-150 g CO₂e** depending on template choice (using consistent EU-27 carbon intensity)
+* Range spans from Basic Minutes (19 g) to SectionTemplate (150 g) - a 7.9× difference
 * Template selection is the single most impactful factor for environmental footprint
 
 ---
@@ -344,7 +344,7 @@ This system uses two types of AI models: Large Language Models (LLMs) for summar
 
 *ASR training represents only 0.034% of combined training impact and is negligible.*
 
-*See Appendices D and E for detailed calculation methodology and data sources.*
+*See Appendices C and D for detailed calculation methodology and data sources.*
 
 ### 10.2 Training vs. Inference Comparison
 
@@ -385,7 +385,7 @@ To avoid underestimating environmental impact, this assessment assumes comparati
 
 # Appendix B: System Token Usage Analysis
 
-This appendix documents all LLM invocations in the i-ai-minute system with per-invocation token estimates and source file references.
+This appendix documents all LLM invocations in the Minute system with per-invocation token estimates and source file references.
 
 ## B.1 Parameters and Assumptions
 
@@ -546,9 +546,9 @@ These patterns represent specialized workflows not used in typical meeting proce
 
 ---
 
-# Appendix D: Training Impact Calculation Details
+# Appendix C: Training Impact Calculation Details
 
-## D.1 Data Sources and Assumptions
+## C.1 Data Sources and Assumptions
 
 **GPT-4 Training Energy:**
 * Source: Ji, Z. & Jiang, M. "A systematic review of electricity demand for large language models" [11]
@@ -573,7 +573,7 @@ These patterns represent specialized workflows not used in typical meeting proce
 * Note: Training calculations use US carbon intensity as most large-scale AI training occurs in US data centers
 * This is significantly higher than EU-27 average (258 g CO₂e/kWh) used for inference
 
-## D.2 Calculation Methodology
+## C.2 Calculation Methodology
 
 **GPT-4 per-user calculations:**
 
@@ -611,9 +611,9 @@ Inference consumes 3.2× the amortized training cost per user.
 
 ---
 
-# Appendix E: Speech-to-Text Training Impact — OWSM Case Study
+# Appendix D: Speech-to-Text Training Impact — OWSM Case Study
 
-## E.1 Context and Relevance
+## D.1 Context and Relevance
 
 This appendix examines the training energy requirements for **Open Whisper-style Speech Models (OWSM)** [19], which represent open-source alternatives to proprietary ASR systems like OpenAI's Whisper. Understanding S2T training costs provides important context for the transcription services used in this system.
 
@@ -622,14 +622,14 @@ This appendix examines the training energy requirements for **Open Whisper-style
 - Training methodology and resource requirements are publicly documented
 
 **Relationship to this system:**
-While this system uses commercial transcription services (not OWSM), this case study illustrates the one-time training costs that underpin modern ASR capabilities. Similar to LLM training costs (Appendix D), these costs are amortized across all users of the technology.
+While this system uses commercial transcription services (not OWSM), this case study illustrates the one-time training costs that underpin modern ASR capabilities. Similar to LLM training costs (Appendix C), these costs are amortized across all users of the technology.
 
 **Limitation:**
 This analysis does not account for the energy used by auxialiary AI systems (e.g. diarization, content moderation) that are bundled in the transcription services used in this system.
 
 ---
 
-## E.2 OWSM v3 Training Configuration
+## D.2 OWSM v3 Training Configuration
 
 This analysis focuses on OWSM v3 [19], which represents a standard medium-sized Whisper-style model:
 
@@ -641,7 +641,7 @@ The model uses NVIDIA A100 40GB PCIe GPUs with 250W TDP [20].
 
 ---
 
-## E.3 Energy Calculation Methodology
+## D.3 Energy Calculation Methodology
 
 ### Base GPU Energy
 
@@ -671,7 +671,7 @@ PUE (Power Usage Effectiveness) captures cooling, power distribution losses, lig
 
 ---
 
-## E.4 Complete Training Energy Impact
+## D.4 Complete Training Energy Impact
 
 | Tier | Description | OWSM v3 |
 |------|-------------|----------|
@@ -681,7 +681,7 @@ PUE (Power Usage Effectiveness) captures cooling, power distribution losses, lig
 
 ---
 
-## E.5 Interpretation and Context
+## D.5 Interpretation and Context
 
 ### Comparison to LLM Training
 
@@ -697,13 +697,13 @@ Key observations:
 
 ---
 
-## E.6 Per-User Training Impact
+## D.6 Per-User Training Impact
 
 **User base:** Training costs amortized across 300 million Microsoft Teams monthly active users [23], representing a conservative estimate for Azure Speech-to-Text service reach.
 
 **Carbon intensity:** US average 386 g CO₂e/kWh (EPA eGRID) [14], as most large-scale AI training occurs in US data centers.
 
-## E.7 Calculation Methodology
+## D.7 Calculation Methodology
 
 **OWSM v3 per-user calculations:**
 

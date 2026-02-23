@@ -82,10 +82,10 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
             assert "processing_speed_ratio" in sample
             assert "metrics" in sample
             assert "wer" in sample["metrics"]
-            assert "hits" in sample["metrics"]
-            assert "substitutions" in sample["metrics"]
-            assert "deletions" in sample["metrics"]
-            assert "insertions" in sample["metrics"]
+
+            expected_metrics_keys = ["hits", "substitutions", "deletions", "insertions"]
+            assert all(key in sample["metrics"] for key in expected_metrics_keys)
+
             assert "ref_normalized_with_speakers" in sample
             assert "hyp_normalized_with_speakers" in sample
 

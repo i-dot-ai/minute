@@ -1,14 +1,14 @@
-from typing import TypedDict, cast
+from collections.abc import Sequence
+from typing import TypedDict
 
 import jiwer
 
-from common.database.postgres_models import DialogueEntry
 from evals.transcription.src.core.metrics.diarization import (
     find_optimal_speaker_mapping,
     flatten_segments_to_word_speaker_pairs,
 )
 from evals.transcription.src.core.metrics.transforms import jiwer_transform, normalise_text
-from evals.transcription.src.models import DiarizationSegment
+from evals.transcription.src.models import DiarizationSegment, SegmentLike
 
 
 class SegmentDict(TypedDict):
@@ -31,8 +31,8 @@ class WordSpeakerPair(TypedDict):
 
 
 def format_segments_with_speakers(
-    segments: list[DialogueEntry] | list[SegmentDict] | list[DiarizationSegment],
-    reference_segments: (list[DialogueEntry] | list[SegmentDict] | list[DiarizationSegment] | None) = None,
+    segments: Sequence[SegmentLike],
+    reference_segments: Sequence[SegmentLike] | None = None,
 ) -> str:
     """
     Format segments with speaker labels and normalized text.
@@ -46,8 +46,8 @@ def format_segments_with_speakers(
     speaker_mapping: dict[str, str] = {}
 
     if reference_segments:
-        ref_diar = _segments_to_diarization_format(reference_segments)
-        hyp_diar = _segments_to_diarization_format(segments)
+        ref_diar = convert_to_diarization_format(reference_segments)
+        hyp_diar = convert_to_diarization_format(segments)
 
         ref_pairs = flatten_segments_to_word_speaker_pairs(ref_diar)
         hyp_pairs = flatten_segments_to_word_speaker_pairs(hyp_diar)
@@ -77,44 +77,29 @@ def format_segments_with_speakers(
     return " ".join(parts)
 
 
-def _segments_to_diarization_format(
-    segments: list[DialogueEntry] | list[SegmentDict] | list[DiarizationSegment],
-) -> list[DiarizationSegment]:
+def convert_to_diarization_format(segments: Sequence) -> list[DiarizationSegment]:
     """
-    Convert segments to diarization format, using dummy timing if not available.
+    Convert segments to standardized diarization format with speaker, text, start, and end.
+    Handles dict-like objects and objects with attributes.
     """
     result: list[DiarizationSegment] = []
     for seg in segments:
-        if "start_time" in seg:
-            seg_with_timing = cast(DialogueEntry, seg)
-            start = seg_with_timing["start_time"]
-            end = seg_with_timing["end_time"]
+        if isinstance(seg, dict):
+            result.append(
+                {
+                    "speaker": seg.get("speaker", ""),
+                    "text": seg.get("text", ""),
+                    "start": float(seg.get("start", 0.0) or seg.get("start_time", 0.0)),
+                    "end": float(seg.get("end", 0.0) or seg.get("end_time", 0.0)),
+                }
+            )
         else:
-            start = 0.0
-            end = 0.0
-        result.append(
-            {
-                "speaker": seg["speaker"],
-                "text": seg["text"],
-                "start": start,
-                "end": end,
-            }
-        )
+            result.append(
+                {
+                    "speaker": getattr(seg, "speaker", ""),
+                    "text": getattr(seg, "text", ""),
+                    "start": float(getattr(seg, "start", 0.0) or getattr(seg, "start_time", 0.0)),
+                    "end": float(getattr(seg, "end", 0.0) or getattr(seg, "end_time", 0.0)),
+                }
+            )
     return result
-
-
-def convert_segments_to_diarization_format(
-    segments: list[DialogueEntry] | list[SegmentWithTiming],
-) -> list[DiarizationSegment]:
-    """
-    Convert segments to standardized diarization format with speaker, text, start, and end.
-    """
-    return [
-        {
-            "speaker": seg["speaker"],
-            "text": seg["text"],
-            "start": seg["start_time"],
-            "end": seg["end_time"],
-        }
-        for seg in segments
-    ]

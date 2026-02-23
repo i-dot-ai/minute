@@ -12,7 +12,8 @@ from evals.transcription.src.core.dataset import (
     load_benchmark_dataset,
     prepare_audio_for_transcription,
 )
-from evals.transcription.src.core.runner import run_engines_parallel, save_results
+from evals.transcription.src.core.results import save_results
+from evals.transcription.src.core.runner import run_engines_parallel
 
 settings = get_settings()
 WORKDIR = Path(__file__).resolve().parent.parent

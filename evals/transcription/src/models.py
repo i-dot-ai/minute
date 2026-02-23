@@ -10,6 +10,13 @@ from pydantic import BaseModel, ConfigDict
 AudioArray = NDArray[np.floating]
 
 
+class SegmentLike(TypedDict):
+    """Base type for any segment-like object with speaker and text."""
+
+    speaker: str
+    text: str
+
+
 class DiarizationSegment(TypedDict):
     speaker: str
     text: str
@@ -119,6 +126,9 @@ class TranscriptionResult(BaseModel):
     debug_info: dict[str, object]
     dialogue_entries: list[dict] = []
 
+    def __getitem__(self, key: str) -> object:
+        return getattr(self, key)
+
 
 class DiffOps(BaseModel):
     """
@@ -141,6 +151,9 @@ class Metrics(BaseModel):
     substitutions: int
     deletions: int
     insertions: int
+
+    def __getitem__(self, key: str) -> object:
+        return getattr(self, key)
 
 
 class SampleMetrics(BaseModel):
@@ -231,6 +244,18 @@ class MeetingSegment(BaseModel):
     utterance_cutoff_time: float | None = None
 
 
+class DatasetProtocol(Protocol):
+    """
+    Protocol for dataset objects supporting indexing and length operations.
+    """
+
+    def __len__(self) -> int:
+        pass
+
+    def __getitem__(self, index: int) -> DatasetItem:
+        pass
+
+
 class TimingAccumulator:
     """
     Accumulates processing and audio duration for processing speed ratio calculation.
@@ -250,18 +275,6 @@ class TimingAccumulator:
     def processing_speed_ratio(self) -> float:
         """Calculates the ratio of processing time to audio duration."""
         return self.process_sec / self.audio_sec if self.audio_sec else float("nan")
-
-
-class DatasetProtocol(Protocol):
-    """
-    Protocol for dataset objects supporting indexing and length operations.
-    """
-
-    def __len__(self) -> int:
-        pass
-
-    def __getitem__(self, index: int) -> DatasetItem:
-        pass
 
 
 WavWriteFn = Callable[[DatasetItem, int], str]

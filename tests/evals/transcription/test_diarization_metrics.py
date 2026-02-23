@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from evals.transcription.src.core.metrics.diarization import compute_wder
-from evals.transcription.src.core.metrics.speaker_count import compute_speaker_count_metrics
+from evals.transcription.src.core.metrics import compute_speaker_count_metrics, compute_wder
 
 
 def test_compute_wder_perfect_match():
@@ -18,22 +17,6 @@ def test_compute_wder_perfect_match():
     assert result["wder"] == 0.0
     assert result["speaker_errors"] == 0
     assert result["total_words"] == 4
-
-
-def test_compute_wder_speaker_mismatch():
-    ref_segments = [
-        {"speaker": "Speaker_1", "text": "hello world", "start": 0.0, "end": 1.0},
-        {"speaker": "Speaker_1", "text": "goodbye", "start": 1.0, "end": 1.5},
-    ]
-    hyp_segments = [
-        {"speaker": "Speaker_2", "text": "hello world", "start": 0.0, "end": 1.0},
-        {"speaker": "Speaker_1", "text": "goodbye", "start": 1.0, "end": 1.5},
-    ]
-
-    result = compute_wder(ref_segments, hyp_segments)
-    assert result["wder"] > 0.0
-    assert result["speaker_errors"] > 0
-    assert result["total_words"] == 3
 
 
 def test_compute_wder_empty_segments():

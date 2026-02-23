@@ -29,31 +29,19 @@ These components consume electricity and require cooling in common with most clo
 
 ### 2.2 Audio processing
 
-The system uses **FFmpeg** for converting uploaded audio and video files (including MP4) into a standardized format for transcription processing.
+The system uses FFmpeg to convert uploaded audio and video files into a standardized format for transcription. The current production workflow converts any format to mono MP3 at 192k bitrate using the libmp3lame encoder. Files already in the target format skip conversion.
 
-**Conversion workflow:**
+While the conversion workflow is standard, observed production costs suggest significant computational resource requirements. Exact environmental impact estimation is not currently feasible.
 
-* FFmpeg runs locally within the system infrastructure
-* Converts any audio/video format to MP3 using the libmp3lame encoder
-* Standardizes to mono audio (1 channel) at 192k bitrate
-* Extracts audio streams from video files (e.g., MP4)
+**Under investigation:**
 
-**Computational requirements:**
+The team is researching optimizations to reduce processing costs and environmental impact, separated from implementation to avoid affecting production:
 
-Even though the conversion workflow is quite standard, the costs associated with it suggest that it does require significant computational resources. The system processes audio/video files at scale, with operations including:
+* Alternative encoders that may be more efficient while maintaining transcription quality
+* Skipping conversions for formats already supported by Azure Speech-to-Text services
+* Optimizing bitrate and encoding parameters based on transcription service requirements
 
-* Audio extraction from video containers
-* Re-encoding to MP3 format
-* Downmixing stereo to mono
-* Processing files that scale with duration and file size
-
-**Current limitations and optimization efforts:**
-
-It is not currently feasible to exactly estimate the environmental impact of this part of the system. However, we are actively striving to make this more efficient due to the increased costs observed in production. Optimization strategies include:
-
-* Checking if files are already in MP3 mono format and skipping unnecessary conversions
-* Using efficient encoding parameters (192k bitrate, mono output)
-* Leveraging FFmpeg's highly optimized C library implementation
+The production system will continue using MP3 conversion at 192k bitrate until research is completed and validated.
 
 ### 2.3 Optimisation opportunities
 

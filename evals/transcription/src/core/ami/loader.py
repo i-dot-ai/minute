@@ -170,11 +170,11 @@ class AMIDatasetLoader(DatasetProtocol):
         Returns the dataset sample for the segment, or None if processing fails.
         """
         paths = cache.get_cache_paths(self.processed_cache_dir, segment, index)
-
         utterances = utterances_by_meeting.get(segment.meeting_id, [])
 
         if paths.is_complete():
             return self._load_from_cache(utterances, paths, segment, index)
+
         if not utterances:
             logger.warning("No utterances for meeting %s, skipping", segment.meeting_id)
             return None

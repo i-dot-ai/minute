@@ -18,10 +18,16 @@ class CachePaths:
     """
 
     def __init__(self, audio_path: Path, transcript_path: Path):
+        """
+        Initializes cache paths for audio and transcript files.
+        """
         self.audio = audio_path
         self.transcript = transcript_path
 
     def is_complete(self) -> bool:
+        """
+        Checks if both audio and transcript files exist in the cache.
+        """
         return self.audio.exists() and self.transcript.exists()
 
 

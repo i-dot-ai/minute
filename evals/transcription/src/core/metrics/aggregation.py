@@ -16,12 +16,9 @@ def aggregate_metrics(all_sample_metrics: list[dict]) -> dict[str, dict[str, flo
         values: list[float] = []
 
         for sample in all_sample_metrics:
-            try:
-                val = sample.get(key)
-                if val is not None and not isinstance(val, dict):
-                    values.append(float(val))
-            except (KeyError, TypeError, ValueError):
-                continue
+            val = sample.get(key)
+            if val is not None and not isinstance(val, dict):
+                values.append(float(val))
 
         if values:
             aggregated[key] = {

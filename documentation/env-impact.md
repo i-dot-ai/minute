@@ -29,8 +29,6 @@ These components consume electricity and require cooling in common with most clo
 
 ### 2.2 Audio processing
 
-> Note: I do remember Jon mentioning that the audio processing is a major contributor to the overall cost, but I don't have any specific numbers and the code doesn't show any major energy consumption considerations. Happy to revise this section if you have any specific numbers.
-
 The system uses **FFmpeg** for converting uploaded audio and video files (including MP4) into a standardized format for transcription processing.
 
 **Conversion workflow:**
@@ -40,18 +38,22 @@ The system uses **FFmpeg** for converting uploaded audio and video files (includ
 * Standardizes to mono audio (1 channel) at 192k bitrate
 * Extracts audio streams from video files (e.g., MP4)
 
-**Energy characteristics:**
+**Computational requirements:**
 
-FFmpeg conversion is **moderately CPU-intensive** but benefits from optimization:
+Even though the conversion workflow is quite standard, the costs associated with it suggest that it does require significant computational resources. The system processes audio/video files at scale, with operations including:
 
-* **CPU-intensive operations**: Audio extraction from video containers, re-encoding to MP3, downmixing stereo to mono
-* **Efficiency factors**: FFmpeg is a highly optimized C library; 192k bitrate provides reasonable quality without excessive processing; mono output reduces computational load vs. stereo
-* **Scale dependency**: Single file conversion has negligible energy cost; batch processing of many or large files can consume significant CPU resources; long videos (hours) are more intensive than typical meeting recordings
-* **Built-in optimization**: The system already checks if files are MP3 mono format and skips unnecessary conversions when possible
+* Audio extraction from video containers
+* Re-encoding to MP3 format
+* Downmixing stereo to mono
+* Processing files that scale with duration and file size
 
-**Relative impact:**
+**Current limitations and optimization efforts:**
 
-For typical meeting recordings (30-60 minutes), FFmpeg conversion energy is **minimal compared to transcription and LLM processing** that follow. However, it is not negligible—it represents a measurable CPU workload that scales with file duration and complexity
+It is not currently feasible to exactly estimate the environmental impact of this part of the system. However, we are actively striving to make this more efficient due to the increased costs observed in production. Optimization strategies include:
+
+* Checking if files are already in MP3 mono format and skipping unnecessary conversions
+* Using efficient encoding parameters (192k bitrate, mono output)
+* Leveraging FFmpeg's highly optimized C library implementation
 
 ### 2.3 Optimisation opportunities
 

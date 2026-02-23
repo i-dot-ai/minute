@@ -2,7 +2,7 @@ import logging
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
-from typing import Any
+from typing import Any, cast
 
 from tqdm import tqdm
 
@@ -16,7 +16,6 @@ from evals.transcription.src.core.metrics import (
 from evals.transcription.src.core.results import create_summary
 from evals.transcription.src.core.segments import (
     convert_to_diarization_format,
-    format_segments_with_speakers,
 )
 from evals.transcription.src.models import (
     DatasetProtocol,
@@ -76,6 +75,10 @@ def run_engines_parallel(
     dataset: DatasetProtocol,
     wav_write_fn: WavWriteFn,
     duration_fn: DurationFn,
+    run_id: str,
+    timestamp: str,
+    dataset_version: str,
+    dataset_split: str | None,
     max_workers: int | None = None,
 ) -> list[EngineOutput]:
     """
@@ -109,23 +112,19 @@ def run_engines_parallel(
         metrics = _compute_base_wer_metrics(ref_raw, hyp_raw)
         ref_diar_dicts, hyp_diar_dicts = _process_diarization(reference_diarization, dialogue_entries, metrics)
 
-        ref_normalized_with_speakers = format_segments_with_speakers(ref_diar_dicts) if ref_diar_dicts else ""
-        hyp_normalized_with_speakers = (
-            format_segments_with_speakers(hyp_diar_dicts, reference_segments=ref_diar_dicts) if hyp_diar_dicts else ""
-        )
-
         row = SampleRow(
-            engine=label,
-            dataset_index=int(index),
-            wav_path=wav_path,
-            audio_sec=audio_seconds,
-            process_sec=process_seconds,
-            processing_speed_ratio=(process_seconds / audio_seconds) if audio_seconds else None,
-            metrics=metrics,
-            ref_raw=ref_raw,
-            hyp_raw=hyp_raw,
-            ref_normalized_with_speakers=ref_normalized_with_speakers,
-            hyp_normalized_with_speakers=hyp_normalized_with_speakers,
+            run_id=run_id,
+            timestamp=timestamp,
+            example_id=str(index),
+            engine_version=label,
+            reference_transcript=ref_raw,
+            reference_dialogue_entries=cast(list[dict[Any, Any]], ref_diar_dicts) if ref_diar_dicts else None,
+            hypothesis_transcript=hyp_raw,
+            hypothesis_dialogue_entries=cast(list[dict[Any, Any]], hyp_diar_dicts) if hyp_diar_dicts else None,
+            metrics=metrics.model_dump(exclude_none=True),
+            latency_ms=process_seconds * 1000,
+            latency_recording_ratio=(process_seconds / audio_seconds) if audio_seconds else None,
+            error=None,
         )
 
         with progress_bar_lock:
@@ -156,10 +155,14 @@ def run_engines_parallel(
         EngineOutput(
             summary=create_summary(
                 adapter.name,
-                sorted(results[adapter.name].rows, key=lambda row: row.dataset_index),
+                sorted(results[adapter.name].rows, key=lambda row: int(row.example_id)),
                 results[adapter.name].timing,
+                run_id,
+                timestamp,
+                dataset_version,
+                dataset_split,
             ),
-            samples=sorted(results[adapter.name].rows, key=lambda row: row.dataset_index),
+            samples=sorted(results[adapter.name].rows, key=lambda row: int(row.example_id)),
         )
         for adapter in adapters_config
     ]

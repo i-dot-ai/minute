@@ -130,32 +130,6 @@ class TranscriptionResult(BaseModel):
         return getattr(self, key)
 
 
-class DiffOps(BaseModel):
-    """
-    Word-level edit operations from WER calculation.
-    """
-
-    equal: int
-    replace: int
-    delete: int
-    insert: int
-
-
-class Metrics(BaseModel):
-    """
-    Word Error Rate metrics including edit operation counts.
-    """
-
-    wer: float
-    hits: int
-    substitutions: int
-    deletions: int
-    insertions: int
-
-    def __getitem__(self, key: str) -> object:
-        return getattr(self, key)
-
-
 class SampleMetrics(BaseModel):
     wer: float
     hits: int
@@ -172,20 +146,21 @@ class SampleMetrics(BaseModel):
 
 class SampleRow(BaseModel):
     """
-    Detailed transcription results for a single sample.
+    Per-example transcription eval results matching data contract schema.
     """
 
-    engine: str
-    dataset_index: int
-    wav_path: str
-    audio_sec: float
-    process_sec: float
-    processing_speed_ratio: float | None
-    metrics: SampleMetrics
-    ref_raw: str
-    hyp_raw: str
-    ref_normalized_with_speakers: str
-    hyp_normalized_with_speakers: str
+    run_id: str
+    timestamp: str
+    example_id: str
+    engine_version: str
+    reference_transcript: str
+    reference_dialogue_entries: list[dict] | None
+    hypothesis_transcript: str
+    hypothesis_dialogue_entries: list[dict] | None
+    metrics: dict[str, float]
+    latency_ms: float
+    latency_recording_ratio: float | None
+    error: dict[str, str] | None = None
 
 
 class AggregatedMetricStats(BaseModel):
@@ -197,22 +172,18 @@ class AggregatedMetricStats(BaseModel):
 
 class Summary(BaseModel):
     """
-    Aggregate metrics for a transcription engine across all samples.
+    Run-level transcription eval summary matching data contract schema.
     """
 
-    engine: str
-    num_samples: int
-    overall_wer_pct: float
+    run_id: str
+    timestamp: str
+    dataset_version: str
+    engine_version: str
+    split: str | None
+    n_examples: int
+    overall_score: float | None
+    metrics: dict[str, AggregatedMetricStats]
     processing_speed_ratio: float
-    process_sec: float
-    audio_sec: float
-    aggregated_metrics: dict[str, AggregatedMetricStats]
-    speaker_count_accuracy: float
-    total_hits: int
-    total_substitutions: int
-    total_deletions: int
-    total_insertions: int
-    total_speaker_errors: int
 
 
 class EngineOutput(BaseModel):

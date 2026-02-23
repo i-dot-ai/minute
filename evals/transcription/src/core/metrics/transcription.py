@@ -1,10 +1,10 @@
 import jiwer
 
 from evals.transcription.src.core.metrics.transforms import jiwer_transform
-from evals.transcription.src.models import Metrics
+from evals.transcription.src.models import SampleMetrics
 
 
-def compute_wer_metrics(refs: list[str], hyps: list[str]) -> Metrics:
+def compute_wer_metrics(refs: list[str], hyps: list[str]) -> SampleMetrics:
     """
     Computes WER and related metrics using jiwer.
     """
@@ -15,7 +15,7 @@ def compute_wer_metrics(refs: list[str], hyps: list[str]) -> Metrics:
         hypothesis_transform=jiwer_transform,
     )
 
-    return Metrics(
+    return SampleMetrics(
         wer=float(word_output.wer),
         hits=int(word_output.hits),
         substitutions=int(word_output.substitutions),

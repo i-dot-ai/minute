@@ -38,7 +38,11 @@ class FakeDataset:
 
     @property
     def dataset_version(self) -> str:
-        return "FakeDataset_test"
+        return "FakeDataset_v0"
+
+    @property
+    def dataset_split(self) -> str | None:
+        return "test"
 
     @property
     def total_audio_sec(self) -> float:

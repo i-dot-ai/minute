@@ -60,34 +60,32 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
     results = json.loads(results_path.read_text(encoding="utf-8"))
 
     assert len(results["summaries"]) == 2
-    assert {s["engine"] for s in results["summaries"]} == {"Azure Speech-to-Text", "Whisper"}
+    assert {s["engine_version"] for s in results["summaries"]} == {"Azure Speech-to-Text", "Whisper"}
 
     for summary in results["summaries"]:
-        assert summary["num_samples"] == 2
-        assert summary["overall_wer_pct"] >= 0.0
-        assert "aggregated_metrics" in summary
-        assert "wer" in summary["aggregated_metrics"]
+        assert summary["n_examples"] == 2
+        assert summary["overall_score"] is not None
+        assert "metrics" in summary
+        assert "wer" in summary["metrics"]
 
-        engine = summary["engine"]
+        engine = summary["engine_version"]
         samples = results["engines"][engine]
         assert len(samples) == 2
 
         for idx, sample in enumerate(samples):
-            assert sample["dataset_index"] == idx
-            assert sample["engine"] == engine
-            assert "ref_raw" in sample
-            assert "hyp_raw" in sample
-            assert "audio_sec" in sample
-            assert "process_sec" in sample
-            assert "processing_speed_ratio" in sample
+            assert sample["example_id"] == str(idx)
+            assert sample["engine_version"] == engine
+            assert "reference_transcript" in sample
+            assert "hypothesis_transcript" in sample
+            assert "latency_recording_ratio" in sample
             assert "metrics" in sample
             assert "wer" in sample["metrics"]
 
             expected_metrics_keys = ["hits", "substitutions", "deletions", "insertions"]
             assert all(key in sample["metrics"] for key in expected_metrics_keys)
 
-            assert "ref_normalized_with_speakers" in sample
-            assert "hyp_normalized_with_speakers" in sample
+            assert "reference_dialogue_entries" in sample
+            assert "hypothesis_dialogue_entries" in sample
 
 
 def test_processing_speed_ratio_calculation(setup_evaluation):
@@ -105,7 +103,7 @@ def test_processing_speed_ratio_calculation(setup_evaluation):
 
     for engine_samples in results["engines"].values():
         for sample in engine_samples:
-            assert sample["processing_speed_ratio"] == pytest.approx(0.025)
+            assert sample["latency_recording_ratio"] == pytest.approx(0.025)
 
 
 @pytest.mark.parametrize(

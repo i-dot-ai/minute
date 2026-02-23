@@ -5,7 +5,6 @@ import pytest
 from evals.transcription.src.core.results import create_summary, save_results
 from evals.transcription.src.models import (
     EngineOutput,
-    SampleMetrics,
     SampleRow,
     Summary,
     TimingAccumulator,
@@ -23,20 +22,20 @@ def test_create_summary_basic():
             reference_dialogue_entries=None,
             hypothesis_transcript="hello world",
             hypothesis_dialogue_entries=None,
-            metrics=SampleMetrics(
-                wer=0.1,
-                hits=9,
-                substitutions=1,
-                deletions=0,
-                insertions=0,
-                wder=0.0,
-                speaker_errors=0,
-                total_words=10,
-                speaker_count_deviation=0.0,
-                ref_speaker_count=2,
-                hyp_speaker_count=2,
-            ),
-            latency_ms={"transcribe": 1000.0},
+            metrics={
+                "wer": 0.1,
+                "hits": 9,
+                "substitutions": 1,
+                "deletions": 0,
+                "insertions": 0,
+                "wder": 0.0,
+                "speaker_errors": 0,
+                "total_words": 10,
+                "speaker_count_deviation": 0.0,
+                "ref_speaker_count": 2,
+                "hyp_speaker_count": 2,
+            },
+            latency_ms=1000.0,
             latency_recording_ratio=0.5,
             error=None,
         ),
@@ -51,20 +50,20 @@ def test_create_summary_basic():
         timing,
         "test_run",
         "20260223_100000",
-        "ami-v1",
+        "AMI_v0",
+        "n2_f0.1",
     )
 
     assert summary.run_id == "test_run"
     assert summary.timestamp == "20260223_100000"
-    assert summary.dataset_version == "ami-v1"
+    assert summary.dataset_version == "AMI_v0"
     assert summary.engine_version == "TestEngine"
-    assert summary.split is None
+    assert summary.split == "n2_f0.1"
     assert summary.n_examples == 1
     assert summary.overall_score == pytest.approx(0.9)
     assert "wer" in summary.metrics
     assert summary.metrics["wer"].mean == pytest.approx(0.1)
-    assert "transcribe_mean" in summary.latency_ms
-    assert summary.latency_ms["transcribe_mean"] == pytest.approx(1000.0)
+    assert summary.processing_speed_ratio == pytest.approx(0.5)
 
 
 def test_create_summary_multiple_samples():
@@ -78,20 +77,20 @@ def test_create_summary_multiple_samples():
             reference_dialogue_entries=None,
             hypothesis_transcript="hello world",
             hypothesis_dialogue_entries=None,
-            metrics=SampleMetrics(
-                wer=0.1,
-                hits=9,
-                substitutions=1,
-                deletions=0,
-                insertions=0,
-                wder=0.0,
-                speaker_errors=0,
-                total_words=10,
-                speaker_count_deviation=0.0,
-                ref_speaker_count=2,
-                hyp_speaker_count=2,
-            ),
-            latency_ms={"transcribe": 1000.0},
+            metrics={
+                "wer": 0.1,
+                "hits": 9,
+                "substitutions": 1,
+                "deletions": 0,
+                "insertions": 0,
+                "wder": 0.0,
+                "speaker_errors": 0,
+                "total_words": 10,
+                "speaker_count_deviation": 0.0,
+                "ref_speaker_count": 2,
+                "hyp_speaker_count": 2,
+            },
+            latency_ms=1000.0,
             latency_recording_ratio=0.5,
             error=None,
         ),
@@ -104,20 +103,20 @@ def test_create_summary_multiple_samples():
             reference_dialogue_entries=None,
             hypothesis_transcript="good morning",
             hypothesis_dialogue_entries=None,
-            metrics=SampleMetrics(
-                wer=0.2,
-                hits=8,
-                substitutions=2,
-                deletions=0,
-                insertions=0,
-                wder=0.1,
-                speaker_errors=1,
-                total_words=10,
-                speaker_count_deviation=0.5,
-                ref_speaker_count=2,
-                hyp_speaker_count=1,
-            ),
-            latency_ms={"transcribe": 1200.0},
+            metrics={
+                "wer": 0.2,
+                "hits": 8,
+                "substitutions": 2,
+                "deletions": 0,
+                "insertions": 0,
+                "wder": 0.1,
+                "speaker_errors": 1,
+                "total_words": 10,
+                "speaker_count_deviation": 0.5,
+                "ref_speaker_count": 2,
+                "hyp_speaker_count": 1,
+            },
+            latency_ms=1200.0,
             latency_recording_ratio=0.6,
             error=None,
         ),
@@ -132,7 +131,8 @@ def test_create_summary_multiple_samples():
         timing,
         "test_run",
         "20260223_100000",
-        "ami-v1",
+        "AMI_v0",
+        "n2_f0.1",
     )
 
     assert summary.run_id == "test_run"
@@ -153,14 +153,14 @@ def test_create_summary_no_speaker_count_deviation():
             reference_dialogue_entries=None,
             hypothesis_transcript="hello world",
             hypothesis_dialogue_entries=None,
-            metrics=SampleMetrics(
-                wer=0.1,
-                hits=9,
-                substitutions=1,
-                deletions=0,
-                insertions=0,
-            ),
-            latency_ms={"transcribe": 1000.0},
+            metrics={
+                "wer": 0.1,
+                "hits": 9,
+                "substitutions": 1,
+                "deletions": 0,
+                "insertions": 0,
+            },
+            latency_ms=1000.0,
             latency_recording_ratio=0.5,
             error=None,
         ),
@@ -175,19 +175,20 @@ def test_create_summary_no_speaker_count_deviation():
         timing,
         "test_run",
         "20260223_100000",
-        "ami-v1",
+        "AMI_v0",
+        "n2_f0.1",
     )
 
     expected_fields = {
         "run_id": "test_run",
         "timestamp": "20260223_100000",
-        "dataset_version": "ami-v1",
+        "dataset_version": "AMI_v0",
         "engine_version": "TestEngine",
         "n_examples": 1,
+        "split": "n2_f0.1",
     }
     for key, value in expected_fields.items():
         assert getattr(summary, key) == value
-    assert summary.split is None
 
 
 def test_save_results_creates_file(tmp_path):
@@ -202,8 +203,8 @@ def test_save_results_creates_file(tmp_path):
         reference_dialogue_entries=None,
         hypothesis_transcript="hello",
         hypothesis_dialogue_entries=None,
-        metrics=SampleMetrics(wer=0.1, hits=9, substitutions=1, deletions=0, insertions=0),
-        latency_ms={"transcribe": 1000.0},
+        metrics={"wer": 0.1, "hits": 9, "substitutions": 1, "deletions": 0, "insertions": 0},
+        latency_ms=1000.0,
         latency_recording_ratio=0.5,
         error=None,
     )
@@ -211,19 +212,18 @@ def test_save_results_creates_file(tmp_path):
     summary = Summary(
         run_id="test_run",
         timestamp="20260223_100000",
-        dataset_version="ami-v1",
+        dataset_version="AMI_v0",
         engine_version="TestEngine",
-        split=None,
+        split="n2_f0.1",
         n_examples=1,
         overall_score=0.9,
         metrics={},
-        latency_ms={"transcribe_mean": 1000.0},
+        processing_speed_ratio=0.5,
     )
 
     results = [EngineOutput(summary=summary, samples=[sample])]
-    run_info = {"timestamp": 123456, "num_samples": 1}
 
-    save_results(results, output_path, run_info)
+    save_results(results, output_path)
 
     assert output_path.exists()
 
@@ -231,9 +231,6 @@ def test_save_results_creates_file(tmp_path):
 
     with output_path.open() as f:
         data = json.load(f)
-
-    expected_run_info = {"timestamp": 123456, "num_samples": 1}
-    assert data["run_info"] == expected_run_info
 
     expected_structure = {
         "summaries_count": 1,
@@ -260,8 +257,8 @@ def test_save_results_multiple_engines(tmp_path):
         reference_dialogue_entries=None,
         hypothesis_transcript="hello",
         hypothesis_dialogue_entries=None,
-        metrics=SampleMetrics(wer=0.1, hits=9, substitutions=1, deletions=0, insertions=0),
-        latency_ms={"transcribe": 1000.0},
+        metrics={"wer": 0.1, "hits": 9, "substitutions": 1, "deletions": 0, "insertions": 0},
+        latency_ms=1000.0,
         latency_recording_ratio=0.5,
         error=None,
     )
@@ -275,8 +272,8 @@ def test_save_results_multiple_engines(tmp_path):
         reference_dialogue_entries=None,
         hypothesis_transcript="world",
         hypothesis_dialogue_entries=None,
-        metrics=SampleMetrics(wer=0.2, hits=8, substitutions=2, deletions=0, insertions=0),
-        latency_ms={"transcribe": 1500.0},
+        metrics={"wer": 0.2, "hits": 8, "substitutions": 2, "deletions": 0, "insertions": 0},
+        latency_ms=1500.0,
         latency_recording_ratio=0.6,
         error=None,
     )
@@ -284,34 +281,33 @@ def test_save_results_multiple_engines(tmp_path):
     summary1 = Summary(
         run_id="test_run",
         timestamp="20260223_100000",
-        dataset_version="ami-v1",
+        dataset_version="AMI_v0",
         engine_version="Engine1",
-        split=None,
+        split="n2_f0.1",
         n_examples=1,
         overall_score=0.9,
         metrics={},
-        latency_ms={"transcribe_mean": 1000.0},
+        processing_speed_ratio=0.5,
     )
 
     summary2 = Summary(
         run_id="test_run",
         timestamp="20260223_100000",
-        dataset_version="ami-v1",
+        dataset_version="AMI_v0",
         engine_version="Engine2",
-        split=None,
+        split="n2_f0.1",
         n_examples=1,
         overall_score=0.8,
         metrics={},
-        latency_ms={"transcribe_mean": 1500.0},
+        processing_speed_ratio=0.6,
     )
 
     results = [
         EngineOutput(summary=summary1, samples=[sample1]),
         EngineOutput(summary=summary2, samples=[sample2]),
     ]
-    run_info = {"timestamp": 123456}
 
-    save_results(results, output_path, run_info)
+    save_results(results, output_path)
 
     import json
 

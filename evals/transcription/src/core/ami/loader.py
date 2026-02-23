@@ -277,12 +277,16 @@ class AMIDatasetLoader(DatasetProtocol):
 
     @property
     def dataset_version(self) -> str:
-        parts = ["AMI"]
+        return "AMI_v0"
+
+    @property
+    def dataset_split(self) -> str | None:
+        parts = []
         if self.num_samples is not None:
             parts.append(f"n{self.num_samples}")
         if self.sample_duration_fraction is not None:
             parts.append(f"f{self.sample_duration_fraction}")
-        return "_".join(parts)
+        return "_".join(parts) if parts else None
 
     @property
     def total_audio_sec(self) -> float:

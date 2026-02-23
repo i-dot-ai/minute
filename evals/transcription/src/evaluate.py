@@ -32,6 +32,7 @@ def run_evaluation(
     """
     output_dir = WORKDIR / "results"
     timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
+    run_id = f"eval_{timestamp}"
     output_path = output_dir / f"evaluation_results_{timestamp}.json"
 
     logger.info("Loading dataset...")
@@ -65,25 +66,24 @@ def run_evaluation(
         dataset=dataset,
         wav_write_fn=prepare_audio_for_transcription,
         duration_fn=lambda path: get_duration(Path(path)),
+        run_id=run_id,
+        timestamp=timestamp,
+        dataset_version=dataset.dataset_version,
+        dataset_split=dataset.dataset_split,
         max_workers=max_workers,
     )
 
-    run_info: dict[str, str | float | int] = {
-        "dataset_version": dataset.dataset_version,
-        "total_audio_sec": dataset.total_audio_sec,
-        "total_words": dataset.total_words,
-    }
-
-    save_results(results, output_path, run_info)
+    save_results(results, output_path)
 
     logger.info("=== Evaluation Complete ===")
-    logger.info("Dataset: %s", run_info["dataset_version"])
+    logger.info("Dataset: %s", dataset.dataset_version)
     logger.info("")
     for result in results:
+        wer_pct = result.summary.metrics["wer"].mean * 100.0
         logger.info(
             "%s WER: %.2f%%",
-            result.summary.engine,
-            result.summary.overall_wer_pct,
+            result.summary.engine_version,
+            wer_pct,
         )
     logger.info("Results saved to: %s", output_path)
 

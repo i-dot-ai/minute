@@ -80,16 +80,20 @@ def test_create_summary_basic(make_sample_row):
         "n2_f0.1",
     )
 
-    assert summary.run_id == "test_run"
-    assert summary.timestamp == "20260223_100000"
-    assert summary.dataset_version == "AMI_v0"
-    assert summary.engine_version == "TestEngine"
-    assert summary.split == "n2_f0.1"
-    assert summary.n_examples == 1
-    assert summary.overall_score == pytest.approx(0.9)
+    expected = {
+        "run_id": "test_run",
+        "timestamp": "20260223_100000",
+        "dataset_version": "AMI_v0",
+        "engine_version": "TestEngine",
+        "split": "n2_f0.1",
+        "n_examples": 1,
+        "overall_score": pytest.approx(0.9),
+        "processing_speed_ratio": pytest.approx(0.5),
+    }
+    for key, value in expected.items():
+        assert getattr(summary, key) == value
     assert "wer" in summary.metrics
     assert summary.metrics["wer"].mean == pytest.approx(0.1)
-    assert summary.processing_speed_ratio == pytest.approx(0.5)
 
 
 def test_create_summary_multiple_samples(make_sample_row):
@@ -122,10 +126,14 @@ def test_create_summary_multiple_samples(make_sample_row):
         "n2_f0.1",
     )
 
-    assert summary.run_id == "test_run"
-    assert summary.engine_version == "TestEngine"
-    assert summary.n_examples == 2
-    assert summary.overall_score == pytest.approx(0.85)
+    expected = {
+        "run_id": "test_run",
+        "engine_version": "TestEngine",
+        "n_examples": 2,
+        "overall_score": pytest.approx(0.85),
+    }
+    for key, value in expected.items():
+        assert getattr(summary, key) == value
     assert "wer" in summary.metrics
 
 
@@ -190,17 +198,21 @@ def test_save_results_creates_file(tmp_path, make_sample_row):
     with output_path.open() as f:
         data = json.load(f)
 
-    expected_structure = {
+    expected = {
         "summaries_count": 1,
         "engines_count": 1,
+        "first_summary_engine": "TestEngine",
         "has_TestEngine": True,
         "TestEngine_samples_count": 1,
     }
-    assert len(data["summaries"]) == expected_structure["summaries_count"]
-    assert data["summaries"][0]["engine_version"] == "TestEngine"
-    assert len(data["engines"]) == expected_structure["engines_count"]
-    assert "TestEngine" in data["engines"]
-    assert len(data["engines"]["TestEngine"]) == expected_structure["TestEngine_samples_count"]
+    actual = {
+        "summaries_count": len(data["summaries"]),
+        "engines_count": len(data["engines"]),
+        "first_summary_engine": data["summaries"][0]["engine_version"],
+        "has_TestEngine": "TestEngine" in data["engines"],
+        "TestEngine_samples_count": len(data["engines"]["TestEngine"]),
+    }
+    assert actual == expected
 
 
 def test_save_results_multiple_engines(tmp_path, make_sample_row):
@@ -254,12 +266,16 @@ def test_save_results_multiple_engines(tmp_path, make_sample_row):
     with output_path.open() as f:
         data = json.load(f)
 
-    expected_structure = {
+    expected = {
         "summaries_count": 2,
         "engines_count": 2,
-        "engines": ["Engine1", "Engine2"],
+        "has_Engine1": True,
+        "has_Engine2": True,
     }
-    assert len(data["summaries"]) == expected_structure["summaries_count"]
-    assert len(data["engines"]) == expected_structure["engines_count"]
-    for engine in expected_structure["engines"]:
-        assert engine in data["engines"]
+    actual = {
+        "summaries_count": len(data["summaries"]),
+        "engines_count": len(data["engines"]),
+        "has_Engine1": "Engine1" in data["engines"],
+        "has_Engine2": "Engine2" in data["engines"],
+    }
+    assert actual == expected

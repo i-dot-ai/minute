@@ -59,33 +59,47 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
     assert results_path.exists()
     results = json.loads(results_path.read_text(encoding="utf-8"))
 
-    assert len(results["summaries"]) == 2
-    assert {s["engine_version"] for s in results["summaries"]} == {"Azure Speech-to-Text", "Whisper"}
+    expected_structure = {
+        "summaries": {
+            "count": 2,
+            "engines": {"Azure Speech-to-Text", "Whisper"},
+            "required_fields": ["n_examples", "overall_score", "engine_version", "metrics"],
+            "metrics_fields": ["wer"],
+        },
+        "samples": {
+            "count_per_engine": 2,
+            "required_fields": [
+                "example_id",
+                "engine_version",
+                "reference_transcript",
+                "hypothesis_transcript",
+                "latency_recording_ratio",
+                "metrics",
+                "reference_dialogue_entries",
+                "hypothesis_dialogue_entries",
+            ],
+            "metrics_fields": ["wer", "hits", "substitutions", "deletions", "insertions"],
+        },
+    }
+
+    assert len(results["summaries"]) == expected_structure["summaries"]["count"]
+    assert {s["engine_version"] for s in results["summaries"]} == expected_structure["summaries"]["engines"]
 
     for summary in results["summaries"]:
         assert summary["n_examples"] == 2
         assert summary["overall_score"] is not None
-        assert "metrics" in summary
-        assert "wer" in summary["metrics"]
+        assert all(field in summary for field in expected_structure["summaries"]["required_fields"])
+        assert all(metric in summary["metrics"] for metric in expected_structure["summaries"]["metrics_fields"])
 
         engine = summary["engine_version"]
         samples = results["engines"][engine]
-        assert len(samples) == 2
+        assert len(samples) == expected_structure["samples"]["count_per_engine"]
 
         for idx, sample in enumerate(samples):
             assert sample["example_id"] == str(idx)
             assert sample["engine_version"] == engine
-            assert "reference_transcript" in sample
-            assert "hypothesis_transcript" in sample
-            assert "latency_recording_ratio" in sample
-            assert "metrics" in sample
-            assert "wer" in sample["metrics"]
-
-            expected_metrics_keys = ["hits", "substitutions", "deletions", "insertions"]
-            assert all(key in sample["metrics"] for key in expected_metrics_keys)
-
-            assert "reference_dialogue_entries" in sample
-            assert "hypothesis_dialogue_entries" in sample
+            assert all(field in sample for field in expected_structure["samples"]["required_fields"])
+            assert all(metric in sample["metrics"] for metric in expected_structure["samples"]["metrics_fields"])
 
 
 def test_processing_speed_ratio_calculation(setup_evaluation):

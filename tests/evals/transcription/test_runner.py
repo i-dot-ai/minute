@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from evals.transcription.src.core.runner import run_engines_parallel
+from evals.transcription.src.core.runner import (
+    _compute_diarization_metrics,
+    _extract_segments,
+    _process_diarization,
+    run_engines_parallel,
+)
+from evals.transcription.src.models import SampleMetrics
 from tests.evals.transcription.conftest import FakeAdapter, FakeDataset
 
 
@@ -55,3 +61,140 @@ def test_run_engines_parallel_bookkeeping(tmp_path):
     assert samples[1].example_id == "1"
     assert samples[0].engine_version == "A"
     assert samples[0].latency_recording_ratio == pytest.approx(0.25)
+
+
+@pytest.mark.parametrize(
+    ("result_attr", "example_attr", "expected_dialogue", "expected_reference"),
+    [
+        (
+            {"dialogue_entries": [{"speaker": "A", "text": "hello"}]},
+            {"reference_diarization": [{"speaker": "B", "text": "world"}]},
+            [{"speaker": "A", "text": "hello"}],
+            [{"speaker": "B", "text": "world"}],
+        ),
+        ({}, {}, [], []),
+    ],
+)
+def test_extract_segments(result_attr, example_attr, expected_dialogue, expected_reference):
+    class Result:
+        def __init__(self, attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+
+    class Example:
+        def __init__(self, attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+
+    result = Result(result_attr)
+    example = Example(example_attr)
+    dialogue, reference = _extract_segments(result, example)
+
+    assert dialogue == expected_dialogue
+    assert reference == expected_reference
+
+
+@pytest.mark.parametrize(
+    ("ref_diar", "hyp_diar", "metrics_input", "expected_metrics"),
+    [
+        (
+            [{"speaker": "Speaker_1", "text": "hello world", "start": 0.0, "end": 1.0}],
+            [{"speaker": "Speaker_A", "text": "hello world", "start": 0.0, "end": 1.0}],
+            {"wer": 0.0, "hits": 2, "substitutions": 0, "deletions": 0, "insertions": 0},
+            {"wder": 0.0, "speaker_errors": 0, "total_words": 2},
+        ),
+        (
+            [],
+            [{"speaker": "A", "text": "hello"}],
+            {"wer": 0.0, "hits": 0, "substitutions": 0, "deletions": 0, "insertions": 0},
+            {"wder": None},
+        ),
+        (
+            [{"speaker": "A", "text": "hello"}],
+            [],
+            {"wer": 0.0, "hits": 0, "substitutions": 0, "deletions": 0, "insertions": 0},
+            {},
+        ),
+    ],
+)
+def test_process_diarization(ref_diar, hyp_diar, metrics_input, expected_metrics):
+    metrics = SampleMetrics(**metrics_input)
+    ref_result, hyp_result = _process_diarization(ref_diar, hyp_diar, metrics)
+
+    if not ref_diar or not hyp_diar:
+        assert ref_result == []
+        assert hyp_result == []
+    else:
+        assert len(ref_result) == len(ref_diar)
+        assert len(hyp_result) == len(hyp_diar)
+
+    for key, value in expected_metrics.items():
+        assert getattr(metrics, key) == value
+
+
+@pytest.mark.parametrize(
+    ("ref_diar", "hyp_diar", "hits", "expected"),
+    [
+        (
+            [
+                {"speaker": "Speaker_1", "text": "hello world", "start": 0.0, "end": 1.0},
+                {"speaker": "Speaker_2", "text": "good morning", "start": 1.0, "end": 2.0},
+            ],
+            [
+                {"speaker": "Speaker_A", "text": "hello world", "start": 0.0, "end": 1.0},
+                {"speaker": "Speaker_B", "text": "good morning", "start": 1.0, "end": 2.0},
+            ],
+            4,
+            {
+                "wder": 0.0,
+                "speaker_errors": 0,
+                "total_words": 4,
+                "speaker_count_deviation": 0.0,
+                "ref_speaker_count": 2,
+                "hyp_speaker_count": 2,
+            },
+        ),
+        (
+            [
+                {"speaker": "Speaker_1", "text": "hello world", "start": 0.0, "end": 1.0},
+                {"speaker": "Speaker_2", "text": "good morning", "start": 1.0, "end": 2.0},
+                {"speaker": "Speaker_1", "text": "goodbye", "start": 2.0, "end": 2.5},
+            ],
+            [
+                {"speaker": "Speaker_A", "text": "hello world", "start": 0.0, "end": 1.0},
+                {"speaker": "Speaker_B", "text": "good morning", "start": 1.0, "end": 2.0},
+                {"speaker": "Speaker_B", "text": "goodbye", "start": 2.0, "end": 2.5},
+            ],
+            5,
+            {
+                "wder": 0.2,
+                "speaker_errors": 1,
+                "total_words": 5,
+                "speaker_count_deviation": 0.0,
+                "ref_speaker_count": 2,
+                "hyp_speaker_count": 2,
+            },
+        ),
+        (
+            [
+                {"speaker": "Speaker_1", "text": "hello", "start": 0.0, "end": 0.5},
+                {"speaker": "Speaker_2", "text": "world", "start": 0.5, "end": 1.0},
+            ],
+            [
+                {"speaker": "Speaker_A", "text": "hello world", "start": 0.0, "end": 1.0},
+            ],
+            2,
+            {
+                "speaker_count_deviation": 1.0,
+                "ref_speaker_count": 2,
+                "hyp_speaker_count": 1,
+            },
+        ),
+    ],
+)
+def test_compute_diarization_metrics(ref_diar, hyp_diar, hits, expected):
+    metrics = SampleMetrics(wer=0.0, hits=hits, substitutions=0, deletions=0, insertions=0)
+    _compute_diarization_metrics(ref_diar, hyp_diar, metrics)
+
+    for key, value in expected.items():
+        assert getattr(metrics, key) == value

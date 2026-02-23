@@ -11,35 +11,61 @@ from evals.transcription.src.models import (
 )
 
 
-def test_create_summary_basic():
-    rows = [
-        SampleRow(
+@pytest.fixture
+def make_sample_row():
+    def _make(
+        example_id="0",
+        engine_version="TestEngine",
+        wer=0.1,
+        hits=9,
+        substitutions=1,
+        deletions=0,
+        insertions=0,
+        wder=0.0,
+        speaker_errors=0,
+        total_words=10,
+        speaker_count_deviation=0.0,
+        ref_speaker_count=2,
+        hyp_speaker_count=2,
+        latency_ms=1000.0,
+        latency_recording_ratio=0.5,
+    ):
+        metrics = {
+            "wer": wer,
+            "hits": hits,
+            "substitutions": substitutions,
+            "deletions": deletions,
+            "insertions": insertions,
+        }
+        if wder is not None:
+            metrics["wder"] = wder
+            metrics["speaker_errors"] = speaker_errors
+            metrics["total_words"] = total_words
+        if speaker_count_deviation is not None:
+            metrics["speaker_count_deviation"] = speaker_count_deviation
+            metrics["ref_speaker_count"] = ref_speaker_count
+            metrics["hyp_speaker_count"] = hyp_speaker_count
+
+        return SampleRow(
             run_id="test_run",
             timestamp="20260223_100000",
-            example_id="0",
-            engine_version="TestEngine",
+            example_id=example_id,
+            engine_version=engine_version,
             reference_transcript="hello world",
             reference_dialogue_entries=None,
             hypothesis_transcript="hello world",
             hypothesis_dialogue_entries=None,
-            metrics={
-                "wer": 0.1,
-                "hits": 9,
-                "substitutions": 1,
-                "deletions": 0,
-                "insertions": 0,
-                "wder": 0.0,
-                "speaker_errors": 0,
-                "total_words": 10,
-                "speaker_count_deviation": 0.0,
-                "ref_speaker_count": 2,
-                "hyp_speaker_count": 2,
-            },
-            latency_ms=1000.0,
-            latency_recording_ratio=0.5,
+            metrics=metrics,
+            latency_ms=latency_ms,
+            latency_recording_ratio=latency_recording_ratio,
             error=None,
-        ),
-    ]
+        )
+
+    return _make
+
+
+def test_create_summary_basic(make_sample_row):
+    rows = [make_sample_row()]
     timing = TimingAccumulator()
     timing.process_sec = 1.0
     timing.audio_sec = 2.0
@@ -66,59 +92,20 @@ def test_create_summary_basic():
     assert summary.processing_speed_ratio == pytest.approx(0.5)
 
 
-def test_create_summary_multiple_samples():
+def test_create_summary_multiple_samples(make_sample_row):
     rows = [
-        SampleRow(
-            run_id="test_run",
-            timestamp="20260223_100000",
-            example_id="0",
-            engine_version="TestEngine",
-            reference_transcript="hello world",
-            reference_dialogue_entries=None,
-            hypothesis_transcript="hello world",
-            hypothesis_dialogue_entries=None,
-            metrics={
-                "wer": 0.1,
-                "hits": 9,
-                "substitutions": 1,
-                "deletions": 0,
-                "insertions": 0,
-                "wder": 0.0,
-                "speaker_errors": 0,
-                "total_words": 10,
-                "speaker_count_deviation": 0.0,
-                "ref_speaker_count": 2,
-                "hyp_speaker_count": 2,
-            },
-            latency_ms=1000.0,
-            latency_recording_ratio=0.5,
-            error=None,
-        ),
-        SampleRow(
-            run_id="test_run",
-            timestamp="20260223_100000",
+        make_sample_row(example_id="0", wer=0.1, hits=9, substitutions=1),
+        make_sample_row(
             example_id="1",
-            engine_version="TestEngine",
-            reference_transcript="good morning",
-            reference_dialogue_entries=None,
-            hypothesis_transcript="good morning",
-            hypothesis_dialogue_entries=None,
-            metrics={
-                "wer": 0.2,
-                "hits": 8,
-                "substitutions": 2,
-                "deletions": 0,
-                "insertions": 0,
-                "wder": 0.1,
-                "speaker_errors": 1,
-                "total_words": 10,
-                "speaker_count_deviation": 0.5,
-                "ref_speaker_count": 2,
-                "hyp_speaker_count": 1,
-            },
+            wer=0.2,
+            hits=8,
+            substitutions=2,
+            wder=0.1,
+            speaker_errors=1,
+            speaker_count_deviation=0.5,
+            hyp_speaker_count=1,
             latency_ms=1200.0,
             latency_recording_ratio=0.6,
-            error=None,
         ),
     ]
     timing = TimingAccumulator()
@@ -142,27 +129,11 @@ def test_create_summary_multiple_samples():
     assert "wer" in summary.metrics
 
 
-def test_create_summary_no_speaker_count_deviation():
+def test_create_summary_no_speaker_count_deviation(make_sample_row):
     rows = [
-        SampleRow(
-            run_id="test_run",
-            timestamp="20260223_100000",
-            example_id="0",
-            engine_version="TestEngine",
-            reference_transcript="hello world",
-            reference_dialogue_entries=None,
-            hypothesis_transcript="hello world",
-            hypothesis_dialogue_entries=None,
-            metrics={
-                "wer": 0.1,
-                "hits": 9,
-                "substitutions": 1,
-                "deletions": 0,
-                "insertions": 0,
-            },
-            latency_ms=1000.0,
-            latency_recording_ratio=0.5,
-            error=None,
+        make_sample_row(
+            wder=None,
+            speaker_count_deviation=None,
         ),
     ]
     timing = TimingAccumulator()
@@ -191,23 +162,10 @@ def test_create_summary_no_speaker_count_deviation():
         assert getattr(summary, key) == value
 
 
-def test_save_results_creates_file(tmp_path):
+def test_save_results_creates_file(tmp_path, make_sample_row):
     output_path = tmp_path / "results" / "output.json"
 
-    sample = SampleRow(
-        run_id="test_run",
-        timestamp="20260223_100000",
-        example_id="0",
-        engine_version="TestEngine",
-        reference_transcript="hello",
-        reference_dialogue_entries=None,
-        hypothesis_transcript="hello",
-        hypothesis_dialogue_entries=None,
-        metrics={"wer": 0.1, "hits": 9, "substitutions": 1, "deletions": 0, "insertions": 0},
-        latency_ms=1000.0,
-        latency_recording_ratio=0.5,
-        error=None,
-    )
+    sample = make_sample_row(wder=None, speaker_count_deviation=None)
 
     summary = Summary(
         run_id="test_run",
@@ -245,37 +203,19 @@ def test_save_results_creates_file(tmp_path):
     assert len(data["engines"]["TestEngine"]) == expected_structure["TestEngine_samples_count"]
 
 
-def test_save_results_multiple_engines(tmp_path):
+def test_save_results_multiple_engines(tmp_path, make_sample_row):
     output_path = tmp_path / "output.json"
 
-    sample1 = SampleRow(
-        run_id="test_run",
-        timestamp="20260223_100000",
-        example_id="0",
-        engine_version="Engine1",
-        reference_transcript="hello",
-        reference_dialogue_entries=None,
-        hypothesis_transcript="hello",
-        hypothesis_dialogue_entries=None,
-        metrics={"wer": 0.1, "hits": 9, "substitutions": 1, "deletions": 0, "insertions": 0},
-        latency_ms=1000.0,
-        latency_recording_ratio=0.5,
-        error=None,
-    )
-
-    sample2 = SampleRow(
-        run_id="test_run",
-        timestamp="20260223_100000",
-        example_id="0",
+    sample1 = make_sample_row(engine_version="Engine1", wder=None, speaker_count_deviation=None)
+    sample2 = make_sample_row(
         engine_version="Engine2",
-        reference_transcript="world",
-        reference_dialogue_entries=None,
-        hypothesis_transcript="world",
-        hypothesis_dialogue_entries=None,
-        metrics={"wer": 0.2, "hits": 8, "substitutions": 2, "deletions": 0, "insertions": 0},
+        wer=0.2,
+        hits=8,
+        substitutions=2,
         latency_ms=1500.0,
         latency_recording_ratio=0.6,
-        error=None,
+        wder=None,
+        speaker_count_deviation=None,
     )
 
     summary1 = Summary(

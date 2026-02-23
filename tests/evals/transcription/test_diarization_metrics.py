@@ -14,16 +14,14 @@ def test_compute_wder_perfect_match():
     ]
 
     result = compute_wder(ref_segments, hyp_segments)
-    assert result["wder"] == 0.0
-    assert result["speaker_errors"] == 0
-    assert result["total_words"] == 4
+    expected = {"wder": 0.0, "speaker_errors": 0, "total_words": 4}
+    assert result == expected
 
 
 def test_compute_wder_empty_segments():
     result = compute_wder([], [])
-    assert result["wder"] == 0.0
-    assert result["speaker_errors"] == 0
-    assert result["total_words"] == 0
+    expected = {"wder": 0.0, "speaker_errors": 0, "total_words": 0}
+    assert result == expected
 
 
 def test_compute_wder_missing_hypothesis():
@@ -31,9 +29,8 @@ def test_compute_wder_missing_hypothesis():
         {"speaker": "Speaker_1", "text": "hello world", "start": 0.0, "end": 1.0},
     ]
     result = compute_wder(ref_segments, [])
-    assert result["wder"] == 0.0
-    assert result["speaker_errors"] == 0
-    assert result["total_words"] == 2
+    expected = {"wder": 0.0, "speaker_errors": 0, "total_words": 2}
+    assert result == expected
 
 
 def test_compute_speaker_count_metrics_perfect_match():
@@ -47,9 +44,13 @@ def test_compute_speaker_count_metrics_perfect_match():
     ]
 
     result = compute_speaker_count_metrics(ref_segments, hyp_segments)
-    assert result["speaker_count_accuracy"] == 1.0
-    assert result["ref_speaker_count"] == 2
-    assert result["hyp_speaker_count"] == 2
+    expected = {
+        "speaker_count_accuracy": 1.0,
+        "ref_speaker_count": 2,
+        "hyp_speaker_count": 2,
+        "absolute_error": 0,
+    }
+    assert result == expected
 
 
 def test_compute_speaker_count_metrics_mismatch():
@@ -62,16 +63,24 @@ def test_compute_speaker_count_metrics_mismatch():
     ]
 
     result = compute_speaker_count_metrics(ref_segments, hyp_segments)
-    assert result["speaker_count_accuracy"] == 0.0
-    assert result["ref_speaker_count"] == 2
-    assert result["hyp_speaker_count"] == 1
+    expected = {
+        "speaker_count_accuracy": 0.0,
+        "ref_speaker_count": 2,
+        "hyp_speaker_count": 1,
+        "absolute_error": 1,
+    }
+    assert result == expected
 
 
 def test_compute_speaker_count_metrics_empty():
     result = compute_speaker_count_metrics([], [])
-    assert result["speaker_count_accuracy"] == 1.0
-    assert result["ref_speaker_count"] == 0
-    assert result["hyp_speaker_count"] == 0
+    expected = {
+        "speaker_count_accuracy": 1.0,
+        "ref_speaker_count": 0,
+        "hyp_speaker_count": 0,
+        "absolute_error": 0,
+    }
+    assert result == expected
 
 
 def test_compute_wder_more_ref_speakers_than_hyp():
@@ -88,6 +97,7 @@ def test_compute_wder_more_ref_speakers_than_hyp():
     result = compute_wder(ref_segments, hyp_segments)
     assert result["total_words"] == 5
     assert result["speaker_errors"] == 1
+    assert result["wder"] == 0.2
 
 
 def test_compute_wder_hyp_speaker_no_overlap():
@@ -100,8 +110,8 @@ def test_compute_wder_hyp_speaker_no_overlap():
     ]
 
     result = compute_wder(ref_segments, hyp_segments)
-    assert result["total_words"] == 2
-    assert result["speaker_errors"] == 0
+    expected = {"wder": 0.0, "speaker_errors": 0, "total_words": 2}
+    assert result == expected
 
 
 def test_compute_wder_all_words_wrong_speaker():
@@ -115,9 +125,8 @@ def test_compute_wder_all_words_wrong_speaker():
     ]
 
     result = compute_wder(ref_segments, hyp_segments)
-    assert result["wder"] == 0.0
-    assert result["speaker_errors"] == 0
-    assert result["total_words"] == 4
+    expected = {"wder": 0.0, "speaker_errors": 0, "total_words": 4}
+    assert result == expected
 
 
 def test_compute_wder_partial_speaker_errors():
@@ -133,9 +142,8 @@ def test_compute_wder_partial_speaker_errors():
     ]
 
     result = compute_wder(ref_segments, hyp_segments)
-    assert result["total_words"] == 5
-    assert result["speaker_errors"] == 1
-    assert result["wder"] == 0.2
+    expected = {"wder": 0.2, "speaker_errors": 1, "total_words": 5}
+    assert result == expected
 
 
 def test_compute_wder_with_punctuation_and_case():
@@ -147,9 +155,8 @@ def test_compute_wder_with_punctuation_and_case():
     ]
 
     result = compute_wder(ref_segments, hyp_segments)
-    assert result["wder"] == 0.0
-    assert result["speaker_errors"] == 0
-    assert result["total_words"] == 2
+    expected = {"wder": 0.0, "speaker_errors": 0, "total_words": 2}
+    assert result == expected
 
 
 def test_compute_wder_three_speakers_optimal_mapping():
@@ -165,9 +172,8 @@ def test_compute_wder_three_speakers_optimal_mapping():
     ]
 
     result = compute_wder(ref_segments, hyp_segments)
-    assert result["wder"] == 0.0
-    assert result["speaker_errors"] == 0
-    assert result["total_words"] == 9
+    expected = {"wder": 0.0, "speaker_errors": 0, "total_words": 9}
+    assert result == expected
 
 
 def test_compute_wder_with_transcription_errors():
@@ -179,8 +185,8 @@ def test_compute_wder_with_transcription_errors():
     ]
 
     result = compute_wder(ref_segments, hyp_segments)
-    assert result["total_words"] == 3
-    assert result["speaker_errors"] == 0
+    expected = {"wder": 0.0, "speaker_errors": 0, "total_words": 3}
+    assert result == expected
 
 
 def test_compute_speaker_count_metrics_more_hyp_speakers():
@@ -193,10 +199,13 @@ def test_compute_speaker_count_metrics_more_hyp_speakers():
     ]
 
     result = compute_speaker_count_metrics(ref_segments, hyp_segments)
-    assert result["speaker_count_accuracy"] == 0.0
-    assert result["ref_speaker_count"] == 1
-    assert result["hyp_speaker_count"] == 2
-    assert result["absolute_error"] == 1
+    expected = {
+        "speaker_count_accuracy": 0.0,
+        "ref_speaker_count": 1,
+        "hyp_speaker_count": 2,
+        "absolute_error": 1,
+    }
+    assert result == expected
 
 
 def test_compute_speaker_count_metrics_large_difference():
@@ -210,10 +219,13 @@ def test_compute_speaker_count_metrics_large_difference():
     ]
 
     result = compute_speaker_count_metrics(ref_segments, hyp_segments)
-    assert result["speaker_count_accuracy"] == 0.0
-    assert result["ref_speaker_count"] == 3
-    assert result["hyp_speaker_count"] == 1
-    assert result["absolute_error"] == 2
+    expected = {
+        "speaker_count_accuracy": 0.0,
+        "ref_speaker_count": 3,
+        "hyp_speaker_count": 1,
+        "absolute_error": 2,
+    }
+    assert result == expected
 
 
 def test_compute_speaker_count_metrics_duplicate_speaker_names():
@@ -229,7 +241,10 @@ def test_compute_speaker_count_metrics_duplicate_speaker_names():
     ]
 
     result = compute_speaker_count_metrics(ref_segments, hyp_segments)
-    assert result["speaker_count_accuracy"] == 1.0
-    assert result["ref_speaker_count"] == 2
-    assert result["hyp_speaker_count"] == 2
-    assert result["absolute_error"] == 0
+    expected = {
+        "speaker_count_accuracy": 1.0,
+        "ref_speaker_count": 2,
+        "hyp_speaker_count": 2,
+        "absolute_error": 0,
+    }
+    assert result == expected

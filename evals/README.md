@@ -27,8 +27,6 @@ At a high level, an experiment is defined by:
 
 Update the config file and/or prompt templates as needed, then run the experiment.
 
-
-
 # Transcription Evaluation Suite
 
 Evaluation framework for comparing transcription services using the AMI Corpus dataset.

@@ -21,12 +21,11 @@ minversion = "8.3"
 testpaths = [
     "tests"
 ]
-adopts = [
+addopts = [
     "-ra -q",
     "--cov=backend",               
     "--cov=common",
-    "--cov=evals", 
-    "--cov-worker",                 
+    "--cov=evals",                 
     "--cov-report=term-missing",   
     "--cov-report=html",             
     ]
@@ -206,7 +205,7 @@ check_untyped_defs = true
 no_implicit_optional = true
 # terraform: non production diagram scripts using untyped diagrams 
 # TODO: Decide on a structure for evals and viewer folder and add mypy support properly
-exclude = ["alembic/*", "tests/*", "terraform/*", "viewer/*", "evals/src/*"]
+exclude = ["alembic/*", "tests/*", "terraform/*", "viewer/*", "evals/summarisation/src/*", "a"]
 
 
 [[tool.mypy.overrides]]

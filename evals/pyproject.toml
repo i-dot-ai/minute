@@ -26,6 +26,9 @@ ailg-evals = "ailg_evals.cli:app"
 requires = ["hatchling>=1.25.0"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["evals"]
+
 [tool.uv]
 
 default-groups = ["dev"]

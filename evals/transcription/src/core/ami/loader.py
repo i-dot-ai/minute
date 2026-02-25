@@ -31,10 +31,9 @@ def _load_utterances_for_meetings(
     dataset = load_dataset(AMI_DATASET_NAME, config, split=split)
     utterances_by_meeting: defaultdict[str, list[RawDatasetRow]] = defaultdict(list)
     for row in dataset:
-        r = row
-        meeting_id = r["meeting_id"]
+        meeting_id = row["meeting_id"]
         if meeting_id in required_meetings:
-            utterances_by_meeting[meeting_id].append(r)
+            utterances_by_meeting[meeting_id].append(RawDatasetRow(**row))
     return utterances_by_meeting
 
 

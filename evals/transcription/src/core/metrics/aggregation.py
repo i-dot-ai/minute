@@ -10,6 +10,7 @@ def aggregate_metrics(all_sample_metrics: list[dict]) -> dict[str, dict[str, flo
     metric_keys = [
         "wer",
         "wder",
+        "speaker_count_accuracy",
     ]
 
     for key in metric_keys:

@@ -27,8 +27,6 @@ def create_summary(
     aggregated_dict = aggregate_metrics(metrics_list)
     aggregated = {key: AggregatedMetricStats(**stats) for key, stats in aggregated_dict.items()}
 
-    overall_score = 1.0 - aggregated["wer"].mean if "wer" in aggregated else None
-
     return Summary(
         run_id=run_id,
         timestamp=timestamp,
@@ -36,7 +34,7 @@ def create_summary(
         engine_version=label,
         split=dataset_split,
         n_examples=len(rows),
-        overall_score=overall_score,
+        overall_score=None,
         metrics=aggregated,
         processing_speed_ratio=timing.processing_speed_ratio,
     )

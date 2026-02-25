@@ -63,7 +63,7 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
         "summaries": {
             "count": 2,
             "engines": {"Azure Speech-to-Text", "Whisper"},
-            "required_fields": ["n_examples", "overall_score", "engine_version", "metrics"],
+            "required_fields": ["n_examples", "engine_version", "metrics"],
             "metrics_fields": ["wer"],
         },
         "samples": {
@@ -87,7 +87,6 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
 
     for summary in results["summaries"]:
         assert summary["n_examples"] == 2
-        assert summary["overall_score"] is not None
         assert all(field in summary for field in expected_structure["summaries"]["required_fields"])
         assert all(metric in summary["metrics"] for metric in expected_structure["summaries"]["metrics_fields"])
 

@@ -139,7 +139,7 @@ class SampleMetrics(BaseModel):
     wder: float | None = None
     speaker_errors: int | None = None
     total_words: int | None = None
-    speaker_count_deviation: float | None = None
+    speaker_count_accuracy: float | None = None
     ref_speaker_count: int | None = None
     hyp_speaker_count: int | None = None
 

@@ -179,6 +179,6 @@ def _compute_diarization_metrics(
     metrics.total_words = wder_metrics["total_words"]
 
     speaker_metrics = compute_speaker_count_metrics(ref_diar, hyp_diar)
-    metrics.speaker_count_deviation = 1.0 - speaker_metrics["speaker_count_accuracy"]
+    metrics.speaker_count_accuracy = speaker_metrics["speaker_count_accuracy"]
     metrics.ref_speaker_count = int(speaker_metrics["ref_speaker_count"])
     metrics.hyp_speaker_count = int(speaker_metrics["hyp_speaker_count"])

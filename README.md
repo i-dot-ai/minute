@@ -137,6 +137,8 @@ To run unit tests:
 make test
 ```
 
+For transcription service evaluation, see [evals/transcription/README.md](evals/transcription/README.md).
+
 ### Testing paid APIs and LLM prompt evaluations
 
 A special set of tests are available to evaluate paid calls to LLM providers. Since we don't want to run this all the

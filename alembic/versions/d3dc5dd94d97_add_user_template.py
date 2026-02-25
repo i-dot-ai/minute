@@ -12,6 +12,8 @@ import sqlalchemy as sa
 import sqlmodel
 
 from alembic import op
+from sqlmodel import AutoString
+
 
 # revision identifiers, used by Alembic.
 revision: str = "d3dc5dd94d97"
@@ -27,8 +29,8 @@ def upgrade() -> None:
         sa.Column("id", sa.Uuid(), server_default=sa.text("gen_random_uuid()"), nullable=False),
         sa.Column("created_datetime", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_datetime", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("name", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column("content", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("name", AutoString(), nullable=False),
+        sa.Column("content", AutoString(), nullable=False),
         sa.Column("user_id", sa.Uuid(), nullable=True),
         sa.ForeignKeyConstraint(["user_id"], ["user.id"]),
         sa.PrimaryKeyConstraint("id"),

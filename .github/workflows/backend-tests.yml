@@ -1,0 +1,85 @@
+name: Backend Tests
+
+on:
+  workflow_call:
+    inputs: 
+      python_version: 
+        required: true
+        type: string
+      poetry_version: 
+        required: true
+        type: string
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    environment: release
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Set up Poetry
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: ${{ inputs.poetry_version }}
+
+      - name: Cache virtualenv 
+        uses: actions/cache@v4 
+        with: 
+          path: .venv 
+          key: venv-${{ runner.os }}-${{ inputs.python_version }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            venv-${{ runner.os }}-${{ inputs.python_version }}-
+            venv-${{ runner.os }}-
+      
+      - name: Configure Poetry to create .venv in project
+        run: poetry config virtualenvs.in-project true
+
+      - name: Install dependencies
+        run: poetry install --no-root --no-ansi --with dev --sync
+
+      - name: Copy env file
+        run: cp .env.example .env
+
+      - name: Create test data directory
+        run: mkdir -p .data/test_audio/normal
+
+      - name: Start services
+        run: docker compose up -d db localstack --wait
+
+      - name: Run database migrations
+        run: poetry run alembic upgrade head
+
+      - name: Run tests with coverage
+        run: make test-cov
+
+      - name: Upload backend coverage HTML 
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage-report
+          path: htmlcov/
+
+      - name: Upload backend coverage XML
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage-xml
+          path: coverage.xml
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
+          poetry run coverage report --format=markdown >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Stop services
+        if: always()
+        run: docker compose down

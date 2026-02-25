@@ -1,0 +1,57 @@
+name: Frontend CI
+
+on:
+  workflow_call:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Formatting
+        working-directory: frontend
+        run: npm run prettier:check
+
+      - name: Run frontend tests with coverage
+        id: test
+        working-directory: frontend
+        run: |
+          npm run test:cov 2>&1 | tee test-output.txt
+
+      - name: Upload frontend coverage HTML
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage-html
+          path: frontend/coverage
+
+      - name: Upload frontend coverage XML
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage-xml
+          path: frontend/coverage/cobertura-coverage.xml 
+
+      - name: Coverage summary
+        if: always()
+        working-directory: frontend
+        run: |
+          echo "## Frontend Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          sed 's/\x1b\[[0-9;]*m//g' test-output.txt | sed -n '/^-.*|.*-$/,/^$/p' >> $GITHUB_STEP_SUMMARY || echo "Coverage summary not available" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

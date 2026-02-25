@@ -39,6 +39,13 @@ class AzureSpeechAdapter(TranscriptionAdapter):
     )
     async def start(cls, audio_file_path_or_recording: Path | Recording) -> TranscriptionJobMessageData:
         """Transcribe using Azure Speech-to-Text API."""
+        if not settings.AZURE_SPEECH_KEY or not settings.AZURE_SPEECH_REGION:
+            msg = (
+                "Azure credentials not found. Please set AZURE_SPEECH_KEY and AZURE_SPEECH_REGION "
+                "environment variables to run transcription evaluation."
+            )
+            raise ValueError(msg)
+
         if not isinstance(audio_file_path_or_recording, Path):
             msg = "AzureSpeechAdapter only accepts Path objects"
             raise TypeError(msg)

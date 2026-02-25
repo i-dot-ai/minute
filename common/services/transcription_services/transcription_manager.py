@@ -5,7 +5,7 @@ from pathlib import Path
 
 import sentry_sdk
 
-from common.audio.ffmpeg import convert_to_mp3, get_duration, get_num_audio_channels
+from common.audio.ffmpeg import convert_to_mp3, get_duration, is_audio_ready_for_transcription
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import Recording, Transcription
@@ -25,7 +25,6 @@ from common.types import TranscriptionJobMessageData
 logger = logging.getLogger(__name__)
 
 settings = get_settings()
-SUPPORTED_FORMATS = {".mp3"}
 _adapters = {
     adapter.name: adapter
     for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter, AzureBatchTranscriptionAdapter, WhisplyLocalAdapter]
@@ -109,8 +108,7 @@ class TranscriptionServiceManager:
     async def get_recording_to_process(
         cls, recording: Recording, temp_file_path: Path, file_extension: str
     ) -> tuple[Recording, Path, float]:
-        num_channels = get_num_audio_channels(temp_file_path)
-        if file_extension in SUPPORTED_FORMATS and num_channels == 1:
+        if is_audio_ready_for_transcription(temp_file_path, file_extension):
             duration = get_duration(temp_file_path)
             return recording, temp_file_path, duration
 

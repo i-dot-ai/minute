@@ -2,18 +2,31 @@ import logging
 import subprocess
 from pathlib import Path
 
-import ffmpeg  # type: ignore[import-untyped]
+import ffmpeg
+
+from common.constants import MONO_CHANNELS, SUPPORTED_FORMATS
 
 logger = logging.getLogger(__name__)
 
 
-def convert_to_mp3(input_file_path: Path) -> Path:
+def convert_to_mp3(input_file_path: Path, output_path: Path | None = None) -> Path:
+    """
+    Converts audio to mono MP3 format, preserving the input sample rate.
+
+    Args:
+        input_file_path: Path to input audio file
+        output_path: Optional output path. If None, creates path with _converted suffix
+    """
     if not Path(input_file_path).is_file():
         msg = f"Input file not found: {input_file_path}"
         logger.error(msg)
         raise FileNotFoundError(msg)
 
-    output_file = input_file_path.with_name(f"{input_file_path.stem}_converted.mp3")
+    if output_path is None:
+        output_path = input_file_path.with_name(f"{input_file_path.stem}_converted.mp3")
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
     try:
         logger.info("Probing input file for audio streams")
         probe = ffmpeg.probe(input_file_path)
@@ -24,20 +37,16 @@ def convert_to_mp3(input_file_path: Path) -> Path:
             logger.error(msg)
             raise RuntimeError(msg)
 
-        # Open the input file
         input_stream = ffmpeg.input(input_file_path)
 
-        # Set up the output stream with the desired parameters
         output_args = {
-            "acodec": "libmp3lame",  # Use LAME MP3 encoder
-            "loglevel": "warning",  # Show warnings and errors
+            "acodec": "libmp3lame",
+            "loglevel": "warning",
             "audio_bitrate": "192k",
-            "ac": 1,
+            "ac": MONO_CHANNELS,
         }
 
-        output_stream = ffmpeg.output(input_stream, output_file.as_posix(), **output_args)
-
-        # Run the FFmpeg command
+        output_stream = ffmpeg.output(input_stream, str(output_path), **output_args)
         ffmpeg.run(output_stream, overwrite_output=True)
         logger.info("FFmpeg command completed successfully")
 
@@ -45,7 +54,7 @@ def convert_to_mp3(input_file_path: Path) -> Path:
         logger.exception("Unexpected error occurred in MP3 conversion")
         raise
     else:
-        return output_file
+        return output_path
 
 
 def get_num_audio_channels(file_path: Path) -> int:
@@ -83,6 +92,17 @@ def get_num_audio_channels(file_path: Path) -> int:
         msg = "Failed to get number of channels"
         logger.exception(msg)
         return 2
+
+
+def is_audio_ready_for_transcription(file_path: Path, file_extension: str) -> bool:
+    """
+    Checks if an audio file is ready for transcription without conversion.
+    Returns True if the file is in a supported format and is mono.
+    """
+    if file_extension not in SUPPORTED_FORMATS:
+        return False
+    num_channels = get_num_audio_channels(file_path)
+    return num_channels == MONO_CHANNELS
 
 
 def get_duration(file_path: Path) -> float:

@@ -18,10 +18,44 @@ skip = [
 
 [tool.pytest.ini_options]
 minversion = "8.3"
-addopts = "-ra -q"
 testpaths = [
     "tests"
 ]
+adopts = [
+    "-ra -q",
+    "--cov=backend",               
+    "--cov=common",
+    "--cov=evals", 
+    "--cov-worker",                 
+    "--cov-report=term-missing",   
+    "--cov-report=html",             
+    ]
+
+[tool.coverage.run]
+source = ["backend", "common", "evals"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/terraform/*",
+    "*/alembic/*",
+    "*/__pycache__/*",
+    "*/migrations/*",
+    "*/.venv/*",
+    "*/venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+fail_under = 10
+
 
 [tool.poetry]
 packages = [
@@ -52,6 +86,7 @@ markdownify = "^1.2.0"
 python-multipart = "^0.0.20"
 i-dot-ai-utilities = "^0.4.4"
 azure-servicebus = "^7.14.2"
+mypy-boto3-sqs = "^1.42.3"
 
 [tool.poetry.group.backend.dependencies]
 pyjwt = "^2.9.0"
@@ -69,6 +104,12 @@ azure-identity = "^1.23.1"
 
 [tool.poetry.group.local-dev.dependencies]
 whisply = "^0.13.1"
+
+[tool.poetry.group.evals.dependencies]
+datasets = "^3.0.0"
+jiwer = "^3.0.0"
+soundfile = "^0.12.0"
+librosa = "^0.10.0"
 
 [tool.poetry.group.dev.dependencies]
 bumpversion = "^0.6.0"
@@ -117,6 +158,7 @@ types-ujson = "^5.10.0.20250822"
 types-aioboto3 = "^15.5.0"
 types-botocore = "^1.0.2"
 types-boto3 = "^1.42.34"
+coverage = "^7.13.2"
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]
@@ -139,7 +181,7 @@ select = [
     "TCH", "TD", "TID", "UP", "YTT"
 ]
 # TODO: Decide on a structure for evals folder and add ruff support properly
-exclude = ["out/*", "viewer/*", "alembic/*"]
+exclude = ["out/*", "viewer/*", "alembic/*", "evals/src/*"]
 ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318","ISC001","PLR0912","C901","PLR0912"]
 
 [tool.ruff.lint.isort]
@@ -151,15 +193,31 @@ known-first-party = ["backend", "frontend"]
 "*/tests_playwright/*" = ["S101", "S106", "PLR0913", "PLR2004", "TD003"]
 
 [tool.mypy]
+# packages = ["evals"] 
+explicit_package_bases = true
+
 warn_unused_configs = true
 warn_return_any = true
 warn_unused_ignores = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 strict_optional = true
-
 check_untyped_defs = true
 no_implicit_optional = true
 # terraform: non production diagram scripts using untyped diagrams 
 # TODO: Decide on a structure for evals and viewer folder and add mypy support properly
-exclude = ["alembic/*", "tests/*", "terraform/*", "viewer/*", "evals/*"]
+exclude = ["alembic/*", "tests/*", "terraform/*", "viewer/*", "evals/src/*"]
+
+
+[[tool.mypy.overrides]]
+module = "soundfile.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "datasets.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "ffmpeg.*"
+ignore_missing_imports = true
+

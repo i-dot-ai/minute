@@ -4,8 +4,7 @@ name: tests
 
 env:
   DOCKER_BUILDKIT: 1
-  PYTHON_VERSION: "3.12"
-  POETRY_VERSION: "2.3.2"
+
 
 on:
   push:
@@ -33,64 +32,23 @@ on:
   workflow_dispatch:
 
 jobs:
-  run_tests:
-    name: Run tests
-    runs-on: ubuntu-latest
-    environment: release
+  backend_tests:
+    uses: ./.github/workflows/backend-tests.yml
+    with:
+      python_version: "3.12"
+      poetry_version: "2.3.2"
+    secrets: inherit
 
-    steps:
-      - uses: actions/checkout@v3 
+  frontend_tests:
+    uses: ./.github/workflows/frontend-tests.yml
+    secrets: inherit
 
-      - name: Set up Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Set up Poetry
-        uses: abatilo/actions-poetry@v2
-        with:
-          poetry-version: ${{ env.POETRY_VERSION }}
 
-      - name: Install dependencies
-        run: |
-          poetry install --no-root --no-ansi --with dev
-
-      - name: Copy env file
-        run: |
-          cp .env.example .env
-
-      - name: Create test data directory
-        run: |
-          mkdir -p .data/test_audio/normal
-
-      - name: Start services
-        run: |
-          docker compose up -d db localstack --wait
-
-      - name: Run database migrations
-        run: |
-          poetry run alembic upgrade head
-
-      - name: Run tests
-        run: |
-          make test
-      
-      - name: Set up Node 
-        uses: actions/setup-node@v3 
-        with: 
-            node-version: 20 
-
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Run frontend tests
-        working-directory: frontend
-        run: npm test
-
-      - name: Stop services
-        if: always()
-        run: |
-          docker compose down
-
-#
+  worker:
+    if: ${{ false && always() }}
+    permissions: write-all
+    uses: ./.github/workflows/build-one.yml
+    with:
+      service: worker
+    secrets: inherit

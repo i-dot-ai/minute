@@ -204,7 +204,7 @@ disallow_incomplete_defs = true
 strict_optional = true
 check_untyped_defs = true
 no_implicit_optional = true
-# terraform: non production diagram scripts using untyped diagrams
+# terraform: non production diagram scripts using untyped diagrams 
 # TODO: Decide on a structure for evals and viewer folder and add mypy support properly
 exclude = ["alembic/*", "tests/*", "terraform/*", "viewer/*", "evals/src/*"]
 

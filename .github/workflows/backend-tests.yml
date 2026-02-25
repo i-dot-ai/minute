@@ -57,7 +57,7 @@ jobs:
       - name: Run database migrations
         run: poetry run alembic upgrade head
 
-      - name: Run tests with coverage (excluding evals)
+      - name: Run tests with coverage
         run: make test-cov
 
       - name: Upload backend coverage HTML 

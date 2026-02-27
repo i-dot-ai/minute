@@ -2,10 +2,20 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Literal
+from typing import Literal, TypeAlias
 
 import yaml
 from pydantic import BaseModel, Field
+
+MetricName: TypeAlias = Literal[
+    "faithfulness",
+    "coverage",
+    "conciseness",
+    "coherence",
+]
+
+def default_criteria() -> list[MetricName]:
+    return []
 
 
 class RunConfig(BaseModel):
@@ -37,9 +47,7 @@ class ModelConfig(BaseModel):
 
 class JudgeConfig(ModelConfig):
     pass_threshold: int = 4
-    criteria: list[Literal["faithfulness", "coverage", "conciseness", "coherence"]] = Field(
-        default_factory=lambda: ["faithfulness", "coverage", "conciseness", "coherence"]
-    )
+    criteria: list[MetricName] = Field(default_factory=default_criteria)
 
 
 class PromptConfig(BaseModel):

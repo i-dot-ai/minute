@@ -4,7 +4,7 @@ import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Optional
 
 import dspy
 import orjson
@@ -25,6 +25,8 @@ from .schemas import (
     GenerationConfig,
     MetricResult,
 )
+from pydantic import SecretStr
+
 
 
 def _now() -> datetime:
@@ -78,10 +80,10 @@ def _to_dspy_devset(examples: list[DialogExample]) -> list[dspy.Example]:
 def _build_llm(model_cfg: ModelConfig) -> ChatOpenAI:
     return ChatOpenAI(
         base_url=model_cfg.base_url,
-        api_key=model_cfg.api_key,
+        api_key=SecretStr(model_cfg.api_key),
         model=model_cfg.model,
         temperature=model_cfg.temperature,
-        max_tokens=model_cfg.max_tokens,
+        max_completion_tokens=model_cfg.max_tokens,
         timeout=model_cfg.timeout_s,
     )
 
@@ -107,8 +109,14 @@ def _summarize_one(
     summary_resp = summarizer_llm.invoke(summarize_msg)
     t1 = time.perf_counter()
 
+    content = summary_resp.content
+    if isinstance(content, str):
+        summary_text = content.strip()
+    else:
+        summary_text = " ".join(str(item) for item in content).strip()
+        
     candidate = DialogSummary(
-        summary=summary_resp.content.strip(),
+        summary=summarize_text,
         model=cfg.model.model,
         prompt_version=prompt_version,
         generation_config=GenerationConfig(
@@ -173,7 +181,7 @@ def run_eval(
     metric_scores: dict[str, list[float]] = {name: [] for name in metric_names}
 
     class _Program:
-        def __call__(self, *, dialogue: str):
+        def __call__(self, *, dialogue: str) -> dspy.Prediction : 
             candidate, summarize_ms = _summarize_one(
                 cfg=cfg,
                 summarizer_llm=summarizer_llm,
@@ -187,7 +195,7 @@ def run_eval(
 
     program = _Program()
 
-    def _metric(gold, pred, trace=None):
+    def _metric(gold:DialogExample, pred:dspy.Prediction, trace: Optional[dict[str,Any]]=None)-> float:
         ex = DialogExample(
             example_id=str(getattr(gold, "example_id")),
             dialogue=str(getattr(gold, "dialogue")),

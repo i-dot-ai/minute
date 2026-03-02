@@ -3,12 +3,11 @@ from __future__ import annotations
 import pytest
 
 from evals.transcription.src.core.runner import (
-    _compute_diarization_metrics,
+    _compute_all_metrics,
     _extract_segments,
-    _process_diarization,
+    _validate_and_convert_diarization,
     run_engines_parallel,
 )
-from evals.transcription.src.models import SampleMetrics
 from tests.evals.transcription.conftest import FakeAdapter, FakeDataset
 
 
@@ -94,30 +93,14 @@ def test_extract_segments(result_attr, example_attr, expected_dialogue, expected
     assert reference == expected_reference
 
 
-def test_process_diarization_success():
+def test_validate_and_convert_diarization_success():
     ref_diar = [{"speaker": "Speaker_1", "text": "hello world", "start": 0.0, "end": 1.0}]
     hyp_diar = [{"speaker": "Speaker_A", "text": "hello world", "start": 0.0, "end": 1.0}]
-    metrics = SampleMetrics(
-        wer=0.0,
-        hits=2,
-        substitutions=0,
-        deletions=0,
-        insertions=0,
-        wder=0.0,
-        speaker_errors=0,
-        total_words=0,
-        speaker_count_accuracy=0.0,
-        ref_speaker_count=0,
-        hyp_speaker_count=0,
-    )
 
-    ref_result, hyp_result = _process_diarization(ref_diar, hyp_diar, metrics)
+    ref_result, hyp_result = _validate_and_convert_diarization(ref_diar, hyp_diar)
 
     assert len(ref_result) == len(ref_diar)
     assert len(hyp_result) == len(hyp_diar)
-    assert metrics.wder == 0.0
-    assert metrics.speaker_errors == 0
-    assert metrics.total_words == 2
 
 
 @pytest.mark.parametrize(
@@ -127,29 +110,17 @@ def test_process_diarization_success():
         ([{"speaker": "A", "text": "hello"}], []),
     ],
 )
-def test_process_diarization_raises_on_missing_data(ref_diar, hyp_diar):
-    metrics = SampleMetrics(
-        wer=0.0,
-        hits=0,
-        substitutions=0,
-        deletions=0,
-        insertions=0,
-        wder=0.0,
-        speaker_errors=0,
-        total_words=0,
-        speaker_count_accuracy=0.0,
-        ref_speaker_count=0,
-        hyp_speaker_count=0,
-    )
-
+def test_validate_and_convert_diarization_raises_on_missing_data(ref_diar, hyp_diar):
     with pytest.raises(ValueError, match="Diarization data is required but missing"):
-        _process_diarization(ref_diar, hyp_diar, metrics)
+        _validate_and_convert_diarization(ref_diar, hyp_diar)
 
 
 @pytest.mark.parametrize(
-    ("ref_diar", "hyp_diar", "hits", "expected"),
+    ("ref_text", "hyp_text", "ref_diar", "hyp_diar", "expected"),
     [
         (
+            "hello world good morning",
+            "hello world good morning",
             [
                 {"speaker": "Speaker_1", "text": "hello world", "start": 0.0, "end": 1.0},
                 {"speaker": "Speaker_2", "text": "good morning", "start": 1.0, "end": 2.0},
@@ -158,8 +129,8 @@ def test_process_diarization_raises_on_missing_data(ref_diar, hyp_diar):
                 {"speaker": "Speaker_A", "text": "hello world", "start": 0.0, "end": 1.0},
                 {"speaker": "Speaker_B", "text": "good morning", "start": 1.0, "end": 2.0},
             ],
-            4,
             {
+                "wer": 0.0,
                 "wder": 0.0,
                 "speaker_errors": 0,
                 "total_words": 4,
@@ -169,6 +140,8 @@ def test_process_diarization_raises_on_missing_data(ref_diar, hyp_diar):
             },
         ),
         (
+            "hello world good morning goodbye",
+            "hello world good morning goodbye",
             [
                 {"speaker": "Speaker_1", "text": "hello world", "start": 0.0, "end": 1.0},
                 {"speaker": "Speaker_2", "text": "good morning", "start": 1.0, "end": 2.0},
@@ -179,8 +152,8 @@ def test_process_diarization_raises_on_missing_data(ref_diar, hyp_diar):
                 {"speaker": "Speaker_B", "text": "good morning", "start": 1.0, "end": 2.0},
                 {"speaker": "Speaker_B", "text": "goodbye", "start": 2.0, "end": 2.5},
             ],
-            5,
             {
+                "wer": 0.0,
                 "wder": 0.2,
                 "speaker_errors": 1,
                 "total_words": 5,
@@ -190,6 +163,8 @@ def test_process_diarization_raises_on_missing_data(ref_diar, hyp_diar):
             },
         ),
         (
+            "hello world",
+            "hello world",
             [
                 {"speaker": "Speaker_1", "text": "hello", "start": 0.0, "end": 0.5},
                 {"speaker": "Speaker_2", "text": "world", "start": 0.5, "end": 1.0},
@@ -197,8 +172,8 @@ def test_process_diarization_raises_on_missing_data(ref_diar, hyp_diar):
             [
                 {"speaker": "Speaker_A", "text": "hello world", "start": 0.0, "end": 1.0},
             ],
-            2,
             {
+                "wer": 0.0,
                 "speaker_count_accuracy": 0.0,
                 "ref_speaker_count": 2,
                 "hyp_speaker_count": 1,
@@ -206,21 +181,8 @@ def test_process_diarization_raises_on_missing_data(ref_diar, hyp_diar):
         ),
     ],
 )
-def test_compute_diarization_metrics(ref_diar, hyp_diar, hits, expected):
-    metrics = SampleMetrics(
-        wer=0.0,
-        hits=hits,
-        substitutions=0,
-        deletions=0,
-        insertions=0,
-        wder=0.0,
-        speaker_errors=0,
-        total_words=0,
-        speaker_count_accuracy=0.0,
-        ref_speaker_count=0,
-        hyp_speaker_count=0,
-    )
-    _compute_diarization_metrics(ref_diar, hyp_diar, metrics)
+def test_compute_all_metrics(ref_text, hyp_text, ref_diar, hyp_diar, expected):
+    metrics = _compute_all_metrics(ref_text, hyp_text, ref_diar, hyp_diar)
 
     for key, value in expected.items():
         assert getattr(metrics, key) == value

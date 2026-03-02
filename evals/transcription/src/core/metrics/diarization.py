@@ -27,6 +27,7 @@ def _iterate_aligned_equal_chunks(
     for alignment in alignment_result.alignments:
         for chunk in alignment:
             if chunk.type != "equal":
+                # Skip substitutions, deletions, and insertions (already captured by WER)
                 continue
 
             ref_slice = ref_pairs[chunk.ref_start_idx : chunk.ref_end_idx]

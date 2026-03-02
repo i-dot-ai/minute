@@ -38,10 +38,18 @@ def _extract_segments(result: Any, example: Any) -> tuple[list, list]:
     return dialogue_entries, reference_diarization
 
 
-def _compute_base_wer_metrics(ref_raw: str, hyp_raw: str) -> SampleMetrics:
+def _compute_all_metrics(
+    ref_raw: str,
+    hyp_raw: str,
+    ref_diarization: list[DiarizationSegment],
+    hyp_diarization: list[DiarizationSegment],
+) -> SampleMetrics:
     reference_normalized = normalise_text(ref_raw)
     hypothesis_normalized = normalise_text(hyp_raw)
     wer_metrics = compute_wer_metrics([reference_normalized], [hypothesis_normalized])
+
+    wder_metrics = compute_wder(ref_diarization, hyp_diarization)
+    speaker_metrics = compute_speaker_count_metrics(ref_diarization, hyp_diarization)
 
     return SampleMetrics(
         wer=wer_metrics.wer,
@@ -49,19 +57,18 @@ def _compute_base_wer_metrics(ref_raw: str, hyp_raw: str) -> SampleMetrics:
         substitutions=wer_metrics.substitutions,
         deletions=wer_metrics.deletions,
         insertions=wer_metrics.insertions,
-        wder=0.0,
-        speaker_errors=0,
-        total_words=0,
-        speaker_count_accuracy=0.0,
-        ref_speaker_count=0,
-        hyp_speaker_count=0,
+        wder=wder_metrics["wder"],
+        speaker_errors=wder_metrics["speaker_errors"],
+        total_words=wder_metrics["total_words"],
+        speaker_count_accuracy=speaker_metrics["speaker_count_accuracy"],
+        ref_speaker_count=int(speaker_metrics["ref_speaker_count"]),
+        hyp_speaker_count=int(speaker_metrics["hyp_speaker_count"]),
     )
 
 
-def _process_diarization(
+def _validate_and_convert_diarization(
     reference_diarization: list,
     dialogue_entries: list,
-    metrics: SampleMetrics,
 ) -> tuple[list[DiarizationSegment], list[DiarizationSegment]]:
     if not reference_diarization or not dialogue_entries:
         msg = "Diarization data is required but missing"
@@ -69,7 +76,6 @@ def _process_diarization(
 
     ref_diar_dicts = convert_to_diarization_format(reference_diarization)
     hyp_diar_dicts = convert_to_diarization_format(dialogue_entries)
-    _compute_diarization_metrics(ref_diar_dicts, hyp_diar_dicts, metrics)
 
     return ref_diar_dicts, hyp_diar_dicts
 
@@ -115,8 +121,8 @@ def run_engines_parallel(
         process_seconds = float(result.duration_sec)
 
         dialogue_entries, reference_diarization = _extract_segments(result, example)
-        metrics = _compute_base_wer_metrics(ref_raw, hyp_raw)
-        ref_diar_dicts, hyp_diar_dicts = _process_diarization(reference_diarization, dialogue_entries, metrics)
+        ref_diar_dicts, hyp_diar_dicts = _validate_and_convert_diarization(reference_diarization, dialogue_entries)
+        metrics = _compute_all_metrics(ref_raw, hyp_raw, ref_diar_dicts, hyp_diar_dicts)
 
         row = SampleRow(
             run_id=run_id,
@@ -172,19 +178,3 @@ def run_engines_parallel(
         )
         for adapter in adapters_config
     ]
-
-
-def _compute_diarization_metrics(
-    ref_diar: list[DiarizationSegment],
-    hyp_diar: list[DiarizationSegment],
-    metrics: SampleMetrics,
-) -> None:
-    wder_metrics = compute_wder(ref_diar, hyp_diar)
-    metrics.wder = wder_metrics["wder"]
-    metrics.speaker_errors = wder_metrics["speaker_errors"]
-    metrics.total_words = wder_metrics["total_words"]
-
-    speaker_metrics = compute_speaker_count_metrics(ref_diar, hyp_diar)
-    metrics.speaker_count_accuracy = speaker_metrics["speaker_count_accuracy"]
-    metrics.ref_speaker_count = int(speaker_metrics["ref_speaker_count"])
-    metrics.hyp_speaker_count = int(speaker_metrics["hyp_speaker_count"])

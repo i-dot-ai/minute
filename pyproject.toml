@@ -208,19 +208,7 @@ ignore_missing_imports = false
 # TODO: Decide on a structure for evals and viewer folder and add mypy support properly
 exclude = ["alembic/*", "tests/*", "terraform/*", "viewer/*"]
 
-
 [[tool.mypy.overrides]]
-module = "soundfile.*"
+module = ["datasets.*", "dspy", "dspy.*", "ffmpeg.*", "orjson","langchain_core.*", "langchain_openai.*", "soundfile.*"]
 ignore_missing_imports = true
 
-[[tool.mypy.overrides]]
-module = "datasets.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "ffmpeg.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = ["dspy", "dspy.*"]
-ignore_missing_imports = true

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import dspy  # type: ignore[import-untyped]
+import dspy
 
 
 class DialogSumSignature(dspy.Signature):

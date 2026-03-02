@@ -14,6 +14,7 @@ MetricName: TypeAlias = Literal[
     "coherence",
 ]
 
+
 def default_criteria() -> list[MetricName]:
     return []
 
@@ -62,6 +63,7 @@ class AppConfig(BaseModel):
     judge: JudgeConfig
     metrics: list[str] = Field(default_factory=list)
     prompts: PromptConfig
+
 
 def load_config(path: str | Path) -> AppConfig:
     path = Path(path)

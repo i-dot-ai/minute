@@ -5,12 +5,14 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from openai import OpenAI
-from openai.types.chat import ChatCompletionMessageParam
 
 from common.settings import get_settings
+
+if TYPE_CHECKING:
+    from openai.types.chat import ChatCompletionMessageParam
 
 settings = get_settings()
 

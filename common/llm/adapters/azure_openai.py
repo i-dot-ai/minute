@@ -36,7 +36,7 @@ class OpenAIModelAdapter(ModelAdapter):
     async def structured_chat(self, messages: list[dict[str, str]], response_format: type[T]) -> T:
         response = await self.async_azure_client.beta.chat.completions.parse(
             model=self._model,
-            messages=cast(list[ChatCompletionMessageParam], messages),
+            messages=cast("list[ChatCompletionMessageParam]", messages),
             response_format=response_format,
             **self._kwargs,
         )
@@ -44,12 +44,12 @@ class OpenAIModelAdapter(ModelAdapter):
         if parsed is None:
             msg = "OpenAI response.parsed is None"
             raise ValueError(msg)
-        return cast(T, parsed)
+        return cast("T", parsed)
 
     async def chat(self, messages: list[dict[str, str]]) -> str:
         response = await self.async_azure_client.chat.completions.create(
             model=self._model,
-            messages=cast(list[ChatCompletionMessageParam], messages),
+            messages=cast("list[ChatCompletionMessageParam]", messages),
             temperature=0.0,
             max_tokens=16384,
         )

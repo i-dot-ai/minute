@@ -12,6 +12,7 @@ from datasets import load_dataset
 from dspy.evaluate import Evaluate
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .config import AppConfig, ModelConfig
@@ -25,8 +26,6 @@ from .schemas import (
     GenerationConfig,
     MetricResult,
 )
-from pydantic import SecretStr
-
 
 
 def _now() -> datetime:
@@ -114,9 +113,9 @@ def _summarize_one(
         summary_text = content.strip()
     else:
         summary_text = " ".join(str(item) for item in content).strip()
-        
+
     candidate = DialogSummary(
-        summary=summarize_text,
+        summary=summary_text,
         model=cfg.model.model,
         prompt_version=prompt_version,
         generation_config=GenerationConfig(
@@ -181,7 +180,7 @@ def run_eval(
     metric_scores: dict[str, list[float]] = {name: [] for name in metric_names}
 
     class _Program:
-        def __call__(self, *, dialogue: str) -> dspy.Prediction : 
+        def __call__(self, *, dialogue: str) -> dspy.Prediction:
             candidate, summarize_ms = _summarize_one(
                 cfg=cfg,
                 summarizer_llm=summarizer_llm,
@@ -195,7 +194,9 @@ def run_eval(
 
     program = _Program()
 
-    def _metric(gold:DialogExample, pred:dspy.Prediction, trace: Optional[dict[str,Any]]=None)-> float:
+    def _metric(
+        gold: DialogExample, pred: dspy.Prediction, trace: Optional[dict[str, Any]] = None
+    ) -> float:
         ex = DialogExample(
             example_id=str(getattr(gold, "example_id")),
             dialogue=str(getattr(gold, "dialogue")),

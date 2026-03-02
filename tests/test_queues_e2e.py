@@ -265,9 +265,9 @@ async def assert_transcription_succeeds(transcription_id: UUID, receive_task: as
 async def get_transcription(transcription_id: UUID) -> Transcription:
     async with get_test_client() as test_client:
         transcription_response = await test_client.get(f"/transcriptions/{transcription_id}")
-        assert (
-            transcription_response.status_code == 200
-        ), f"failed to get transcription, {transcription_response.json()}"
+        assert transcription_response.status_code == 200, (
+            f"failed to get transcription, {transcription_response.json()}"
+        )
         return Transcription.model_validate(transcription_response.json())
 
 

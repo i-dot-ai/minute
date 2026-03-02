@@ -1,4 +1,4 @@
-# flake8: noqa: E501, RUF001
+# flake8: noqa: E501
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -38,7 +38,7 @@ class General(SimpleTemplate):
 
 These are the agenda items for this meeting. Do not include other items under the Discussion Points header.
 Use them as headings for the discussion points.:
- - {'\n - '.join(topic for topic in agenda.splitlines())}
+ - {"\n - ".join(topic for topic in agenda.splitlines())}
 
            """
         prompt = f"""You are an expert meeting minutes writer with extensive experience across various sectors. Your task is to create clear, comprehensive, and well-structured meeting minutes that capture both the essence and important details of the discussion.

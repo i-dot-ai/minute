@@ -63,7 +63,6 @@ class AppConfig(BaseModel):
     metrics: list[str] = Field(default_factory=list)
     prompts: PromptConfig
 
-
 def load_config(path: str | Path) -> AppConfig:
     path = Path(path)
     data = yaml.safe_load(path.read_text(encoding="utf-8"))

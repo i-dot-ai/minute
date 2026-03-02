@@ -224,4 +224,3 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["dspy", "dspy.*"]
 ignore_missing_imports = true
-

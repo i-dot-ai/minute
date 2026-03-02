@@ -3,7 +3,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TypedDict
+from typing import Any, TypedDict, cast
 
 from common.services.transcription_services.adapter import (
     TranscriptionAdapter as CommonTranscriptionAdapter,
@@ -73,7 +73,7 @@ class ServiceTranscriptionAdapter(EvalsTranscriptionAdapter):
                 text=full_text,
                 duration_sec=(end_time - start_time),
                 debug_info={},
-                dialogue_entries=[dict(entry) for entry in dialogue_entries],
+                dialogue_entries=cast(list[dict[Any, Any]], dialogue_entries),
             )
 
         except Exception as error:  # noqa: BLE001 - evals are aiming to capture every type

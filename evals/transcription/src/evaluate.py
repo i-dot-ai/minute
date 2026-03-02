@@ -7,7 +7,7 @@ from pathlib import Path
 
 from common.audio.ffmpeg import get_duration
 from common.settings import get_settings
-from evals.transcription.src.adapters import AzureSTTAdapter, WhisperAdapter
+from evals.transcription.src.adapters import azure_st_adapter, whisply_adapter
 from evals.transcription.src.core.dataset import (
     load_benchmark_dataset,
     prepare_audio_for_transcription,
@@ -50,10 +50,7 @@ def run_evaluation(
         logger.info("Audio files cached in: %s", WORKDIR / "cache" / "processed")
         return
 
-    azure_adapter = AzureSTTAdapter()
-    whisper_adapter = WhisperAdapter()
-
-    adapters = [azure_adapter, whisper_adapter]
+    adapters = [azure_st_adapter(), whisply_adapter()]
 
     logger.info(
         "Running %d adapters in parallel on %d samples...",

@@ -35,7 +35,6 @@ def worker_service() -> Generator[WorkerService, Any, None]:
     yield worker_service
     ray.shutdown()
 
-
 @pytest.fixture(autouse=True)
 async def transcription_queue_service():
     settings = get_settings()

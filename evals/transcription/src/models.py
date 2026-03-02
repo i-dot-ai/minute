@@ -7,6 +7,8 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict
 
+from common.database.postgres_models import DialogueEntry
+
 AudioArray = NDArray[np.floating]
 
 
@@ -124,7 +126,7 @@ class TranscriptionResult(BaseModel):
     text: str
     duration_sec: float
     debug_info: dict[str, object]
-    dialogue_entries: list[dict] = []
+    dialogue_entries: list[DialogueEntry] = []
 
     def __getitem__(self, key: str) -> object:
         return getattr(self, key)

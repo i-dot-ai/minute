@@ -49,6 +49,12 @@ def _compute_base_wer_metrics(ref_raw: str, hyp_raw: str) -> SampleMetrics:
         substitutions=wer_metrics.substitutions,
         deletions=wer_metrics.deletions,
         insertions=wer_metrics.insertions,
+        wder=0.0,
+        speaker_errors=0,
+        total_words=0,
+        speaker_count_accuracy=0.0,
+        ref_speaker_count=0,
+        hyp_speaker_count=0,
     )
 
 
@@ -57,13 +63,13 @@ def _process_diarization(
     dialogue_entries: list,
     metrics: SampleMetrics,
 ) -> tuple[list[DiarizationSegment], list[DiarizationSegment]]:
-    ref_diar_dicts: list[DiarizationSegment] = []
-    hyp_diar_dicts: list[DiarizationSegment] = []
+    if not reference_diarization or not dialogue_entries:
+        msg = "Diarization data is required but missing"
+        raise ValueError(msg)
 
-    if reference_diarization and dialogue_entries:
-        ref_diar_dicts = convert_to_diarization_format(reference_diarization)
-        hyp_diar_dicts = convert_to_diarization_format(dialogue_entries)
-        _compute_diarization_metrics(ref_diar_dicts, hyp_diar_dicts, metrics)
+    ref_diar_dicts = convert_to_diarization_format(reference_diarization)
+    hyp_diar_dicts = convert_to_diarization_format(dialogue_entries)
+    _compute_diarization_metrics(ref_diar_dicts, hyp_diar_dicts, metrics)
 
     return ref_diar_dicts, hyp_diar_dicts
 

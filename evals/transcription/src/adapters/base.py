@@ -65,6 +65,7 @@ class ServiceTranscriptionAdapter(EvalsTranscriptionAdapter):
                     text="",
                     duration_sec=(end_time - start_time),
                     debug_info={"error": "Empty transcript"},
+                    dialogue_entries=[],
                 )
 
             full_text = " ".join(entry["text"] for entry in dialogue_entries).strip()
@@ -84,6 +85,7 @@ class ServiceTranscriptionAdapter(EvalsTranscriptionAdapter):
                 text="",
                 duration_sec=(end_time - start_time),
                 debug_info={"error": str(error)},
+                dialogue_entries=[],
             )
 
 

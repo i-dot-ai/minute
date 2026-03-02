@@ -1,17 +1,14 @@
 import numpy as np
 
 
-def aggregate_metrics(all_sample_metrics: list[dict]) -> dict[str, dict[str, float]]:
+def aggregate_metrics(
+    all_sample_metrics: list[dict],
+    metric_keys: list[str],
+) -> dict[str, dict[str, float]]:
     """
     Calculate mean, std, min, and max statistics for each metric across all samples.
     """
     aggregated: dict[str, dict[str, float]] = {}
-
-    metric_keys = [
-        "wer",
-        "wder",
-        "speaker_count_accuracy",
-    ]
 
     for key in metric_keys:
         values: list[float] = []

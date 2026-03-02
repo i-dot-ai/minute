@@ -2,6 +2,7 @@ import json
 import logging
 from pathlib import Path
 
+from evals.transcription.src.constants import AGGREGATABLE_METRIC_KEYS
 from evals.transcription.src.core.metrics import aggregate_metrics
 from evals.transcription.src.models import (
     AggregatedMetricStats,
@@ -24,7 +25,7 @@ def create_summary(
     dataset_split: str | None,
 ) -> Summary:
     metrics_list = [row.metrics for row in rows]
-    aggregated_dict = aggregate_metrics(metrics_list)
+    aggregated_dict = aggregate_metrics(metrics_list, AGGREGATABLE_METRIC_KEYS)
     aggregated = {key: AggregatedMetricStats(**stats) for key, stats in aggregated_dict.items()}
 
     return Summary(

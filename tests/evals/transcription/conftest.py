@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from evals.transcription.src.models import AudioSample, DatasetItem, TranscriptionResult
+from evals.transcription.src.models import AMIDatasetSample, AudioSample, TranscriptionResult
 
 
 class FakeAdapter:
@@ -13,27 +13,38 @@ class FakeAdapter:
         self.proc_sec = proc_sec
 
     def transcribe(self, wav_path: str):  # noqa: ARG002
-        return TranscriptionResult(text=self.hyp, duration_sec=self.proc_sec, debug_info={"label": self.label})
+        dialogue_entries = [{"speaker": "Speaker 1", "text": self.hyp, "start": 0.0, "end": 1.0}]
+        return TranscriptionResult(
+            text=self.hyp,
+            duration_sec=self.proc_sec,
+            debug_info={"label": self.label},
+            dialogue_entries=dialogue_entries,
+        )
 
 
 class FakeDataset:
     def __init__(self, samples: list[dict]):
-        self._samples = [
-            DatasetItem(
+        self._samples = []
+        for idx, s in enumerate(samples):
+            item = AMIDatasetSample(
                 audio=AudioSample(
                     array=np.array([0.0, 0.0], dtype=np.float32),
                     sampling_rate=16000,
                     path=s["audio"]["path"],
                 ),
                 text=s["text"],
+                meeting_id="fake_meeting",
+                dataset_index=idx,
+                duration_sec=1.0,
+                num_utterances=1,
+                reference_diarization=[{"speaker": "Speaker 1", "text": s["text"], "start": 0.0, "end": 1.0}],
             )
-            for s in samples
-        ]
+            self._samples.append(item)
 
     def __len__(self) -> int:
         return len(self._samples)
 
-    def __getitem__(self, idx: int) -> DatasetItem:
+    def __getitem__(self, idx: int) -> AMIDatasetSample:
         return self._samples[idx]
 
     @property

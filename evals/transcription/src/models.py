@@ -136,12 +136,12 @@ class SampleMetrics(BaseModel):
     substitutions: int
     deletions: int
     insertions: int
-    wder: float | None = None
-    speaker_errors: int | None = None
-    total_words: int | None = None
-    speaker_count_accuracy: float | None = None
-    ref_speaker_count: int | None = None
-    hyp_speaker_count: int | None = None
+    wder: float
+    speaker_errors: int
+    total_words: int
+    speaker_count_accuracy: float
+    ref_speaker_count: int
+    hyp_speaker_count: int
 
 
 class SampleRow(BaseModel):

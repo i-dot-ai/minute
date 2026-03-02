@@ -8,7 +8,7 @@ import pytest
 import soundfile as sf
 
 from evals.transcription.src.adapters.azure import azure_st_adapter
-from evals.transcription.src.adapters.whisper import whisper_st_adapter
+from evals.transcription.src.adapters.whisply import whisply_adapter
 from evals.transcription.src.evaluate import run_evaluation
 from tests.evals.transcription.conftest import FakeAdapter, FakeDataset
 
@@ -36,7 +36,7 @@ def setup_evaluation(tmp_path, monkeypatch):
             lambda **_: FakeAdapter("Azure Speech-to-Text", azure_hyp),
         )
         monkeypatch.setattr(
-            "evals.transcription.src.evaluate.whisper_st_adapter",
+            "evals.transcription.src.evaluate.whisply_adapter",
             lambda **_: FakeAdapter("Whisper", whisper_hyp),
         )
 
@@ -123,7 +123,7 @@ def test_processing_speed_ratio_calculation(setup_evaluation):
     ("adapter_class", "monkeypatch_target"),
     [
         (azure_st_adapter, "evals.transcription.src.adapters.azure.CommonAzureAdapter.start"),
-        (whisper_st_adapter, "evals.transcription.src.adapters.whisper.WhisplyLocalAdapter.start"),
+        (whisply_adapter, "common.services.transcription_services.whisply_local.WhisplyLocalAdapter.start"),
     ],
 )
 def test_adapter_contracts(tmp_path, monkeypatch, adapter_class, monkeypatch_target):
@@ -155,15 +155,9 @@ def test_run_evaluation_requires_azure_credentials(monkeypatch, tmp_path):
     monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: 1.0)
     monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))
     monkeypatch.setattr(
-        "evals.transcription.src.evaluate.whisper_st_adapter",
+        "evals.transcription.src.evaluate.whisply_adapter",
         lambda **_: FakeAdapter("Whisper", "hello world"),
     )
 
-    run_evaluation(num_samples=1)
-
-    results_path = next((Path(tmp_path) / "results").glob("evaluation_results_*.json"))
-    results = json.loads(results_path.read_text(encoding="utf-8"))
-
-    azure_samples = results["engines"]["Azure Speech API"]
-    assert len(azure_samples) == 1
-    assert "metrics" in azure_samples[0]
+    with pytest.raises(ValueError, match="Diarization data is required but missing"):
+        run_evaluation(num_samples=1)

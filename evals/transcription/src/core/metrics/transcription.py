@@ -21,4 +21,10 @@ def compute_wer_metrics(refs: list[str], hyps: list[str]) -> SampleMetrics:
         substitutions=int(word_output.substitutions),
         deletions=int(word_output.deletions),
         insertions=int(word_output.insertions),
+        wder=0.0,
+        speaker_errors=0,
+        total_words=0,
+        speaker_count_accuracy=0.0,
+        ref_speaker_count=0,
+        hyp_speaker_count=0,
     )

@@ -13,7 +13,7 @@ class FakeAdapter:
         self.proc_sec = proc_sec
 
     def transcribe(self, wav_path: str):  # noqa: ARG002
-        dialogue_entries = [{"speaker": "Speaker 1", "text": self.hyp, "start": 0.0, "end": 1.0}]
+        dialogue_entries = [{"speaker": "Speaker 1", "text": self.hyp, "start_time": 0.0, "end_time": 1.0}]
         return TranscriptionResult(
             text=self.hyp,
             duration_sec=self.proc_sec,
@@ -37,7 +37,7 @@ class FakeDataset:
                 dataset_index=idx,
                 duration_sec=1.0,
                 num_utterances=1,
-                reference_diarization=[{"speaker": "Speaker 1", "text": s["text"], "start": 0.0, "end": 1.0}],
+                reference_diarization=[{"speaker": "Speaker 1", "text": s["text"], "start_time": 0.0, "end_time": 1.0}],
             )
             self._samples.append(item)
 

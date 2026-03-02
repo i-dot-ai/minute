@@ -128,7 +128,12 @@ def test_processing_speed_ratio_calculation(setup_evaluation):
 )
 def test_adapter_contracts(tmp_path, monkeypatch, adapter_class, monkeypatch_target):
     async def fake_start(_path):
-        return SimpleNamespace(transcript=[{"text": "hello"}, {"text": "world"}])
+        return SimpleNamespace(
+            transcript=[
+                {"speaker": "Speaker 1", "text": "hello", "start_time": 0.0, "end_time": 0.5},
+                {"speaker": "Speaker 1", "text": "world", "start_time": 0.5, "end_time": 1.0},
+            ]
+        )
 
     monkeypatch.setattr(monkeypatch_target, fake_start)
 

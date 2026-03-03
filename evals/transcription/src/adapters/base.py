@@ -3,7 +3,6 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TypedDict
 
 from common.services.transcription_services.adapter import (
     TranscriptionAdapter as CommonTranscriptionAdapter,
@@ -87,9 +86,3 @@ class ServiceTranscriptionAdapter(EvalsTranscriptionAdapter):
                 debug_info={"error": str(error)},
                 dialogue_entries=[],
             )
-
-
-class AdapterConfig(TypedDict):
-    """Configuration for a transcription adapter."""
-
-    adapter: EvalsTranscriptionAdapter

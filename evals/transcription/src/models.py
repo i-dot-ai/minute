@@ -81,18 +81,6 @@ class RawDatasetRow(BaseModel):
     speaker_id: str
 
 
-class Utterance(BaseModel):
-    """
-    Single utterance with audio, text, and timing information.
-    """
-
-    audio: dict
-    text: str
-    begin_time: float
-    end_time: float
-    meeting_id: str
-
-
 class AMIDatasetSample(DatasetItem):
     """
     AMI dataset sample with meeting metadata and utterance count.

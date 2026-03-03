@@ -287,14 +287,6 @@ class AMIDatasetLoader(DatasetProtocol):
             parts.append(f"f{self.sample_duration_fraction}")
         return "_".join(parts) if parts else None
 
-    @property
-    def total_audio_sec(self) -> float:
-        return sum(sample.duration_sec for sample in self.samples)
-
-    @property
-    def total_words(self) -> int:
-        return sum(len(sample.text.split()) for sample in self.samples)
-
     def __len__(self) -> int:
         """
         Returns the number of samples in the dataset.

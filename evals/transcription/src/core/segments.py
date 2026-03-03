@@ -1,19 +1,6 @@
 from collections.abc import Sequence
-from typing import TypedDict
 
 from evals.transcription.src.models import DiarizationSegment
-
-
-class SegmentDict(TypedDict):
-    speaker: str
-    text: str
-
-
-class SegmentWithTiming(TypedDict):
-    speaker: str
-    text: str
-    start_time: float
-    end_time: float
 
 
 def convert_to_diarization_format(segments: Sequence) -> list[DiarizationSegment]:

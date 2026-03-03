@@ -16,7 +16,7 @@ MetricName: TypeAlias = Literal[
 
 
 def default_criteria() -> list[MetricName]:
-    return []
+    return ["faithfulness", "coverage", "conciseness", "coherence"]
 
 
 class RunConfig(BaseModel):

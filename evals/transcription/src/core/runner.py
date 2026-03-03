@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 from typing import Any, cast
 
+from common.database.postgres_models import DialogueEntry
 from tqdm import tqdm
 
 from evals.transcription.src.adapters.base import EvalsTranscriptionAdapter
@@ -18,6 +19,7 @@ from evals.transcription.src.core.segments import (
     convert_to_diarization_format,
 )
 from evals.transcription.src.models import (
+    DatasetItem,
     DatasetProtocol,
     DiarizationSegment,
     DurationFn,
@@ -26,13 +28,16 @@ from evals.transcription.src.models import (
     SampleMetrics,
     SampleRow,
     TimingAccumulator,
+    TranscriptionResult,
     WavWriteFn,
 )
 
 logger = logging.getLogger(__name__)
 
 
-def _extract_segments(result: Any, example: Any) -> tuple[list, list]:
+def _extract_segments(
+    result: TranscriptionResult, example: DatasetItem
+) -> tuple[list[DialogueEntry], list[dict]]:
     dialogue_entries = result.dialogue_entries if hasattr(result, "dialogue_entries") else []
     reference_diarization = example.reference_diarization if hasattr(example, "reference_diarization") else []
     return dialogue_entries, reference_diarization

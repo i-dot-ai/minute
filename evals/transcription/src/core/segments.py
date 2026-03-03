@@ -16,13 +16,6 @@ class SegmentWithTiming(TypedDict):
     end_time: float
 
 
-class WordSpeakerPair(TypedDict):
-    word: str
-    speaker: str
-    start: float
-    end: float
-
-
 def convert_to_diarization_format(segments: Sequence) -> list[DiarizationSegment]:
     """
     Convert segments to standardized diarization format with speaker, text, start, and end.

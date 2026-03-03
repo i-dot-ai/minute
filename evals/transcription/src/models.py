@@ -12,24 +12,11 @@ from common.database.postgres_models import DialogueEntry
 AudioArray = NDArray[np.floating]
 
 
-class SegmentLike(TypedDict):
-    """Base type for any segment-like object with speaker and text."""
-
-    speaker: str
-    text: str
-
-
 class DiarizationSegment(TypedDict):
     speaker: str
     text: str
     start: float
     end: float
-
-
-class RunInfo(TypedDict):
-    dataset_version: str
-    total_audio_sec: float
-    total_words: int
 
 
 class MeetingMetadata(BaseModel):

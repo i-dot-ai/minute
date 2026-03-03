@@ -139,10 +139,13 @@ def _evaluate_metrics(
 
 
 def _maybe_flush_records(
-    results_path: Path, records: list[dict[str, Any]], *, flush_every: int
+    results_path: Path, records: list[EvalRecord], *, flush_every: int
 ) -> None:
     if len(records) >= flush_every:
-        write_jsonl(results_path, records)
+        write_jsonl(
+            results_path,
+            (r.model_dump(by_alias=True) for r in records),
+        )
         records.clear()
 
 
@@ -173,7 +176,7 @@ def run_eval(
     metrics = build_metrics(cfg)
     summarize_prompt, _ = _build_prompts()
 
-    records: list[dict[str, Any]] = []
+    records: list[EvalRecord] = []
     summarize_ms_values: list[int] = []
     judge_ms_values: list[int] = []
     metric_names = [m.name for m in metrics]
@@ -225,7 +228,7 @@ def run_eval(
             },
             error=None,
         )
-        records.append(rec.model_dump(by_alias=True))
+        records.append(rec)
         _maybe_flush_records(results_path, records, flush_every=25)
 
         # Return a scalar score for DSPy evaluation.
@@ -237,7 +240,7 @@ def run_eval(
     overall_score = evaluator(program, metric=_metric)
 
     if records:
-        write_jsonl(results_path, records)
+        write_jsonl(results_path, [r.model_dump(by_alias=True) for r in records])
 
     metrics_summary = {
         name: {"mean": float(sum(vals) / len(vals)) if vals else 0.0}

@@ -206,7 +206,7 @@ ignore_missing_imports = false
 
 # terraform: non production diagram scripts using untyped diagrams 
 # TODO: Add mypy support for viewer folder or remove if deprecated
-exclude = ["alembic/*", "tests/*", "terraform/*", "viewer/*"]
+exclude = ["alembic/*", "tests/*", "viewer/*"]
 
 [[tool.mypy.overrides]]
 module = ["datasets.*", "dspy", "dspy.*", "ffmpeg.*", "orjson","langchain_core.*", "langchain_openai.*", "soundfile.*"]

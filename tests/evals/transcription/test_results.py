@@ -11,60 +11,56 @@ from evals.transcription.src.models import (
 )
 
 
-@pytest.fixture
-def make_sample_row():
-    def _make(
-        example_id="0",
-        engine_version="TestEngine",
-        wer=0.1,
-        hits=9,
-        substitutions=1,
-        deletions=0,
-        insertions=0,
-        wder=0.0,
-        speaker_errors=0,
-        total_words=10,
-        speaker_count_accuracy=1.0,
-        ref_speaker_count=2,
-        hyp_speaker_count=2,
-        latency_ms=1000.0,
-        latency_recording_ratio=0.5,
-    ):
-        metrics = {
-            "wer": wer,
-            "hits": hits,
-            "substitutions": substitutions,
-            "deletions": deletions,
-            "insertions": insertions,
-        }
-        if wder is not None:
-            metrics["wder"] = wder
-            metrics["speaker_errors"] = speaker_errors
-            metrics["total_words"] = total_words
-        if speaker_count_accuracy is not None:
-            metrics["speaker_count_accuracy"] = speaker_count_accuracy
-            metrics["ref_speaker_count"] = ref_speaker_count
-            metrics["hyp_speaker_count"] = hyp_speaker_count
+def make_sample_row(
+    example_id="0",
+    engine_version="TestEngine",
+    wer=0.1,
+    hits=9,
+    substitutions=1,
+    deletions=0,
+    insertions=0,
+    wder=0.0,
+    speaker_errors=0,
+    total_words=10,
+    speaker_count_accuracy=1.0,
+    ref_speaker_count=2,
+    hyp_speaker_count=2,
+    latency_ms=1000.0,
+    latency_recording_ratio=0.5,
+):
+    metrics = {
+        "wer": wer,
+        "hits": hits,
+        "substitutions": substitutions,
+        "deletions": deletions,
+        "insertions": insertions,
+    }
+    if wder is not None:
+        metrics["wder"] = wder
+        metrics["speaker_errors"] = speaker_errors
+        metrics["total_words"] = total_words
+    if speaker_count_accuracy is not None:
+        metrics["speaker_count_accuracy"] = speaker_count_accuracy
+        metrics["ref_speaker_count"] = ref_speaker_count
+        metrics["hyp_speaker_count"] = hyp_speaker_count
 
-        return SampleRow(
-            run_id="test_run",
-            timestamp="20260223_100000",
-            example_id=example_id,
-            engine_version=engine_version,
-            reference_transcript="hello world",
-            reference_dialogue_entries=None,
-            hypothesis_transcript="hello world",
-            hypothesis_dialogue_entries=None,
-            metrics=metrics,
-            latency_ms=latency_ms,
-            latency_recording_ratio=latency_recording_ratio,
-            error=None,
-        )
-
-    return _make
+    return SampleRow(
+        run_id="test_run",
+        timestamp="20260223_100000",
+        example_id=example_id,
+        engine_version=engine_version,
+        reference_transcript="hello world",
+        reference_dialogue_entries=None,
+        hypothesis_transcript="hello world",
+        hypothesis_dialogue_entries=None,
+        metrics=metrics,
+        latency_ms=latency_ms,
+        latency_recording_ratio=latency_recording_ratio,
+        error=None,
+    )
 
 
-def test_create_summary_basic(make_sample_row):
+def test_create_summary_basic():
     rows = [make_sample_row()]
     timing = TimingAccumulator()
     timing.process_sec = 1.0
@@ -95,7 +91,7 @@ def test_create_summary_basic(make_sample_row):
     assert summary.metrics["wer"].mean == pytest.approx(0.1)
 
 
-def test_create_summary_multiple_samples(make_sample_row):
+def test_create_summary_multiple_samples():
     rows = [
         make_sample_row(example_id="0", wer=0.1, hits=9, substitutions=1),
         make_sample_row(
@@ -135,7 +131,7 @@ def test_create_summary_multiple_samples(make_sample_row):
     assert "wer" in summary.metrics
 
 
-def test_create_summary_no_speaker_count_accuracy(make_sample_row):
+def test_create_summary_no_speaker_count_accuracy():
     rows = [
         make_sample_row(
             wder=None,
@@ -168,7 +164,7 @@ def test_create_summary_no_speaker_count_accuracy(make_sample_row):
         assert getattr(summary, key) == value
 
 
-def test_save_results_creates_file(tmp_path, make_sample_row):
+def test_save_results_creates_file(tmp_path):
     output_path = tmp_path / "results" / "output.json"
 
     sample = make_sample_row(wder=None, speaker_count_accuracy=None)
@@ -213,7 +209,7 @@ def test_save_results_creates_file(tmp_path, make_sample_row):
     assert actual == expected
 
 
-def test_save_results_multiple_engines(tmp_path, make_sample_row):
+def test_save_results_multiple_engines(tmp_path):
     output_path = tmp_path / "output.json"
 
     sample1 = make_sample_row(engine_version="Engine1", wder=None, speaker_count_accuracy=None)

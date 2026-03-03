@@ -68,6 +68,9 @@ If file size doesn't matter:
 
 ## Caveats/Questions
 
+- What formats are supported by speech to text providers?
+  - [AWS](https://docs.aws.amazon.com/transcribe/latest/dg/how-input.html#how-input-audio): AMR, FLAC, M4A, MP3, MP4, Ogg, WebM, WAV
+  - [Azure](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/batch-transcription-audio-data?tabs=portal#supported-input-formats-and-codecs): WAV, MP3, OPUS/OGG, FLAC, WMA, AAC, AMR, WebM, SPEEX
 - Some lossless formats perform worse than lossy formats (e.g. WAV vs MP3). This is unintuitive.
   - An explanation for this could be due to the fact that lots of training data is compressed, and due to the fact that [compression can reduce noise](https://link.springer.com/chapter/10.1007/978-3-030-60276-5_3).
 - Somewhat high mean WER scores across all codecs.

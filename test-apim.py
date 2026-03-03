@@ -5,14 +5,12 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 from openai import OpenAI
+from openai.types.chat import ChatCompletionMessageParam
 
 from common.settings import get_settings
-
-if TYPE_CHECKING:
-    from openai.types.chat import ChatCompletionMessageParam
 
 settings = get_settings()
 
@@ -83,7 +81,7 @@ def invoke_chat_completion(client: OpenAI, messages: list[dict[str, str]]) -> An
     """Send a chat-completions request to the deployment."""
     return client.chat.completions.create(
         model=DEPLOYMENT_ID,
-        messages=cast("list[ChatCompletionMessageParam]", messages),
+        messages=cast(list[ChatCompletionMessageParam], messages),
         max_tokens=128,
         temperature=0,
         extra_query={"api-version": API_VERSION},

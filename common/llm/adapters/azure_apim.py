@@ -1,5 +1,5 @@
 import logging
-from typing import TypeVar, cast
+from typing import cast
 
 from openai import AsyncAzureOpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
@@ -7,7 +7,6 @@ from openai.types.chat.chat_completion import Choice
 
 from .base import ModelAdapter
 
-T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +30,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
             },
         )
 
-    async def structured_chat(self, messages: list[dict[str, str]], response_format: type[T]) -> T:
+    async def structured_chat[T](self, messages: list[dict[str, str]], response_format: type[T]) -> T:
         response = await self.async_apim_client.beta.chat.completions.parse(
             model=self._deployment,
             messages=cast("list[ChatCompletionMessageParam]", messages),

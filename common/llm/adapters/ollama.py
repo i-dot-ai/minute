@@ -13,7 +13,7 @@ from openai.types.chat import (
 
 from common.settings import get_settings
 
-from .base import ModelAdapter, T
+from .base import ModelAdapter
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -50,8 +50,8 @@ class OllamaModelAdapter(ModelAdapter):
             error_msg = f"Invalid role: {role}"
             raise ValueError(error_msg)
 
-    async def structured_chat(self, messages: list[dict[str, str]], response_format: type[T]) -> T:
-        schema = response_format.model_json_schema()
+    async def structured_chat[T](self, messages: list[dict[str, str]], response_format: type[T]) -> T:
+        schema = response_format.model_json_schema()  # type: ignore[attr-defined]
         json_instruction = f"\n\nRespond with valid JSON matching this schema:\n{schema}"
 
         modified_messages = messages.copy()
@@ -75,7 +75,7 @@ class OllamaModelAdapter(ModelAdapter):
             raise ValueError(msg)
         try:
             json_data = json.loads(content)
-            return response_format.model_validate(json_data)
+            return response_format.model_validate(json_data)  # type: ignore[attr-defined,no-any-return]
         except Exception as e:
             logger.error("Ollama JSON parsing/validation failed: %s: %s", type(e).__name__, str(e))
             raise

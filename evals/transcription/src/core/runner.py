@@ -1,5 +1,4 @@
 import logging
-from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 from typing import Any, cast
@@ -86,7 +85,7 @@ def _validate_and_convert_diarization(
 
 
 def run_engines_parallel(
-    adapters_config: Sequence[EvalsTranscriptionAdapter],
+    adapters: list[EvalsTranscriptionAdapter],
     indices: list[int],
     *,
     dataset: DatasetProtocol,
@@ -101,7 +100,7 @@ def run_engines_parallel(
     """
     Runs multiple transcription adapters in parallel on dataset samples and computes WER metrics.
     """
-    total_tasks = len(indices) * len(adapters_config)
+    total_tasks = len(indices) * len(adapters)
     progress_bar = tqdm(total=total_tasks, desc="Processing all engines", unit="task")
     progress_bar_lock = Lock()
 
@@ -150,13 +149,13 @@ def run_engines_parallel(
 
         return label, index, row, audio_seconds, process_seconds
 
-    for adapter in adapters_config:
+    for adapter in adapters:
         results[adapter.name] = EngineResults(rows=[], timing=TimingAccumulator())
 
-    workers = max_workers if max_workers is not None else len(adapters_config)
+    workers = max_workers if max_workers is not None else len(adapters)
     with ThreadPoolExecutor(max_workers=workers) as executor:
         futures = []
-        for adapter in adapters_config:
+        for adapter in adapters:
             for index in indices:
                 future = executor.submit(process_sample, adapter, index)
                 futures.append(future)
@@ -181,5 +180,5 @@ def run_engines_parallel(
             ),
             samples=sorted(results[adapter.name].rows, key=lambda row: int(row.example_id)),
         )
-        for adapter in adapters_config
+        for adapter in adapters
     ]

@@ -58,7 +58,7 @@ def run_evaluation(
         len(indices),
     )
     results = run_engines_parallel(
-        adapters_config=adapters,
+        adapters=adapters,
         indices=indices,
         dataset=dataset,
         wav_write_fn=prepare_audio_for_transcription,

@@ -37,6 +37,6 @@ def test_run_evaluation(tmp_path, monkeypatch, kwargs, dataset_len, expected_loa
         assert result is None
         mock_load.assert_called_once_with(**expected_load_call)
         mock_run.assert_called_once()
-        assert len(mock_run.call_args.kwargs["adapters_config"]) == 2
+        assert len(mock_run.call_args.kwargs["adapters"]) == 2
         assert mock_run.call_args.kwargs["indices"] == list(range(dataset_len))
         mock_save.assert_called_once()

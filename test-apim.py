@@ -5,10 +5,10 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import Any, cast
+from typing import cast
 
 from openai import OpenAI
-from openai.types.chat import ChatCompletionMessageParam
+from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 
 from common.settings import get_settings
 
@@ -77,7 +77,7 @@ def build_client(access_token: str) -> OpenAI:
     )
 
 
-def invoke_chat_completion(client: OpenAI, messages: list[dict[str, str]]) -> Any:
+def invoke_chat_completion(client: OpenAI, messages: list[dict[str, str]]) -> ChatCompletion:
     """Send a chat-completions request to the deployment."""
     return client.chat.completions.create(
         model=DEPLOYMENT_ID,

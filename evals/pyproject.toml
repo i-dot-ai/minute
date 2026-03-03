@@ -36,9 +36,6 @@ default-groups = ["dev"]
 [dependency-groups]
 dev = [
   "ruff>=0.6.9",
-  "mypy (>=1.19.1,<2.0.0)",
-  "pytest==8.3.2",
-  "pytest-cov==5.0.0",
 ]
 
 [tool.ruff]
@@ -46,22 +43,3 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
-
-[tool.mypy]
-explicit_package_bases = true
-warn_unused_configs = true
-warn_return_any = true
-warn_unused_ignores = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-strict_optional = true
-check_untyped_defs = true
-no_implicit_optional = true
-
-[[tool.mypy.overrides]]
-module = ["dspy", "dspy.*"]
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = ["ffmpeg", "ffmpeg.*"]
-ignore_missing_imports = true

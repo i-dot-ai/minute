@@ -117,4 +117,3 @@ config/google-credentials.json
 htmlcov/
 coverage.xml
 .pytest_cache/
-errors.txt

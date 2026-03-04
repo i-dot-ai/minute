@@ -169,9 +169,6 @@ line-length = 120
 target-version = 'py312'
 fix = true
 
-[tool.ruff.format]
-exclude = ["data/*"]
-
 [tool.ruff.lint]
 select = [
     "A", "B", "C", "E", "F", "G", "I", "N", "Q", "S", "T", "W",
@@ -181,7 +178,7 @@ select = [
     "TCH", "TD", "TID", "UP", "YTT"
 ]
 # TODO: Decide on a structure for evals folder and add ruff support properly
-exclude = ["out/*", "viewer/*", "alembic/*", "evals/src/*"]
+exclude = ["out/*", "viewer/*", "alembic/*"]
 ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318","ISC001","PLR0912","C901","PLR0912"]
 
 [tool.ruff.lint.isort]

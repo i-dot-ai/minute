@@ -81,7 +81,7 @@ def invoke_chat_completion(client: OpenAI, messages: list[dict[str, str]]) -> Ch
     """Send a chat-completions request to the deployment."""
     return client.chat.completions.create(
         model=DEPLOYMENT_ID,
-        messages=cast(list[ChatCompletionMessageParam], messages),
+        messages=cast("list[ChatCompletionMessageParam]", messages),
         max_tokens=128,
         temperature=0,
         extra_query={"api-version": API_VERSION},

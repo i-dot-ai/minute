@@ -34,9 +34,18 @@ jobs:
     - name: Run mypy
       run: |
         poetry run mypy .
+
+    - name: Debug directory
+      run: |
+        pwd
+        ls -a
+
+    - name: Ruff strict debug
+      run: |
+        poetry run ruff --version
+        poetry run ruff check . --show-files
     
     - name: Format and linting
       run: |
         poetry run ruff format . --check
-        poetry run ruff check .
 

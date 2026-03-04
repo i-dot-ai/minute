@@ -197,8 +197,7 @@ def run_eval(
 
     program = _Program()
 
-    def _metric(
-        gold: DialogExample, pred: dspy.Prediction) -> float:
+    def _metric(gold: DialogExample, pred: dspy.Prediction) -> float:
         ex = DialogExample(
             example_id=str(getattr(gold, "example_id")),
             dialogue=str(getattr(gold, "dialogue")),

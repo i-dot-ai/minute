@@ -44,7 +44,6 @@ jobs:
     secrets: inherit
 
 
-
   worker:
     if: ${{ false && always() }}
     permissions: write-all

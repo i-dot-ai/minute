@@ -25,7 +25,8 @@ addopts = [
     "-ra -q",
     "--cov=backend",               
     "--cov=common",
-    "--cov=evals",                 
+    "--cov=evals", 
+    "--cov=worker",                 
     "--cov-report=term-missing",   
     "--cov-report=html",             
     ]
@@ -192,9 +193,7 @@ known-first-party = ["backend", "frontend"]
 "*/tests_playwright/*" = ["S101", "S106", "PLR0913", "PLR2004", "TD003"]
 
 [tool.mypy]
-# packages = ["evals"] 
 explicit_package_bases = true
-
 warn_unused_configs = true
 warn_return_any = true
 warn_unused_ignores = true
@@ -203,20 +202,13 @@ disallow_incomplete_defs = true
 strict_optional = true
 check_untyped_defs = true
 no_implicit_optional = true
+ignore_missing_imports = false
+
 # terraform: non production diagram scripts using untyped diagrams 
-# TODO: Decide on a structure for evals and viewer folder and add mypy support properly
-exclude = ["alembic/*", "tests/*", "terraform/*", "viewer/*", "evals/summarisation/src/*", "a"]
-
-
-[[tool.mypy.overrides]]
-module = "soundfile.*"
-ignore_missing_imports = true
+# TODO: Add mypy support for viewer folder or remove if deprecated
+exclude = ["alembic/*", "tests/*", "viewer/*"]
 
 [[tool.mypy.overrides]]
-module = "datasets.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "ffmpeg.*"
+module = ["datasets.*", "dspy", "dspy.*", "ffmpeg.*", "orjson","langchain_core.*", "langchain_openai.*", "soundfile.*"]
 ignore_missing_imports = true
 

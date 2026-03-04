@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 
 

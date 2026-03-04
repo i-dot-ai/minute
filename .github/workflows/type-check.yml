@@ -35,7 +35,7 @@ jobs:
       run: |
         poetry run mypy .
     
-    - name: Format code
+    - name: Format and linting
       run: |
         poetry run ruff format . --check
         poetry run ruff check .

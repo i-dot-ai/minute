@@ -1,4 +1,4 @@
-# flake8: noqa: E501, RUF001
+# flake8: noqa: E501
 from pydantic import BaseModel, Field
 
 from common.database.postgres_models import DialogueEntry, Minute

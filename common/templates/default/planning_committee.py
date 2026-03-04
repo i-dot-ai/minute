@@ -1,4 +1,4 @@
-# flake8: noqa: E501, RUF001
+# flake8: noqa: E501
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.templates.types import SectionTemplate
 from common.types import (

@@ -65,7 +65,7 @@ jobs:
         if: always()
         with:
           name: backend-coverage-report
-          path: htmlcov/
+          path: htmlcov/cov
 
       - name: Upload backend coverage XML
         uses: actions/upload-artifact@v4

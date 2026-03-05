@@ -1,5 +1,5 @@
 import logging
-from typing import Any, TypeVar, cast
+from typing import Any, cast
 
 from google import genai
 from google.genai import types
@@ -19,7 +19,6 @@ from common.settings import get_settings
 from .base import ModelAdapter
 
 settings = get_settings()
-T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
 
@@ -74,7 +73,7 @@ class GeminiModelAdapter(ModelAdapter):
                 logger.warning(msg)
         return gemini_messages, Content(parts=[Part.from_text(text=instruction) for instruction in system_instructions])
 
-    async def structured_chat(self, messages: list[dict[str, str]], response_format: type[T]) -> T:
+    async def structured_chat[T](self, messages: list[dict[str, str]], response_format: type[T]) -> T:
         contents, system_instruction = self._convert_openai_messages_to_gemini(messages)
         response = await self.client.aio.models.generate_content(
             contents=contents,

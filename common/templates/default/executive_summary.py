@@ -1,4 +1,4 @@
-# flake8: noqa: E501, RUF001
+# flake8: noqa: E501
 from common.database.postgres_models import DialogueEntry
 from common.prompts import get_transcript_messages
 from common.templates.types import SimpleTemplate

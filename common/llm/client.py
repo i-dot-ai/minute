@@ -1,5 +1,4 @@
 from enum import Enum, auto
-from typing import TypeVar
 
 from google.genai.types import (
     GenerateContentConfig,
@@ -17,7 +16,6 @@ from common.settings import get_settings
 from common.types import LLMHallucination, LLMHallucinationList
 
 settings = get_settings()
-T = TypeVar("T", bound=BaseModel)
 
 
 class ChatBot:
@@ -55,7 +53,7 @@ class ChatBot:
         return response
 
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-    async def structured_chat(self, messages: list[dict[str, str]], response_format: type[T]) -> T:
+    async def structured_chat[T: BaseModel](self, messages: list[dict[str, str]], response_format: type[T]) -> T:
         response = await self.adapter.structured_chat(messages=messages, response_format=response_format)
         self.messages.extend(messages)
         self.messages.append({"role": "assistant", "content": response.model_dump_json()})

@@ -10,10 +10,11 @@ from openai.types.chat import (
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
 )
+from pydantic import BaseModel
 
 from common.settings import get_settings
 
-from .base import ModelAdapter, T
+from .base import ModelAdapter
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -50,7 +51,7 @@ class OllamaModelAdapter(ModelAdapter):
             error_msg = f"Invalid role: {role}"
             raise ValueError(error_msg)
 
-    async def structured_chat(self, messages: list[dict[str, str]], response_format: type[T]) -> T:
+    async def structured_chat[T: BaseModel](self, messages: list[dict[str, str]], response_format: type[T]) -> T:
         schema = response_format.model_json_schema()
         json_instruction = f"\n\nRespond with valid JSON matching this schema:\n{schema}"
 

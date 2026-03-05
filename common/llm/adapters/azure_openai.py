@@ -1,5 +1,5 @@
 import logging
-from typing import Any, TypeVar, cast
+from typing import Any, cast
 
 from openai import AsyncAzureOpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
@@ -10,7 +10,6 @@ from common.settings import get_settings
 from .base import ModelAdapter
 
 settings = get_settings()
-T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
 
@@ -33,7 +32,7 @@ class OpenAIModelAdapter(ModelAdapter):
         )
         self._kwargs = kwargs
 
-    async def structured_chat(self, messages: list[dict[str, str]], response_format: type[T]) -> T:
+    async def structured_chat[T](self, messages: list[dict[str, str]], response_format: type[T]) -> T:
         response = await self.async_azure_client.beta.chat.completions.parse(
             model=self._model,
             messages=cast(list[ChatCompletionMessageParam], messages),

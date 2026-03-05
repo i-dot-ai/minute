@@ -10,8 +10,9 @@ from .runner import run_eval
 app = typer.Typer(no_args_is_help=True)
 
 
-@app.command()
+@app.callback(invoke_without_command=True)
 def run(
+    ctx: typer.Context,
     config: Path = typer.Option(..., "--config", exists=True, dir_okay=False, readable=True),
     split: str = typer.Option("test", "--split"),
     limit: int | None = typer.Option(None, "--limit"),

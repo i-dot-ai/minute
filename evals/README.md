@@ -37,7 +37,7 @@ Requires FFmpeg for audio processing. Install from project root:
 
 ```bash
 brew install ffmpeg  # macOS
-poetry install --with worker,local-dev,evals
+poetry install --with worker,local-dev,evals_transcription
 ```
 
 ## Usage

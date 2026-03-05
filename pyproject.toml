@@ -105,11 +105,25 @@ azure-identity = "^1.23.1"
 [tool.poetry.group.local-dev.dependencies]
 whisply = "^0.13.1"
 
-[tool.poetry.group.evals.dependencies]
+[tool.poetry.group.evals_transcription.dependencies]
 datasets = "^3.0.0"
 jiwer = "^3.0.0"
 soundfile = "^0.12.0"
 librosa = "^0.10.0"
+
+[tool.poetry.group.evals_summarisation.dependencies]
+datasets = ">=2.20.0"
+dspy-ai = ">=2.0.4"
+jinja2 = ">=3.1.4"
+langchain = ">=0.2.14"
+langchain-core = ">=0.2.38"
+langchain-openai = ">=0.1.22"
+orjson = ">=3.10.7"
+polars = ">=1.5.0"
+pydantic = ">=2.8.2"
+pyyaml = ">=6.0.2"
+tenacity = ">=9.0.0"
+typer = ">=0.12.5"
 
 [tool.poetry.group.dev.dependencies]
 bumpversion = "^0.6.0"

@@ -36,7 +36,11 @@ How do we want to balance cost savings vs WER. One way we could look at it is ho
 
 ![alt text](sped-transcription/errors-added.png)
 
-If we want no more error, we should stay at 1.0x speed. However, 1.1x and 1.2x only introduce 1%/2% WER and would cut transcription costs dows by 10%/20%, so should be considered. Higher speeds do have higher WER, so this entirely depends on our willingess to trade WER for cost.
+If we want no more error, we should stay at 1.0x speed. However, cost savings are avaialable at the expense of transcription quality.
+
+Our appetite for this trade-off is dependant on overall end-to-end transcription quality. Once we have this information, a decsion can be made - if we speed up audio, and if so to what speed.
+
+This decision will also need to anticipate some implementation work. The audio is fed back to the user on the frontend and we may want to avoid playing the audio at a faster than 1.0x speed.
 
 ## Caveats/Questions
 

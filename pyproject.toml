@@ -206,6 +206,6 @@ ignore_missing_imports = false
 exclude = ["alembic/*", "tests/*", "viewer/*"]
 
 [[tool.mypy.overrides]]
-module = ["datasets.*", "dspy", "dspy.*", "ffmpeg.*", "orjson","langchain_core.*", "langchain_openai.*", "soundfile.*"]
+module = ["datasets.*", "dspy.*", "dspy", "ffmpeg.*", "orjson","langchain_core.*", "langchain_openai.*", "soundfile.*"]
 ignore_missing_imports = true
 

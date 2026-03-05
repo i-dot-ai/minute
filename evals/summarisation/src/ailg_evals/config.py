@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Literal, TypeAlias
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, Field
 
-MetricName: TypeAlias = Literal[
+type MetricName = Literal[
     "faithfulness",
     "coverage",
     "conciseness",

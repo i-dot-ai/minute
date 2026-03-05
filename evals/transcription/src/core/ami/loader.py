@@ -1,12 +1,11 @@
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import DefaultDict, List
 
-from common.constants import TARGET_SAMPLE_RATE
 from datasets import load_dataset
 from numpy import ndarray
 
+from common.constants import TARGET_SAMPLE_RATE
 from evals.transcription.src.core.ami import audio, cache
 from evals.transcription.src.core.ami.constants import AMI_DATASET_NAME
 from evals.transcription.src.core.ami.metadata import load_or_build_metadata
@@ -23,13 +22,13 @@ logger = logging.getLogger(__name__)
 
 def _load_utterances_for_meetings(
     required_meetings: set, split: str, config: str
-) -> DefaultDict[str, List[RawDatasetRow]]:
+) -> defaultdict[str, list[RawDatasetRow]]:
     """
     Loads specified meetings from the AMI dataset using Hugging Face's datasets library.
     Returns a dictionary mapping meeting IDs to lists of utterances.
     """
     dataset = load_dataset(AMI_DATASET_NAME, config, split=split)
-    utterances_by_meeting: DefaultDict[str, List[RawDatasetRow]] = defaultdict(list)
+    utterances_by_meeting: defaultdict[str, list[RawDatasetRow]] = defaultdict(list)
     for row in dataset:
         r = row
         meeting_id = r["meeting_id"]
@@ -38,9 +37,7 @@ def _load_utterances_for_meetings(
     return utterances_by_meeting
 
 
-def _apply_cutoff(
-    utterances: List[RawDatasetRow], cutoff_time: float | None
-) -> List[RawDatasetRow]:
+def _apply_cutoff(utterances: list[RawDatasetRow], cutoff_time: float | None) -> list[RawDatasetRow]:
     """
     Applies a cutoff time to the list of utterances, keeping only those that fit within the cutoff.
     """
@@ -48,7 +45,7 @@ def _apply_cutoff(
         return utterances
 
     utterances_sorted = sorted(utterances, key=lambda x: x.begin_time)
-    result: List[RawDatasetRow] = []
+    result: list[RawDatasetRow] = []
     accumulated = 0.0
 
     for utterance in utterances_sorted:
@@ -140,9 +137,7 @@ class AMIDatasetLoader(DatasetProtocol):
         logger.info("Dataset preparation complete: %d samples ready", self.num_of_samples)
         return self.samples
 
-    def _load_required_utterances(
-        self, segments: List[MeetingSegment]
-    ) -> DefaultDict[str, List[RawDatasetRow]]:
+    def _load_required_utterances(self, segments: list[MeetingSegment]) -> defaultdict[str, list[RawDatasetRow]]:
         """
         Checks if all required segments are already cached. If so, returns an empty dict.
         Otherwise, loads the necessary utterances for the required meetings and returns them
@@ -165,7 +160,7 @@ class AMIDatasetLoader(DatasetProtocol):
         self,
         segment: MeetingSegment,
         index: int,
-        utterances_by_meeting: DefaultDict[str, List[RawDatasetRow]],
+        utterances_by_meeting: defaultdict[str, list[RawDatasetRow]],
     ) -> AMIDatasetSample | None:
         """
         Processes a single meeting segment by either loading from cache or building from utterances.
@@ -207,7 +202,7 @@ class AMIDatasetLoader(DatasetProtocol):
 
     def _build_from_utterances(
         self,
-        utterances: List[RawDatasetRow],
+        utterances: list[RawDatasetRow],
         paths: cache.CachePaths,
         segment: MeetingSegment,
         index: int,

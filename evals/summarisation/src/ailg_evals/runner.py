@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import logging
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterable
+from typing import TYPE_CHECKING
 
 import dspy
 import orjson
@@ -15,7 +16,6 @@ from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from .config import AppConfig, ModelConfig
 from .jsonl import write_jsonl
 from .metric import DialogSummaryMetric, build_metrics
 from .prompts import render_template
@@ -27,9 +27,17 @@ from .schemas import (
     MetricResult,
 )
 
+logger = logging.getLogger(__name__)
+
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from .config import AppConfig, ModelConfig
+
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _ms(start_s: float, end_s: float) -> int:
@@ -109,10 +117,7 @@ def _summarize_one(
     t1 = time.perf_counter()
 
     content = summary_resp.content
-    if isinstance(content, str):
-        summary_text = content.strip()
-    else:
-        summary_text = " ".join(str(item) for item in content).strip()
+    summary_text = content.strip() if isinstance(content, str) else " ".join(str(item) for item in content).strip()
 
     candidate = DialogSummary(
         summary=summary_text,
@@ -138,9 +143,7 @@ def _evaluate_metrics(
     return out
 
 
-def _maybe_flush_records(
-    results_path: Path, records: list[EvalRecord], *, flush_every: int
-) -> None:
+def _maybe_flush_records(results_path: Path, records: list[EvalRecord], *, flush_every: int) -> None:
     if len(records) >= flush_every:
         write_jsonl(
             results_path,
@@ -184,65 +187,77 @@ def run_eval(
 
     class _Program:
         def __call__(self, *, dialogue: str) -> dspy.Prediction:
-            candidate, summarize_ms = _summarize_one(
-                cfg=cfg,
-                summarizer_llm=summarizer_llm,
-                summarize_prompt=summarize_prompt,
-                summarizer_template_path=summarizer_template_path,
-                dialogue=dialogue,
-                prompt_version=prompt_version,
-            )
-            summarize_ms_values.append(summarize_ms)
-            return dspy.Prediction(summary=candidate.summary, _candidate=candidate)
+            try:
+                candidate, summarize_ms = _summarize_one(
+                    cfg=cfg,
+                    summarizer_llm=summarizer_llm,
+                    summarize_prompt=summarize_prompt,
+                    summarizer_template_path=summarizer_template_path,
+                    dialogue=dialogue,
+                    prompt_version=prompt_version,
+                )
+                summarize_ms_values.append(summarize_ms)
+                return dspy.Prediction(summary=candidate.summary, _candidate=candidate)
+            except Exception:
+                import traceback
+
+                logger.exception("Exception in summarizing dialogue:\n%s", dialogue[:50])
+                traceback.print_exc()
+                raise
 
     program = _Program()
 
     def _metric(gold: DialogExample, pred: dspy.Prediction) -> float:
-        ex = DialogExample(
-            example_id=str(getattr(gold, "example_id")),
-            dialogue=str(getattr(gold, "dialogue")),
-            reference_summary=getattr(gold, "reference_summary", None),
-        )
+        try:
+            ex = DialogExample(
+                example_id=str(gold.example_id),
+                dialogue=str(gold.dialogue),
+                reference_summary=getattr(gold, "reference_summary", None),
+            )
 
-        t_j0 = time.perf_counter()
-        metrics_out = _evaluate_metrics(metrics=metrics, example=ex, prediction=pred)
-        t_j1 = time.perf_counter()
-        judge_ms = _ms(t_j0, t_j1)
-        judge_ms_values.append(judge_ms)
+            t_j0 = time.perf_counter()
+            metrics_out = _evaluate_metrics(metrics=metrics, example=ex, prediction=pred)
+            t_j1 = time.perf_counter()
+            judge_ms = _ms(t_j0, t_j1)
+            judge_ms_values.append(judge_ms)
 
-        for name, res in metrics_out.items():
-            metric_scores[name].append(res.score)
+            for name, res in metrics_out.items():
+                metric_scores[name].append(res.score)
 
-        candidate = getattr(pred, "_candidate")
-        rec = EvalRecord(
-            run_id=run_id,
-            timestamp=_now(),
-            example=ex,
-            candidate=candidate,
-            metrics=metrics_out,
-            latency_ms={
-                "summarize": summarize_ms_values[-1] if summarize_ms_values else 0,
-                "judge": judge_ms,
-            },
-            error=None,
-        )
-        records.append(rec)
-        _maybe_flush_records(results_path, records, flush_every=25)
+            candidate = pred._candidate  # noqa: SLF001 #aligning with the linter breaks runner
+            rec = EvalRecord(
+                run_id=run_id,
+                timestamp=_now(),
+                example=ex,
+                candidate=candidate,
+                metrics=metrics_out,
+                latency_ms={
+                    "summarize": summarize_ms_values[-1] if summarize_ms_values else 0,
+                    "judge": judge_ms,
+                },
+                error=None,
+            )
+            records.append(rec)
+            _maybe_flush_records(results_path, records, flush_every=25)
 
-        # Return a scalar score for DSPy evaluation.
-        if metric_names:
-            return float(sum(metrics_out[n].score for n in metric_names) / len(metric_names))
-        return 0.0
+            if metric_names:
+                return float(sum(metrics_out[n].score for n in metric_names) / len(metric_names))
+            return 0.0
+        except Exception:
+            import traceback
 
-    evaluator = Evaluate(devset=devset, num_threads=1, display_progress=True, display_table=5)
+            logger.exception("Exception while evaluating metrics for example_id=%s", gold.example_id)
+            traceback.print_exc()
+            raise
+
+    evaluator = Evaluate(devset=devset, num_threads=1, display_progress=True, display_table=5, provide_traceback=True)
     overall_score = evaluator(program, metric=_metric)
 
     if records:
         write_jsonl(results_path, [r.model_dump(by_alias=True) for r in records])
 
     metrics_summary = {
-        name: {"mean": float(sum(vals) / len(vals)) if vals else 0.0}
-        for name, vals in metric_scores.items()
+        name: {"mean": float(sum(vals) / len(vals)) if vals else 0.0} for name, vals in metric_scores.items()
     }
     summary = {
         "run_id": run_id,

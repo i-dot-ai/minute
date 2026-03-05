@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
+from pathlib import Path  # noqa: TC003, needed at runtime by Typer
 
 import typer
 
@@ -9,11 +9,12 @@ from .runner import run_eval
 
 app = typer.Typer(no_args_is_help=True)
 
+config_path_arg = typer.Option(..., "--config", exists=True, dir_okay=False, readable=True)
+
 
 @app.callback(invoke_without_command=True)
 def run(
-    ctx: typer.Context,
-    config: Path = typer.Option(..., "--config", exists=True, dir_okay=False, readable=True),
+    config: Path = config_path_arg,
     split: str = typer.Option("test", "--split"),
     limit: int | None = typer.Option(None, "--limit"),
     prompt_version: str = typer.Option("dev", "--prompt-version"),

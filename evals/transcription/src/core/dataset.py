@@ -3,8 +3,8 @@ import tempfile
 from pathlib import Path
 
 import soundfile
-from common.audio.ffmpeg import convert_to_mp3
 
+from common.audio.ffmpeg import convert_to_mp3
 from evals.transcription.src.constants import (
     AUDIO_DIR,
     CACHE_DIR,
@@ -16,9 +16,7 @@ from evals.transcription.src.models import DatasetItem
 logger = logging.getLogger(__name__)
 
 
-def load_benchmark_dataset(
-    num_samples: int | None, sample_duration_fraction: float | None = None
-) -> AMIDatasetLoader:
+def load_benchmark_dataset(num_samples: int | None, sample_duration_fraction: float | None = None) -> AMIDatasetLoader:
     """
     Loads the AMI benchmark dataset with optional sampling of meetings and duration fractions.
     """

@@ -7,7 +7,7 @@ import soundfile
 from common.audio.ffmpeg import convert_to_mp3
 from evals.transcription.src.constants import (
     AUDIO_DIR,
-    CACHE_DIR,
+    INPUT_DIR,
 )
 from evals.transcription.src.core.ami.loader import AMIDatasetLoader
 from evals.transcription.src.core.ami_dataset import load_ami_dataset
@@ -20,10 +20,11 @@ def load_benchmark_dataset(num_samples: int | None, sample_duration_fraction: fl
     """
     Loads the AMI benchmark dataset with optional sampling of meetings and duration fractions.
     """
+    ami_cache_dir = INPUT_DIR / "ami"
     logger.info("Loading AMI dataset with %d samples...", num_samples)
-    logger.info("Using cache directory: %s", CACHE_DIR)
+    logger.info("Using cache directory: %s", ami_cache_dir)
 
-    ami_loader = load_ami_dataset(CACHE_DIR, num_samples, sample_duration_fraction)
+    ami_loader = load_ami_dataset(ami_cache_dir, num_samples, sample_duration_fraction)
 
     logger.info("Dataset loaded successfully")
     logger.info("Number of samples: %d", len(ami_loader))

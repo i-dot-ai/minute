@@ -30,7 +30,7 @@ def run_evaluation(
     """
     Runs transcription evaluation on AMI dataset with Azure and Whisper adapters.
     """
-    output_dir = WORKDIR / "results"
+    output_dir = WORKDIR / "output"
     timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
     output_path = output_dir / f"evaluation_results_{timestamp}.json"
 
@@ -46,7 +46,7 @@ def run_evaluation(
     if prepare_only:
         logger.info("=== Dataset Preparation Complete ===")
         logger.info("Prepared %d meetings", len(indices))
-        logger.info("Audio files cached in: %s", WORKDIR / "cache" / "processed")
+        logger.info("Audio files cached in: %s", WORKDIR / "input" / "ami" / "processed")
         return
 
     azure_adapter = azure_st_adapter()

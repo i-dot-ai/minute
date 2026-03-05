@@ -40,6 +40,10 @@ brew install ffmpeg  # macOS
 poetry install --with worker,local-dev,evals_transcription
 ```
 
+## Dataset
+
+The transcription evaluation uses the **AMI Meeting Corpus**, a public dataset that is automatically downloaded during evaluation runs. No manual input data is required. The dataset is downloaded to `evals/transcription/input/` and is gitignored.
+
 ## Usage
 
 **CLI Arguments**:
@@ -56,4 +60,4 @@ poetry run python evals/transcription/src/evaluate.py \
   --max-workers 1
 ```
 
-Results saved to `evals/transcription/results/evaluation_results_YYYYMMDD_HHMMSS.json`.
+Results saved to `evals/transcription/output/evaluation_results_YYYYMMDD_HHMMSS.json`.

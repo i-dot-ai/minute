@@ -125,3 +125,5 @@ evals/**/datasets/
 evals/**/*.wav
 evals/**/*.mp3
 evals/**/*.m4a
+evals/transcription/input/
+evals/transcription/output/

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-WORKDIR = Path(__file__).resolve().parent
-CACHE_DIR = WORKDIR.parent / "datasets" / "ami"
-AUDIO_DIR = WORKDIR / "audio"
-AUDIO_DIR.mkdir(exist_ok=True)
+WORKDIR = Path(__file__).resolve().parent.parent
+INPUT_DIR = WORKDIR / "input"
+AUDIO_DIR = INPUT_DIR / "audio"
+AUDIO_DIR.mkdir(parents=True, exist_ok=True)

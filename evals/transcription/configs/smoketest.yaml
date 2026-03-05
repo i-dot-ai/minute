@@ -1,0 +1,7 @@
+num_samples: 2
+sample_duration_fraction: 0.1
+max_workers: 1
+prepare_only: false
+adapters:
+  - whisply
+  - azure

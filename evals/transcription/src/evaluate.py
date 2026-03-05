@@ -5,10 +5,11 @@ import logging
 from datetime import UTC, datetime
 from pathlib import Path
 
+import yaml
 from common.audio.ffmpeg import get_duration
 from common.settings import get_settings
-from evals.transcription.src.adapters import azure_st_adapter, whisper_st_adapter
 from evals.transcription.src.adapters.base import AdapterConfig
+from evals.transcription.src.adapters.registry import get_adapter
 from evals.transcription.src.core.dataset import (
     load_benchmark_dataset,
     prepare_audio_for_transcription,
@@ -26,9 +27,10 @@ def run_evaluation(
     sample_duration_fraction: float | None = None,
     prepare_only: bool = False,
     max_workers: int | None = None,
+    adapter_names: list[str] | None = None,
 ) -> None:
     """
-    Runs transcription evaluation on AMI dataset with Azure and Whisper adapters.
+    Runs transcription evaluation on AMI dataset with configured adapters.
     """
     output_dir = WORKDIR / "output"
     timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
@@ -49,14 +51,12 @@ def run_evaluation(
         logger.info("Audio files cached in: %s", WORKDIR / "input" / "ami" / "processed")
         return
 
-    azure_adapter = azure_st_adapter()
+    if not adapter_names:
+        msg = "No adapters specified in config"
+        raise ValueError(msg)
 
-    whisper_adapter = whisper_st_adapter()
-
-    adapters_config: list[AdapterConfig] = [
-        {"adapter": azure_adapter},
-        {"adapter": whisper_adapter},
-    ]
+    adapters_config: list[AdapterConfig] = [{"adapter": get_adapter(name)} for name in adapter_names]
+    logger.info("Using adapters: %s", ", ".join(adapter_names))
 
     logger.info(
         "Running %d adapters in parallel on %d samples...",
@@ -84,42 +84,41 @@ def run_evaluation(
     logger.info("Results saved to: %s", output_path)
 
 
+def load_config(config_path: Path) -> dict:
+    """
+    Loads evaluation configuration from YAML file.
+    """
+    with config_path.open("r") as f:
+        return yaml.safe_load(f)
+
+
 def main() -> None:
     """
     Parses command-line arguments and runs transcription evaluation.
     """
     parser = argparse.ArgumentParser(description="Run transcription evaluation")
     parser.add_argument(
-        "--num-samples",
-        type=int,
-        default=None,
-        help="Number of meetings to evaluate from AMI dataset. " "If not specified, evaluates all available meetings.",
-    )
-    parser.add_argument(
-        "--sample-duration-fraction",
-        type=float,
-        default=None,
-        help="Fraction of each meeting to use (e.g., 0.1 = use first 10%% of each meeting). "
-        "When set, --num-samples must be >= 1.0 and specifies the number of meetings.",
-    )
-    parser.add_argument(
-        "--prepare-only",
-        action="store_true",
-        help="Only prepare and cache the dataset without running transcription",
-    )
-    parser.add_argument(
-        "--max-workers",
-        type=int,
-        default=None,
-        help="Maximum number of parallel workers. Defaults to number of adapters if not specified.",
+        "--config",
+        type=str,
+        default="default.yaml",
+        help="Path to config file (default: default.yaml in configs/)",
     )
     args = parser.parse_args()
 
+    config_path = WORKDIR / "configs" / args.config
+    if not config_path.exists():
+        msg = f"Config file not found: {config_path}"
+        raise FileNotFoundError(msg)
+
+    config = load_config(config_path)
+    logger.info("Loaded config from: %s", config_path)
+
     run_evaluation(
-        num_samples=args.num_samples,
-        sample_duration_fraction=args.sample_duration_fraction,
-        prepare_only=args.prepare_only,
-        max_workers=args.max_workers,
+        num_samples=config.get("num_samples"),
+        sample_duration_fraction=config.get("sample_duration_fraction"),
+        prepare_only=config.get("prepare_only", False),
+        max_workers=config.get("max_workers"),
+        adapter_names=config.get("adapters"),
     )
 
 

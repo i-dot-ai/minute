@@ -105,13 +105,13 @@ azure-identity = "^1.23.1"
 [tool.poetry.group.local-dev.dependencies]
 whisply = "^0.13.1"
 
-[tool.poetry.group.evals_transcription.dependencies]
+[tool.poetry.group.evals-transcription.dependencies]
 datasets = "^3.0.0"
 jiwer = "^3.0.0"
 soundfile = "^0.12.0"
 librosa = "^0.10.0"
 
-[tool.poetry.group.evals_summarisation.dependencies]
+[tool.poetry.group.evals-summarisation.dependencies]
 datasets = ">=2.20.0"
 dspy-ai = ">=2.0.4"
 jinja2 = ">=3.1.4"

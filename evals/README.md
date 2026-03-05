@@ -27,37 +27,27 @@ At a high level, an experiment is defined by:
 
 Update the config file and/or prompt templates as needed, then run the experiment.
 
-# Transcription Evaluation Suite
+# Transcription Evaluation
 
-Evaluation framework for comparing transcription services using the AMI Corpus dataset.
+Compares transcription services using the AMI Corpus (auto-downloaded to `input/).
 
 ## Setup
 
-Requires FFmpeg for audio processing. Install from project root:
-
 ```bash
 brew install ffmpeg  # macOS
-poetry install --with worker,local-dev,evals_transcription
+poetry install --with worker,local-dev,evals-transcription
 ```
-
-## Dataset
-
-The transcription evaluation uses the **AMI Meeting Corpus**, a public dataset that is automatically downloaded during evaluation runs. No manual input data is required. The dataset is downloaded to `evals/transcription/input/` and is gitignored.
 
 ## Usage
 
-**CLI Arguments**:
-- `--num-samples N`: Evaluate N meetings (default: all available)
-- `--sample-duration-fraction 0.X`: Use first X% of each meeting (e.g., `0.1` = 10%)
-- `--max-workers N`: Parallel workers (default: 4, use `1` for local adapters like Whisper)
-- `--prepare-only`: Cache dataset without transcription
-
-**Example** - Quick smoke test with 2 meetings at 10% duration:
 ```bash
-poetry run python evals/transcription/src/evaluate.py \
-  --num-samples 2 \
-  --sample-duration-fraction 0.1 \
-  --max-workers 1
+# Run default config (smoketest)
+poetry run python evals/transcription/src/evaluate.py
+
+# Run specific config
+poetry run python evals/transcription/src/evaluate.py --config larger_cloud_test.yaml
 ```
 
-Results saved to `evals/transcription/output/evaluation_results_YYYYMMDD_HHMMSS.json`.
+Configs in `evals/transcription/configs/`: `smoketest.yaml`, `larger_cloud_test.yaml`
+
+Results → `evals/transcription/output/`

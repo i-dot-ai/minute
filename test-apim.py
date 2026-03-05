@@ -5,15 +5,16 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from openai import OpenAI
-from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 
 from common.settings import get_settings
 
 settings = get_settings()
 
+if TYPE_CHECKING:
+    from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 
 DEPLOYMENT_ID = "minute-gpt4o"
 API_VERSION = "2024-10-21"
@@ -81,7 +82,7 @@ def invoke_chat_completion(client: OpenAI, messages: list[dict[str, str]]) -> Ch
     """Send a chat-completions request to the deployment."""
     return client.chat.completions.create(
         model=DEPLOYMENT_ID,
-        messages=cast("list[ChatCompletionMessageParam]", messages),
+        messages=cast(list["ChatCompletionMessageParam"], messages),
         max_tokens=128,
         temperature=0,
         extra_query={"api-version": API_VERSION},

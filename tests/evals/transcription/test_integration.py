@@ -185,7 +185,7 @@ def test_run_evaluation_requires_azure_credentials(monkeypatch, tmp_path):
     monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: 1.0)
     monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))
     monkeypatch.setattr(
-        "evals.transcription.src.evaluate.whisper_adapter",
+        "evals.transcription.src.evaluate.whisper_st_adapter",
         lambda **_: FakeAdapter("Whisper", "hello world"),
     )
 

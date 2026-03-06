@@ -7,6 +7,7 @@ from evals.transcription.src.models import SampleMetrics
 def compute_wer_metrics(refs: list[str], hyps: list[str]) -> SampleMetrics:
     """
     Computes WER and related metrics using jiwer.
+    Returns partial SampleMetrics with WER fields populated and placeholder values for other fields.
     """
     word_output = jiwer.process_words(
         refs,
@@ -27,4 +28,5 @@ def compute_wer_metrics(refs: list[str], hyps: list[str]) -> SampleMetrics:
         speaker_count_accuracy=0.0,
         ref_speaker_count=0,
         hyp_speaker_count=0,
+        processing_speed_ratio=0.0,
     )

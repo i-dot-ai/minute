@@ -54,19 +54,16 @@ def _compute_all_metrics(
     wder_metrics = compute_wder(ref_diarization, hyp_diarization)
     speaker_metrics = compute_speaker_count_metrics(ref_diarization, hyp_diarization)
 
-    return SampleMetrics(
-        wer=wer_metrics.wer,
-        hits=wer_metrics.hits,
-        substitutions=wer_metrics.substitutions,
-        deletions=wer_metrics.deletions,
-        insertions=wer_metrics.insertions,
-        wder=wder_metrics["wder"],
-        speaker_errors=wder_metrics["speaker_errors"],
-        total_words=wder_metrics["total_words"],
-        speaker_count_accuracy=speaker_metrics["speaker_count_accuracy"],
-        ref_speaker_count=int(speaker_metrics["ref_speaker_count"]),
-        hyp_speaker_count=int(speaker_metrics["hyp_speaker_count"]),
-        processing_speed_ratio=processing_speed_ratio,
+    return wer_metrics.model_copy(
+        update={
+            "wder": wder_metrics["wder"],
+            "speaker_errors": wder_metrics["speaker_errors"],
+            "total_words": wder_metrics["total_words"],
+            "speaker_count_accuracy": speaker_metrics["speaker_count_accuracy"],
+            "ref_speaker_count": int(speaker_metrics["ref_speaker_count"]),
+            "hyp_speaker_count": int(speaker_metrics["hyp_speaker_count"]),
+            "processing_speed_ratio": processing_speed_ratio,
+        }
     )
 
 

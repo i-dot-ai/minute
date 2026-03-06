@@ -8,7 +8,7 @@ from openai.types.chat.chat_completion import Choice
 from common.settings import get_settings
 
 from .base import ModelAdapter
-from .llm_constants import TEMPERATURE, MAX_TOKENS
+from .llm_constants import MAX_TOKENS, TEMPERATURE
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

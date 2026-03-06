@@ -23,6 +23,7 @@ from common.types import (
     MeetingType,
     MinuteAndHallucinations,
 )
+from __future__ import annotations
 
 settings = get_settings()
 
@@ -210,7 +211,7 @@ class MinuteHandlerService:
             case _:
                 result, hallucinations = await cls.generate_full_minutes(minute)
         html_result = mistune.html(result)
-        return cast("str", html_result), hallucinations
+        return cast(str, html_result), hallucinations
 
     @classmethod
     async def generate_full_minutes(cls, minute: Minute) -> MinuteAndHallucinations:

@@ -8,8 +8,7 @@ import dspy
 from .schemas import DialogExample, MetricResult
 from .signatures import JudgeRatingSignature
 
-if TYPE_CHECKING:
-    from .config import AppConfig
+from .config import AppConfig
 
 
 @dataclass(frozen=True)

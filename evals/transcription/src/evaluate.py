@@ -2,7 +2,6 @@ import argparse
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from common.audio.ffmpeg import get_duration
 from common.settings import get_settings
@@ -11,10 +10,9 @@ from evals.transcription.src.core.dataset import (
     load_benchmark_dataset,
     prepare_audio_for_transcription,
 )
+from __future__ import annotations
 from evals.transcription.src.core.runner import run_engines_parallel, save_results
-
-if TYPE_CHECKING:
-    from evals.transcription.src.adapters.base import AdapterConfig
+from evals.transcription.src.adapters.base import AdapterConfig
 
 
 settings = get_settings()

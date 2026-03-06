@@ -4,9 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import orjson
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
+from collections.abc import Iterable
 
 
 def write_jsonl(path: str | Path, records: Iterable[dict[str, Any]]) -> None:

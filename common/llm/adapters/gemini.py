@@ -15,7 +15,7 @@ from google.genai.types import (
 )
 
 from common.settings import get_settings
-
+from __future__ import annotations
 from .base import ModelAdapter
 
 settings = get_settings()
@@ -89,7 +89,7 @@ class GeminiModelAdapter(ModelAdapter):
         if response.parsed is None:
             msg = "Gemini response.parsed is None"
             raise ValueError(msg)
-        return cast("T", response.parsed)
+        return cast(T, response.parsed)
 
     async def chat(self, messages: list[dict[str, str]]) -> str:
         contents, system_instruction = self._convert_openai_messages_to_gemini(messages)

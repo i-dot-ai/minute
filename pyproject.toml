@@ -174,8 +174,8 @@ select = [
     "A", "B", "C", "E", "F", "G", "I", "N", "Q", "S", "T", "W",
     "ARG", "ASYNC", "BLE", "COM", "DJ", "DTZ", "EM", "EXE", "FURB",
     "ICN", "INT", "ISC", "LOG", "NPY", "PD", "PGH", "PIE", "PL",
-    "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "SLOT",
-    "TCH", "TD", "TID", "UP", "YTT"
+    "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "SLOT", 
+    "TD", "TID", "UP", "YTT"
 ]
 # TODO: Decide on a structure for evals folder and add ruff support properly
 exclude = ["out/*", "viewer/*", "alembic/*"]

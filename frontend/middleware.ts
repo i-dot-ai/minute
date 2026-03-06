@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   '/monitoring',
   '/privacy',
   '/support',
+  '/logout',
 ]
 
 export async function middleware(req: NextRequest) {

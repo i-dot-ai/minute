@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import 'govuk-frontend/dist/govuk/govuk-frontend.min.css';
 @plugin "@tailwindcss/typography";
-
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -79,6 +79,24 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+@media print {
+  :root {
+    --govuk-text-colour: var(--govuk-print-text-colour, #000);
+  }
+}
+
+.govuk-link {
+  font-family:
+    GDS Transport,
+    arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-decoration: underline;
+  text-decoration-thickness: max(1px, 0.0625rem);
+  text-underline-offset: 0.1578em;
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -117,6 +135,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -128,6 +147,7 @@
   grid-template-areas:
     'alpha'
     'nav';
+
   @media (width > 72rem) {
     grid-template-areas: 'nav alpha';
     grid-template-columns: 1fr max-content 1fr;
@@ -261,14 +281,16 @@
 .editor-content pre > code {
   background-color: #444;
   color: white;
-  width: 100%!;
+  width: 100%;
 }
+
 .editor-content pre {
-  width: 100%!;
+  width: 100%;
   background-color: #444;
   padding: 0.5rem;
   border-radius: 0.5rem;
 }
+
 .editor-content code:not(pre code) {
   color: red;
 }

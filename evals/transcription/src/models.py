@@ -119,6 +119,7 @@ class SampleMetrics(BaseModel):
     speaker_count_accuracy: float
     ref_speaker_count: int
     hyp_speaker_count: int
+    processing_speed_ratio: float
 
 
 class SampleRow(BaseModel):

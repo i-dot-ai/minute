@@ -45,6 +45,7 @@ def _compute_all_metrics(
     hyp_raw: str,
     ref_diarization: list[DiarizationSegment],
     hyp_diarization: list[DiarizationSegment],
+    processing_speed_ratio: float,
 ) -> SampleMetrics:
     reference_normalized = normalise_text(ref_raw)
     hypothesis_normalized = normalise_text(hyp_raw)
@@ -65,6 +66,7 @@ def _compute_all_metrics(
         speaker_count_accuracy=speaker_metrics["speaker_count_accuracy"],
         ref_speaker_count=int(speaker_metrics["ref_speaker_count"]),
         hyp_speaker_count=int(speaker_metrics["hyp_speaker_count"]),
+        processing_speed_ratio=processing_speed_ratio,
     )
 
 
@@ -124,7 +126,14 @@ def run_engines_parallel(
 
         dialogue_entries, reference_diarization = _extract_segments(result, example)
         ref_diar_dicts, hyp_diar_dicts = _validate_and_convert_diarization(reference_diarization, dialogue_entries)
-        metrics = _compute_all_metrics(ref_raw, hyp_raw, ref_diar_dicts, hyp_diar_dicts)
+        processing_speed_ratio = process_seconds / audio_seconds if audio_seconds > 0 else float("nan")
+        metrics = _compute_all_metrics(
+            ref_raw,
+            hyp_raw,
+            ref_diar_dicts,
+            hyp_diar_dicts,
+            processing_speed_ratio,
+        )
 
         row = SampleRow(
             run_id=run_id,

@@ -6,10 +6,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import yaml
+
 from common.audio.ffmpeg import get_duration
 from common.settings import get_settings
 from evals.transcription.src.adapters.base import AdapterConfig
-from evals.transcription.src.adapters.registry import get_adapter
+from evals.transcription.src.adapters.registry import ADAPTER_REGISTRY
 from evals.transcription.src.core.dataset import (
     load_benchmark_dataset,
     prepare_audio_for_transcription,
@@ -55,7 +56,7 @@ def run_evaluation(
         msg = "No adapters specified in config"
         raise ValueError(msg)
 
-    adapters_config: list[AdapterConfig] = [{"adapter": get_adapter(name)} for name in adapter_names]
+    adapters_config: list[AdapterConfig] = [{"adapter": ADAPTER_REGISTRY[name]()} for name in adapter_names]
     logger.info("Using adapters: %s", ", ".join(adapter_names))
 
     logger.info(

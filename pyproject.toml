@@ -175,11 +175,11 @@ select = [
     "ARG", "ASYNC", "BLE", "COM", "DJ", "DTZ", "EM", "EXE", "FURB",
     "ICN", "INT", "ISC", "LOG", "NPY", "PD", "PGH", "PIE", "PL",
     "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "SLOT", 
-    "TD", "TID", "UP", "YTT"
+    "TD", "TID", "UP", "YTT", "TCH"
 ]
-# TODO: Decide on a structure for evals folder and add ruff support properly
+
 exclude = ["out/*", "viewer/*", "alembic/*"]
-ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318","ISC001","PLR0912","C901","PLR0912"]
+ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318","ISC001","PLR0912","C901","PLR0912", "TC003"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["backend", "frontend"]

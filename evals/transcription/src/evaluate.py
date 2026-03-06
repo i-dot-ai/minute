@@ -1,12 +1,13 @@
+from __future__ import annotations
+
 import argparse
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from common.audio.ffmpeg import get_duration
 from common.settings import get_settings
-
-from evals.transcription.src.adapters import AzureSTTAdapter, WhisperAdapter
+from evals.transcription.src.adapters import azure_st_adapter, whisper_st_adapter
 from evals.transcription.src.adapters.base import AdapterConfig
 from evals.transcription.src.core.dataset import (
     load_benchmark_dataset,
@@ -30,7 +31,7 @@ def run_evaluation(
     Runs transcription evaluation on AMI dataset with Azure and Whisper adapters.
     """
     output_dir = WORKDIR / "results"
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
     output_path = output_dir / f"evaluation_results_{timestamp}.json"
 
     logger.info("Loading dataset...")
@@ -48,9 +49,9 @@ def run_evaluation(
         logger.info("Audio files cached in: %s", WORKDIR / "cache" / "processed")
         return
 
-    azure_adapter = AzureSTTAdapter()
+    azure_adapter = azure_st_adapter()
 
-    whisper_adapter = WhisperAdapter()
+    whisper_adapter = whisper_st_adapter()
 
     adapters_config: list[AdapterConfig] = [
         {"adapter": azure_adapter},
@@ -92,8 +93,7 @@ def main() -> None:
         "--num-samples",
         type=int,
         default=None,
-        help="Number of meetings to evaluate from AMI dataset. "
-        "If not specified, evaluates all available meetings.",
+        help="Number of meetings to evaluate from AMI dataset. " "If not specified, evaluates all available meetings.",
     )
     parser.add_argument(
         "--sample-duration-fraction",

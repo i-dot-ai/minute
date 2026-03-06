@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import time
 import uuid
-from datetime import datetime, timezone
+from collections.abc import Iterable
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterable
 
 import dspy
 import orjson
@@ -29,7 +29,7 @@ from .schemas import (
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _ms(start_s: float, end_s: float) -> int:
@@ -109,10 +109,7 @@ def _summarize_one(
     t1 = time.perf_counter()
 
     content = summary_resp.content
-    if isinstance(content, str):
-        summary_text = content.strip()
-    else:
-        summary_text = " ".join(str(item) for item in content).strip()
+    summary_text = content.strip() if isinstance(content, str) else " ".join(str(item) for item in content).strip()
 
     candidate = DialogSummary(
         summary=summary_text,
@@ -138,9 +135,7 @@ def _evaluate_metrics(
     return out
 
 
-def _maybe_flush_records(
-    results_path: Path, records: list[EvalRecord], *, flush_every: int
-) -> None:
+def _maybe_flush_records(results_path: Path, records: list[EvalRecord], *, flush_every: int) -> None:
     if len(records) >= flush_every:
         write_jsonl(
             results_path,
@@ -193,14 +188,14 @@ def run_eval(
                 prompt_version=prompt_version,
             )
             summarize_ms_values.append(summarize_ms)
-            return dspy.Prediction(summary=candidate.summary, _candidate=candidate)
+            return dspy.Prediction(summary=candidate.summary, candidate=candidate)
 
     program = _Program()
 
     def _metric(gold: DialogExample, pred: dspy.Prediction) -> float:
         ex = DialogExample(
-            example_id=str(getattr(gold, "example_id")),
-            dialogue=str(getattr(gold, "dialogue")),
+            example_id=str(gold.example_id),
+            dialogue=str(gold.dialogue),
             reference_summary=getattr(gold, "reference_summary", None),
         )
 
@@ -213,7 +208,7 @@ def run_eval(
         for name, res in metrics_out.items():
             metric_scores[name].append(res.score)
 
-        candidate = getattr(pred, "_candidate")
+        candidate = pred.candidate
         rec = EvalRecord(
             run_id=run_id,
             timestamp=_now(),
@@ -229,20 +224,18 @@ def run_eval(
         records.append(rec)
         _maybe_flush_records(results_path, records, flush_every=25)
 
-        # Return a scalar score for DSPy evaluation.
         if metric_names:
             return float(sum(metrics_out[n].score for n in metric_names) / len(metric_names))
         return 0.0
 
-    evaluator = Evaluate(devset=devset, num_threads=1, display_progress=True, display_table=5)
+    evaluator = Evaluate(devset=devset, num_threads=1, display_progress=True, display_table=5, provide_traceback=True)
     overall_score = evaluator(program, metric=_metric)
 
     if records:
         write_jsonl(results_path, [r.model_dump(by_alias=True) for r in records])
 
     metrics_summary = {
-        name: {"mean": float(sum(vals) / len(vals)) if vals else 0.0}
-        for name, vals in metric_scores.items()
+        name: {"mean": float(sum(vals) / len(vals)) if vals else 0.0} for name, vals in metric_scores.items()
     }
     summary = {
         "run_id": run_id,

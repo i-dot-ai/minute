@@ -169,20 +169,17 @@ line-length = 120
 target-version = 'py312'
 fix = true
 
-[tool.ruff.format]
-exclude = ["data/*"]
-
 [tool.ruff.lint]
 select = [
     "A", "B", "C", "E", "F", "G", "I", "N", "Q", "S", "T", "W",
     "ARG", "ASYNC", "BLE", "COM", "DJ", "DTZ", "EM", "EXE", "FURB",
     "ICN", "INT", "ISC", "LOG", "NPY", "PD", "PGH", "PIE", "PL",
-    "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "SLOT",
-    "TCH", "TD", "TID", "UP", "YTT"
+    "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "SLOT", 
+    "TD", "TID", "UP", "YTT", "TCH"
 ]
-# TODO: Decide on a structure for evals folder and add ruff support properly
-exclude = ["out/*", "viewer/*", "alembic/*", "evals/src/*"]
-ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318","ISC001","PLR0912","C901","PLR0912"]
+
+exclude = ["out/*", "viewer/*", "alembic/*"]
+ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318","ISC001","PLR0912","C901","PLR0912", "TC001", "TC002", "TC003"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["backend", "frontend"]
@@ -209,6 +206,6 @@ ignore_missing_imports = false
 exclude = ["alembic/*", "tests/*", "viewer/*"]
 
 [[tool.mypy.overrides]]
-module = ["datasets.*", "dspy", "dspy.*", "ffmpeg.*", "orjson","langchain_core.*", "langchain_openai.*", "soundfile.*"]
+module = ["datasets.*", "dspy.*", "dspy", "ffmpeg.*", "orjson","langchain_core.*", "langchain_openai.*", "soundfile.*"]
 ignore_missing_imports = true
 

@@ -7,8 +7,8 @@ from types import SimpleNamespace
 import pytest
 import soundfile as sf
 
-from evals.transcription.src.adapters.azure import AzureSTTAdapter
-from evals.transcription.src.adapters.whisper import WhisperAdapter
+from evals.transcription.src.adapters.azure import azure_st_adapter
+from evals.transcription.src.adapters.whisper import whisper_st_adapter
 from evals.transcription.src.evaluate import run_evaluation
 from tests.evals.transcription.conftest import FakeAdapter, FakeDataset
 
@@ -32,11 +32,11 @@ def setup_evaluation(tmp_path, monkeypatch):
         monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))
 
         monkeypatch.setattr(
-            "evals.transcription.src.evaluate.AzureSTTAdapter",
+            "evals.transcription.src.evaluate.azure_st_adapter",
             lambda **_: FakeAdapter("Azure Speech-to-Text", azure_hyp),
         )
         monkeypatch.setattr(
-            "evals.transcription.src.evaluate.WhisperAdapter",
+            "evals.transcription.src.evaluate.whisper_st_adapter",
             lambda **_: FakeAdapter("Whisper", whisper_hyp),
         )
 
@@ -152,8 +152,8 @@ def test_processing_speed_ratio_calculation(setup_evaluation):
 @pytest.mark.parametrize(
     ("adapter_class", "monkeypatch_target"),
     [
-        (AzureSTTAdapter, "evals.transcription.src.adapters.azure.CommonAzureAdapter.start"),
-        (WhisperAdapter, "evals.transcription.src.adapters.whisper.WhisplyLocalAdapter.start"),
+        (azure_st_adapter, "evals.transcription.src.adapters.azure.CommonAzureAdapter.start"),
+        (whisper_st_adapter, "evals.transcription.src.adapters.whisper.WhisplyLocalAdapter.start"),
     ],
 )
 def test_adapter_contracts(tmp_path, monkeypatch, adapter_class, monkeypatch_target):
@@ -185,7 +185,7 @@ def test_run_evaluation_requires_azure_credentials(monkeypatch, tmp_path):
     monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: 1.0)
     monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))
     monkeypatch.setattr(
-        "evals.transcription.src.evaluate.WhisperAdapter",
+        "evals.transcription.src.evaluate.whisper_st_adapter",
         lambda **_: FakeAdapter("Whisper", "hello world"),
     )
 

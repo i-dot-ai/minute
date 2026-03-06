@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import Callable, Protocol
+from collections.abc import Callable
+from typing import Protocol
 
-import numpy
+import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict
 
-AudioArray = NDArray[numpy.floating]
+AudioArray = NDArray[np.floating]
 
 
 class MeetingMetadata(BaseModel):
@@ -27,7 +28,7 @@ class RawAudioDict(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    array: NDArray[numpy.float32]
+    array: NDArray[np.float32]
     sampling_rate: int
 
 

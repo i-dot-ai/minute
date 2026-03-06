@@ -8,7 +8,6 @@ from typing import TypedDict
 from common.services.transcription_services.adapter import (
     TranscriptionAdapter as CommonTranscriptionAdapter,
 )
-
 from evals.transcription.src.models import TranscriptionResult
 
 logger = logging.getLogger(__name__)
@@ -23,12 +22,10 @@ class EvalsTranscriptionAdapter(ABC):
     @abstractmethod
     def name(self) -> str:
         """Name of the transcription adapter."""
-        pass
 
     @abstractmethod
     def transcribe(self, wav_path: str) -> TranscriptionResult:
         """Transcribe the given wav file."""
-        pass
 
 
 class ServiceTranscriptionAdapter(EvalsTranscriptionAdapter):
@@ -78,7 +75,8 @@ class ServiceTranscriptionAdapter(EvalsTranscriptionAdapter):
                 debug_info={},
             )
 
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001 - evals are aiming to capture every type
+            # of failure when calculating metrics, hence broad except
             logger.error("%s transcription failed: %s", self._service_name, error)
             end_time = time.time()
             return TranscriptionResult(

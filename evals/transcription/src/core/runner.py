@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from threading import Lock
 
-import numpy
+import numpy as np
 from tqdm import tqdm
 
 from evals.transcription.src.adapters.base import AdapterConfig
@@ -133,9 +133,9 @@ def run_engines_parallel(
             processing_speed_ratio=float(timing.processing_speed_ratio),
             process_sec=float(timing.process_sec),
             audio_sec=float(timing.audio_sec),
-            per_sample_wer_min=float(numpy.min(per_sample_wers)),
-            per_sample_wer_max=float(numpy.max(per_sample_wers)),
-            per_sample_wer_mean=float(numpy.mean(per_sample_wers)),
+            per_sample_wer_min=float(np.min(per_sample_wers)),
+            per_sample_wer_max=float(np.max(per_sample_wers)),
+            per_sample_wer_mean=float(np.mean(per_sample_wers)),
         )
 
         output_results.append(EngineOutput(summary=summary, samples=rows))
@@ -151,9 +151,7 @@ def save_results(results: list[EngineOutput], output_path: Path) -> None:
 
     combined = {
         "summaries": [result.summary.model_dump() for result in results],
-        "engines": {
-            result.summary.engine: [s.model_dump() for s in result.samples] for result in results
-        },
+        "engines": {result.summary.engine: [s.model_dump() for s in result.samples] for result in results},
     }
 
     with output_path.open("w", encoding="utf-8") as file_handle:

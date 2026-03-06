@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def create_summary(
     label: str,
     rows: list[SampleRow],
-    timing: TimingAccumulator,
+    _timing: TimingAccumulator,
     run_id: str,
     timestamp: str,
     dataset_version: str,
@@ -37,7 +37,6 @@ def create_summary(
         n_examples=len(rows),
         overall_score=None,
         metrics=aggregated,
-        processing_speed_ratio=timing.processing_speed_ratio,
     )
 
 

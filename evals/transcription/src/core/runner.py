@@ -3,9 +3,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 from typing import Any, cast
 
-from common.database.postgres_models import DialogueEntry
 from tqdm import tqdm
 
+from common.database.postgres_models import DialogueEntry
 from evals.transcription.src.adapters.base import EvalsTranscriptionAdapter
 from evals.transcription.src.core.metrics import (
     compute_speaker_count_metrics,
@@ -34,9 +34,7 @@ from evals.transcription.src.models import (
 logger = logging.getLogger(__name__)
 
 
-def _extract_segments(
-    result: TranscriptionResult, example: DatasetItem
-) -> tuple[list[DialogueEntry], list[dict]]:
+def _extract_segments(result: TranscriptionResult, example: DatasetItem) -> tuple[list[DialogueEntry], list[dict]]:
     dialogue_entries = result.dialogue_entries if hasattr(result, "dialogue_entries") else []
     reference_diarization = example.reference_diarization if hasattr(example, "reference_diarization") else []
     return dialogue_entries, reference_diarization
@@ -137,9 +135,8 @@ def run_engines_parallel(
             reference_dialogue_entries=cast(list[dict[Any, Any]], ref_diar_dicts) if ref_diar_dicts else None,
             hypothesis_transcript=hyp_raw,
             hypothesis_dialogue_entries=cast(list[dict[Any, Any]], hyp_diar_dicts) if hyp_diar_dicts else None,
-            metrics=metrics.model_dump(exclude_none=True),
             latency_ms=process_seconds * 1000,
-            latency_recording_ratio=(process_seconds / audio_seconds) if audio_seconds else None,
+            metrics=metrics.model_dump(exclude_none=True),
             error=None,
         )
 

@@ -132,9 +132,8 @@ erDiagram
     JSONB reference_dialogue_entries
     TEXT hypothesis_transcript
     JSONB hypothesis_dialogue_entries
-    JSONB metrics
-    JSONB latency_ms
-    DOUBLE latency_recording_ratio
+    DOUBLE latency_ms
+    JSONB metrics # wer, wder, speaker_count_accuracy, processing_speed
     JSONB error
   }
 
@@ -153,8 +152,7 @@ erDiagram
     TEXT split
     INT n_examples
     DOUBLE overall_score
-    JSONB metrics
-    JSONB latency_ms
+    JSONB metrics # wer, wder, speaker_count_accuracy, processing_speed
   }
 
   summary_eval_record {

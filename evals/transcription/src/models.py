@@ -134,9 +134,8 @@ class SampleRow(BaseModel):
     reference_dialogue_entries: list[dict] | None
     hypothesis_transcript: str
     hypothesis_dialogue_entries: list[dict] | None
-    metrics: dict[str, float]
     latency_ms: float
-    latency_recording_ratio: float | None
+    metrics: dict[str, float]
     error: dict[str, str] | None = None
 
 
@@ -160,7 +159,6 @@ class Summary(BaseModel):
     n_examples: int
     overall_score: float | None
     metrics: dict[str, AggregatedMetricStats]
-    processing_speed_ratio: float
 
 
 class EngineOutput(BaseModel):

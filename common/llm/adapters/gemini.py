@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import Any, cast
 
@@ -15,7 +17,7 @@ from google.genai.types import (
 )
 
 from common.settings import get_settings
-from __future__ import annotations
+
 from .base import ModelAdapter
 
 settings = get_settings()

@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 import dspy
 
+from .config import AppConfig
 from .schemas import DialogExample, MetricResult
 from .signatures import JudgeRatingSignature
-
-from .config import AppConfig
 
 
 @dataclass(frozen=True)

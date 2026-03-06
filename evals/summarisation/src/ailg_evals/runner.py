@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import time
 import uuid
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from pathlib import Path
+
 import dspy
 import orjson
 from datasets import load_dataset
@@ -13,6 +15,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+from .config import AppConfig, ModelConfig
 from .jsonl import write_jsonl
 from .metric import DialogSummaryMetric, build_metrics
 from .prompts import render_template
@@ -23,9 +26,6 @@ from .schemas import (
     GenerationConfig,
     MetricResult,
 )
-
-from collections.abc import Iterable
-from .config import AppConfig, ModelConfig
 
 
 def _now() -> datetime:
@@ -208,7 +208,7 @@ def run_eval(
         for name, res in metrics_out.items():
             metric_scores[name].append(res.score)
 
-        candidate = pred.candidate  
+        candidate = pred.candidate
         rec = EvalRecord(
             run_id=run_id,
             timestamp=_now(),

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import orjson
-from collections.abc import Iterable
 
 
 def write_jsonl(path: str | Path, records: Iterable[dict[str, Any]]) -> None:

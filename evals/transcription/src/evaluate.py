@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import logging
 from datetime import UTC, datetime
@@ -6,14 +8,12 @@ from pathlib import Path
 from common.audio.ffmpeg import get_duration
 from common.settings import get_settings
 from evals.transcription.src.adapters import azure_st_adapter, whisper_st_adapter
+from evals.transcription.src.adapters.base import AdapterConfig
 from evals.transcription.src.core.dataset import (
     load_benchmark_dataset,
     prepare_audio_for_transcription,
 )
-from __future__ import annotations
 from evals.transcription.src.core.runner import run_engines_parallel, save_results
-from evals.transcription.src.adapters.base import AdapterConfig
-
 
 settings = get_settings()
 WORKDIR = Path(__file__).resolve().parent.parent

@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import logging
 from typing import Any, cast
 
 from openai import AsyncAzureOpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 from openai.types.chat.chat_completion import Choice
-from __future__ import annotations
 
 from common.settings import get_settings
 

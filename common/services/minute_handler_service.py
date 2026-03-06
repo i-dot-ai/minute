@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import uuid
 from typing import cast
@@ -23,7 +25,6 @@ from common.types import (
     MeetingType,
     MinuteAndHallucinations,
 )
-from __future__ import annotations
 
 settings = get_settings()
 

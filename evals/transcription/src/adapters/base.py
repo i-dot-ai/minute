@@ -76,7 +76,7 @@ class ServiceTranscriptionAdapter(EvalsTranscriptionAdapter):
             )
 
         except Exception as error:  # noqa: BLE001 - evals are aiming to capture every type
-                                    # of failure when calculating metrics, hence broad except
+            # of failure when calculating metrics, hence broad except
             logger.error("%s transcription failed: %s", self._service_name, error)
             end_time = time.time()
             return TranscriptionResult(

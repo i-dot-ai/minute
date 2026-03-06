@@ -9,7 +9,7 @@ import yaml
 
 from common.audio.ffmpeg import get_duration
 from common.settings import get_settings
-from evals.transcription.src.adapters.base import AdapterConfig
+from evals.transcription.src.adapters.base import AdapterConfig, ServiceTranscriptionAdapter
 from evals.transcription.src.adapters.registry import ADAPTER_REGISTRY
 from evals.transcription.src.core.dataset import (
     load_benchmark_dataset,
@@ -33,7 +33,7 @@ def run_evaluation(
     """
     Runs transcription evaluation on AMI dataset with configured adapters.
     """
-    output_dir = WORKDIR / "output"
+    output_dir = WORKDIR / "results"
     timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
     output_path = output_dir / f"evaluation_results_{timestamp}.json"
 
@@ -52,11 +52,18 @@ def run_evaluation(
         logger.info("Audio files cached in: %s", WORKDIR / "input" / "ami" / "processed")
         return
 
+    if adapter_names is None:
+        adapter_names = list(ADAPTER_REGISTRY.keys())
+
     if not adapter_names:
         msg = "No adapters specified in config"
         raise ValueError(msg)
 
-    adapters_config: list[AdapterConfig] = [{"adapter": ADAPTER_REGISTRY[name]()} for name in adapter_names]
+    adapters_config: list[AdapterConfig] = [
+        {"adapter": ServiceTranscriptionAdapter(adapter_class, adapter_name)}
+        for name in adapter_names
+        for adapter_class, adapter_name in [ADAPTER_REGISTRY[name]]
+    ]
     logger.info("Using adapters: %s", ", ".join(adapter_names))
 
     logger.info(
@@ -85,12 +92,13 @@ def run_evaluation(
     logger.info("Results saved to: %s", output_path)
 
 
-def load_config(config_path: Path) -> dict:
+def load_config(config_path: Path) -> dict[str, object]:
     """
     Loads evaluation configuration from YAML file.
     """
     with config_path.open("r") as f:
-        return yaml.safe_load(f)
+        config: dict[str, object] = yaml.safe_load(f)
+        return config
 
 
 def main() -> None:
@@ -114,12 +122,18 @@ def main() -> None:
     config = load_config(config_path)
     logger.info("Loaded config from: %s", config_path)
 
+    num_samples = config.get("num_samples")
+    sample_duration_fraction = config.get("sample_duration_fraction")
+    prepare_only = config.get("prepare_only", False)
+    max_workers = config.get("max_workers")
+    adapter_names = config.get("adapters")
+
     run_evaluation(
-        num_samples=config.get("num_samples"),
-        sample_duration_fraction=config.get("sample_duration_fraction"),
-        prepare_only=config.get("prepare_only", False),
-        max_workers=config.get("max_workers"),
-        adapter_names=config.get("adapters"),
+        num_samples=int(num_samples) if num_samples is not None else None,  # type: ignore[call-overload]
+        sample_duration_fraction=float(sample_duration_fraction) if sample_duration_fraction is not None else None,  # type: ignore[arg-type]
+        prepare_only=bool(prepare_only),
+        max_workers=int(max_workers) if max_workers is not None else None,  # type: ignore[call-overload]
+        adapter_names=list(adapter_names) if adapter_names is not None else None,  # type: ignore[call-overload]
     )
 
 

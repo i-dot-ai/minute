@@ -7,15 +7,14 @@ from types import SimpleNamespace
 import pytest
 import soundfile as sf
 
-from evals.transcription.src.adapters.azure import azure_st_adapter
-from evals.transcription.src.adapters.whisper import whisper_st_adapter
+from evals.transcription.src.adapters.registry import ADAPTER_REGISTRY
 from evals.transcription.src.evaluate import run_evaluation
-from tests.evals.transcription.conftest import FakeAdapter, FakeDataset
+from tests.evals.transcription.conftest import FakeDataset
 
 
 @pytest.fixture
 def setup_evaluation(tmp_path, monkeypatch):
-    def _setup(samples_data, audio_duration=1.0, azure_hyp="hello world", whisper_hyp="good morning"):
+    def _setup(samples_data, audio_duration=1.0, azure_hyp="hello world", whisper_hyp="good morning"):  # noqa: ARG001
         wav_files = []
         for i in range(len(samples_data)):
             wav_file = tmp_path / f"{chr(97 + i)}.wav"
@@ -30,15 +29,6 @@ def setup_evaluation(tmp_path, monkeypatch):
         monkeypatch.setattr("evals.transcription.src.evaluate.load_benchmark_dataset", lambda **_: dataset)
         monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: audio_duration)
         monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))
-
-        monkeypatch.setattr(
-            "evals.transcription.src.evaluate.azure_st_adapter",
-            lambda **_: FakeAdapter("Azure Speech-to-Text", azure_hyp),
-        )
-        monkeypatch.setattr(
-            "evals.transcription.src.evaluate.whisper_st_adapter",
-            lambda **_: FakeAdapter("Whisper", whisper_hyp),
-        )
 
         return tmp_path
 
@@ -150,13 +140,13 @@ def test_processing_speed_ratio_calculation(setup_evaluation):
 
 
 @pytest.mark.parametrize(
-    ("adapter_class", "monkeypatch_target"),
+    ("adapter_name", "monkeypatch_target"),
     [
-        (azure_st_adapter, "evals.transcription.src.adapters.azure.CommonAzureAdapter.start"),
-        (whisper_st_adapter, "evals.transcription.src.adapters.whisper.WhisplyLocalAdapter.start"),
+        ("azure", "common.services.transcription_services.azure.AzureSpeechAdapter.start"),
+        ("whisply", "common.services.transcription_services.whisply_local.WhisplyLocalAdapter.start"),
     ],
 )
-def test_adapter_contracts(tmp_path, monkeypatch, adapter_class, monkeypatch_target):
+def test_adapter_contracts(tmp_path, monkeypatch, adapter_name, monkeypatch_target):
     async def fake_start(_path):
         return SimpleNamespace(transcript=[{"text": "hello"}, {"text": "world"}])
 
@@ -165,7 +155,10 @@ def test_adapter_contracts(tmp_path, monkeypatch, adapter_class, monkeypatch_tar
     wav_file = tmp_path / "test.wav"
     sf.write(wav_file, [0.0, 0.0], 16000, subtype="PCM_16")
 
-    adapter = adapter_class()
+    from evals.transcription.src.adapters.base import ServiceTranscriptionAdapter
+
+    adapter_class, adapter_name_str = ADAPTER_REGISTRY[adapter_name]
+    adapter = ServiceTranscriptionAdapter(adapter_class, adapter_name_str)
     result = adapter.transcribe(str(wav_file))
     assert result.text == "hello world"
     assert result.duration_sec >= 0
@@ -184,16 +177,12 @@ def test_run_evaluation_requires_azure_credentials(monkeypatch, tmp_path):
     monkeypatch.setattr("evals.transcription.src.evaluate.load_benchmark_dataset", lambda **_: dataset)
     monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: 1.0)
     monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))
-    monkeypatch.setattr(
-        "evals.transcription.src.evaluate.whisper_st_adapter",
-        lambda **_: FakeAdapter("Whisper", "hello world"),
-    )
 
-    run_evaluation(num_samples=1)
+    run_evaluation(num_samples=1, adapter_names=["azure"])
 
     results_path = next((Path(tmp_path) / "results").glob("evaluation_results_*.json"))
     results = json.loads(results_path.read_text(encoding="utf-8"))
 
-    azure_samples = results["engines"]["Azure Speech API"]
+    azure_samples = results["engines"]["Azure Speech-to-Text"]
     assert len(azure_samples) == 1
     assert "Azure credentials not found" in azure_samples[0]["engine_debug"]["error"]

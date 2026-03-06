@@ -6,6 +6,7 @@ from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 from openai.types.chat.chat_completion import Choice
 
 from .base import ModelAdapter
+from .llm_constants import TEMPERATURE, MAX_TOKENS
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +48,8 @@ class AzureAPIMModelAdapter(ModelAdapter):
         response = await self.async_apim_client.chat.completions.create(
             model=self._model,
             messages=cast(list[ChatCompletionMessageParam], messages),
-            temperature=0.0,
-            max_tokens=16384,
+            temperature=TEMPERATURE,
+            max_tokens=MAX_TOKENS,
             extra_query={"api-version": self._api_version},
         )
 

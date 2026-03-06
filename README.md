@@ -52,7 +52,9 @@ If you have access to a supported LLM and Transcription provider, you will need 
 
 Note:
 
-- These APIM values can be found on the [Azure APIM Portal](https://portal.api.azc.test.communities.gov.uk/).
+- These APIM values can be found on the [Azure APIM Portal](https://portal.api.azc.test.communities.gov.uk/), including:
+  - AZURE_APIM_URL in the format `https://{{host}}.gov.uk/{{product_name}}/`
+  - AZURE_APIM_API_VERSION in the format `yyyy-mm-dd`
 - The `AZURE_APIM_ACCESS_TOKEN` is short lived and so must be regenerated every 2 hours.
 
 ##### In `common/settings.py`:

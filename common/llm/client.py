@@ -119,9 +119,6 @@ def create_chatbot(model_type: str, model_name: str, temperature: float) -> Chat
         if not settings.AZURE_APIM_URL:
             msg = "AZURE_APIM_URL is required for azure_apim model"
             raise ValueError(msg)
-        if not settings.AZURE_APIM_DEPLOYMENT:
-            msg = "AZURE_APIM_DEPLOYMENT is required for azure_apim model"
-            raise ValueError(msg)
         if not settings.AZURE_APIM_API_VERSION:
             msg = "AZURE_APIM_API_VERSION is required for azure_apim model"
             raise ValueError(msg)
@@ -135,7 +132,7 @@ def create_chatbot(model_type: str, model_name: str, temperature: float) -> Chat
         return ChatBot(
             AzureAPIMModelAdapter(
                 url=settings.AZURE_APIM_URL,
-                deployment=settings.AZURE_APIM_DEPLOYMENT,
+                model=model_name,
                 api_version=settings.AZURE_APIM_API_VERSION,
                 access_token=settings.AZURE_APIM_ACCESS_TOKEN,
                 subscription_key=settings.AZURE_APIM_SUBSCRIPTION_KEY,

@@ -6,7 +6,7 @@ from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 from openai.types.chat.chat_completion import Choice
 
 from .base import ModelAdapter
-from .llm_constants import TEMPERATURE, MAX_TOKENS
+from .llm_constants import MAX_TOKENS, TEMPERATURE
 
 logger = logging.getLogger(__name__)
 

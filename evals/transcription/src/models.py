@@ -160,6 +160,7 @@ class Summary(BaseModel):
     n_examples: int
     overall_score: float | None
     metrics: dict[str, AggregatedMetricStats]
+    processing_speed_ratio: float
 
 
 class EngineOutput(BaseModel):

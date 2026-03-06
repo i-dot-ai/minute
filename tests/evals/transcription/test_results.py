@@ -26,7 +26,7 @@ def make_sample_row(
     ref_speaker_count=2,
     hyp_speaker_count=2,
     latency_ms=1000.0,
-    latency_recording_ratio=0.5,
+    processing_speed_ratio=0.5,
 ):
     metrics = {
         "wer": wer,
@@ -34,6 +34,7 @@ def make_sample_row(
         "substitutions": substitutions,
         "deletions": deletions,
         "insertions": insertions,
+        "processing_speed_ratio": processing_speed_ratio,
     }
     if wder is not None:
         metrics["wder"] = wder
@@ -55,7 +56,6 @@ def make_sample_row(
         hypothesis_dialogue_entries=None,
         metrics=metrics,
         latency_ms=latency_ms,
-        latency_recording_ratio=latency_recording_ratio,
         error=None,
     )
 
@@ -104,7 +104,7 @@ def test_create_summary_multiple_samples():
             speaker_count_accuracy=0.0,
             hyp_speaker_count=1,
             latency_ms=1200.0,
-            latency_recording_ratio=0.6,
+            processing_speed_ratio=0.6,
         ),
     ]
     timing = TimingAccumulator()
@@ -219,7 +219,7 @@ def test_save_results_multiple_engines(tmp_path):
         hits=8,
         substitutions=2,
         latency_ms=1500.0,
-        latency_recording_ratio=0.6,
+        processing_speed_ratio=0.6,
         wder=None,
         speaker_count_accuracy=None,
     )

@@ -59,7 +59,7 @@ def test_run_engines_parallel_bookkeeping(tmp_path):
     assert samples[0].example_id == "0"
     assert samples[1].example_id == "1"
     assert samples[0].engine_version == "A"
-    assert samples[0].latency_recording_ratio == pytest.approx(0.25)
+    assert samples[0].metrics["processing_speed_ratio"] == pytest.approx(0.25)
 
 
 @pytest.mark.parametrize(
@@ -182,7 +182,7 @@ def test_validate_and_convert_diarization_raises_on_missing_data(ref_diar, hyp_d
     ],
 )
 def test_compute_all_metrics(ref_text, hyp_text, ref_diar, hyp_diar, expected):
-    metrics = _compute_all_metrics(ref_text, hyp_text, ref_diar, hyp_diar)
+    metrics = _compute_all_metrics(ref_text, hyp_text, ref_diar, hyp_diar, processing_speed_ratio=0.5)
 
     for key, value in expected.items():
         assert getattr(metrics, key) == value

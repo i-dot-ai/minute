@@ -37,6 +37,7 @@ def create_summary(
         n_examples=len(rows),
         overall_score=None,
         metrics=aggregated,
+        processing_speed_ratio=timing.processing_speed_ratio,
     )
 
 

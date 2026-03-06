@@ -73,12 +73,11 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
                 "engine_version",
                 "reference_transcript",
                 "hypothesis_transcript",
-                "latency_recording_ratio",
                 "metrics",
                 "reference_dialogue_entries",
                 "hypothesis_dialogue_entries",
             ],
-            "metrics_fields": ["wer", "hits", "substitutions", "deletions", "insertions"],
+            "metrics_fields": ["wer", "hits", "substitutions", "deletions", "insertions", "processing_speed_ratio"],
         },
     }
 
@@ -116,7 +115,7 @@ def test_processing_speed_ratio_calculation(setup_evaluation):
 
     for engine_samples in results["engines"].values():
         for sample in engine_samples:
-            assert sample["latency_recording_ratio"] == pytest.approx(0.025)
+            assert sample["metrics"]["processing_speed_ratio"] == pytest.approx(0.025)
 
 
 @pytest.mark.parametrize(

@@ -1,5 +1,5 @@
 run:
-  output_dir: runs
+  output_dir: evals/summarisation/output
   seed: 0
 
 dataset:
@@ -35,5 +35,5 @@ metrics:
   - judge_coherence
 
 prompts:
-  summarizer_template_path: prompts/summarize.j2
-  judge_template_path: prompts/judge.j2
+  summarizer_template_path: evals/summarisation/prompts/summarize.j2
+  judge_template_path: evals/summarisation/prompts/judge.j2

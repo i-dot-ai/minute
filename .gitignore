@@ -122,8 +122,8 @@ coverage.xml
 evals/**/runs/
 evals/**/results/
 evals/**/datasets/
+evals/**/input/
+evals/**/output/
 evals/**/*.wav
 evals/**/*.mp3
 evals/**/*.m4a
-evals/transcription/input/
-evals/transcription/output/

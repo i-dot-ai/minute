@@ -69,8 +69,6 @@ def load_config(path: str | Path) -> AppConfig:
     path = Path(path)
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
 
-    # Convenience: allow judge config to omit ModelConfig fields when it shares the same endpoint.
-    # Since JudgeConfig subclasses ModelConfig, we backfill required fields prior to validation.
     if isinstance(data, dict):
         model_cfg = data.get("model")
         judge_cfg = data.get("judge")
@@ -79,7 +77,6 @@ def load_config(path: str | Path) -> AppConfig:
             judge_cfg.setdefault("api_key_env", model_cfg.get("api_key_env"))
     cfg = AppConfig.model_validate(data)
 
-    # Allow env override for base_url without changing YAML.
     env_base_url = os.getenv("AILG_EVALS_BASE_URL")
     if env_base_url:
         cfg.model.base_url = env_base_url

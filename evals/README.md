@@ -1,29 +1,28 @@
-# ailg-evals
+# Summarisation Evaluation
 
-Config-driven LangChain eval runner for DialogSum-style conversational summarization.
+Config-driven eval runner for DialogSum-style conversational summarization.
 
-## Quickstart
-
-1) Create environment and install deps:
+## Setup
 
 ```bash
-uv sync
+poetry install --with evals-summarisation
 ```
 
-1) Run eval:
+## Usage
 
 ```bash
-uv run ailg-evals --config configs/default.yaml --split test --limit 50
+# Run default config
+poetry run python evals/summarisation/src/evaluate.py --config evals/summarisation/configs/default.yaml --split test --limit 50
 ```
 
-Outputs are written to `runs/<run_id>/results.jsonl` and `runs/<run_id>/summary.json`.
+Outputs are written to `evals/summarisation/output/<run_id>/results.jsonl` and `evals/summarisation/output/<run_id>/summary.json`.
 
-## Running a new experiment (This process will likely be updated in the future)
+## Running a new experiment
 
-At a high level, an experiment is defined by:
+An experiment is defined by:
 
-- A config file in `configs/` (dataset, model/judge settings, and which prompt templates to use).
-- Prompt templates in `prompts/` (how we ask the model to summarise, and how we ask the judge to score).
+- A config file in `evals/summarisation/configs/` (dataset, model/judge settings, and which prompt templates to use).
+- Prompt templates in `evals/summarisation/prompts/` (how we ask the model to summarise, and how we ask the judge to score).
 
 Update the config file and/or prompt templates as needed, then run the experiment.
 

@@ -31,7 +31,7 @@ def run_evaluation(
     adapter_names: list[str] | None = None,
 ) -> None:
     """
-    Runs transcription evaluation on AMI dataset with configured adapters.
+    Runs transcription evaluation on the specified dataset with configured adapters.
     """
     output_dir = WORKDIR / "results"
     timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
@@ -44,27 +44,17 @@ def run_evaluation(
     )
 
     indices = list(range(len(dataset)))
-    logger.info("Loaded %d samples from AMI dataset", len(indices))
+    logger.info("Loaded %d samples from the dataset", len(indices))
 
     if prepare_only:
         logger.info("=== Dataset Preparation Complete ===")
         logger.info("Prepared %d meetings", len(indices))
-        logger.info("Audio files cached in: %s", WORKDIR / "input" / "ami" / "processed")
         return
 
-    if adapter_names is None:
-        adapter_names = list(ADAPTER_REGISTRY.keys())
-
-    if not adapter_names:
-        msg = "No adapters specified in config"
-        raise ValueError(msg)
-
     adapters_config: list[AdapterConfig] = [
-        {"adapter": ServiceTranscriptionAdapter(adapter_class, adapter_name)}
+        {"adapter": ServiceTranscriptionAdapter(*ADAPTER_REGISTRY[name])}
         for name in adapter_names
-        for adapter_class, adapter_name in [ADAPTER_REGISTRY[name]]
     ]
-    logger.info("Using adapters: %s", ", ".join(adapter_names))
 
     logger.info(
         "Running %d adapters in parallel on %d samples...",
@@ -122,18 +112,33 @@ def main() -> None:
     config = load_config(config_path)
     logger.info("Loaded config from: %s", config_path)
 
-    num_samples = config.get("num_samples")
-    sample_duration_fraction = config.get("sample_duration_fraction")
-    prepare_only = config.get("prepare_only", False)
-    max_workers = config.get("max_workers")
-    adapter_names = config.get("adapters")
+    num_samples_raw = config.get("num_samples")
+    sample_duration_fraction_raw = config.get("sample_duration_fraction")
+    prepare_only_raw = config.get("prepare_only", False)
+    max_workers_raw = config.get("max_workers")
+    adapter_names_raw = config.get("adapters")
+
+    num_samples: int | None = int(num_samples_raw) if num_samples_raw is not None else None
+    sample_duration_fraction: float | None = (
+        float(sample_duration_fraction_raw) if sample_duration_fraction_raw is not None else None
+    )
+    prepare_only: bool = bool(prepare_only_raw)
+    max_workers: int | None = int(max_workers_raw) if max_workers_raw is not None else None
+
+    if adapter_names_raw is None:
+        msg = "Required config field 'adapters' is missing"
+        raise ValueError(msg)
+    if not isinstance(adapter_names_raw, list):
+        msg = f"Config field 'adapters' must be a list, got {type(adapter_names_raw).__name__}"
+        raise TypeError(msg)
+    adapter_names: list[str] = list(adapter_names_raw)
 
     run_evaluation(
-        num_samples=int(num_samples) if num_samples is not None else None,  # type: ignore[call-overload]
-        sample_duration_fraction=float(sample_duration_fraction) if sample_duration_fraction is not None else None,  # type: ignore[arg-type]
-        prepare_only=bool(prepare_only),
-        max_workers=int(max_workers) if max_workers is not None else None,  # type: ignore[call-overload]
-        adapter_names=list(adapter_names) if adapter_names is not None else None,  # type: ignore[call-overload]
+        num_samples=num_samples,
+        sample_duration_fraction=sample_duration_fraction,
+        prepare_only=prepare_only,
+        max_workers=max_workers,
+        adapter_names=adapter_names,
     )
 
 

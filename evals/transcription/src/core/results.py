@@ -35,7 +35,6 @@ def create_summary(
         engine_version=label,
         split=dataset_split,
         n_examples=len(rows),
-        overall_score=None,
         metrics=aggregated,
         processing_speed_ratio=_timing.processing_speed_ratio,
     )

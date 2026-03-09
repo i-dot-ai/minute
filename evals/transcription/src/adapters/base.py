@@ -76,8 +76,7 @@ class ServiceTranscriptionAdapter(EvalsTranscriptionAdapter):
                 dialogue_entries=dialogue_entries,
             )
 
-        except Exception as error:  # noqa: BLE001 - evals are aiming to capture every type
-            # of failure when calculating metrics, hence broad except
+        except (RuntimeError, ValueError, OSError, AttributeError) as error:
             logger.error("%s transcription failed: %s", self._service_name, error)
             end_time = time.time()
             return TranscriptionResult(

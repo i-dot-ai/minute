@@ -12,7 +12,7 @@ class FakeAdapter:
         self.hyp = hyp
         self.proc_sec = proc_sec
 
-    def transcribe(self, wav_path: str):  # noqa: ARG002
+    def transcribe(self, _wav_path: str):
         dialogue_entries = [{"speaker": "Speaker 1", "text": self.hyp, "start_time": 0.0, "end_time": 1.0}]
         return TranscriptionResult(
             text=self.hyp,

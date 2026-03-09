@@ -1,0 +1,4 @@
+theme: "Brief customer service interaction about a product return"
+max_words: 100
+max_words_per_turn: 50
+num_speakers: 2

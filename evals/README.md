@@ -59,3 +59,35 @@ poetry run python evals/transcription/src/evaluate.py --config larger_cloud_test
 **Configs:** `evals/transcription/configs/` (`smoketest.yaml`, `larger_cloud_test.yaml`)
 
 **Results:** `evals/transcription/output/`
+
+# Dataset Generation
+
+Generate synthetic conversational transcripts using LLM-based role-playing.
+
+## Setup
+
+```bash
+poetry install --with evals-dataset-generation
+```
+
+## Usage
+
+```bash
+# Run with default config
+poetry run python evals/dataset_generation/transcription_generation/main.py
+
+# Run with specific config
+poetry run python evals/dataset_generation/transcription_generation/main.py --config smoketest.yaml
+```
+
+## Configuration
+
+Configs in `evals/dataset_generation/transcription_generation/configs/`: `default.yaml`, `smoketest.yaml`
+
+Parameters:
+- `theme`: Conversation scenario/topic
+- `max_words`: Total words in generated transcript
+- `max_words_per_turn`: Maximum words to keep in conversation context per speaker (controls memory window)
+- `num_speakers`: Number of speakers (default: 2)
+
+Output → `evals/dataset_generation/transcription_generation/output/transcript_<timestamp>.json`

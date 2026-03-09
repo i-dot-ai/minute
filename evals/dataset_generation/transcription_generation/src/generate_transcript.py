@@ -1,9 +1,9 @@
-import asyncio
 import logging
+from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader
 
 from common.llm.client import FastOrBestLLM, create_default_chatbot
-from pathlib import Path
-from jinja2 import Environment, FileSystemLoader
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +13,6 @@ env = Environment(loader=FileSystemLoader(template_dir))
 
 
 async def main(SYSTEM_PROMPT_1, SYSTEM_PROMPT_2) -> None:
-
-
     # Load a specific template
     template = env.get_template("actor_system.j2")
 
@@ -24,10 +22,9 @@ async def main(SYSTEM_PROMPT_1, SYSTEM_PROMPT_2) -> None:
     # Render with context
     system_prompt_actor_two = template.render(role_definition=SYSTEM_PROMPT_2)
 
-
     # temp Config
     NUM_TURNS = 3
-    MAX_WORDS= 400 #assuming 1500 words every 10mins 
+    MAX_WORDS = 400  # assuming 1500 words every 10mins
     SPEAKERS = ["speaker_1", "speaker_2"]
 
     # temp Prompts
@@ -38,19 +35,17 @@ async def main(SYSTEM_PROMPT_1, SYSTEM_PROMPT_2) -> None:
     # histories and transcript
     histories = {
         "speaker_1": [{"role": "system", "content": system_prompt_actor_two}],
-        "speaker_2": [{"role": "system", "content":system_prompt_actor_one }],
+        "speaker_2": [{"role": "system", "content": system_prompt_actor_one}],
     }
     # transcript = [{"speaker": "2", "text": INITIAL_MESSAGE}]
 
     transcript = []
 
-
     chatbot = create_default_chatbot(FastOrBestLLM.FAST)
-
 
     current_message = INITIAL_MESSAGE
     WORD_COUNT = 0
-    
+
     while MAX_WORDS is None or WORD_COUNT < MAX_WORDS:
         logger.info("Word Count: %s", WORD_COUNT)
 
@@ -69,7 +64,5 @@ async def main(SYSTEM_PROMPT_1, SYSTEM_PROMPT_2) -> None:
         histories["speaker_2"].append({"role": "assistant", "content": reply2})
 
         current_message = reply2
-
-
 
     logger.info("Transcript: \n %s", transcript)

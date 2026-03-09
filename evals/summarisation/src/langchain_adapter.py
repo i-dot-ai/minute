@@ -23,9 +23,9 @@ class LangChainModelAdapter(BaseChatModel):
     def _generate(
         self,
         messages: list[BaseMessage],
-        stop: list[str] | None = None,
-        run_manager: Any = None,
-        **kwargs: Any,
+        _stop: list[str] | None = None,
+        _run_manager: Any = None,
+        **_kwargs: Any,
     ) -> ChatResult:
         try:
             loop = asyncio.get_event_loop()
@@ -33,7 +33,9 @@ class LangChainModelAdapter(BaseChatModel):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-        message_dicts = [{"role": "user" if i == 0 else "assistant", "content": str(m.content)} for i, m in enumerate(messages)]
+        message_dicts = [
+            {"role": "user" if i == 0 else "assistant", "content": str(m.content)} for i, m in enumerate(messages)
+        ]
 
         response = loop.run_until_complete(self.adapter.chat(message_dicts))
 

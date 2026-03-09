@@ -51,9 +51,12 @@ def run_evaluation(
         logger.info("Prepared %d meetings", len(indices))
         return
 
+    if adapter_names is None:
+        msg = "adapter_names is required when prepare_only is False"
+        raise ValueError(msg)
+
     adapters_config: list[AdapterConfig] = [
-        {"adapter": ServiceTranscriptionAdapter(*ADAPTER_REGISTRY[name])}
-        for name in adapter_names
+        {"adapter": ServiceTranscriptionAdapter(*ADAPTER_REGISTRY[name])} for name in adapter_names
     ]
 
     logger.info(
@@ -118,12 +121,34 @@ def main() -> None:
     max_workers_raw = config.get("max_workers")
     adapter_names_raw = config.get("adapters")
 
-    num_samples: int | None = int(num_samples_raw) if num_samples_raw is not None else None
-    sample_duration_fraction: float | None = (
-        float(sample_duration_fraction_raw) if sample_duration_fraction_raw is not None else None
-    )
-    prepare_only: bool = bool(prepare_only_raw)
-    max_workers: int | None = int(max_workers_raw) if max_workers_raw is not None else None
+    num_samples: int | None = None
+    if num_samples_raw is not None:
+        if not isinstance(num_samples_raw, int):
+            msg = f"Config field 'num_samples' must be an int, got {type(num_samples_raw).__name__}"
+            raise TypeError(msg)
+        num_samples = num_samples_raw
+
+    sample_duration_fraction: float | None = None
+    if sample_duration_fraction_raw is not None:
+        if not isinstance(sample_duration_fraction_raw, int | float):
+            msg = (
+                f"Config field 'sample_duration_fraction' must be a number, "
+                f"got {type(sample_duration_fraction_raw).__name__}"
+            )
+            raise TypeError(msg)
+        sample_duration_fraction = float(sample_duration_fraction_raw)
+
+    if not isinstance(prepare_only_raw, bool):
+        msg = f"Config field 'prepare_only' must be a bool, got {type(prepare_only_raw).__name__}"
+        raise TypeError(msg)
+    prepare_only: bool = prepare_only_raw
+
+    max_workers: int | None = None
+    if max_workers_raw is not None:
+        if not isinstance(max_workers_raw, int):
+            msg = f"Config field 'max_workers' must be an int, got {type(max_workers_raw).__name__}"
+            raise TypeError(msg)
+        max_workers = max_workers_raw
 
     if adapter_names_raw is None:
         msg = "Required config field 'adapters' is missing"
@@ -131,7 +156,7 @@ def main() -> None:
     if not isinstance(adapter_names_raw, list):
         msg = f"Config field 'adapters' must be a list, got {type(adapter_names_raw).__name__}"
         raise TypeError(msg)
-    adapter_names: list[str] = list(adapter_names_raw)
+    adapter_names: list[str] = adapter_names_raw
 
     run_evaluation(
         num_samples=num_samples,

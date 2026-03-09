@@ -63,7 +63,7 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
         whisper_hyp="good morning",
     )
 
-    run_evaluation(num_samples=2)
+    run_evaluation(num_samples=2, adapter_names=["azure", "whisply"])
 
     results_path = next((Path(tmp_path) / "results").glob("evaluation_results_*.json"))
     assert results_path.exists()
@@ -114,7 +114,7 @@ def test_processing_speed_ratio_calculation(setup_evaluation):
         whisper_hyp="hello world",
     )
 
-    run_evaluation(num_samples=1)
+    run_evaluation(num_samples=1, adapter_names=["azure", "whisply"])
 
     results_path = next((Path(tmp_path) / "results").glob("evaluation_results_*.json"))
     results = json.loads(results_path.read_text(encoding="utf-8"))

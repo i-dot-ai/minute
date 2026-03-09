@@ -11,9 +11,17 @@ poetry install --with evals-summarisation
 ## Usage
 
 ```bash
-# Run default config
-poetry run python evals/summarisation/src/evaluate.py --config evals/summarisation/configs/default.yaml --split test --limit 50
+# Quick smoke test (2 examples)
+poetry run python evals/summarisation/src/evaluate.py --config evals/summarisation/configs/default.yaml
+
+# Full test suite
+poetry run python evals/summarisation/src/evaluate.py --config evals/summarisation/configs/test.yaml
 ```
+
+**Available configs:**
+- `default.yaml` - Symlink to `smoke-test.yaml` for quick validation
+- `smoke-test.yaml` - Fast smoke test with `limit: 2`
+- `test.yaml` - Full test suite (no limit)
 
 Outputs are written to `evals/summarisation/output/<run_id>/results.jsonl` and `evals/summarisation/output/<run_id>/summary.json`.
 
@@ -21,10 +29,10 @@ Outputs are written to `evals/summarisation/output/<run_id>/results.jsonl` and `
 
 An experiment is defined by:
 
-- A config file in `evals/summarisation/configs/` (dataset, model/judge settings, and which prompt templates to use).
+- A config file in `evals/summarisation/configs/` (dataset, model/judge settings, run parameters like split/limit/prompt_version, and which prompt templates to use).
 - Prompt templates in `evals/summarisation/prompts/` (how we ask the model to summarise, and how we ask the judge to score).
 
-Update the config file and/or prompt templates as needed, then run the experiment.
+All run parameters (`split`, `limit`, `prompt_version`) are now configured in the YAML file under the `run:` section, not as CLI flags.
 
 # Transcription Evaluation
 

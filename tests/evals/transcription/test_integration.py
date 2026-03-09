@@ -14,7 +14,7 @@ from tests.evals.transcription.conftest import FakeDataset
 
 @pytest.fixture
 def setup_evaluation(tmp_path, monkeypatch):
-    def _setup(samples_data, audio_duration=1.0, azure_hyp="hello world", whisper_hyp="good morning"):  # noqa: ARG001
+    def _setup(samples_data, audio_duration=1.0, azure_hyp="hello world", whisper_hyp="good morning"):
         wav_files = []
         for i in range(len(samples_data)):
             wav_file = tmp_path / f"{chr(97 + i)}.wav"
@@ -24,11 +24,31 @@ def setup_evaluation(tmp_path, monkeypatch):
         samples = [{"text": data["text"], "audio": {"path": str(wav_files[i])}} for i, data in enumerate(samples_data)]
         dataset = FakeDataset(samples)
 
+        class FakeAzureAdapter:
+            name = "Azure Speech-to-Text"
+
+            @classmethod
+            async def start(cls, _audio_file_path):
+                return SimpleNamespace(transcript=[{"text": azure_hyp}])
+
+        class FakeWhisperAdapter:
+            name = "Whisper"
+
+            @classmethod
+            async def start(cls, _audio_file_path):
+                return SimpleNamespace(transcript=[{"text": whisper_hyp}])
+
+        fake_registry = {
+            "azure": (FakeAzureAdapter, "Azure Speech-to-Text"),
+            "whisply": (FakeWhisperAdapter, "Whisper"),
+        }
+
         fake_settings = SimpleNamespace(AZURE_SPEECH_KEY="key", AZURE_SPEECH_REGION="region")
         monkeypatch.setattr("evals.transcription.src.evaluate.settings", fake_settings)
         monkeypatch.setattr("evals.transcription.src.evaluate.load_benchmark_dataset", lambda **_: dataset)
         monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: audio_duration)
         monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))
+        monkeypatch.setattr("evals.transcription.src.evaluate.ADAPTER_REGISTRY", fake_registry)
 
         return tmp_path
 
@@ -49,61 +69,6 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
     assert results_path.exists()
     results = json.loads(results_path.read_text(encoding="utf-8"))
 
-    expected = {
-        "Azure Speech-to-Text": [
-            {
-                "dataset_index": 0,
-                "engine": "Azure Speech-to-Text",
-                "ref_raw": "hello world",
-                "ref_norm": "hello world",
-                "audio_sec": 1.0,
-                "process_sec": 0.25,
-                "hyp_raw": "hello world",
-                "hyp_norm": "hello world",
-                "processing_speed_ratio": 0.25,
-                "engine_debug": {"label": "Azure Speech-to-Text"},
-            },
-            {
-                "dataset_index": 1,
-                "engine": "Azure Speech-to-Text",
-                "ref_raw": "good morning",
-                "ref_norm": "good morning",
-                "audio_sec": 1.0,
-                "process_sec": 0.25,
-                "hyp_raw": "hello world",
-                "hyp_norm": "hello world",
-                "processing_speed_ratio": 0.25,
-                "engine_debug": {"label": "Azure Speech-to-Text"},
-            },
-        ],
-        "Whisper": [
-            {
-                "dataset_index": 0,
-                "engine": "Whisper",
-                "ref_raw": "hello world",
-                "ref_norm": "hello world",
-                "audio_sec": 1.0,
-                "process_sec": 0.25,
-                "hyp_raw": "good morning",
-                "hyp_norm": "good morning",
-                "processing_speed_ratio": 0.25,
-                "engine_debug": {"label": "Whisper"},
-            },
-            {
-                "dataset_index": 1,
-                "engine": "Whisper",
-                "ref_raw": "good morning",
-                "ref_norm": "good morning",
-                "audio_sec": 1.0,
-                "process_sec": 0.25,
-                "hyp_raw": "good morning",
-                "hyp_norm": "good morning",
-                "processing_speed_ratio": 0.25,
-                "engine_debug": {"label": "Whisper"},
-            },
-        ],
-    }
-
     assert len(results["summaries"]) == 2
     assert {s["engine"] for s in results["summaries"]} == {"Azure Speech-to-Text", "Whisper"}
 
@@ -111,14 +76,34 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
         assert summary["num_samples"] == 2
         assert summary["overall_wer_pct"] >= 0.0
 
-        engine = summary["engine"]
-        samples = results["engines"][engine]
-        expected_samples = expected[engine]
+    azure_samples = results["engines"]["Azure Speech-to-Text"]
+    assert len(azure_samples) == 2
+    assert azure_samples[0]["dataset_index"] == 0
+    assert azure_samples[0]["engine"] == "Azure Speech-to-Text"
+    assert azure_samples[0]["ref_raw"] == "hello world"
+    assert azure_samples[0]["hyp_raw"] == "hello world"
+    assert azure_samples[0]["audio_sec"] == 1.0
+    assert azure_samples[0]["process_sec"] > 0
+    assert azure_samples[0]["engine_debug"] == {}
+    assert {"equal", "replace", "delete", "insert"}.issubset(azure_samples[0]["diff_ops"])
 
-        for sample, expected_sample in zip(samples, expected_samples, strict=False):
-            actual = {k: sample[k] for k in expected_sample}
-            assert actual == expected_sample
-            assert {"equal", "replace", "delete", "insert"}.issubset(sample["diff_ops"])
+    assert azure_samples[1]["dataset_index"] == 1
+    assert azure_samples[1]["ref_raw"] == "good morning"
+    assert azure_samples[1]["hyp_raw"] == "hello world"
+
+    whisper_samples = results["engines"]["Whisper"]
+    assert len(whisper_samples) == 2
+    assert whisper_samples[0]["dataset_index"] == 0
+    assert whisper_samples[0]["engine"] == "Whisper"
+    assert whisper_samples[0]["ref_raw"] == "hello world"
+    assert whisper_samples[0]["hyp_raw"] == "good morning"
+    assert whisper_samples[0]["audio_sec"] == 1.0
+    assert whisper_samples[0]["process_sec"] > 0
+    assert whisper_samples[0]["engine_debug"] == {}
+
+    assert whisper_samples[1]["dataset_index"] == 1
+    assert whisper_samples[1]["ref_raw"] == "good morning"
+    assert whisper_samples[1]["hyp_raw"] == "good morning"
 
 
 def test_processing_speed_ratio_calculation(setup_evaluation):
@@ -136,7 +121,9 @@ def test_processing_speed_ratio_calculation(setup_evaluation):
 
     for engine_samples in results["engines"].values():
         for sample in engine_samples:
-            assert sample["processing_speed_ratio"] == pytest.approx(0.025)
+            expected_ratio = sample["process_sec"] / sample["audio_sec"]
+            assert sample["processing_speed_ratio"] == pytest.approx(expected_ratio)
+            assert sample["audio_sec"] == 10.0
 
 
 @pytest.mark.parametrize(

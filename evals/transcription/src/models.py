@@ -132,9 +132,9 @@ class SampleRow(BaseModel):
     example_id: str
     engine_version: str
     reference_transcript: str
-    reference_dialogue_entries: list[dict] | None
+    reference_dialogue_entries: list[DiarizationSegment] | None
     hypothesis_transcript: str
-    hypothesis_dialogue_entries: list[dict] | None
+    hypothesis_dialogue_entries: list[DiarizationSegment] | None
     latency_ms: float
     metrics: dict[str, float]
     error: dict[str, str] | None = None

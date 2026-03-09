@@ -1,7 +1,6 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
-from typing import Any, cast
 
 from tqdm import tqdm
 
@@ -138,9 +137,9 @@ def run_engines_parallel(
             example_id=str(index),
             engine_version=label,
             reference_transcript=ref_raw,
-            reference_dialogue_entries=cast(list[dict[Any, Any]], ref_diar_dicts) if ref_diar_dicts else None,
+            reference_dialogue_entries=ref_diar_dicts if ref_diar_dicts else None,
             hypothesis_transcript=hyp_raw,
-            hypothesis_dialogue_entries=cast(list[dict[Any, Any]], hyp_diar_dicts) if hyp_diar_dicts else None,
+            hypothesis_dialogue_entries=hyp_diar_dicts if hyp_diar_dicts else None,
             latency_ms=process_seconds * 1000,
             metrics=metrics.model_dump(exclude_none=True),
             error=None,

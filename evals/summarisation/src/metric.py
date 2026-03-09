@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 import dspy
 
-from common.llm.adapters import AzureAPIMModelAdapter
 from common.settings import get_settings
 
+from .adapter_factory import build_azure_apim_adapter
 from .config import AppConfig
 from .dspy_wrapper import DSPyModelAdapterWrapper
 from .schemas import DialogExample, MetricResult
@@ -46,15 +46,7 @@ def build_metrics(cfg: AppConfig) -> list[DialogSummaryMetric]:
     metrics: list[DialogSummaryMetric] = []
 
     settings = get_settings()
-
-    adapter = AzureAPIMModelAdapter(
-        url=settings.AZURE_APIM_URL,
-        model=settings.BEST_LLM_MODEL_NAME,
-        api_version=settings.AZURE_APIM_API_VERSION,
-        access_token=settings.AZURE_APIM_ACCESS_TOKEN,
-        subscription_key=settings.AZURE_APIM_SUBSCRIPTION_KEY,
-    )
-
+    adapter = build_azure_apim_adapter()
     judge_lm = DSPyModelAdapterWrapper(adapter=adapter, model_name=settings.BEST_LLM_MODEL_NAME)
 
     for name in cfg.metrics:

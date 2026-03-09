@@ -11,11 +11,10 @@ import orjson
 from datasets import load_dataset
 from dspy.evaluate import Evaluate
 from langchain_core.prompts import ChatPromptTemplate
-from tenacity import retry, stop_after_attempt, wait_exponential
 
-from common.llm.adapters import AzureAPIMModelAdapter
 from common.settings import get_settings
 
+from .adapter_factory import build_azure_apim_adapter
 from .config import AppConfig
 from .jsonl import write_jsonl
 from .langchain_adapter import LangChainModelAdapter
@@ -77,16 +76,9 @@ def _to_dspy_devset(examples: list[DialogExample]) -> list[dspy.Example]:
     return devset
 
 
-@retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=2, min=1, max=60))
 def _build_llm() -> LangChainModelAdapter:
     settings = get_settings()
-    adapter = AzureAPIMModelAdapter(
-        url=settings.AZURE_APIM_URL,
-        model=settings.BEST_LLM_MODEL_NAME,
-        api_version=settings.AZURE_APIM_API_VERSION,
-        access_token=settings.AZURE_APIM_ACCESS_TOKEN,
-        subscription_key=settings.AZURE_APIM_SUBSCRIPTION_KEY,
-    )
+    adapter = build_azure_apim_adapter()
     return LangChainModelAdapter(adapter=adapter, model_name=settings.BEST_LLM_MODEL_NAME)
 
 

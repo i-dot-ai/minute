@@ -7,7 +7,7 @@ import numpy as np
 import soundfile
 
 from common.audio.ffmpeg import convert_to_mp3
-from evals.transcription.src.core.ami.selection import MeetingSegment
+from evals.transcription.src.models import MeetingSegment
 
 logger = logging.getLogger(__name__)
 

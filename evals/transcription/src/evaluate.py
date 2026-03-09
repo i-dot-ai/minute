@@ -7,13 +7,13 @@ from pathlib import Path
 
 from common.audio.ffmpeg import get_duration
 from common.settings import get_settings
-from evals.transcription.src.adapters import azure_st_adapter, whisper_st_adapter
-from evals.transcription.src.adapters.base import AdapterConfig
+from evals.transcription.src.adapters import EvalsTranscriptionAdapter, azure_st_adapter, whisply_adapter
 from evals.transcription.src.core.dataset import (
     load_benchmark_dataset,
     prepare_audio_for_transcription,
 )
-from evals.transcription.src.core.runner import run_engines_parallel, save_results
+from evals.transcription.src.core.results import save_results
+from evals.transcription.src.core.runner import run_engines_parallel
 
 settings = get_settings()
 WORKDIR = Path(__file__).resolve().parent.parent
@@ -32,6 +32,7 @@ def run_evaluation(
     """
     output_dir = WORKDIR / "results"
     timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
+    run_id = f"eval_{timestamp}"
     output_path = output_dir / f"evaluation_results_{timestamp}.json"
 
     logger.info("Loading dataset...")
@@ -49,37 +50,37 @@ def run_evaluation(
         logger.info("Audio files cached in: %s", WORKDIR / "cache" / "processed")
         return
 
-    azure_adapter = azure_st_adapter()
-
-    whisper_adapter = whisper_st_adapter()
-
-    adapters_config: list[AdapterConfig] = [
-        {"adapter": azure_adapter},
-        {"adapter": whisper_adapter},
-    ]
+    adapters: list[EvalsTranscriptionAdapter] = [azure_st_adapter(), whisply_adapter()]
 
     logger.info(
         "Running %d adapters in parallel on %d samples...",
-        len(adapters_config),
+        len(adapters),
         len(indices),
     )
     results = run_engines_parallel(
-        adapters_config=adapters_config,
+        adapters=adapters,
         indices=indices,
         dataset=dataset,
         wav_write_fn=prepare_audio_for_transcription,
         duration_fn=lambda path: get_duration(Path(path)),
+        run_id=run_id,
+        timestamp=timestamp,
+        dataset_version=dataset.dataset_version,
+        dataset_split=dataset.dataset_split,
         max_workers=max_workers,
     )
 
     save_results(results, output_path)
 
     logger.info("=== Evaluation Complete ===")
+    logger.info("Dataset: %s", dataset.dataset_version)
+    logger.info("")
     for result in results:
+        wer_pct = result.summary.metrics["wer"].mean * 100.0
         logger.info(
             "%s WER: %.2f%%",
-            result.summary.engine,
-            result.summary.overall_wer_pct,
+            result.summary.engine_version,
+            wer_pct,
         )
     logger.info("Results saved to: %s", output_path)
 

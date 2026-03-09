@@ -26,6 +26,7 @@ class PromptConfig(BaseModel):
         default="actor_generator.j2", description="Template for generating actor definitions"
     )
     actor_system_template: str = Field(default="actor_system.j2", description="Template for actor system prompts")
+    facilitator_template: str = Field(default="facilitator.j2", description="Template for facilitator prompts")
 
     def create_environment(self) -> Environment:
         return Environment(loader=FileSystemLoader(self.prompts_dir), autoescape=select_autoescape())

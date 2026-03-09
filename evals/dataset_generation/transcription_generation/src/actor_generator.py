@@ -13,9 +13,9 @@ class ActorGenerator:
         self.prompt_config = prompt_config or PromptConfig()
         self.env = self.prompt_config.create_environment()
 
-    async def generate_actor_definitions(self, theme: str) -> list[str]:
+    async def generate_actor_definitions(self, theme: str, num_speakers: int) -> list[str]:
         template = self.env.get_template(self.prompt_config.actor_generator_template)
-        prompt = template.render(theme=theme)
+        prompt = template.render(theme=theme, num_speakers=num_speakers)
 
         response = await self.chatbot.structured_chat(
             [{"role": "system", "content": prompt}], response_format=ActorDefinition

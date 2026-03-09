@@ -21,7 +21,7 @@ async def generate_transcript_from_config(config: TranscriptGenerationConfig) ->
     logger.info("Starting transcript generation for theme: %s", config.theme)
 
     actor_generator = ActorGenerator()
-    actor_definitions = await actor_generator.generate_actor_definitions(config.theme)
+    actor_definitions = await actor_generator.generate_actor_definitions(config.theme, config.num_speakers)
 
     transcript_generator = TranscriptGenerator(generation_config=config)
     transcript = await transcript_generator.generate_transcript(actor_definitions)

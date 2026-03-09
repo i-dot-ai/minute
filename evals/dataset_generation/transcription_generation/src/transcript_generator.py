@@ -3,6 +3,7 @@ import logging
 from common.database.postgres_models import DialogueEntry
 from common.llm.client import ChatBot, FastOrBestLLM, create_default_chatbot
 from evals.dataset_generation.transcription_generation.src.config import PromptConfig, TranscriptGenerationConfig
+from evals.dataset_generation.transcription_generation.src.facilitator import Facilitator
 
 logger = logging.getLogger(__name__)
 
@@ -45,46 +46,46 @@ class TranscriptGenerator:
 
         speaker_ids = self.generation_config.speaker_ids
         histories: dict[str, list[dict[str, str]]] = {
-            speaker_ids[0]: [{"role": "system", "content": self._create_system_prompt(actor_definitions[1])}],
-            speaker_ids[1]: [{"role": "system", "content": self._create_system_prompt(actor_definitions[0])}],
+            speaker_id: [{"role": "system", "content": self._create_system_prompt(actor_def)}]
+            for speaker_id, actor_def in zip(speaker_ids, actor_definitions, strict=False)
         }
 
+        facilitator = Facilitator(
+            actor_definitions=actor_definitions, speaker_ids=speaker_ids, prompt_config=self.prompt_config
+        )
+
         transcript: list[DialogueEntry] = []
-        current_message = ""
         word_count = 0
+        last_message = ""
+
+        current_speaker_id = speaker_ids[0]
 
         while word_count < self.generation_config.max_words:
             logger.info("Word count: %d/%d", word_count, self.generation_config.max_words)
 
-            histories[speaker_ids[0]].append({"role": "user", "content": current_message})
-            histories[speaker_ids[0]] = self._trim_history(histories[speaker_ids[0]])
-            reply_1 = await self.chatbot.chat(histories[speaker_ids[0]])
-            word_count += len(reply_1.split())
+            histories[current_speaker_id].append({"role": "user", "content": last_message})
+            histories[current_speaker_id] = self._trim_history(histories[current_speaker_id])
+
+            reply = await self.chatbot.chat(histories[current_speaker_id])
+            word_count += len(reply.split())
+
+            speaker_number = speaker_ids.index(current_speaker_id) + 1
             transcript.append(
                 DialogueEntry(
-                    speaker="1",
-                    text=reply_1,
+                    speaker=str(speaker_number),
+                    text=reply,
                     start_time=0.0,  # Placeholder for audio generation
                     end_time=0.0,  # Placeholder for audio generation
                 )
             )
-            histories[speaker_ids[0]].append({"role": "assistant", "content": reply_1})
 
-            histories[speaker_ids[1]].append({"role": "user", "content": reply_1})
-            histories[speaker_ids[1]] = self._trim_history(histories[speaker_ids[1]])
-            reply_2 = await self.chatbot.chat(histories[speaker_ids[1]])
-            word_count += len(reply_2.split())
-            transcript.append(
-                DialogueEntry(
-                    speaker="2",
-                    text=reply_2,
-                    start_time=0.0,  # Placeholder for audio generation
-                    end_time=0.0,  # Placeholder for audio generation
-                )
-            )
-            histories[speaker_ids[1]].append({"role": "assistant", "content": reply_2})
+            histories[current_speaker_id].append({"role": "assistant", "content": reply})
+            facilitator.add_to_history(current_speaker_id, reply)
 
-            current_message = reply_2
+            last_message = reply
+
+            if word_count < self.generation_config.max_words:
+                current_speaker_id = await facilitator.decide_next_speaker()
 
         logger.info("Generated transcript with %d entries and %d words", len(transcript), word_count)
         return transcript

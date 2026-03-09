@@ -38,16 +38,16 @@ export const Header = () => {
           {!isLogoutPage ? (
             <Link
               href="/logout"
-              className="inline-block text-white transition-all hover:scale-105 hover:text-blue-100"
+              className="inline-block text-white underline transition-all hover:scale-105 hover:text-blue-100"
             >
-              Logout
+              Sign out
             </Link>
           ) : (
             <Link
               href="/"
-              className="inline-block text-white transition-all hover:scale-105 hover:text-blue-100"
+              className="inline-block text-white underline transition-all hover:scale-105 hover:text-blue-100"
             >
-              Login
+              Sign in
             </Link>
           )}
         </div>

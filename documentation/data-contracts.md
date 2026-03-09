@@ -132,9 +132,8 @@ erDiagram
     JSONB reference_dialogue_entries
     TEXT hypothesis_transcript
     JSONB hypothesis_dialogue_entries
-    JSONB metrics
-    JSONB latency_ms
-    DOUBLE latency_recording_ratio
+    DOUBLE latency_ms
+    JSONB metrics # wer, wder, speaker_count_accuracy, processing_speed_ratio
     JSONB error
   }
 
@@ -153,8 +152,7 @@ erDiagram
     TEXT split
     INT n_examples
     DOUBLE overall_score
-    JSONB metrics
-    JSONB latency_ms
+    JSONB metrics # wer, wder, speaker_count_accuracy, processing_speed_ratio
   }
 
   summary_eval_record {
@@ -388,10 +386,10 @@ CREATE TABLE transcription_eval_record (
 
   -- Metrics (normalised into transcription_eval_metric_result)
   metrics              JSONB NOT NULL,  -- map metric_name -> {"score": ..., ...}
+                                        -- includes: wer, wder, speaker_count_accuracy, processing_speed_ratio
 
   -- Latency and errors
-  latency_ms            JSONB NOT NULL,   -- e.g., {"preprocess": 123, "transcribe": 456}
-  latency_recording_ratio DOUBLE PRECISION NULL,  -- latency_ms/recording_ms
+  latency_ms            DOUBLE PRECISION NOT NULL,  -- processing time in milliseconds
   error                 JSONB NULL,       -- e.g., {"stage": "transcribe", "message": "..."}
 
   PRIMARY KEY (run_id, example_id)
@@ -407,7 +405,7 @@ CREATE TABLE transcription_eval_metric_result (
   run_id               TEXT NOT NULL,
   example_id           TEXT NOT NULL,
 
-  metric_name          TEXT NOT NULL,  -- e.g., wer, speaker_attributed_wer, word_diarisation_error_rate, speaker_confusion_rate
+  metric_name          TEXT NOT NULL,  -- e.g., wer, wder, speaker_count_accuracy, processing_speed_ratio
   score                DOUBLE PRECISION NOT NULL
 
   PRIMARY KEY (run_id, example_id, metric_name),
@@ -432,8 +430,9 @@ CREATE TABLE transcription_eval_run_summary (
 
   overall_score        DOUBLE PRECISION NULL,
 
-  metrics              JSONB NOT NULL,    -- e.g., {"wer": {"mean": 0.12, "min": 0.10, "max": 0.20, "std": 0.05}, ...}
-  latency_ms           JSONB NOT NULL     -- e.g., {"transcribe_p50": 4500, ...}
+  metrics              JSONB NOT NULL     -- e.g., {"wer": {"mean": 0.12, "min": 0.10, "max": 0.20, "std": 0.05}, 
+                                        --       "processing_speed_ratio": {"mean": 0.5, "min": 0.3, "max": 0.8, "std": 0.1}, ...}
+                                        -- includes: wer, wder, speaker_count_accuracy, processing_speed_ratio
 );
 ```
 

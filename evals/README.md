@@ -36,7 +36,7 @@ All run parameters (`split`, `limit`, `prompt_version`) are now configured in th
 
 # Transcription Evaluation
 
-Compares transcription services using the AMI Corpus (auto-downloaded to `input/).
+Compares transcription services using the AMI Corpus (auto-downloaded to `input/ami/`).
 
 ## Setup
 
@@ -55,6 +55,6 @@ poetry run python evals/transcription/src/evaluate.py
 poetry run python evals/transcription/src/evaluate.py --config larger_cloud_test.yaml
 ```
 
-Configs in `evals/transcription/configs/`: `smoketest.yaml`, `larger_cloud_test.yaml`
+**Configs:** `evals/transcription/configs/` (`default.yaml`, `smoketest.yaml`, `larger_cloud_test.yaml`)
 
-Results → `evals/transcription/output/`
+**Results:** `evals/transcription/output/`

@@ -19,13 +19,14 @@ When evaluating speech-to-text systems against reference transcripts (golden or 
 * Diarization Error Rate (DER)
 * Word Diarization Error Rate (WDER) / Speaker Confusion Rate
 * Speaker Count Deviation and Accuracy
+* Processing Speed / Latency Ratio
 * Bidirectional Entailment
 * Hedging, Modality, and Register Shift Detection
 * Named Entity Recognition (NER) Comparison
 
 ## Decision Outcome
 
-WER, WDER, and Speaker Count Accuracy, because they provide focused, non-noisy coverage of transcription quality from word-level accuracy (WER), speaker attribution (WDER), and basic diarization validation (Speaker Count) while remaining simple to compute and interpret for comparing providers.
+WER, WDER, Speaker Count Accuracy, and Processing Speed, because they provide focused, non-noisy coverage of transcription quality from word-level accuracy (WER), speaker attribution (WDER), basic diarization validation (Speaker Count), and processing efficiency (speed ratio) while remaining simple to compute and interpret for comparing providers.
 
 ## Pros and Cons of the Options
 
@@ -106,6 +107,19 @@ A simple metric counting how many times the detected number of speakers correspo
 * Good, because it identifies a clear mode of failure where incorrect speaker count is always counted as an error.
 * Bad, because it doesn't capture other important transcription information.
 * Bad, because it can significantly tarnish the perception of an otherwise good transcription (binary pass/fail regardless of deviation magnitude).
+
+### Processing Speed / Latency Ratio
+
+*How fast does the system process audio compared to real-time?*
+
+Measures the ratio of processing time to audio duration, indicating whether the system can transcribe faster or slower than real-time playback.
+
+* Good, because it is trivial to compute (processing time / audio duration).
+* Good, because it provides a clear operational metric for comparing provider efficiency.
+* Good, because it helps determine if a system is suitable for real-time or near-real-time applications.
+* Good, because it is independent of transcription quality, allowing separate evaluation of speed vs. accuracy trade-offs.
+* Bad, because it doesn't capture transcription quality or accuracy.
+* Bad, because it can vary based on hardware, network conditions, and concurrent load.
 
 ### Bidirectional Entailment
 

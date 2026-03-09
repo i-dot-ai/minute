@@ -3,7 +3,6 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TypedDict
 
 from common.services.transcription_services.adapter import (
     TranscriptionAdapter as CommonTranscriptionAdapter,
@@ -65,6 +64,7 @@ class ServiceTranscriptionAdapter(EvalsTranscriptionAdapter):
                     text="",
                     duration_sec=(end_time - start_time),
                     debug_info={"error": "Empty transcript"},
+                    dialogue_entries=[],
                 )
 
             full_text = " ".join(entry["text"] for entry in dialogue_entries).strip()
@@ -73,20 +73,15 @@ class ServiceTranscriptionAdapter(EvalsTranscriptionAdapter):
                 text=full_text,
                 duration_sec=(end_time - start_time),
                 debug_info={},
+                dialogue_entries=dialogue_entries,
             )
 
-        except Exception as error:  # noqa: BLE001 - evals are aiming to capture every type
-            # of failure when calculating metrics, hence broad except
+        except (RuntimeError, ValueError, OSError, AttributeError) as error:
             logger.error("%s transcription failed: %s", self._service_name, error)
             end_time = time.time()
             return TranscriptionResult(
                 text="",
                 duration_sec=(end_time - start_time),
                 debug_info={"error": str(error)},
+                dialogue_entries=[],
             )
-
-
-class AdapterConfig(TypedDict):
-    """Configuration for a transcription adapter."""
-
-    adapter: EvalsTranscriptionAdapter

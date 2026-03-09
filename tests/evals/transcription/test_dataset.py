@@ -38,7 +38,7 @@ def test_prepare_audio_for_transcription_downmixes_stereo_and_returns_path(tmp_p
 
     captured = {}
 
-    def fake_write(path, data, sr, subtype=None):  # noqa: ARG001
+    def fake_write(_path, data, _sr, **_kwargs):
         captured["data"] = data
 
     monkeypatch.setattr("evals.transcription.src.core.dataset.soundfile.write", fake_write)
@@ -58,7 +58,7 @@ def test_prepare_audio_for_transcription_cleans_temp_on_ffmpeg_error(tmp_path, m
 
     temp_path_holder = {}
 
-    def fake_write(path, data, sr, subtype=None):  # noqa: ARG001
+    def fake_write(path, _data, _sr, **_kwargs):
         temp_path_holder["path"] = path
 
     def fake_run(*_args, **_kwargs):

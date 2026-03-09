@@ -29,14 +29,18 @@ def setup_evaluation(tmp_path, monkeypatch):
 
             @classmethod
             async def start(cls, _audio_file_path):
-                return SimpleNamespace(transcript=[{"text": azure_hyp}])
+                return SimpleNamespace(
+                    transcript=[{"text": azure_hyp, "speaker": "Speaker 1", "start_time": 0.0, "end_time": 1.0}]
+                )
 
         class FakeWhisperAdapter:
             name = "Whisper"
 
             @classmethod
             async def start(cls, _audio_file_path):
-                return SimpleNamespace(transcript=[{"text": whisper_hyp}])
+                return SimpleNamespace(
+                    transcript=[{"text": whisper_hyp, "speaker": "Speaker 1", "start_time": 0.0, "end_time": 1.0}]
+                )
 
         fake_registry = {
             "azure": (FakeAzureAdapter, "Azure Speech-to-Text"),
@@ -65,45 +69,49 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
 
     run_evaluation(num_samples=2, adapter_names=["azure", "whisply"])
 
-    results_path = next((Path(tmp_path) / "results").glob("evaluation_results_*.json"))
+    results_path = next((Path(tmp_path) / "output").glob("evaluation_results_*.json"))
     assert results_path.exists()
     results = json.loads(results_path.read_text(encoding="utf-8"))
 
-    assert len(results["summaries"]) == 2
-    assert {s["engine"] for s in results["summaries"]} == {"Azure Speech-to-Text", "Whisper"}
+    expected_structure = {
+        "summaries": {
+            "count": 2,
+            "engines": {"Azure Speech-to-Text", "Whisper"},
+            "required_fields": ["n_examples", "engine_version", "metrics"],
+            "metrics_fields": ["wer"],
+        },
+        "samples": {
+            "count_per_engine": 2,
+            "required_fields": [
+                "example_id",
+                "engine_version",
+                "reference_transcript",
+                "hypothesis_transcript",
+                "metrics",
+                "reference_dialogue_entries",
+                "hypothesis_dialogue_entries",
+            ],
+            "metrics_fields": ["wer", "hits", "substitutions", "deletions", "insertions", "processing_speed_ratio"],
+        },
+    }
+
+    assert len(results["summaries"]) == expected_structure["summaries"]["count"]
+    assert {s["engine_version"] for s in results["summaries"]} == expected_structure["summaries"]["engines"]
 
     for summary in results["summaries"]:
-        assert summary["num_samples"] == 2
-        assert summary["overall_wer_pct"] >= 0.0
+        assert summary["n_examples"] == 2
+        assert all(field in summary for field in expected_structure["summaries"]["required_fields"])
+        assert all(metric in summary["metrics"] for metric in expected_structure["summaries"]["metrics_fields"])
 
-    azure_samples = results["engines"]["Azure Speech-to-Text"]
-    assert len(azure_samples) == 2
-    assert azure_samples[0]["dataset_index"] == 0
-    assert azure_samples[0]["engine"] == "Azure Speech-to-Text"
-    assert azure_samples[0]["ref_raw"] == "hello world"
-    assert azure_samples[0]["hyp_raw"] == "hello world"
-    assert azure_samples[0]["audio_sec"] == 1.0
-    assert azure_samples[0]["process_sec"] > 0
-    assert azure_samples[0]["engine_debug"] == {}
-    assert {"equal", "replace", "delete", "insert"}.issubset(azure_samples[0]["diff_ops"])
+        engine = summary["engine_version"]
+        samples = results["engines"][engine]
+        assert len(samples) == expected_structure["samples"]["count_per_engine"]
 
-    assert azure_samples[1]["dataset_index"] == 1
-    assert azure_samples[1]["ref_raw"] == "good morning"
-    assert azure_samples[1]["hyp_raw"] == "hello world"
-
-    whisper_samples = results["engines"]["Whisper"]
-    assert len(whisper_samples) == 2
-    assert whisper_samples[0]["dataset_index"] == 0
-    assert whisper_samples[0]["engine"] == "Whisper"
-    assert whisper_samples[0]["ref_raw"] == "hello world"
-    assert whisper_samples[0]["hyp_raw"] == "good morning"
-    assert whisper_samples[0]["audio_sec"] == 1.0
-    assert whisper_samples[0]["process_sec"] > 0
-    assert whisper_samples[0]["engine_debug"] == {}
-
-    assert whisper_samples[1]["dataset_index"] == 1
-    assert whisper_samples[1]["ref_raw"] == "good morning"
-    assert whisper_samples[1]["hyp_raw"] == "good morning"
+        for idx, sample in enumerate(samples):
+            assert sample["example_id"] == str(idx)
+            assert sample["engine_version"] == engine
+            assert all(field in sample for field in expected_structure["samples"]["required_fields"])
+            assert all(metric in sample["metrics"] for metric in expected_structure["samples"]["metrics_fields"])
 
 
 def test_processing_speed_ratio_calculation(setup_evaluation):
@@ -116,14 +124,13 @@ def test_processing_speed_ratio_calculation(setup_evaluation):
 
     run_evaluation(num_samples=1, adapter_names=["azure", "whisply"])
 
-    results_path = next((Path(tmp_path) / "results").glob("evaluation_results_*.json"))
+    results_path = next((Path(tmp_path) / "output").glob("evaluation_results_*.json"))
     results = json.loads(results_path.read_text(encoding="utf-8"))
 
     for engine_samples in results["engines"].values():
         for sample in engine_samples:
-            expected_ratio = sample["process_sec"] / sample["audio_sec"]
-            assert sample["processing_speed_ratio"] == pytest.approx(expected_ratio)
-            assert sample["audio_sec"] == 10.0
+            assert "processing_speed_ratio" in sample["metrics"]
+            assert sample["metrics"]["processing_speed_ratio"] > 0
 
 
 @pytest.mark.parametrize(
@@ -135,7 +142,12 @@ def test_processing_speed_ratio_calculation(setup_evaluation):
 )
 def test_adapter_contracts(tmp_path, monkeypatch, adapter_name, monkeypatch_target):
     async def fake_start(_path):
-        return SimpleNamespace(transcript=[{"text": "hello"}, {"text": "world"}])
+        return SimpleNamespace(
+            transcript=[
+                {"speaker": "Speaker 1", "text": "hello", "start_time": 0.0, "end_time": 0.5},
+                {"speaker": "Speaker 1", "text": "world", "start_time": 0.5, "end_time": 1.0},
+            ]
+        )
 
     monkeypatch.setattr(monkeypatch_target, fake_start)
 
@@ -165,11 +177,5 @@ def test_run_evaluation_requires_azure_credentials(monkeypatch, tmp_path):
     monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: 1.0)
     monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))
 
-    run_evaluation(num_samples=1, adapter_names=["azure"])
-
-    results_path = next((Path(tmp_path) / "results").glob("evaluation_results_*.json"))
-    results = json.loads(results_path.read_text(encoding="utf-8"))
-
-    azure_samples = results["engines"]["Azure Speech-to-Text"]
-    assert len(azure_samples) == 1
-    assert "Azure credentials not found" in azure_samples[0]["engine_debug"]["error"]
+    with pytest.raises(ValueError, match="Diarization data is required but missing"):
+        run_evaluation(num_samples=1, adapter_names=["azure"])

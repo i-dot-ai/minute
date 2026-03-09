@@ -20,7 +20,11 @@ from evals.transcription.src.evaluate import run_evaluation
             10,
             {"num_samples": None, "sample_duration_fraction": 0.5},
         ),
-        ({"adapter_names": ["azure", "whisply"]}, 2, {"num_samples": None, "sample_duration_fraction": None}),
+        (
+            {"adapter_names": ["azure", "whisply"]},
+            2,
+            {"num_samples": None, "sample_duration_fraction": None},
+        ),
     ],
 )
 def test_run_evaluation(tmp_path, monkeypatch, kwargs, dataset_len, expected_load_call):

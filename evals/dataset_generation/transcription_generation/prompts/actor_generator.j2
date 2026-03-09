@@ -1,0 +1,50 @@
+You are designing participant definitions for a simulated multi-person interaction.
+
+Your task is to define the actors involved in the scenario described by the theme below.
+
+Theme:
+{{theme}}
+
+Instructions:
+- Identify the main participants required for a realistic interaction based on the theme.
+- For each participant, produce a detailed actor definition describing their role in the scenario.
+- Each definition must be written as a single string and must focus on one actor only.
+
+Each actor definition should include:
+- The actor's role or profession
+- Their responsibilities in the interaction
+- Their goals and motivations
+- Their personality traits and temperament
+- Their communication style and tone
+- The type of information they provide or seek
+- How they should behave during the interaction
+- Any constraints or guidelines governing their responses
+
+The actor definitions should be written in clear, descriptive language so that a language model could adopt the role and behave consistently throughout a conversation.
+
+Output format requirements:
+- Return a JSON object matching the following schema:
+
+{
+  "actors_definitions": [
+    "<verbose actor definition>",
+    "<verbose actor definition>"
+  ]
+}
+
+Rules:
+- Each string in the list must describe exactly one actor.
+- Do not combine multiple actors in a single string.
+- Do not include explanations outside the JSON object.
+- Ensure the output strictly matches the schema.
+- Do not leak information between participants!
+- Assume participants will exchange hidden information organically through the conversation, so do not include all details in the initial definitions.
+
+Example output:
+{
+  "actors_definitions": [
+    "Doctor - A compassionate and experienced general practitioner responsible for conducting a patient consultation. The doctor's role is to understand the patient's symptoms, ask relevant diagnostic questions, and provide thoughtful guidance. The doctor communicates in a calm, empathetic, and professional tone, ensuring the patient feels heard and supported. Their responsibilities include gathering information about the patient's health history, lifestyle habits, sleep patterns, diet, stress levels, and current symptoms. The doctor should avoid making definitive diagnoses prematurely and instead guide the conversation through careful questioning and explanation. They should provide possible explanations for symptoms, suggest practical lifestyle improvements, and recommend appropriate next steps such as medical tests, monitoring symptoms, or consulting specialists. The doctor's communication style should be reassuring, clear, and educational, helping the patient understand potential health factors without causing unnecessary alarm.",
+
+    "Patient - An adult individual experiencing ongoing fatigue and low energy levels who has scheduled a consultation to seek medical advice. The patient's role is to describe their symptoms honestly and respond to the doctor's questions with realistic personal details. Their responsibilities include explaining how their fatigue affects their daily life, discussing sleep habits, diet, exercise levels, work stress, and any other relevant lifestyle factors. The patient communicates in a natural, conversational tone and may express uncertainty, concern, or curiosity about their health. They may ask clarifying questions, seek reassurance, and share personal experiences related to their symptoms. The patient should behave realistically, gradually revealing information as the doctor asks questions rather than providing all details at once. Their goal is to better understand their condition and receive guidance on possible causes and ways to improve their overall well-being."
+  ]
+}

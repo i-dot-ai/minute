@@ -30,7 +30,9 @@ class TranscriptGenerator:
         template = self.env.get_template(self.prompt_config.time_remaining_template)
         words_remaining = max(0, self.generation_config.word_target - current_word_count)
         minutes_remaining = math.ceil(words_remaining / WORDS_PER_MINUTE)
-        return template.render(minutes_remaining=minutes_remaining)
+        hard_close = current_word_count < (self.generation_config.word_target * 0.02)  # need to make configurable
+        soft_close = current_word_count < (self.generation_config.word_target * 0.1)
+        return template.render(minutes_remaining=minutes_remaining, hard_close=hard_close, soft_close=soft_close)
 
     def _trim_history(self, history: list[dict[str, str]]) -> list[dict[str, str]]:
         if self.generation_config.max_words_per_turn is None:

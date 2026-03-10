@@ -38,18 +38,18 @@ class TranscriptGenerator:
             minutes_remaining_perc=minutes_remaining_perc, hard_close=hard_close, soft_close=soft_close
         )
 
-    def _trim_history(self, history: list[ChatEntry]) -> list[ChatEntry]:        
+    def _trim_history(self, history: list[ChatEntry]) -> list[ChatEntry]:
         if self.generation_config.max_words_per_turn is None:
             return history
 
         system_messages = [msg for msg in history if msg.role == "system"]
         conversation_messages = [msg for msg in history if msg.role != "system"]
 
-        total_words = sum(len(msg.text.split()) for msg in conversation_messages)
+        total_words = sum(len(msg.content.split()) for msg in conversation_messages)
 
         while total_words > self.generation_config.max_words_per_turn and len(conversation_messages) > 1:
             removed_msg = conversation_messages.pop(0)
-            total_words -= len(removed_msg["text"].split())
+            total_words -= len(removed_msg.content.split())
 
         return system_messages + conversation_messages
 
@@ -58,21 +58,13 @@ class TranscriptGenerator:
             msg = f"Expected {self.generation_config.num_speakers} actors, got {len(actor_definitions)}"
             raise ValueError(msg)
 
-
         speaker_ids = self.generation_config.speaker_ids
-       
-        actors : dict[str,Actor] = {}
+
+        actors: dict[str, Actor] = {}
         for speaker_id, actor_def in zip(speaker_ids, actor_definitions, strict=False):
-            actor= Actor(speaker_id)
-            actor.add_to_history(
-                ChatEntry(role="system", text=self._create_system_prompt(actor_def)) ) 
+            actor = Actor(speaker_id)
+            actor.add_to_history(ChatEntry(role="system", content=self._create_system_prompt(actor_def)))
             actors[speaker_id] = actor
-
-
-        # histories: dict[str, list[dict[str, str]]] = {
-        #     speaker_id: [{"role": "system", "content": self._create_system_prompt(actor_def)}]
-        #     for speaker_id, actor_def in zip(speaker_ids, actor_definitions, strict=False)
-        # }
 
         facilitator = Facilitator(
             actor_definitions=actor_definitions, speaker_ids=speaker_ids, prompt_config=self.prompt_config
@@ -99,10 +91,10 @@ class TranscriptGenerator:
             user_message = f"{time_remaining_msg}\n\n{last_message}" if last_message else time_remaining_msg
 
             current_actor = actors[current_speaker_id]
-            current_actor.add_to_history(ChatEntry(role="user", text=user_message))
+            current_actor.add_to_history(ChatEntry(role="user", content=user_message))
             current_actor.history = self._trim_history(current_actor.history)
 
-            reply = await current_actor.reply()
+            reply = await current_actor.reply_to_last_message()
             word_count += len(reply.split())
 
             speaker_number = speaker_ids.index(current_speaker_id) + 1
@@ -115,7 +107,7 @@ class TranscriptGenerator:
                 )
             )
 
-            current_actor.add_to_history(ChatEntry(role="assistant", text=reply))
+            current_actor.add_to_history(ChatEntry(role="assistant", content=reply))
             facilitator.add_to_history(current_speaker_id, reply)
 
             last_message = reply

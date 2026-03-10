@@ -22,7 +22,13 @@ class Facilitator:
     def _create_facilitator_prompt(self) -> str:
         template = get_template(FACILITATOR_TEMPLATE)
         roles = list(zip(self.speaker_ids, self.actor_definitions, strict=False))
-        return template.render(roles=roles, conversation_history=self.conversation_history)
+        speakers_who_spoke = {speaker_id for speaker_id, _ in self.conversation_history}
+        speakers_who_havent_spoken = [sid for sid in self.speaker_ids if sid not in speakers_who_spoke]
+        return template.render(
+            roles=roles,
+            conversation_history=self.conversation_history,
+            speakers_who_havent_spoken=speakers_who_havent_spoken,
+        )
 
     async def decide_next_speaker(self) -> tuple[str, bool]:
         prompt = self._create_facilitator_prompt()

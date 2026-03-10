@@ -1,6 +1,6 @@
+from abc import abstractmethod
 from functools import cached_property
 
-from numba.core.errors import abstractmethod
 from pydantic import BaseModel
 
 from common.llm.client import ChatBot, FastOrBestLLM, create_default_chatbot
@@ -36,6 +36,7 @@ class Participant:
         self.history_manager = history_manager
         self.chatbot = chatbot or create_default_chatbot(FastOrBestLLM.FAST)
 
+    @property
     @abstractmethod
     def system_message_content(self) -> str:
         pass
@@ -43,7 +44,7 @@ class Participant:
     def full_history(self, notice_message: str):
         system_message = {
             "role": "system",
-            "content": self.system_message_content(),
+            "content": self.system_message_content,
         }
         messages_history = self.history_manager.get_history_for_participant(self.identifier)
         return [system_message, *messages_history, {"role": "user", "content": notice_message}]

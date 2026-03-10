@@ -1,7 +1,7 @@
 import logging
 
 from common.llm.client import ChatBot, FastOrBestLLM, create_default_chatbot
-from evals.dataset_generation.transcription_generation.src.config import PromptConfig
+from evals.dataset_generation.transcription_generation.src.constants import FACILITATOR_TEMPLATE, get_template
 from evals.dataset_generation.transcription_generation.src.models import FacilitatorDecision
 
 logger = logging.getLogger(__name__)
@@ -13,17 +13,14 @@ class Facilitator:
         actor_definitions: list[str],
         speaker_ids: list[str],
         chatbot: ChatBot | None = None,
-        prompt_config: PromptConfig | None = None,
     ) -> None:
         self.actor_definitions = actor_definitions
         self.speaker_ids = speaker_ids
         self.chatbot = chatbot or create_default_chatbot(FastOrBestLLM.FAST)
-        self.prompt_config = prompt_config or PromptConfig()
-        self.env = self.prompt_config.create_environment()
         self.conversation_history: list[tuple[str, str]] = []
 
     def _create_facilitator_prompt(self) -> str:
-        template = self.env.get_template(self.prompt_config.facilitator_template)
+        template = get_template(FACILITATOR_TEMPLATE)
         roles = list(zip(self.speaker_ids, self.actor_definitions, strict=False))
         return template.render(roles=roles, conversation_history=self.conversation_history)
 

@@ -1,7 +1,5 @@
-Meeting info: There are {{ minutes_remaining }} minutes remaining in this meeting.
-
-{% if soft_close %}
-Look to begin making concluding remarks.
-{% elif hard_close %}
-Look to immediately conclude the discussion and finish the meeting.
+{% if hard_close %}
+Meeting info: Look to immediately conclude the discussion and finish the meeting.
+{% elif soft_close %}
+Meeting info: Look to begin making concluding remarks.
 {% endif %}

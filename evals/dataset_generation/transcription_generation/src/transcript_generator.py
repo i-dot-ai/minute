@@ -1,13 +1,14 @@
 import logging
 import math
 
-from common.constants import WORDS_PER_MINUTE
 from common.database.postgres_models import DialogueEntry
 from common.llm.client import ChatBot, FastOrBestLLM, create_default_chatbot
 from evals.dataset_generation.transcription_generation.src.config import PromptConfig, TranscriptGenerationConfig
 from evals.dataset_generation.transcription_generation.src.facilitator import Facilitator
 
 logger = logging.getLogger(__name__)
+HARD_CLOSE_THRESHOLD = 2
+SOFT_CLOSE_THRESHOLD = 10
 
 
 class TranscriptGenerator:
@@ -29,10 +30,12 @@ class TranscriptGenerator:
     def _create_time_remaining_message(self, current_word_count: int) -> str:
         template = self.env.get_template(self.prompt_config.time_remaining_template)
         words_remaining = max(0, self.generation_config.word_target - current_word_count)
-        minutes_remaining = math.ceil(words_remaining / WORDS_PER_MINUTE)
-        hard_close = current_word_count < (self.generation_config.word_target * 0.02)  # need to make configurable
-        soft_close = current_word_count < (self.generation_config.word_target * 0.1)
-        return template.render(minutes_remaining=minutes_remaining, hard_close=hard_close, soft_close=soft_close)
+        minutes_remaining_perc = math.ceil(words_remaining / self.generation_config.word_target * 100)  # rename
+        hard_close = minutes_remaining_perc < HARD_CLOSE_THRESHOLD  # need to make configurable
+        soft_close = minutes_remaining_perc < SOFT_CLOSE_THRESHOLD
+        return template.render(
+            minutes_remaining_perc=minutes_remaining_perc, hard_close=hard_close, soft_close=soft_close
+        )
 
     def _trim_history(self, history: list[dict[str, str]]) -> list[dict[str, str]]:
         if self.generation_config.max_words_per_turn is None:

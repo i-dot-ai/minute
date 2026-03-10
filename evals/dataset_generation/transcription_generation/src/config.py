@@ -6,7 +6,10 @@ from pydantic import BaseModel, Field
 
 class TranscriptGenerationConfig(BaseModel):
     theme: str = Field(description="Theme or scenario for the conversation")
-    max_words: int = Field(default=400, description="Maximum words in generated transcript")
+    word_target: int = Field(default=400, description="Target words in generated transcript")
+    termination_threshold_multiplier: float = Field(
+        default=1.25, description="Multiplier for word_target to determine hard termination (e.g., 1.25 = 125%)"
+    )
     max_words_per_turn: int | None = Field(
         default=None, description="Maximum words to keep in conversation context per speaker (None = unlimited)"
     )
@@ -27,6 +30,7 @@ class PromptConfig(BaseModel):
     )
     actor_system_template: str = Field(default="actor_system.j2", description="Template for actor system prompts")
     facilitator_template: str = Field(default="facilitator.j2", description="Template for facilitator prompts")
+    time_remaining_template: str = Field(default="time_remaining.j2", description="Template for time remaining message")
 
     def create_environment(self) -> Environment:
         return Environment(loader=FileSystemLoader(self.prompts_dir), autoescape=select_autoescape())

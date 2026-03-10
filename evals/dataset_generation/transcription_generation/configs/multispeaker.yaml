@@ -1,4 +1,4 @@
 theme: "Team meeting to resolve a conflict about project priorities between product manager, engineering lead, designer, and stakeholder"
-max_words: 300
+word_target: 300
 max_words_per_turn: 100
 num_speakers: 4

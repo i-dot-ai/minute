@@ -18,4 +18,12 @@ Based on the conversation flow and the roles, decide which speaker should speak 
 - Role responsibilities and expertise
 - Turn balance (avoid one speaker dominating)
 
-Return only the speaker ID who should speak next.
+IMPORTANT: Detect if participants are signaling they want to wrap up the meeting. Look for phrases like:
+- "I think that's all I wanted to cover"
+- "Okay, I guess it's about time"
+- "That's everything from my side"
+- "I don't have anything else to add"
+- Similar wrap-up signals
+
+If you detect that participants are ready to end the meeting, set should_terminate to true.
+Otherwise, return the speaker ID who should speak next and set should_terminate to false.

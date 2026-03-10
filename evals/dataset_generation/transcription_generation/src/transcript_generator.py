@@ -1,5 +1,7 @@
 import logging
+import math
 
+from common.constants import WORDS_PER_MINUTE
 from common.database.postgres_models import DialogueEntry
 from common.llm.client import ChatBot, FastOrBestLLM, create_default_chatbot
 from evals.dataset_generation.transcription_generation.src.config import PromptConfig, TranscriptGenerationConfig
@@ -23,6 +25,12 @@ class TranscriptGenerator:
     def _create_system_prompt(self, actor_definition: str) -> str:
         template = self.env.get_template(self.prompt_config.actor_system_template)
         return template.render(role_definition=actor_definition)
+
+    def _create_time_remaining_message(self, current_word_count: int) -> str:
+        template = self.env.get_template(self.prompt_config.time_remaining_template)
+        words_remaining = max(0, self.generation_config.word_target - current_word_count)
+        minutes_remaining = math.ceil(words_remaining / WORDS_PER_MINUTE)
+        return template.render(minutes_remaining=minutes_remaining)
 
     def _trim_history(self, history: list[dict[str, str]]) -> list[dict[str, str]]:
         if self.generation_config.max_words_per_turn is None:
@@ -59,11 +67,22 @@ class TranscriptGenerator:
         last_message = ""
 
         current_speaker_id = speaker_ids[0]
+        hard_termination_threshold = int(
+            self.generation_config.word_target * self.generation_config.termination_threshold_multiplier
+        )
 
-        while word_count < self.generation_config.max_words:
-            logger.info("Word count: %d/%d", word_count, self.generation_config.max_words)
+        while word_count < hard_termination_threshold:
+            logger.info(
+                "Word count: %d/%d (hard limit: %d)",
+                word_count,
+                self.generation_config.word_target,
+                hard_termination_threshold,
+            )
 
-            histories[current_speaker_id].append({"role": "user", "content": last_message})
+            time_remaining_msg = self._create_time_remaining_message(word_count)
+            user_message = f"{time_remaining_msg}\n\n{last_message}" if last_message else time_remaining_msg
+
+            histories[current_speaker_id].append({"role": "user", "content": user_message})
             histories[current_speaker_id] = self._trim_history(histories[current_speaker_id])
 
             reply = await self.chatbot.chat(histories[current_speaker_id])
@@ -74,8 +93,8 @@ class TranscriptGenerator:
                 DialogueEntry(
                     speaker=str(speaker_number),
                     text=reply,
-                    start_time=0.0,  # Placeholder for audio generation
-                    end_time=0.0,  # Placeholder for audio generation
+                    start_time=0.0,
+                    end_time=0.0,
                 )
             )
 
@@ -84,8 +103,11 @@ class TranscriptGenerator:
 
             last_message = reply
 
-            if word_count < self.generation_config.max_words:
-                current_speaker_id = await facilitator.decide_next_speaker()
+            if word_count < hard_termination_threshold:
+                current_speaker_id, should_terminate = await facilitator.decide_next_speaker()
+                if should_terminate:
+                    logger.info("Meeting terminated by facilitator (participants ready to wrap up)")
+                    break
 
         logger.info("Generated transcript with %d entries and %d words", len(transcript), word_count)
         return transcript

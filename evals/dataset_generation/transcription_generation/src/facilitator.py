@@ -24,20 +24,20 @@ class Facilitator:
 
     def _create_facilitator_prompt(self) -> str:
         template = self.env.get_template(self.prompt_config.facilitator_template)
-        roles = list(zip(self.speaker_ids, self.actor_definitions))
+        roles = list(zip(self.speaker_ids, self.actor_definitions, strict=False))
         return template.render(roles=roles, conversation_history=self.conversation_history)
 
-    async def decide_next_speaker(self) -> str:
+    async def decide_next_speaker(self) -> tuple[str, bool]:
         prompt = self._create_facilitator_prompt()
-        
+
         response = await self.chatbot.structured_chat(
-            [{"role": "system", "content": prompt}],
-            response_format=FacilitatorDecision
+            [{"role": "system", "content": prompt}], response_format=FacilitatorDecision
         )
-        
+
         next_speaker = response.next_speaker_id
-        logger.info("Facilitator selected next speaker: %s", next_speaker)
-        return next_speaker
+        should_terminate = response.should_terminate
+        logger.info("Facilitator selected next speaker: %s, should_terminate: %s", next_speaker, should_terminate)
+        return next_speaker, should_terminate
 
     def add_to_history(self, speaker_id: str, text: str) -> None:
         self.conversation_history.append((speaker_id, text))

@@ -7,3 +7,6 @@ class ActorDefinition(BaseModel):
 
 class FacilitatorDecision(BaseModel):
     next_speaker_id: str = Field(description="ID of the speaker who should speak next")
+    should_terminate: bool = Field(
+        default=False, description="Whether the meeting should be terminated because participants are done"
+    )

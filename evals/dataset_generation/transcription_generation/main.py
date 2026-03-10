@@ -36,7 +36,7 @@ async def generate_transcript_from_config(config: TranscriptGenerationConfig) ->
         json.dump(
             {
                 "theme": config.theme,
-                "max_words": config.max_words,
+                "word_target": config.word_target,
                 "num_speakers": config.num_speakers,
                 "actor_definitions": actor_definitions,
                 "dialogue_entries": [dict(entry) for entry in transcript],

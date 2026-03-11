@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class ActorGenerator:
     def __init__(self, chatbot: ChatBot | None = None) -> None:
-        self.chatbot = chatbot or create_default_chatbot(FastOrBestLLM.FAST)
+        self.chatbot = chatbot or create_default_chatbot(FastOrBestLLM.BEST)
 
     async def generate_actor_definitions(self, theme: str, num_speakers: int) -> list[str]:
         template = get_template(ACTOR_GENERATOR_TEMPLATE)

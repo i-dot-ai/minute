@@ -16,7 +16,7 @@ class Facilitator:
     ) -> None:
         self.actor_definitions = actor_definitions
         self.speaker_ids = speaker_ids
-        self.chatbot = chatbot or create_default_chatbot(FastOrBestLLM.FAST)
+        self.chatbot = chatbot or create_default_chatbot(FastOrBestLLM.BEST)
         self.conversation_history: list[tuple[str, str]] = []
 
     def _create_facilitator_prompt(self) -> str:

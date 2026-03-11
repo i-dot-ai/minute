@@ -2,7 +2,7 @@ import logging
 import math
 
 from common.database.postgres_models import DialogueEntry
-from common.llm.client import ChatBot, FastOrBestLLM, create_default_chatbot
+from common.llm.client import FastOrBestLLM, create_default_chatbot
 from evals.dataset_generation.transcription_generation.src.config import TranscriptGenerationConfig
 from evals.dataset_generation.transcription_generation.src.constants import (
     TIME_REMAINING_TEMPLATE,
@@ -19,10 +19,8 @@ SOFT_CLOSE_THRESHOLD = 10
 class TranscriptGenerator:
     def __init__(
         self,
-        chatbot: ChatBot | None = None,
         generation_config: TranscriptGenerationConfig | None = None,
     ) -> None:
-        self.chatbot = chatbot or create_default_chatbot(FastOrBestLLM.FAST)
         self.generation_config = generation_config or TranscriptGenerationConfig(theme="Default conversation theme")
 
     def _create_time_remaining_message(self, current_word_count: int) -> str:
@@ -49,7 +47,13 @@ class TranscriptGenerator:
             actor = Actor(speaker_id, history_manager, actor_def)
             actors[speaker_id] = actor
 
-        facilitator = Facilitator(actor_definitions=actor_definitions, speaker_ids=speaker_ids)
+        facilitator = Facilitator(
+            history_manager=history_manager,
+            actor_definitions=actor_definitions,
+            speaker_ids=speaker_ids,
+            identifier="facilitator",
+            chatbot=create_default_chatbot(FastOrBestLLM.BEST),
+        )
 
         transcript: list[DialogueEntry] = []
         word_count = 0
@@ -87,6 +91,7 @@ class TranscriptGenerator:
             )
 
             facilitator.add_to_history(current_speaker_id, reply)
+            # facilitator.history_manager.add_to_history(current_speaker_id, reply)
 
             last_message = reply
 

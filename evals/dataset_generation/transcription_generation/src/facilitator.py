@@ -1,22 +1,25 @@
 import logging
 
-from common.llm.client import ChatBot, FastOrBestLLM, create_default_chatbot
+from common.llm.client import ChatBot
 from evals.dataset_generation.transcription_generation.src.constants import FACILITATOR_TEMPLATE, get_template
 from evals.dataset_generation.transcription_generation.src.models import FacilitatorDecision
+from evals.dataset_generation.transcription_generation.src.participant import Participant
 
 logger = logging.getLogger(__name__)
 
 
-class Facilitator:
+class Facilitator(Participant):
     def __init__(
         self,
+        history_manager,
         actor_definitions: list[str],
         speaker_ids: list[str],
+        identifier: str = "facilitator",
         chatbot: ChatBot | None = None,
     ) -> None:
+        super().__init__(identifier, history_manager, chatbot)
         self.actor_definitions = actor_definitions
         self.speaker_ids = speaker_ids
-        self.chatbot = chatbot or create_default_chatbot(FastOrBestLLM.BEST)
         self.conversation_history: list[tuple[str, str]] = []
 
     def _create_facilitator_prompt(self) -> str:

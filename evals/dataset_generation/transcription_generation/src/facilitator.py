@@ -20,16 +20,15 @@ class Facilitator(Participant):
         super().__init__(identifier, history_manager, chatbot)
         self.actor_definitions = actor_definitions
         self.speaker_ids = speaker_ids
-        self.conversation_history: list[tuple[str, str]] = []
 
     def _create_facilitator_prompt(self) -> str:
         template = get_template(FACILITATOR_TEMPLATE)
         roles = list(zip(self.speaker_ids, self.actor_definitions, strict=False))
-        speakers_who_spoke = {speaker_id for speaker_id, _ in self.conversation_history}
+        speakers_who_spoke = {speaker_id for speaker_id, _ in self.history_manager.history}
         speakers_who_havent_spoken = [sid for sid in self.speaker_ids if sid not in speakers_who_spoke]
         return template.render(
             roles=roles,
-            conversation_history=self.conversation_history,
+            conversation_history=self.history_manager.history,
             speakers_who_havent_spoken=speakers_who_havent_spoken,
         )
 
@@ -44,6 +43,3 @@ class Facilitator(Participant):
         should_terminate = response.should_terminate
         logger.info("Facilitator selected next speaker: %s, should_terminate: %s", next_speaker, should_terminate)
         return next_speaker, should_terminate
-
-    def add_to_history(self, speaker_id: str, text: str) -> None:
-        self.conversation_history.append((speaker_id, text))

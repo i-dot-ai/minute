@@ -48,7 +48,7 @@ class TranscriptGenerator:
             actors[speaker_id] = actor
 
         facilitator = Facilitator(
-            history_manager=history_manager,
+            history_manager=HistoryManager(),
             actor_definitions=actor_definitions,
             speaker_ids=speaker_ids,
             identifier="facilitator",
@@ -90,8 +90,7 @@ class TranscriptGenerator:
                 )
             )
 
-            facilitator.add_to_history(current_speaker_id, reply)
-            # facilitator.history_manager.add_to_history(current_speaker_id, reply)
+            facilitator.history_manager.add_to_history(reply, current_speaker_id)
 
             last_message = reply
 

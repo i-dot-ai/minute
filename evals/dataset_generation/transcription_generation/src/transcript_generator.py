@@ -1,5 +1,6 @@
 import logging
 import math
+from enum import Enum
 
 from common.database.postgres_models import DialogueEntry
 from common.llm.client import FastOrBestLLM, create_default_chatbot
@@ -16,6 +17,12 @@ HARD_CLOSE_THRESHOLD = 2
 SOFT_CLOSE_THRESHOLD = 10
 
 
+class NoticeType(Enum):
+    NONE = "none"
+    SOFT = "soft"
+    HARD = "hard"
+
+
 class TranscriptGenerator:
     def __init__(
         self,
@@ -23,15 +30,30 @@ class TranscriptGenerator:
     ) -> None:
         self.generation_config = generation_config or TranscriptGenerationConfig(theme="Default conversation theme")
 
-    def _create_time_remaining_message(self, current_word_count: int) -> str:
-        template = get_template(TIME_REMAINING_TEMPLATE)
+    def _classify_notice_type(self, current_word_count: int) -> NoticeType:
         words_remaining = max(0, self.generation_config.word_target - current_word_count)
-        minutes_remaining_perc = math.ceil(words_remaining / self.generation_config.word_target * 100)  # rename
-        hard_close = minutes_remaining_perc < HARD_CLOSE_THRESHOLD  # need to make configurable
-        soft_close = minutes_remaining_perc < SOFT_CLOSE_THRESHOLD
+        remaining_perc = math.ceil((words_remaining * 100) / self.generation_config.word_target)
+        
+        if remaining_perc < HARD_CLOSE_THRESHOLD:
+            return NoticeType.HARD
+        if remaining_perc < SOFT_CLOSE_THRESHOLD:
+            return NoticeType.SOFT
+        return NoticeType.NONE
+    
+    def _get_notice_prompt(self, notice_type: NoticeType) -> str:
+        if notice_type == NoticeType.NONE:
+            return None
+        
+        template = get_template(TIME_REMAINING_TEMPLATE)
         return template.render(
-            minutes_remaining_perc=minutes_remaining_perc, hard_close=hard_close, soft_close=soft_close
+            use_hard_ending_notice=(notice_type == NoticeType.HARD),
+            use_soft_ending_notice=(notice_type == NoticeType.SOFT)
         )
+    
+    def _create_time_remaining_message(self, current_word_count: int) -> str | None:
+        notice_type = self._classify_notice_type(current_word_count)
+        return self._get_notice_prompt(notice_type)
+
 
     async def generate_transcript(self, actor_definitions: list[str]) -> list[DialogueEntry]:
         if len(actor_definitions) != self.generation_config.num_speakers:
@@ -57,7 +79,6 @@ class TranscriptGenerator:
 
         transcript: list[DialogueEntry] = []
         word_count = 0
-        last_message = ""
 
         current_speaker_id = speaker_ids[0]
         hard_termination_threshold = int(
@@ -72,11 +93,9 @@ class TranscriptGenerator:
                 hard_termination_threshold,
             )
 
-            time_remaining_msg = self._create_time_remaining_message(word_count)
-            notice_message = f"{time_remaining_msg}\n\n{last_message}" if last_message else time_remaining_msg
-
             current_actor = actors[current_speaker_id]
-
+            
+            notice_message = self._create_time_remaining_message(word_count)
             reply = await current_actor.reply_to_last_message(notice_message)
             word_count += len(reply.split())
 
@@ -91,8 +110,6 @@ class TranscriptGenerator:
             )
 
             facilitator.history_manager.add_to_history(reply, current_speaker_id)
-
-            last_message = reply
 
             if word_count < hard_termination_threshold:
                 current_speaker_id, should_terminate = await facilitator.decide_next_speaker()

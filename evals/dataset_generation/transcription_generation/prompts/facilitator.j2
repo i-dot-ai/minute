@@ -8,7 +8,7 @@ Speaker {{ speaker_id }}: {{ definition }}
 
 Conversation so far:
 {% for speaker_id, text in conversation_history %}
-Speaker {{ speaker_id }}: {{ text }}
+Speaker {{ speaker_id }}: {% if text %}{{ text }}{% else %}[No message]{% endif %}
 {% endfor %}
 {% endif %}
 
@@ -30,6 +30,8 @@ Participation:
 - Consider the dynamics of the conversation and the roles of each speaker when deciding who should speak next.
 - Ensure all speakers have the opportunity to contribute, especially if they have not spoken much but within the context of the conversation, it would make sense for them to speak.
 - It is important that all voices are heard, but also that the conversation remains coherent and focused on the topic at hand.
+- Avoid picking the same speaker consecutively if possible.
+- If a speaker is hesitant to speak, pick someone else, and come back to this speaker later. 
 {% if speakers_who_havent_spoken %}
 
 CRITICAL: The following speakers have NOT yet participated in the conversation:

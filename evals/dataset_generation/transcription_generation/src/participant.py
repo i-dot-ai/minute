@@ -24,9 +24,9 @@ class HistoryManager:
         prepared_history = []
         for entry in self.history:
             if entry.speaker_id == speaker_id:
-                prepared_history.append({"role": "assistant", "content": entry.content})
+                prepared_history.append({"role": "assistant", "content": f"You said: {entry.content}"})
             else:
-                prepared_history.append({"role": "user", "content": entry.content})
+                prepared_history.append({"role": "user", "content": f"{entry.speaker_id} said: {entry.content}"})
         return prepared_history
 
 
@@ -41,14 +41,23 @@ class Participant:
     def system_message_content(self) -> str:
         pass
 
-    def full_history(self, notice_message: str):
-        system_message = {
-            "role": "system",
-            "content": self.system_message_content,
-        }
-        messages_history = self.history_manager.get_history_for_participant(self.identifier)
-        return [system_message, *messages_history, {"role": "user", "content": notice_message}]
+    def get_new_messages(self, notice_message: str | None = None) -> list[dict]:
+        full_history = []
 
+        full_history.append(
+            {
+                "role": "system",
+                "content": self.system_message_content,
+            }
+        )
+        full_history.extend(self.history_manager.get_history_for_participant(self.identifier))
+        if notice_message:
+            full_history.append({"role": "user", "content": notice_message})
+
+        # remove messages that were already stored by the chatbot
+        cropped_history = full_history[len(self.chatbot.messages) :]
+
+        return cropped_history
 
 class Actor(Participant):
     def __init__(
@@ -62,8 +71,8 @@ class Actor(Participant):
         template = get_template(ACTOR_SYSTEM_TEMPLATE)
         return template.render(role_definition=self.actor_definition)
 
-    async def reply_to_last_message(self, notice_message: str) -> str:
-        messages = self.full_history(notice_message)
+    async def reply_to_last_message(self, notice_message: str | None = None) -> str:
+        messages = self.get_new_messages(notice_message)
         response = await self.chatbot.chat(messages)
         self.history_manager.add_to_history(response, self.identifier)
         return response

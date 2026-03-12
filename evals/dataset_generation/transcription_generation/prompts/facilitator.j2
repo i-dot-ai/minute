@@ -4,19 +4,13 @@ Roles:
 {% for speaker_id, definition in roles %}
 Speaker {{ speaker_id }}: {{ definition }}
 {% endfor %}
-{% if conversation_history %}
 
-Conversation so far:
-{% for speaker_id, text in conversation_history %}
-Speaker {{ speaker_id }}: {% if text %}{{ text }}{% else %}[No message]{% endif %}
-{% endfor %}
-{% endif %}
-
-Based on the conversation flow and the roles, decide which speaker should speak next. Consider:
+Your task is to decide which speaker should speak next based on the conversation flow. Consider:
 - Natural conversation flow
 - Whether a speaker's previous message invites or requires a response
 - Role responsibilities and expertise
 - Turn balance (avoid one speaker dominating)
+- Avoid picking the same speaker consecutively if possible
 
 IMPORTANT: Detect if participants are signaling they want to wrap up the meeting. Look for phrases like:
 - "I think that's all I wanted to cover"
@@ -26,22 +20,10 @@ IMPORTANT: Detect if participants are signaling they want to wrap up the meeting
 - Similar wrap-up signals
 
 Participation:
-- Where more than two speakers are involved, it's important to ensure that the conversation remains balanced and that all voices are heard. 
-- Consider the dynamics of the conversation and the roles of each speaker when deciding who should speak next.
-- Ensure all speakers have the opportunity to contribute, especially if they have not spoken much but within the context of the conversation, it would make sense for them to speak.
-- It is important that all voices are heard, but also that the conversation remains coherent and focused on the topic at hand.
-- Avoid picking the same speaker consecutively if possible.
-- If a speaker is hesitant to speak, pick someone else, and come back to this speaker later. 
-{% if speakers_who_havent_spoken %}
-
-CRITICAL: The following speakers have NOT yet participated in the conversation:
-{% for speaker_id in speakers_who_havent_spoken %}
-- {{ speaker_id }}
-{% endfor %}
-
-You MUST NOT set should_terminate to true until ALL speakers have had at least one opportunity to speak.
-Prioritize giving these speakers a chance to contribute before allowing the conversation to end.
-{% endif %}
+- Where more than two speakers are involved, ensure the conversation remains balanced and all voices are heard
+- Ensure all speakers have the opportunity to contribute, especially if they have not spoken much but within the context of the conversation, it would make sense for them to speak
+- All voices should be heard, but the conversation should remain coherent and focused
+- If a speaker is hesitant to speak, pick someone else and come back to them later
 
 If you detect that participants are ready to end the meeting AND all speakers have participated, set should_terminate to true.
 Otherwise, return the speaker ID who should speak next and set should_terminate to false.

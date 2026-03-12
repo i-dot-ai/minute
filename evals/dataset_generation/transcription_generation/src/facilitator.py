@@ -1,4 +1,5 @@
 import logging
+from functools import cached_property
 
 from common.llm.client import ChatBot
 from evals.dataset_generation.transcription_generation.src.constants import FACILITATOR_TEMPLATE, get_template
@@ -21,23 +22,42 @@ class Facilitator(Participant):
         self.actor_definitions = actor_definitions
         self.speaker_ids = speaker_ids
 
-    def _create_facilitator_prompt(self) -> str:
+    @cached_property
+    def _static_system_prompt(self) -> str:
         template = get_template(FACILITATOR_TEMPLATE)
         roles = list(zip(self.speaker_ids, self.actor_definitions, strict=False))
-        speakers_who_spoke = {speaker_id for speaker_id, _ in self.history_manager.history}
-        speakers_who_havent_spoken = [sid for sid in self.speaker_ids if sid not in speakers_who_spoke]
         return template.render(
             roles=roles,
-            conversation_history=self.history_manager.history,
-            speakers_who_havent_spoken=speakers_who_havent_spoken,
+            conversation_history=None,
+            speakers_who_havent_spoken=None,
         )
+
+    def _build_facilitator_messages(self) -> list[dict]:
+        messages = [{"role": "system", "content": self._static_system_prompt}]
+
+        for entry in self.history_manager.history:
+            messages.append({"role": "user", "content": f"Speaker {entry.speaker_id} said: {entry.content}"})
+
+        speakers_who_spoke = {speaker_id for speaker_id, _ in self.history_manager.history}
+        speakers_who_havent_spoken = [sid for sid in self.speaker_ids if sid not in speakers_who_spoke]
+
+        if speakers_who_havent_spoken:
+            reminder = (
+                "CRITICAL: The following speakers have NOT yet participated: "
+                + ", ".join(speakers_who_havent_spoken)
+                + ". You MUST NOT set should_terminate to true until ALL speakers have spoken."
+            )
+            messages.append({"role": "user", "content": reminder})
+
+        messages.append(
+            {"role": "user", "content": "Based on the conversation above, decide which speaker should speak next."}
+        )
+
+        return messages
 
     async def decide_next_speaker(self) -> tuple[str, bool]:
-        prompt = self._create_facilitator_prompt()
-
-        response = await self.chatbot.structured_chat(
-            [{"role": "system", "content": prompt}], response_format=FacilitatorDecision
-        )
+        messages = self._build_facilitator_messages()
+        response = await self.chatbot.structured_chat(messages, response_format=FacilitatorDecision)
 
         next_speaker = response.next_speaker_id
         should_terminate = response.should_terminate

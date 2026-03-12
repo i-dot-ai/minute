@@ -1,0 +1,10 @@
+run:
+  output_dir: "evals/characteristics/output"
+model:
+  provider: "azure_apim"
+  model: "gpt-4o"
+  temperature: 0.0
+prompts:
+  extraction_template: "evals/characteristics/prompts/characteristic_extraction.jinja2"
+dataset:
+  input_dir: "evals/characteristics/input"

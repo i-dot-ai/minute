@@ -24,3 +24,5 @@ runs/
 # Editor
 .vscode/
 .idea/
+input/
+output/

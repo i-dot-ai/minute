@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import logging
 from typing import cast
 
-from openai import AsyncAzureOpenAI
+from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 from openai.types.chat.chat_completion import Choice
 
 from .base import ModelAdapter
+from .llm_constants import MAX_TOKENS, TEMPERATURE
 
 logger = logging.getLogger(__name__)
 
@@ -14,27 +17,27 @@ class AzureAPIMModelAdapter(ModelAdapter):
     def __init__(
         self,
         url: str,
-        deployment: str,
+        model: str,
         api_version: str,
         access_token: str,
         subscription_key: str,
     ) -> None:
-        self._deployment = deployment
-        self.async_apim_client = AsyncAzureOpenAI(
-            base_url=url,
-            api_key="",  # Dummy key unused by APIM,
-            api_version=api_version,
+        self._model = model
+        self._api_version = api_version
+        self.async_apim_client = AsyncOpenAI(
+            base_url=url + self._model,  # APIM URL expects model here
+            api_key=access_token,
             default_headers={
-                "Authorization": f"Bearer {access_token}",
                 "Ocp-Apim-Subscription-Key": subscription_key,
             },
         )
 
     async def structured_chat[T](self, messages: list[dict[str, str]], response_format: type[T]) -> T:
         response = await self.async_apim_client.beta.chat.completions.parse(
-            model=self._deployment,
+            model=self._model,
             messages=cast(list[ChatCompletionMessageParam], messages),
             response_format=response_format,
+            extra_query={"api-version": self._api_version},
         )
 
         parsed = response.choices[0].message.parsed
@@ -45,10 +48,11 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
     async def chat(self, messages: list[dict[str, str]]) -> str:
         response = await self.async_apim_client.chat.completions.create(
-            model=self._deployment,
+            model=self._model,
             messages=cast(list[ChatCompletionMessageParam], messages),
-            temperature=0.0,
-            max_tokens=16384,
+            temperature=TEMPERATURE,
+            max_tokens=MAX_TOKENS,
+            extra_query={"api-version": self._api_version},
         )
 
         choice = response.choices[0]

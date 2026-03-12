@@ -1,92 +1,148 @@
-import json
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from pathlib import Path
 from threading import Lock
 
-import numpy
 from tqdm import tqdm
 
-from evals.transcription.src.adapters.base import AdapterConfig
-from evals.transcription.src.core.metrics import compute_wer_metrics, normalise_text
+from common.database.postgres_models import DialogueEntry
+from evals.transcription.src.adapters.base import EvalsTranscriptionAdapter
+from evals.transcription.src.core.metrics import (
+    compute_speaker_count_metrics,
+    compute_wder,
+    compute_wer_metrics,
+    normalise_text,
+)
+from evals.transcription.src.core.results import create_summary
+from evals.transcription.src.core.segments import (
+    convert_to_diarization_format,
+)
 from evals.transcription.src.models import (
+    DatasetItem,
     DatasetProtocol,
-    DiffOps,
+    DiarizationSegment,
     DurationFn,
     EngineOutput,
     EngineResults,
+    SampleMetrics,
     SampleRow,
-    Summary,
     TimingAccumulator,
+    TranscriptionResult,
     WavWriteFn,
 )
 
 logger = logging.getLogger(__name__)
 
 
+def _extract_segments(result: TranscriptionResult, example: DatasetItem) -> tuple[list[DialogueEntry], list[dict]]:
+    dialogue_entries = result.dialogue_entries if hasattr(result, "dialogue_entries") else []
+    reference_diarization = example.reference_diarization if hasattr(example, "reference_diarization") else []
+    return dialogue_entries, reference_diarization
+
+
+def _compute_all_metrics(
+    ref_raw: str,
+    hyp_raw: str,
+    ref_diarization: list[DiarizationSegment],
+    hyp_diarization: list[DiarizationSegment],
+    processing_speed_ratio: float,
+) -> SampleMetrics:
+    reference_normalized = normalise_text(ref_raw)
+    hypothesis_normalized = normalise_text(hyp_raw)
+    wer_metrics = compute_wer_metrics([reference_normalized], [hypothesis_normalized])
+
+    wder_metrics = compute_wder(ref_diarization, hyp_diarization)
+    speaker_metrics = compute_speaker_count_metrics(ref_diarization, hyp_diarization)
+
+    return wer_metrics.model_copy(
+        update={
+            "wder": wder_metrics["wder"],
+            "speaker_errors": wder_metrics["speaker_errors"],
+            "total_words": wder_metrics["total_words"],
+            "speaker_count_accuracy": speaker_metrics["speaker_count_accuracy"],
+            "ref_speaker_count": int(speaker_metrics["ref_speaker_count"]),
+            "hyp_speaker_count": int(speaker_metrics["hyp_speaker_count"]),
+            "processing_speed_ratio": processing_speed_ratio,
+        }
+    )
+
+
+def _validate_and_convert_diarization(
+    reference_diarization: list,
+    dialogue_entries: list,
+) -> tuple[list[DiarizationSegment], list[DiarizationSegment]]:
+    if not reference_diarization or not dialogue_entries:
+        msg = "Diarization data is required but missing"
+        raise ValueError(msg)
+
+    ref_diar_dicts = convert_to_diarization_format(reference_diarization)
+    hyp_diar_dicts = convert_to_diarization_format(dialogue_entries)
+
+    return ref_diar_dicts, hyp_diar_dicts
+
+
 def run_engines_parallel(
-    adapters_config: list[AdapterConfig],
+    adapters: list[EvalsTranscriptionAdapter],
     indices: list[int],
     *,
     dataset: DatasetProtocol,
     wav_write_fn: WavWriteFn,
     duration_fn: DurationFn,
+    run_id: str,
+    timestamp: str,
+    dataset_version: str,
+    dataset_split: str | None,
     max_workers: int | None = None,
 ) -> list[EngineOutput]:
     """
     Runs multiple transcription adapters in parallel on dataset samples and computes WER metrics.
     """
-    total_tasks = len(indices) * len(adapters_config)
+    total_tasks = len(indices) * len(adapters)
     progress_bar = tqdm(total=total_tasks, desc="Processing all engines", unit="task")
     progress_bar_lock = Lock()
 
     results: dict[str, EngineResults] = {}
 
     def process_sample(
-        adapter_config: AdapterConfig,
+        adapter: EvalsTranscriptionAdapter,
         index: int,
     ) -> tuple[str, int, SampleRow, float, float]:
         """
         Transcribes a single sample and computes WER metrics.
         """
-        adapter = adapter_config["adapter"]
         label = adapter.name
 
-        example = dataset[int(index)]
-        wav_path = wav_write_fn(example, int(index))
+        example = dataset[index]
+        wav_path = wav_write_fn(example, index)
         ref_raw = example.text
         audio_seconds = float(duration_fn(wav_path))
 
         result = adapter.transcribe(wav_path)
         hyp_raw = result.text
         process_seconds = float(result.duration_sec)
-        debug_info = result.debug_info
 
-        reference_normalized = normalise_text(ref_raw)
-        hypothesis_normalized = normalise_text(hyp_raw)
-        per_metrics = compute_wer_metrics([reference_normalized], [hypothesis_normalized])
-        per_sample_wer = per_metrics.wer * 100.0
-        diff_operations = DiffOps(
-            equal=per_metrics.hits,
-            replace=per_metrics.substitutions,
-            delete=per_metrics.deletions,
-            insert=per_metrics.insertions,
+        dialogue_entries, reference_diarization = _extract_segments(result, example)
+        ref_diar_dicts, hyp_diar_dicts = _validate_and_convert_diarization(reference_diarization, dialogue_entries)
+        processing_speed_ratio = process_seconds / audio_seconds if audio_seconds > 0 else float("nan")
+        metrics = _compute_all_metrics(
+            ref_raw,
+            hyp_raw,
+            ref_diar_dicts,
+            hyp_diar_dicts,
+            processing_speed_ratio,
         )
 
         row = SampleRow(
-            engine=label,
-            dataset_index=int(index),
-            wav_path=wav_path,
-            audio_sec=audio_seconds,
-            process_sec=process_seconds,
-            processing_speed_ratio=(process_seconds / audio_seconds) if audio_seconds else None,
-            wer_pct=float(per_sample_wer),
-            diff_ops=diff_operations,
-            ref_raw=ref_raw,
-            hyp_raw=hyp_raw,
-            ref_norm=reference_normalized,
-            hyp_norm=hypothesis_normalized,
-            engine_debug=debug_info,
+            run_id=run_id,
+            timestamp=timestamp,
+            example_id=str(index),
+            engine_version=label,
+            reference_transcript=ref_raw,
+            reference_dialogue_entries=ref_diar_dicts if ref_diar_dicts else None,
+            hypothesis_transcript=hyp_raw,
+            hypothesis_dialogue_entries=hyp_diar_dicts if hyp_diar_dicts else None,
+            latency_ms=process_seconds * 1000,
+            metrics=metrics.model_dump(exclude_none=True),
+            error=None,
         )
 
         with progress_bar_lock:
@@ -95,15 +151,15 @@ def run_engines_parallel(
 
         return label, index, row, audio_seconds, process_seconds
 
-    for adapter_config in adapters_config:
-        results[adapter_config["adapter"].name] = EngineResults(rows=[], timing=TimingAccumulator())
+    for adapter in adapters:
+        results[adapter.name] = EngineResults(rows=[], timing=TimingAccumulator())
 
-    workers = max_workers if max_workers is not None else len(adapters_config)
+    workers = max_workers if max_workers is not None else len(adapters)
     with ThreadPoolExecutor(max_workers=workers) as executor:
         futures = []
-        for adapter_config in adapters_config:
+        for adapter in adapters:
             for index in indices:
-                future = executor.submit(process_sample, adapter_config, index)
+                future = executor.submit(process_sample, adapter, index)
                 futures.append(future)
 
         for future in as_completed(futures):
@@ -113,50 +169,18 @@ def run_engines_parallel(
 
     progress_bar.close()
 
-    output_results: list[EngineOutput] = []
-    for adapter_config in adapters_config:
-        label = adapter_config["adapter"].name
-        rows = sorted(results[label].rows, key=lambda row: row.dataset_index)
-        timing = results[label].timing
-
-        overall_metrics = compute_wer_metrics(
-            [row.ref_raw for row in rows],
-            [row.hyp_raw for row in rows],
+    return [
+        EngineOutput(
+            summary=create_summary(
+                adapter.name,
+                sorted(results[adapter.name].rows, key=lambda row: int(row.example_id)),
+                results[adapter.name].timing,
+                run_id,
+                timestamp,
+                dataset_version,
+                dataset_split,
+            ),
+            samples=sorted(results[adapter.name].rows, key=lambda row: int(row.example_id)),
         )
-        overall_wer = overall_metrics.wer * 100.0
-        per_sample_wers = [row.wer_pct for row in rows]
-
-        summary = Summary(
-            engine=label,
-            num_samples=len(indices),
-            overall_wer_pct=float(overall_wer),
-            processing_speed_ratio=float(timing.processing_speed_ratio),
-            process_sec=float(timing.process_sec),
-            audio_sec=float(timing.audio_sec),
-            per_sample_wer_min=float(numpy.min(per_sample_wers)),
-            per_sample_wer_max=float(numpy.max(per_sample_wers)),
-            per_sample_wer_mean=float(numpy.mean(per_sample_wers)),
-        )
-
-        output_results.append(EngineOutput(summary=summary, samples=rows))
-
-    return output_results
-
-
-def save_results(results: list[EngineOutput], output_path: Path) -> None:
-    """
-    Saves evaluation results to JSON file with summaries and per-sample details.
-    """
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    combined = {
-        "summaries": [result.summary.model_dump() for result in results],
-        "engines": {
-            result.summary.engine: [s.model_dump() for s in result.samples] for result in results
-        },
-    }
-
-    with output_path.open("w", encoding="utf-8") as file_handle:
-        json.dump(combined, file_handle, indent=2, ensure_ascii=False)
-
-    logger.info("Results saved to %s", output_path)
+        for adapter in adapters
+    ]

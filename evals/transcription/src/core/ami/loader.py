@@ -1,12 +1,12 @@
+import json
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import DefaultDict, List
 
-from common.constants import TARGET_SAMPLE_RATE
 from datasets import load_dataset
 from numpy import ndarray
 
+from common.constants import TARGET_SAMPLE_RATE
 from evals.transcription.src.core.ami import audio, cache
 from evals.transcription.src.core.ami.constants import AMI_DATASET_NAME
 from evals.transcription.src.core.ami.metadata import load_or_build_metadata
@@ -23,24 +23,21 @@ logger = logging.getLogger(__name__)
 
 def _load_utterances_for_meetings(
     required_meetings: set, split: str, config: str
-) -> DefaultDict[str, List[RawDatasetRow]]:
+) -> defaultdict[str, list[RawDatasetRow]]:
     """
     Loads specified meetings from the AMI dataset using Hugging Face's datasets library.
     Returns a dictionary mapping meeting IDs to lists of utterances.
     """
     dataset = load_dataset(AMI_DATASET_NAME, config, split=split)
-    utterances_by_meeting: DefaultDict[str, List[RawDatasetRow]] = defaultdict(list)
+    utterances_by_meeting: defaultdict[str, list[RawDatasetRow]] = defaultdict(list)
     for row in dataset:
-        r = row
-        meeting_id = r["meeting_id"]
+        meeting_id = row["meeting_id"]
         if meeting_id in required_meetings:
-            utterances_by_meeting[meeting_id].append(r)
+            utterances_by_meeting[meeting_id].append(RawDatasetRow(**row))
     return utterances_by_meeting
 
 
-def _apply_cutoff(
-    utterances: List[RawDatasetRow], cutoff_time: float | None
-) -> List[RawDatasetRow]:
+def _apply_cutoff(utterances: list[RawDatasetRow], cutoff_time: float | None) -> list[RawDatasetRow]:
     """
     Applies a cutoff time to the list of utterances, keeping only those that fit within the cutoff.
     """
@@ -48,7 +45,7 @@ def _apply_cutoff(
         return utterances
 
     utterances_sorted = sorted(utterances, key=lambda x: x.begin_time)
-    result: List[RawDatasetRow] = []
+    result: list[RawDatasetRow] = []
     accumulated = 0.0
 
     for utterance in utterances_sorted:
@@ -69,6 +66,7 @@ def _build_sample(
     index: int,
     wav_path: Path,
     num_utterances: int,
+    reference_diarization: list[dict],
 ) -> AMIDatasetSample:
     """
     Builds a dataset sample dictionary containing the mixed audio, transcript text, and metadata.
@@ -84,6 +82,7 @@ def _build_sample(
         dataset_index=index,
         duration_sec=audio.compute_duration(mixed_audio),
         num_utterances=num_utterances,
+        reference_diarization=reference_diarization,
     )
 
 
@@ -140,9 +139,7 @@ class AMIDatasetLoader(DatasetProtocol):
         logger.info("Dataset preparation complete: %d samples ready", self.num_of_samples)
         return self.samples
 
-    def _load_required_utterances(
-        self, segments: List[MeetingSegment]
-    ) -> DefaultDict[str, List[RawDatasetRow]]:
+    def _load_required_utterances(self, segments: list[MeetingSegment]) -> defaultdict[str, list[RawDatasetRow]]:
         """
         Checks if all required segments are already cached. If so, returns an empty dict.
         Otherwise, loads the necessary utterances for the required meetings and returns them
@@ -165,18 +162,18 @@ class AMIDatasetLoader(DatasetProtocol):
         self,
         segment: MeetingSegment,
         index: int,
-        utterances_by_meeting: DefaultDict[str, List[RawDatasetRow]],
+        utterances_by_meeting: defaultdict[str, list[RawDatasetRow]],
     ) -> AMIDatasetSample | None:
         """
         Processes a single meeting segment by either loading from cache or building from utterances.
         Returns the dataset sample for the segment, or None if processing fails.
         """
         paths = cache.get_cache_paths(self.processed_cache_dir, segment, index)
+        utterances = utterances_by_meeting.get(segment.meeting_id, [])
 
         if paths.is_complete():
-            return self._load_from_cache(paths, segment, index)
+            return self._load_from_cache(utterances, paths, segment, index)
 
-        utterances = utterances_by_meeting.get(segment.meeting_id, [])
         if not utterances:
             logger.warning("No utterances for meeting %s, skipping", segment.meeting_id)
             return None
@@ -185,6 +182,7 @@ class AMIDatasetLoader(DatasetProtocol):
 
     def _load_from_cache(
         self,
+        utterances: list[RawDatasetRow],
         paths: cache.CachePaths,
         segment: MeetingSegment,
         index: int,
@@ -194,20 +192,33 @@ class AMIDatasetLoader(DatasetProtocol):
         """
         mixed_audio = cache.load_audio(paths.audio)
         text = cache.load_transcript(paths.transcript)
+
+        diarization_path = paths.audio.parent / f"{paths.audio.stem}_ref_diarization.json"
+        if not diarization_path.exists():
+            msg = (
+                f"Cache entry exists at {paths.audio} but diarization file not found at "
+                f"{diarization_path}. Cache entry exists but diarization transcript is missing."
+            )
+            raise FileNotFoundError(msg)
+
+        with diarization_path.open("r") as f:
+            reference_diarization = json.load(f)
+
         word_count = len(text.split())
-        sample = _build_sample(mixed_audio, text, segment, index, paths.audio, word_count)
+        sample = _build_sample(mixed_audio, text, segment, index, paths.audio, len(utterances), reference_diarization)
 
         logger.info(
-            "Cache hit: %s (%.2f sec, %d words)",
+            "Cache hit: %s (%.2f sec, %d words, %d speakers)",
             segment.meeting_id,
             sample.duration_sec,
             word_count,
+            len({d["speaker"] for d in reference_diarization}) if reference_diarization else 0,
         )
         return sample
 
     def _build_from_utterances(
         self,
-        utterances: List[RawDatasetRow],
+        utterances: list[RawDatasetRow],
         paths: cache.CachePaths,
         segment: MeetingSegment,
         index: int,
@@ -219,18 +230,32 @@ class AMIDatasetLoader(DatasetProtocol):
         utterances = _apply_cutoff(utterances, segment.utterance_cutoff_time)
         mixed_audio, text = audio.mix_utterances(utterances)
 
+        reference_diarization: list[dict] = [
+            {
+                "speaker": utt.speaker_id,
+                "start_time": utt.begin_time,
+                "end_time": utt.end_time,
+                "text": utt.text,
+            }
+            for utt in utterances
+        ]
+
         cache.save_audio(paths.audio, mixed_audio, TARGET_SAMPLE_RATE)
         cache.save_transcript(paths.transcript, text)
+        diarization_path = paths.audio.parent / f"{paths.audio.stem}_ref_diarization.json"
+        with diarization_path.open("w") as f:
+            json.dump(reference_diarization, f)
 
-        sample = _build_sample(mixed_audio, text, segment, index, paths.audio, len(utterances))
+        sample = _build_sample(mixed_audio, text, segment, index, paths.audio, len(utterances), reference_diarization)
 
         word_count = len(text.split())
         logger.info(
-            "Cache miss: mixed %s (%d utterances, %.2f sec, %d words)",
+            "Cache miss: mixed %s (%d utterances, %.2f sec, %d words, %d speakers)",
             segment.meeting_id,
             sample.num_utterances,
             sample.duration_sec,
             word_count,
+            len({d["speaker"] for d in reference_diarization}),
         )
         return sample
 
@@ -248,6 +273,19 @@ class AMIDatasetLoader(DatasetProtocol):
         Returns the total number of prepared samples.
         """
         return len(self.samples)
+
+    @property
+    def dataset_version(self) -> str:
+        return "AMI_v0"
+
+    @property
+    def dataset_split(self) -> str | None:
+        parts = []
+        if self.num_samples is not None:
+            parts.append(f"n{self.num_samples}")
+        if self.sample_duration_fraction is not None:
+            parts.append(f"f{self.sample_duration_fraction}")
+        return "_".join(parts) if parts else None
 
     def __len__(self) -> int:
         """

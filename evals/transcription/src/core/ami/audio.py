@@ -1,30 +1,29 @@
 import logging
-from typing import List
 
-import numpy
+import numpy as np
+
 from common.constants import TARGET_SAMPLE_RATE
-
 from evals.transcription.src.models import RawDatasetRow
 
 logger = logging.getLogger(__name__)
 
 
 def mix_utterances(
-    utterances: List[RawDatasetRow], target_sample_rate: int = TARGET_SAMPLE_RATE
-) -> tuple[numpy.ndarray, str]:
+    utterances: list[RawDatasetRow], target_sample_rate: int = TARGET_SAMPLE_RATE
+) -> tuple[np.ndarray, str]:
     """
     Mixes multiple utterances into a single audio array and concatenates their texts.
     Returns a tuple of (mixed_audio, text).
     """
     if not utterances:
-        return numpy.array([], dtype=numpy.float32), ""
+        return np.array([], dtype=np.float32), ""
 
     utterances_sorted = sorted(utterances, key=lambda x: x.begin_time)
 
     max_end_time = max(utterance.end_time for utterance in utterances_sorted)
-    total_samples = int(numpy.ceil(max_end_time * target_sample_rate))
+    total_samples = int(np.ceil(max_end_time * target_sample_rate))
 
-    mixed_audio = numpy.zeros(total_samples, dtype=numpy.float32)
+    mixed_audio = np.zeros(total_samples, dtype=np.float32)
     text_parts = []
 
     for utterance in utterances_sorted:
@@ -49,7 +48,7 @@ def mix_utterances(
     return mixed_audio, full_text
 
 
-def compute_duration(audio: numpy.ndarray, sample_rate: int = TARGET_SAMPLE_RATE) -> float:
+def compute_duration(audio: np.ndarray, sample_rate: int = TARGET_SAMPLE_RATE) -> float:
     """
     Computes the duration of the audio in seconds.
     """

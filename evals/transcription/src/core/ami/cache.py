@@ -3,11 +3,11 @@ import tempfile
 from pathlib import Path
 from typing import cast
 
-import numpy
+import numpy as np
 import soundfile
-from common.audio.ffmpeg import convert_to_mp3
 
-from evals.transcription.src.core.ami.selection import MeetingSegment
+from common.audio.ffmpeg import convert_to_mp3
+from evals.transcription.src.models import MeetingSegment
 
 logger = logging.getLogger(__name__)
 
@@ -41,15 +41,15 @@ def get_cache_paths(processed_dir: Path, segment: MeetingSegment, index: int) ->
     return CachePaths(audio_path, transcript_path)
 
 
-def load_audio(path: Path) -> numpy.ndarray:
+def load_audio(path: Path) -> np.ndarray:
     """
     Loads the audio from the given path and returns it as a numpy array.
     """
     audio, _sample_rate = soundfile.read(path)
-    return cast(numpy.ndarray, audio)
+    return cast(np.ndarray, audio)
 
 
-def save_audio(path: Path, audio: numpy.ndarray, sample_rate: int) -> None:
+def save_audio(path: Path, audio: np.ndarray, sample_rate: int) -> None:
     """
     Saves the given audio array to the specified path as mono MP3 (preserves sample rate).
     """

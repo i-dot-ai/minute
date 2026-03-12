@@ -3,6 +3,7 @@ from pathlib import Path
 from jinja2 import Environment, TemplateNotFound
 from evals.dataset_generation.transcription_generation.src.constants import (get_template, PROMPTS_DIR, ACTOR_GENERATOR_TEMPLATE)
 from common.llm.client import ChatBot
+import pytest
 
 @pytest.fixture
 def mock_adapter():

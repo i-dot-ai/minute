@@ -6,10 +6,10 @@ class ScriptedChatBot:
     def __init__(self, responses):
         self.responses = responses
         self.index = 0
-        self.calls = []
+        self.messages = []
 
     async def chat(self, messages):
-        self.calls.append(messages)
+        self.messages.append(messages)
 
         response = self.responses[self.index]
         self.index += 1

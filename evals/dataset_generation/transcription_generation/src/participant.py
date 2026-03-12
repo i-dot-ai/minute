@@ -1,3 +1,4 @@
+import re
 from abc import abstractmethod
 from functools import cached_property
 
@@ -55,9 +56,8 @@ class Participant:
             full_history.append({"role": "user", "content": notice_message})
 
         # remove messages that were already stored by the chatbot
-        cropped_history = full_history[len(self.chatbot.messages) :]
+        return full_history[len(self.chatbot.messages) :]
 
-        return cropped_history
 
 class Actor(Participant):
     def __init__(
@@ -74,5 +74,6 @@ class Actor(Participant):
     async def reply_to_last_message(self, notice_message: str | None = None) -> str:
         messages = self.get_new_messages(notice_message)
         response = await self.chatbot.chat(messages)
-        self.history_manager.add_to_history(response, self.identifier)
-        return response
+        cleaned_response = re.sub(r"^speaker_\d+\s+said:\s*", "", response, flags=re.IGNORECASE)
+        self.history_manager.add_to_history(cleaned_response, self.identifier)
+        return cleaned_response

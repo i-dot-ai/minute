@@ -33,27 +33,26 @@ class TranscriptGenerator:
     def _classify_notice_type(self, current_word_count: int) -> NoticeType:
         words_remaining = max(0, self.generation_config.word_target - current_word_count)
         remaining_perc = math.ceil((words_remaining * 100) / self.generation_config.word_target)
-        
+
         if remaining_perc < HARD_CLOSE_THRESHOLD:
             return NoticeType.HARD
         if remaining_perc < SOFT_CLOSE_THRESHOLD:
             return NoticeType.SOFT
         return NoticeType.NONE
-    
+
     def _get_notice_prompt(self, notice_type: NoticeType) -> str:
         if notice_type == NoticeType.NONE:
             return None
-        
+
         template = get_template(TIME_REMAINING_TEMPLATE)
         return template.render(
             use_hard_ending_notice=(notice_type == NoticeType.HARD),
-            use_soft_ending_notice=(notice_type == NoticeType.SOFT)
+            use_soft_ending_notice=(notice_type == NoticeType.SOFT),
         )
-    
+
     def _create_time_remaining_message(self, current_word_count: int) -> str | None:
         notice_type = self._classify_notice_type(current_word_count)
         return self._get_notice_prompt(notice_type)
-
 
     async def generate_transcript(self, actor_definitions: list[str]) -> list[DialogueEntry]:
         if len(actor_definitions) != self.generation_config.num_speakers:
@@ -94,7 +93,7 @@ class TranscriptGenerator:
             )
 
             current_actor = actors[current_speaker_id]
-            
+
             notice_message = self._create_time_remaining_message(word_count)
             reply = await current_actor.reply_to_last_message(notice_message)
             word_count += len(reply.split())

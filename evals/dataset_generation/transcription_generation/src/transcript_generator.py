@@ -76,7 +76,6 @@ class TranscriptGenerator:
             chatbot=create_default_chatbot(FastOrBestLLM.BEST),
         )
 
-        transcript: list[DialogueEntry] = []
         word_count = 0
 
         current_speaker_id = speaker_ids[0]
@@ -98,16 +97,6 @@ class TranscriptGenerator:
             reply = await current_actor.reply_to_last_message(notice_message)
             word_count += len(reply.split())
 
-            speaker_number = speaker_ids.index(current_speaker_id) + 1
-            transcript.append(
-                DialogueEntry(
-                    speaker=str(speaker_number),
-                    text=reply,
-                    start_time=0.0,
-                    end_time=0.0,
-                )
-            )
-
             facilitator.history_manager.add_to_history(reply, current_speaker_id)
 
             if word_count < hard_termination_threshold:
@@ -116,5 +105,14 @@ class TranscriptGenerator:
                     logger.info("Meeting terminated by facilitator (participants ready to wrap up)")
                     break
 
+        transcript = [
+            DialogueEntry(
+                speaker=str(speaker_ids.index(entry.speaker_id) + 1),
+                text=entry.content,
+                start_time=0.0,
+                end_time=0.0,
+            )
+            for entry in facilitator.history_manager.history
+        ]
         logger.info("Generated transcript with %d entries and %d words", len(transcript), word_count)
         return transcript

@@ -40,7 +40,7 @@ class TranscriptGenerator:
             return NoticeType.SOFT
         return NoticeType.NONE
 
-    def _get_notice_prompt(self, notice_type: NoticeType) -> str:
+    def _get_notice_prompt(self, notice_type: NoticeType) -> str | None:
         if notice_type == NoticeType.NONE:
             return None
 

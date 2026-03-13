@@ -43,8 +43,8 @@ def setup_evaluation(tmp_path, monkeypatch):
                 )
 
         fake_registry = {
-            "azure": (FakeAzureAdapter, "Azure Speech-to-Text"),
-            "whisply": (FakeWhisperAdapter, "Whisper"),
+            "azure": FakeAzureAdapter,
+            "whisply": FakeWhisperAdapter,
         }
 
         fake_settings = SimpleNamespace(AZURE_SPEECH_KEY="key", AZURE_SPEECH_REGION="region")
@@ -156,8 +156,8 @@ def test_adapter_contracts(tmp_path, monkeypatch, adapter_name, monkeypatch_targ
 
     from evals.transcription.src.adapters.base import ServiceTranscriptionAdapter
 
-    adapter_class, adapter_name_str = ADAPTER_REGISTRY[adapter_name]
-    adapter = ServiceTranscriptionAdapter(adapter_class, adapter_name_str)
+    adapter_class = ADAPTER_REGISTRY[adapter_name]
+    adapter = ServiceTranscriptionAdapter(adapter_class)
     result = adapter.transcribe(str(wav_file))
     assert result.text == "hello world"
     assert result.duration_sec >= 0

@@ -57,7 +57,7 @@ def run_evaluation(
         msg = "adapter_names is required when prepare_only is False"
         raise ValueError(msg)
 
-    adapters = [ServiceTranscriptionAdapter(*ADAPTER_REGISTRY[name]) for name in adapter_names]
+    adapters = [ServiceTranscriptionAdapter(ADAPTER_REGISTRY[name]) for name in adapter_names]
 
     logger.info(
         "Running %d adapters in parallel on %d samples...",

@@ -23,10 +23,11 @@ class DSPyModelAdapterWrapper(dspy.LM):
         messages: list[dict[str, str]] | None = None,
         **kwargs: Any,
     ) -> list[str]:
+        if messages is None and prompt is None:
+            msg = "Either prompt or messages must be provided"
+            raise ValueError(msg)
+
         if messages is None:
-            if prompt is None:
-                msg = "Either prompt or messages must be provided"
-                raise ValueError(msg)
             messages = [{"role": "user", "content": prompt}]
 
         try:

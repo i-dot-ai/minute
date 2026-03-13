@@ -130,7 +130,8 @@ def test_processing_speed_ratio_calculation(setup_evaluation):
     for engine_samples in results["engines"].values():
         for sample in engine_samples:
             assert "processing_speed_ratio" in sample["metrics"]
-            assert sample["metrics"]["processing_speed_ratio"] > 0
+            ratio = sample["metrics"]["processing_speed_ratio"]
+            assert 0 < ratio < 1.0
 
 
 @pytest.mark.parametrize(

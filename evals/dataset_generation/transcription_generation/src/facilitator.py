@@ -2,7 +2,11 @@ import logging
 from functools import cached_property
 
 from common.llm.client import ChatBot
-from evals.dataset_generation.transcription_generation.src.constants import FACILITATOR_TEMPLATE, get_template
+from evals.dataset_generation.transcription_generation.src.constants import (
+    FACILITATOR_REMINDER_TEMPLATE,
+    FACILITATOR_TEMPLATE,
+    get_template,
+)
 from evals.dataset_generation.transcription_generation.src.history_manager import HistoryManager
 from evals.dataset_generation.transcription_generation.src.models import FacilitatorDecision
 from evals.dataset_generation.transcription_generation.src.participant import Participant
@@ -43,11 +47,8 @@ class Facilitator(Participant):
         speakers_who_havent_spoken = [sid for sid in self.speaker_ids if sid not in speakers_who_spoke]
 
         if speakers_who_havent_spoken:
-            reminder = (
-                "CRITICAL: The following speakers have NOT yet participated: "
-                + ", ".join(speakers_who_havent_spoken)
-                + ". You MUST NOT set should_terminate to true until ALL speakers have spoken."
-            )
+            reminder_template = get_template(FACILITATOR_REMINDER_TEMPLATE)
+            reminder = reminder_template.render(speakers_who_havent_spoken=speakers_who_havent_spoken)
             messages.append({"role": "user", "content": reminder})
 
         messages.append(

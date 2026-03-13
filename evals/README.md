@@ -86,8 +86,7 @@ Configs in `evals/dataset_generation/transcription_generation/configs/`: `defaul
 
 Parameters:
 - `theme`: Conversation scenario/topic
-- `max_words`: Total words in generated transcript
-- `max_words_per_turn`: Maximum words to keep in conversation context per speaker (controls memory window)
+- `word_target`: Total words in generated transcript
 - `num_speakers`: Number of speakers (default: 2)
 
 Output → `evals/dataset_generation/transcription_generation/output/transcript_<timestamp>.json`

@@ -2,6 +2,8 @@
 
 Config-driven eval runner for DialogSum-style conversational summarization.
 
+**Important: Run all commands from project root.**
+
 ## Setup
 
 ```bash
@@ -55,6 +57,6 @@ poetry run python evals/transcription/src/evaluate.py
 poetry run python evals/transcription/src/evaluate.py --config larger_cloud_test.yaml
 ```
 
-**Configs:** `evals/transcription/configs/` (`default.yaml`, `smoketest.yaml`, `larger_cloud_test.yaml`)
+**Configs:** `evals/transcription/configs/` (`smoketest.yaml`, `larger_cloud_test.yaml`)
 
 **Results:** `evals/transcription/output/`

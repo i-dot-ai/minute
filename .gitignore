@@ -124,6 +124,6 @@ evals/**/results/
 evals/**/datasets/
 evals/**/input/
 evals/**/output/
-evals/**/*.wav
-evals/**/*.mp3
-evals/**/*.m4a
+**/*.wav
+**/*.mp3
+**/*.m4a

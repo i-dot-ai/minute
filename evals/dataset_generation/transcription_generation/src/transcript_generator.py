@@ -70,7 +70,7 @@ class TranscriptGenerator:
             actors[speaker_id] = actor
 
         facilitator = Facilitator(
-            history_manager=HistoryManager(),
+            history_manager=history_manager,
             actor_definitions=actor_definitions,
             speaker_ids=speaker_ids,
             identifier="facilitator",
@@ -82,6 +82,11 @@ class TranscriptGenerator:
         current_speaker_id = speaker_ids[0]
         hard_termination_threshold = int(
             self.generation_config.word_target * self.generation_config.termination_threshold_multiplier
+        )
+
+        history_manager.add_to_history(
+            "Let's begin the conversation.",
+            "init_user_message",
         )
 
         while word_count < hard_termination_threshold:
@@ -98,8 +103,6 @@ class TranscriptGenerator:
             reply = await current_actor.reply_to_last_message(notice_message)
             word_count += len(reply.split())
 
-            facilitator.history_manager.add_to_history(reply, current_speaker_id)
-
             if word_count < hard_termination_threshold:
                 current_speaker_id, should_terminate = await facilitator.decide_next_speaker()
                 if should_terminate:
@@ -114,6 +117,7 @@ class TranscriptGenerator:
                 end_time=0.0,
             )
             for entry in facilitator.history_manager.history
+            if entry.speaker_id != "init_user_message"
         ]
         logger.info("Generated transcript with %d entries and %d words", len(transcript), word_count)
         return transcript

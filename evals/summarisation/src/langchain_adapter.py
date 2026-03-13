@@ -12,6 +12,11 @@ from pydantic import ConfigDict, Field
 from common.llm.adapters.base import ModelAdapter
 
 
+def _convert_message_to_dict(message: BaseMessage) -> dict[str, str]:
+    role = "user" if message.type == "human" else message.type
+    return {"role": role, "content": str(message.content)}
+
+
 class LangChainModelAdapter(BaseChatModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -36,9 +41,7 @@ class LangChainModelAdapter(BaseChatModel):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-        message_dicts = [
-            {"role": "user" if i == 0 else "assistant", "content": str(m.content)} for i, m in enumerate(messages)
-        ]
+        message_dicts = [_convert_message_to_dict(m) for m in messages]
 
         response = loop.run_until_complete(self.adapter.chat(message_dicts))
 

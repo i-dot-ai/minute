@@ -27,6 +27,10 @@ class Facilitator(Participant):
         self.actor_definitions = actor_definitions
         self.speaker_ids = speaker_ids
 
+    @property
+    def system_message_content(self) -> str:
+        return self._static_system_prompt
+
     @cached_property
     def _static_system_prompt(self) -> str:
         template = get_template(FACILITATOR_TEMPLATE)

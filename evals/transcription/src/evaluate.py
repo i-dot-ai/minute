@@ -11,6 +11,7 @@ from common.audio.ffmpeg import get_duration
 from common.settings import get_settings
 from evals.transcription.src.adapters.base import ServiceTranscriptionAdapter
 from evals.transcription.src.adapters.registry import ADAPTER_REGISTRY
+from evals.transcription.src.config_validation import validate_optional_config_value
 from evals.transcription.src.core.dataset import (
     load_benchmark_dataset,
     prepare_audio_for_transcription,
@@ -122,19 +123,13 @@ def main() -> None:
     config = load_config(config_path)
     logger.info("Loaded config from: %s", config_path)
 
-    num_samples_raw = config.get("num_samples")
+    num_samples = validate_optional_config_value(
+        config.get("num_samples"),
+        int,
+        "num_samples",
+    )
+
     sample_duration_fraction_raw = config.get("sample_duration_fraction")
-    prepare_only_raw = config.get("prepare_only", False)
-    max_workers_raw = config.get("max_workers")
-    adapter_names_raw = config.get("adapters")
-
-    num_samples: int | None = None
-    if num_samples_raw is not None:
-        if not isinstance(num_samples_raw, int):
-            msg = f"Config field 'num_samples' must be an int, got {type(num_samples_raw).__name__}"
-            raise TypeError(msg)
-        num_samples = num_samples_raw
-
     sample_duration_fraction: float | None = None
     if sample_duration_fraction_raw is not None:
         if not isinstance(sample_duration_fraction_raw, int | float):
@@ -145,18 +140,19 @@ def main() -> None:
             raise TypeError(msg)
         sample_duration_fraction = float(sample_duration_fraction_raw)
 
+    prepare_only_raw = config.get("prepare_only", False)
     if not isinstance(prepare_only_raw, bool):
         msg = f"Config field 'prepare_only' must be a bool, got {type(prepare_only_raw).__name__}"
         raise TypeError(msg)
     prepare_only: bool = prepare_only_raw
 
-    max_workers: int | None = None
-    if max_workers_raw is not None:
-        if not isinstance(max_workers_raw, int):
-            msg = f"Config field 'max_workers' must be an int, got {type(max_workers_raw).__name__}"
-            raise TypeError(msg)
-        max_workers = max_workers_raw
+    max_workers = validate_optional_config_value(
+        config.get("max_workers"),
+        int,
+        "max_workers",
+    )
 
+    adapter_names_raw = config.get("adapters")
     if adapter_names_raw is None:
         msg = "Required config field 'adapters' is missing"
         raise ValueError(msg)

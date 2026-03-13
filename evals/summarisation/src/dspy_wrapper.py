@@ -28,7 +28,7 @@ class DSPyModelAdapterWrapper(dspy.LM):
             raise ValueError(msg)
 
         if messages is None:
-            messages = [{"role": "user", "content": prompt}]
+            messages = [{"role": "user", "content": prompt or ""}]
 
         try:
             loop = asyncio.get_event_loop()

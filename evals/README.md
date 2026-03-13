@@ -14,14 +14,13 @@ poetry install --with evals-summarisation
 
 ```bash
 # Quick smoke test (2 examples)
-poetry run python evals/summarisation/src/evaluate.py --config evals/summarisation/configs/default.yaml
+poetry run python evals/summarisation/src/evaluate.py
 
 # Full test suite
 poetry run python evals/summarisation/src/evaluate.py --config evals/summarisation/configs/test.yaml
 ```
 
 **Available configs:**
-- `default.yaml` - Symlink to `smoke-test.yaml` for quick validation
 - `smoke-test.yaml` - Fast smoke test with `limit: 2`
 - `test.yaml` - Full test suite (no limit)
 

@@ -8,9 +8,12 @@ import typer
 from evals.summarisation.src.config import load_config
 from evals.summarisation.src.runner import run_eval
 
-app = typer.Typer(no_args_is_help=True)
+WORKDIR = Path(__file__).resolve().parent.parent
+DEFAULT_CONFIG = WORKDIR / "configs" / "smoke-test.yaml"
 
-config_path_arg = typer.Option(..., "--config", exists=True, dir_okay=False, readable=True)
+app = typer.Typer()
+
+config_path_arg = typer.Option(DEFAULT_CONFIG, "--config", exists=True, dir_okay=False, readable=True)
 
 
 @app.callback(invoke_without_command=True)

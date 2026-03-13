@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Environment, FileSystemLoader, Template, select_autoescape
 
 PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
 
@@ -12,5 +12,5 @@ TIME_REMAINING_TEMPLATE = "time_remaining.j2"
 _jinja_environment = Environment(loader=FileSystemLoader(PROMPTS_DIR), autoescape=select_autoescape())
 
 
-def get_template(template_name: str):
+def get_template(template_name: str) -> Template:
     return _jinja_environment.get_template(template_name)

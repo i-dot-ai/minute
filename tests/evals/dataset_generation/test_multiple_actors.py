@@ -1,6 +1,8 @@
 import pytest
-from evals.dataset_generation.transcription_generation.src.participant import ChatEntry, HistoryManager, Actor, Participant
-from unittest.mock import AsyncMock
+
+from evals.dataset_generation.transcription_generation.src.actor import Actor
+from evals.dataset_generation.transcription_generation.src.history_manager import HistoryManager
+
 
 class ScriptedChatBot:
     def __init__(self, responses):
@@ -17,18 +19,13 @@ class ScriptedChatBot:
         return response
 
 
-
 @pytest.mark.asyncio
 async def test_doctor_patient_conversation():
     history = HistoryManager()
 
-    doctor_bot = ScriptedChatBot([
-        "Can you describe your symptoms?"
-    ])
+    doctor_bot = ScriptedChatBot(["Can you describe your symptoms?"])
 
-    patient_bot = ScriptedChatBot([
-        "I have a headache and fever."
-    ])
+    patient_bot = ScriptedChatBot(["I have a headache and fever."])
 
     doctor = Actor(
         identifier="doctor",

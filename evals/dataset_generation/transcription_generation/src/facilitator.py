@@ -3,6 +3,7 @@ from functools import cached_property
 
 from common.llm.client import ChatBot
 from evals.dataset_generation.transcription_generation.src.constants import FACILITATOR_TEMPLATE, get_template
+from evals.dataset_generation.transcription_generation.src.history_manager import HistoryManager
 from evals.dataset_generation.transcription_generation.src.models import FacilitatorDecision
 from evals.dataset_generation.transcription_generation.src.participant import Participant
 
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 class Facilitator(Participant):
     def __init__(
         self,
-        history_manager,
+        history_manager: HistoryManager,
         actor_definitions: list[str],
         speaker_ids: list[str],
         identifier: str = "facilitator",

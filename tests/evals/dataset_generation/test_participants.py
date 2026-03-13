@@ -1,6 +1,11 @@
-import pytest
-from evals.dataset_generation.transcription_generation.src.participant import ChatEntry, HistoryManager, Actor, Participant
 from unittest.mock import AsyncMock
+
+import pytest
+
+from evals.dataset_generation.transcription_generation.src.actor import Actor
+from evals.dataset_generation.transcription_generation.src.history_manager import HistoryManager
+from evals.dataset_generation.transcription_generation.src.models import ChatEntry
+
 
 class FakeChatBot:
     def __init__(self, responses):
@@ -15,10 +20,8 @@ class FakeChatBot:
         return response
 
 
-
 @pytest.mark.asyncio
 async def test_actor_reply_adds_to_history():
-
     history = HistoryManager()
 
     fake_bot = FakeChatBot(["Hello patient!"])
@@ -33,21 +36,19 @@ async def test_actor_reply_adds_to_history():
     reply = await actor.reply_to_last_message("Patient says hello")
 
     assert reply == "Hello patient!"
-    assert history.history == [
-        ChatEntry(speaker_id="doctor", content="Hello patient!")
-    ]
+    assert history.history == [ChatEntry(speaker_id="doctor", content="Hello patient!")]
 
 
 def test_history_role_mapping():
     history = HistoryManager()
 
-    ROLE_ONE = "doctor"
-    ROLE_TWO = "patient"
+    role_one = "doctor"
+    role_two = "patient"
 
-    history.add_to_history("Hello", ROLE_ONE)
-    history.add_to_history("Hi doctor", ROLE_TWO)
+    history.add_to_history("Hello", role_one)
+    history.add_to_history("Hi doctor", role_two)
 
-    result = history.get_history_for_participant(ROLE_ONE)
+    result = history.get_history_for_participant(role_one)
 
     assert result == [
         {"role": "assistant", "content": "You said: Hello"},
@@ -70,9 +71,8 @@ async def test_actor_reply_mock():
     )
 
     response = await actor.reply_to_last_message("Hello")
+    assert response == "How are you?"
 
-    assert history.history[-1] == ChatEntry(
-    speaker_id="doctor",
-    content="How are you?"
-    )
+    assert history.history[-1] == ChatEntry(speaker_id="doctor", content="How are you?")
+    assert response == history.history[-1].content
     mock_bot.chat.assert_called_once()

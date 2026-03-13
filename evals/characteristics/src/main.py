@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def load_config(config_path: Path) -> dict[str, Any]:
     with config_path.open("r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        return cast(dict[str, Any], yaml.safe_load(f))
 
 
 def render_prompt(template_path: str, transcript: str) -> str:

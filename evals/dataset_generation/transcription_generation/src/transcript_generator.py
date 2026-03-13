@@ -4,13 +4,14 @@ from enum import Enum
 
 from common.database.postgres_models import DialogueEntry
 from common.llm.client import FastOrBestLLM, create_default_chatbot
+from evals.dataset_generation.transcription_generation.src.actor import Actor
 from evals.dataset_generation.transcription_generation.src.config import TranscriptGenerationConfig
 from evals.dataset_generation.transcription_generation.src.constants import (
     TIME_REMAINING_TEMPLATE,
     get_template,
 )
 from evals.dataset_generation.transcription_generation.src.facilitator import Facilitator
-from evals.dataset_generation.transcription_generation.src.participant import Actor, HistoryManager
+from evals.dataset_generation.transcription_generation.src.history_manager import HistoryManager
 
 logger = logging.getLogger(__name__)
 HARD_CLOSE_THRESHOLD = 2

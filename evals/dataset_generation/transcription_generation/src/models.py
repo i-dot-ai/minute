@@ -10,3 +10,8 @@ class FacilitatorDecision(BaseModel):
     should_terminate: bool = Field(
         default=False, description="Whether the meeting should be terminated because participants are done"
     )
+
+
+class ChatEntry(BaseModel):
+    speaker_id: str = Field(description="ID of the current speaker")
+    content: str = Field(description="What was spoken, in the format {'role': '<role>', 'content': '<content>'}")

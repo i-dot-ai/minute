@@ -5,21 +5,19 @@ from typing import TypeVar
 T = TypeVar("T")
 
 
-def validate_optional_config_value(
-    value: object,
-    expected_type: type[T],
-    field_name: str,
+def get_config(
+    config: dict[str, object], key: str, expected_type: type[T], *, default: T | None = None, required: bool = False
 ) -> T | None:
-    """
-    Validates an optional config value.
+    value = config.get(key)
 
-    Returns None if value is None, otherwise validates the type and returns the value.
-    """
     if value is None:
-        return None
+        if required:
+            msg = f"Required config field '{key}' is missing"
+            raise ValueError(msg)
+        return default
 
     if not isinstance(value, expected_type):
-        msg = f"Config field '{field_name}' must be a {expected_type.__name__}, got {type(value).__name__}"
+        msg = f"Config field '{key}' must be a {expected_type.__name__}, got {type(value).__name__}"
         raise TypeError(msg)
 
     return value

@@ -165,7 +165,7 @@ def test_create_summary_no_speaker_count_accuracy():
 
 
 def test_save_results_creates_file(tmp_path):
-    output_path = tmp_path / "results" / "output.json"
+    output_path = tmp_path / "output" / "output.json"
 
     sample = make_sample_row(wder=None, speaker_count_accuracy=None)
 

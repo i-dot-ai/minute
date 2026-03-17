@@ -2,12 +2,13 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/setup-ollama.sh"
+
 cleanup() {
     echo ""
     echo "Shutting down worker..."
-    if [ ! -z "$OLLAMA_PID" ]; then
-        kill $OLLAMA_PID 2>/dev/null || true
-    fi
+    cleanup_ollama
     exit 0
 }
 
@@ -26,7 +27,7 @@ if [ ! -f .env ]; then
 fi
 
 echo "Checks:"
-echo -n "[1/6] MPS availability... "
+echo -n "[1/5] MPS availability... "
 MPS_AVAILABLE=$(poetry run python -c "import torch; print(torch.backends.mps.is_available())" 2>/dev/null || echo "false")
 if [ "$MPS_AVAILABLE" = "True" ]; then
     echo "✓"
@@ -34,40 +35,35 @@ else
     echo "✗ (will use CPU)"
 fi
 
-echo -n "[2/6] Ollama installed... "
-if ! command -v ollama &> /dev/null; then
-    echo "✗"
-    echo "ERROR: Install Ollama: brew install ollama"
-    exit 1
-fi
-echo "✓"
+echo ""
+echo "[2/5] Ollama Setup:"
+setup_ollama || exit 1
 
-echo -n "[3/6] Ollama service... "
-if ! pgrep -x "ollama" > /dev/null; then
-    ollama serve > /tmp/ollama.log 2>&1 &
-    OLLAMA_PID=$!
-    sleep 3
-fi
-if ! curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
-    echo "✗"
-    echo "ERROR: Ollama not responding. Check /tmp/ollama.log"
-    exit 1
-fi
-echo "✓"
-
-echo -n "[4/6] Ollama models... "
-FAST_MODEL=$(grep "FAST_LLM_MODEL_NAME" .env 2>/dev/null | cut -d'=' -f2 || echo "llama3.2:3b-instruct-q4_K_M")
-BEST_MODEL=$(grep "BEST_LLM_MODEL_NAME" .env 2>/dev/null | cut -d'=' -f2 || echo "llama3.2:3b-instruct-q4_K_M")
-for MODEL in "$FAST_MODEL" "$BEST_MODEL"; do
-    if [ -n "$MODEL" ] && ! ollama list | grep -q "$MODEL"; then
+echo ""
+echo "[3/5] Docker Desktop:"
+echo -n "  Checking Docker... "
+if ! docker info > /dev/null 2>&1; then
+    echo "✗ (not running)"
+    echo "  Starting Docker Desktop..."
+    open -a Docker
+    echo -n "  Waiting for Docker... "
+    max_wait=60
+    waited=0
+    while ! docker info > /dev/null 2>&1 && [ $waited -lt $max_wait ]; do
+        sleep 2
+        waited=$((waited + 2))
+    done
+    if ! docker info > /dev/null 2>&1; then
         echo "✗"
-        echo "ERROR: Model '$MODEL' not found. Run: ollama pull $MODEL"
+        echo "  ERROR: Docker failed to start. Please start Docker Desktop manually."
         exit 1
     fi
-done
-echo "✓"
+    echo "✓"
+else
+    echo "✓"
+fi
 
-echo -n "[5/6] Starting Docker services... "
+echo -n "  Starting services... "
 docker compose stop worker 2>/dev/null || true
 docker compose up -d db localstack backend frontend > /dev/null 2>&1
 echo "✓"
@@ -87,14 +83,20 @@ wait_for_service() {
         sleep 2
     done
     
-    echo "✗"
-    echo "ERROR: $service_name failed. Check: docker compose logs $log_service"
+    echo ""
+    echo "  ERROR: $service_name failed. Check: docker compose logs $log_service"
     exit 1
 }
 
-echo -n "[6/6] Waiting for services... "
+echo ""
+echo "[4/5] Service Health Checks:"
+echo -n "  Database... "
 wait_for_service "Database" "docker compose ps db | grep -q 'healthy'" "db"
+echo "✓"
+echo -n "  Backend... "
 wait_for_service "Backend" "curl -s http://localhost:8080/healthcheck" "backend"
+echo "✓"
+echo -n "  Frontend... "
 wait_for_service "Frontend" "curl -s http://localhost:3000" "frontend"
 echo "✓"
 

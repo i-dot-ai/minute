@@ -11,12 +11,13 @@ import orjson
 from datasets import load_dataset
 from dspy.evaluate import Evaluate
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
-from pydantic import SecretStr
-from tenacity import retry, stop_after_attempt, wait_exponential
 
-from .config import AppConfig, ModelConfig
+from common.settings import get_settings
+
+from .adapter_factory import build_azure_apim_adapter
+from .config import AppConfig
 from .jsonl import write_jsonl
+from .langchain_adapter import LangChainModelAdapter
 from .metric import DialogSummaryMetric, build_metrics
 from .prompts import render_template
 from .schemas import (
@@ -75,16 +76,10 @@ def _to_dspy_devset(examples: list[DialogExample]) -> list[dspy.Example]:
     return devset
 
 
-@retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=2, min=1, max=60))
-def _build_llm(model_cfg: ModelConfig) -> ChatOpenAI:
-    return ChatOpenAI(
-        base_url=model_cfg.base_url,
-        api_key=SecretStr(model_cfg.api_key),
-        model=model_cfg.model,
-        temperature=model_cfg.temperature,
-        max_completion_tokens=model_cfg.max_tokens,
-        timeout=model_cfg.timeout_s,
-    )
+def _build_llm() -> LangChainModelAdapter:
+    settings = get_settings()
+    adapter = build_azure_apim_adapter()
+    return LangChainModelAdapter(adapter=adapter, model_name=settings.BEST_LLM_MODEL_NAME)
 
 
 def _build_prompts() -> tuple[ChatPromptTemplate, ChatPromptTemplate]:
@@ -95,12 +90,12 @@ def _build_prompts() -> tuple[ChatPromptTemplate, ChatPromptTemplate]:
 
 def _summarize_one(
     *,
-    cfg: AppConfig,
-    summarizer_llm: ChatOpenAI,
+    summarizer_llm: LangChainModelAdapter,
     summarize_prompt: ChatPromptTemplate,
     summarizer_template_path: str,
     dialogue: str,
     prompt_version: str,
+    model_name: str,
 ) -> tuple[DialogSummary, int]:
     t0 = time.perf_counter()
     summarize_text = render_template(summarizer_template_path, dialogue=dialogue)
@@ -113,11 +108,11 @@ def _summarize_one(
 
     candidate = DialogSummary(
         summary=summary_text,
-        model=cfg.model.model,
+        model=model_name,
         prompt_version=prompt_version,
         generation_config=GenerationConfig(
-            temperature=cfg.model.temperature,
-            max_tokens=cfg.model.max_tokens,
+            temperature=0.2,
+            max_tokens=256,
         ),
     )
     return candidate, _ms(t0, t1)
@@ -164,7 +159,9 @@ def run_eval(
     examples = _load_data_pairs(cfg, split=split, limit=limit)
     devset = _to_dspy_devset(examples)
 
-    summarizer_llm = _build_llm(cfg.model)
+    settings = get_settings()
+    summarizer_llm = _build_llm()
+    model_name = settings.BEST_LLM_MODEL_NAME
 
     summarizer_template_path = cfg.prompts.summarizer_template_path
 
@@ -180,12 +177,12 @@ def run_eval(
     class _Program:
         def __call__(self, *, dialogue: str) -> dspy.Prediction:
             candidate, summarize_ms = _summarize_one(
-                cfg=cfg,
                 summarizer_llm=summarizer_llm,
                 summarize_prompt=summarize_prompt,
                 summarizer_template_path=summarizer_template_path,
                 dialogue=dialogue,
                 prompt_version=prompt_version,
+                model_name=model_name,
             )
             summarize_ms_values.append(summarize_ms)
             return dspy.Prediction(summary=candidate.summary, candidate=candidate)

@@ -117,3 +117,13 @@ config/google-credentials.json
 htmlcov/
 coverage.xml
 .pytest_cache/
+
+# Evals
+evals/**/runs/
+evals/**/results/
+evals/**/datasets/
+evals/**/input/
+evals/**/output/
+**/*.wav
+**/*.mp3
+**/*.m4a

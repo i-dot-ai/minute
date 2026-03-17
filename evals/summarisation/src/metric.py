@@ -4,7 +4,11 @@ from dataclasses import dataclass
 
 import dspy
 
+from common.settings import get_settings
+
+from .adapter_factory import build_azure_apim_adapter
 from .config import AppConfig
+from .dspy_wrapper import DSPyModelAdapterWrapper
 from .schemas import DialogExample, MetricResult
 from .signatures import JudgeRatingSignature
 
@@ -41,13 +45,9 @@ class DialogSummaryMetric:
 def build_metrics(cfg: AppConfig) -> list[DialogSummaryMetric]:
     metrics: list[DialogSummaryMetric] = []
 
-    judge_lm = dspy.LM(
-        cfg.judge.model,
-        api_base=cfg.judge.base_url,
-        api_key=cfg.judge.api_key,
-        temperature=cfg.judge.temperature,
-        max_tokens=cfg.judge.max_tokens,
-    )
+    settings = get_settings()
+    adapter = build_azure_apim_adapter()
+    judge_lm = DSPyModelAdapterWrapper(adapter=adapter, model_name=settings.BEST_LLM_MODEL_NAME)
 
     for name in cfg.metrics:
         metrics.append(

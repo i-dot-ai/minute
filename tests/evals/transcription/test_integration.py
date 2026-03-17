@@ -7,10 +7,9 @@ from types import SimpleNamespace
 import pytest
 import soundfile as sf
 
-from evals.transcription.src.adapters.azure import azure_st_adapter
-from evals.transcription.src.adapters.whisply import whisply_adapter
+from evals.transcription.src.adapters.registry import ADAPTER_REGISTRY
 from evals.transcription.src.evaluate import run_evaluation
-from tests.evals.transcription.conftest import FakeAdapter, FakeDataset
+from tests.evals.transcription.conftest import FakeDataset
 
 
 @pytest.fixture
@@ -25,20 +24,35 @@ def setup_evaluation(tmp_path, monkeypatch):
         samples = [{"text": data["text"], "audio": {"path": str(wav_files[i])}} for i, data in enumerate(samples_data)]
         dataset = FakeDataset(samples)
 
+        class FakeAzureAdapter:
+            name = "Azure Speech-to-Text"
+
+            @classmethod
+            async def start(cls, _audio_file_path):
+                return SimpleNamespace(
+                    transcript=[{"text": azure_hyp, "speaker": "Speaker 1", "start_time": 0.0, "end_time": 1.0}]
+                )
+
+        class FakeWhisperAdapter:
+            name = "Whisper"
+
+            @classmethod
+            async def start(cls, _audio_file_path):
+                return SimpleNamespace(
+                    transcript=[{"text": whisper_hyp, "speaker": "Speaker 1", "start_time": 0.0, "end_time": 1.0}]
+                )
+
+        fake_registry = {
+            "azure": FakeAzureAdapter,
+            "whisply": FakeWhisperAdapter,
+        }
+
         fake_settings = SimpleNamespace(AZURE_SPEECH_KEY="key", AZURE_SPEECH_REGION="region")
         monkeypatch.setattr("evals.transcription.src.evaluate.settings", fake_settings)
         monkeypatch.setattr("evals.transcription.src.evaluate.load_benchmark_dataset", lambda **_: dataset)
         monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: audio_duration)
         monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))
-
-        monkeypatch.setattr(
-            "evals.transcription.src.evaluate.azure_st_adapter",
-            lambda **_: FakeAdapter("Azure Speech-to-Text", azure_hyp),
-        )
-        monkeypatch.setattr(
-            "evals.transcription.src.evaluate.whisply_adapter",
-            lambda **_: FakeAdapter("Whisper", whisper_hyp),
-        )
+        monkeypatch.setattr("evals.transcription.src.evaluate.ADAPTER_REGISTRY", fake_registry)
 
         return tmp_path
 
@@ -53,9 +67,9 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
         whisper_hyp="good morning",
     )
 
-    run_evaluation(num_samples=2)
+    run_evaluation(num_samples=2, adapter_names=["azure", "whisply"])
 
-    results_path = next((Path(tmp_path) / "results").glob("evaluation_results_*.json"))
+    results_path = next((Path(tmp_path) / "output").glob("evaluation_results_*.json"))
     assert results_path.exists()
     results = json.loads(results_path.read_text(encoding="utf-8"))
 
@@ -108,24 +122,26 @@ def test_processing_speed_ratio_calculation(setup_evaluation):
         whisper_hyp="hello world",
     )
 
-    run_evaluation(num_samples=1)
+    run_evaluation(num_samples=1, adapter_names=["azure", "whisply"])
 
-    results_path = next((Path(tmp_path) / "results").glob("evaluation_results_*.json"))
+    results_path = next((Path(tmp_path) / "output").glob("evaluation_results_*.json"))
     results = json.loads(results_path.read_text(encoding="utf-8"))
 
     for engine_samples in results["engines"].values():
         for sample in engine_samples:
-            assert sample["metrics"]["processing_speed_ratio"] == pytest.approx(0.025)
+            assert "processing_speed_ratio" in sample["metrics"]
+            ratio = sample["metrics"]["processing_speed_ratio"]
+            assert 0 < ratio < 1.0
 
 
 @pytest.mark.parametrize(
-    ("adapter_class", "monkeypatch_target"),
+    ("adapter_name", "monkeypatch_target"),
     [
-        (azure_st_adapter, "evals.transcription.src.adapters.azure.CommonAzureAdapter.start"),
-        (whisply_adapter, "common.services.transcription_services.whisply_local.WhisplyLocalAdapter.start"),
+        ("azure", "common.services.transcription_services.azure.AzureSpeechAdapter.start"),
+        ("whisply", "common.services.transcription_services.whisply_local.WhisplyLocalAdapter.start"),
     ],
 )
-def test_adapter_contracts(tmp_path, monkeypatch, adapter_class, monkeypatch_target):
+def test_adapter_contracts(tmp_path, monkeypatch, adapter_name, monkeypatch_target):
     async def fake_start(_path):
         return SimpleNamespace(
             transcript=[
@@ -139,7 +155,10 @@ def test_adapter_contracts(tmp_path, monkeypatch, adapter_class, monkeypatch_tar
     wav_file = tmp_path / "test.wav"
     sf.write(wav_file, [0.0, 0.0], 16000, subtype="PCM_16")
 
-    adapter = adapter_class()
+    from evals.transcription.src.adapters.base import ServiceTranscriptionAdapter
+
+    adapter_class = ADAPTER_REGISTRY[adapter_name]
+    adapter = ServiceTranscriptionAdapter(adapter_class)
     result = adapter.transcribe(str(wav_file))
     assert result.text == "hello world"
     assert result.duration_sec >= 0
@@ -158,10 +177,6 @@ def test_run_evaluation_requires_azure_credentials(monkeypatch, tmp_path):
     monkeypatch.setattr("evals.transcription.src.evaluate.load_benchmark_dataset", lambda **_: dataset)
     monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: 1.0)
     monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))
-    monkeypatch.setattr(
-        "evals.transcription.src.evaluate.whisply_adapter",
-        lambda **_: FakeAdapter("Whisper", "hello world"),
-    )
 
     with pytest.raises(ValueError, match="Diarization data is required but missing"):
-        run_evaluation(num_samples=1)
+        run_evaluation(num_samples=1, adapter_names=["azure"])

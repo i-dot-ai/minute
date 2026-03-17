@@ -186,3 +186,252 @@ def test_compute_all_metrics(ref_text, hyp_text, ref_diar, hyp_diar, expected):
 
     for key, value in expected.items():
         assert getattr(metrics, key) == value
+
+
+def test_run_engines_parallel_multiple_adapters(tmp_path):
+    wav_a = tmp_path / "a.wav"
+    wav_a.write_bytes(b"RIFFfake")
+
+    dataset = FakeDataset(
+        [
+            {"text": "hello world", "audio": {"path": str(wav_a)}},
+        ]
+    )
+
+    adapter_a = FakeAdapter("Engine_A", "hello world", proc_sec=0.5)
+    adapter_b = FakeAdapter("Engine_B", "hello world", proc_sec=1.0)
+
+    results = run_engines_parallel(
+        adapters=[adapter_a, adapter_b],
+        indices=[0],
+        dataset=dataset,
+        wav_write_fn=lambda ex, _idx: ex.audio.path,
+        duration_fn=lambda _path: 2.0,
+        run_id="test_run",
+        timestamp="20240101_120000",
+        dataset_version="FakeDataset_v0",
+        dataset_split="test",
+    )
+
+    assert len(results) == 2
+    assert results[0].summary.engine_version == "Engine_A"
+    assert results[1].summary.engine_version == "Engine_B"
+    assert results[0].samples[0].metrics["processing_speed_ratio"] == pytest.approx(0.25)
+    assert results[1].samples[0].metrics["processing_speed_ratio"] == pytest.approx(0.5)
+
+
+def test_run_engines_parallel_respects_max_workers(tmp_path):
+    wav_a = tmp_path / "a.wav"
+    wav_a.write_bytes(b"RIFFfake")
+
+    dataset = FakeDataset(
+        [
+            {"text": "hello", "audio": {"path": str(wav_a)}},
+        ]
+    )
+
+    adapter = FakeAdapter("Engine_A", "hello", proc_sec=0.5)
+
+    results = run_engines_parallel(
+        adapters=[adapter],
+        indices=[0],
+        dataset=dataset,
+        wav_write_fn=lambda ex, _idx: ex.audio.path,
+        duration_fn=lambda _path: 2.0,
+        run_id="test_run",
+        timestamp="20240101_120000",
+        dataset_version="FakeDataset_v0",
+        dataset_split="test",
+        max_workers=2,
+    )
+
+    assert len(results) == 1
+    assert results[0].summary.engine_version == "Engine_A"
+
+
+def test_run_engines_parallel_sorts_samples_by_example_id(tmp_path):
+    wav_a = tmp_path / "a.wav"
+    wav_b = tmp_path / "b.wav"
+    wav_c = tmp_path / "c.wav"
+    wav_a.write_bytes(b"RIFFfake")
+    wav_b.write_bytes(b"RIFFfake")
+    wav_c.write_bytes(b"RIFFfake")
+
+    dataset = FakeDataset(
+        [
+            {"text": "first", "audio": {"path": str(wav_a)}},
+            {"text": "second", "audio": {"path": str(wav_b)}},
+            {"text": "third", "audio": {"path": str(wav_c)}},
+        ]
+    )
+
+    adapter = FakeAdapter("Engine_A", "test", proc_sec=0.5)
+
+    results = run_engines_parallel(
+        adapters=[adapter],
+        indices=[2, 0, 1],
+        dataset=dataset,
+        wav_write_fn=lambda ex, _idx: ex.audio.path,
+        duration_fn=lambda _path: 2.0,
+        run_id="test_run",
+        timestamp="20240101_120000",
+        dataset_version="FakeDataset_v0",
+        dataset_split="test",
+    )
+
+    samples = results[0].samples
+    assert len(samples) == 3
+    assert samples[0].example_id == "0"
+    assert samples[1].example_id == "1"
+    assert samples[2].example_id == "2"
+
+
+def test_run_engines_parallel_accumulates_timing(tmp_path):
+    wav_a = tmp_path / "a.wav"
+    wav_b = tmp_path / "b.wav"
+    wav_a.write_bytes(b"RIFFfake")
+    wav_b.write_bytes(b"RIFFfake")
+
+    dataset = FakeDataset(
+        [
+            {"text": "hello", "audio": {"path": str(wav_a)}},
+            {"text": "world", "audio": {"path": str(wav_b)}},
+        ]
+    )
+
+    adapter = FakeAdapter("Engine_A", "test", proc_sec=0.5)
+
+    results = run_engines_parallel(
+        adapters=[adapter],
+        indices=[0, 1],
+        dataset=dataset,
+        wav_write_fn=lambda ex, _idx: ex.audio.path,
+        duration_fn=lambda _path: 2.0,
+        run_id="test_run",
+        timestamp="20240101_120000",
+        dataset_version="FakeDataset_v0",
+        dataset_split="test",
+    )
+
+    summary = results[0].summary
+    assert summary.n_examples == 2
+
+
+def test_run_engines_parallel_includes_metadata_in_samples(tmp_path):
+    wav_a = tmp_path / "a.wav"
+    wav_a.write_bytes(b"RIFFfake")
+
+    dataset = FakeDataset(
+        [
+            {"text": "hello world", "audio": {"path": str(wav_a)}},
+        ]
+    )
+
+    adapter = FakeAdapter("Engine_A", "hello world", proc_sec=0.5)
+
+    results = run_engines_parallel(
+        adapters=[adapter],
+        indices=[0],
+        dataset=dataset,
+        wav_write_fn=lambda ex, _idx: ex.audio.path,
+        duration_fn=lambda _path: 2.0,
+        run_id="custom_run_id",
+        timestamp="20240315_143000",
+        dataset_version="AMI_v1",
+        dataset_split="validation",
+    )
+
+    sample = results[0].samples[0]
+    assert sample.run_id == "custom_run_id"
+    assert sample.timestamp == "20240315_143000"
+    assert sample.engine_version == "Engine_A"
+    assert sample.reference_transcript == "hello world"
+    assert sample.hypothesis_transcript == "hello world"
+    assert sample.error is None
+
+
+def test_run_engines_parallel_includes_diarization_in_samples(tmp_path):
+    wav_a = tmp_path / "a.wav"
+    wav_a.write_bytes(b"RIFFfake")
+
+    dataset = FakeDataset(
+        [
+            {"text": "hello world", "audio": {"path": str(wav_a)}},
+        ]
+    )
+
+    adapter = FakeAdapter("Engine_A", "hello world", proc_sec=0.5)
+
+    results = run_engines_parallel(
+        adapters=[adapter],
+        indices=[0],
+        dataset=dataset,
+        wav_write_fn=lambda ex, _idx: ex.audio.path,
+        duration_fn=lambda _path: 2.0,
+        run_id="test_run",
+        timestamp="20240101_120000",
+        dataset_version="FakeDataset_v0",
+        dataset_split="test",
+    )
+
+    sample = results[0].samples[0]
+    assert sample.reference_dialogue_entries is not None
+    assert sample.hypothesis_dialogue_entries is not None
+    assert len(sample.reference_dialogue_entries) > 0
+    assert len(sample.hypothesis_dialogue_entries) > 0
+
+
+def test_run_engines_parallel_computes_latency_ms(tmp_path):
+    wav_a = tmp_path / "a.wav"
+    wav_a.write_bytes(b"RIFFfake")
+
+    dataset = FakeDataset(
+        [
+            {"text": "hello", "audio": {"path": str(wav_a)}},
+        ]
+    )
+
+    adapter = FakeAdapter("Engine_A", "hello", proc_sec=1.5)
+
+    results = run_engines_parallel(
+        adapters=[adapter],
+        indices=[0],
+        dataset=dataset,
+        wav_write_fn=lambda ex, _idx: ex.audio.path,
+        duration_fn=lambda _path: 2.0,
+        run_id="test_run",
+        timestamp="20240101_120000",
+        dataset_version="FakeDataset_v0",
+        dataset_split="test",
+    )
+
+    sample = results[0].samples[0]
+    assert sample.latency_ms == pytest.approx(1500.0)
+
+
+def test_run_engines_parallel_handles_none_dataset_split(tmp_path):
+    wav_a = tmp_path / "a.wav"
+    wav_a.write_bytes(b"RIFFfake")
+
+    dataset = FakeDataset(
+        [
+            {"text": "hello", "audio": {"path": str(wav_a)}},
+        ]
+    )
+
+    adapter = FakeAdapter("Engine_A", "hello", proc_sec=0.5)
+
+    results = run_engines_parallel(
+        adapters=[adapter],
+        indices=[0],
+        dataset=dataset,
+        wav_write_fn=lambda ex, _idx: ex.audio.path,
+        duration_fn=lambda _path: 2.0,
+        run_id="test_run",
+        timestamp="20240101_120000",
+        dataset_version="FakeDataset_v0",
+        dataset_split=None,
+    )
+
+    assert len(results) == 1
+    assert results[0].summary.split is None

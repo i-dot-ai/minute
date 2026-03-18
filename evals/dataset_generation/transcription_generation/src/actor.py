@@ -3,9 +3,9 @@ from functools import cached_property
 
 from common.llm.client import ChatBot
 
-from .constants import ACTOR_SYSTEM_TEMPLATE, get_template
-from .history_manager import HistoryManager
-from .participant import Participant
+from evals.dataset_generation.transcription_generation.src.constants import ACTOR_SYSTEM_TEMPLATE, get_template
+from evals.dataset_generation.transcription_generation.src.history_manager import HistoryManager
+from evals.dataset_generation.transcription_generation.src.participant import Participant
 
 
 def strip_speaker_prefix(text: str) -> str:

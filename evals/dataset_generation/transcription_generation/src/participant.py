@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 from common.llm.client import ChatBot, FastOrBestLLM, create_default_chatbot
 
-from .history_manager import HistoryManager
+from evals.dataset_generation.transcription_generation.src.history_manager import HistoryManager
 
 
 class Participant:

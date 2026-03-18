@@ -1,4 +1,4 @@
-from .models import ChatEntry
+from evals.dataset_generation.transcription_generation.src.models import ChatEntry
 
 
 class HistoryManager:

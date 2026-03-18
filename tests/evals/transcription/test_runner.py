@@ -223,6 +223,8 @@ def test_run_engines_parallel_multiple_adapters(tmp_path):
 
 
 def test_run_engines_parallel_respects_max_workers(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+
     wav_a = tmp_path / "a.wav"
     wav_a.write_bytes(b"RIFFfake")
 
@@ -234,17 +236,15 @@ def test_run_engines_parallel_respects_max_workers(tmp_path):
 
     adapter = FakeAdapter("Engine_A", "hello", proc_sec=0.5)
 
-    with patch("evals.transcription.src.core.runner.ThreadPoolExecutor") as mock_executor:
-        mock_executor.return_value.__enter__.return_value = mock_executor.return_value
-        mock_executor.return_value.submit.return_value.result.return_value = (
-            "Engine_A",
-            0,
-            None,
-            2.0,
-            0.5,
-        )
+    original_init = ThreadPoolExecutor.__init__
+    init_calls = []
 
-        run_engines_parallel(
+    def track_init(self, *args, max_workers=None, **kwargs):
+        init_calls.append(max_workers)
+        return original_init(self, *args, max_workers=max_workers, **kwargs)
+
+    with patch.object(ThreadPoolExecutor, "__init__", track_init):
+        results = run_engines_parallel(
             adapters=[adapter],
             indices=[0],
             dataset=dataset,
@@ -257,7 +257,10 @@ def test_run_engines_parallel_respects_max_workers(tmp_path):
             max_workers=2,
         )
 
-        mock_executor.assert_called_once_with(max_workers=2)
+    assert len(init_calls) == 1
+    assert init_calls[0] == 2
+    assert len(results) == 1
+    assert results[0].summary.engine_version == "Engine_A"
 
 
 def test_run_engines_parallel_sorts_samples_by_example_id(tmp_path):

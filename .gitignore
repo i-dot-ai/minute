@@ -114,6 +114,7 @@ config/google-credentials.json
 
 #testing
 .coverage
+.coverage.*
 htmlcov/
 coverage.xml
 .pytest_cache/

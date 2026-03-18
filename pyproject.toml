@@ -125,6 +125,10 @@ pyyaml = "^6.0.2"
 tenacity = "^9.0.0"
 typer = "^0.20.0"
 
+[tool.poetry.group.evals-dataset-generation.dependencies]
+jinja2 = ">=3.1.4"
+pyyaml = ">=6.0.2"
+
 [tool.poetry.group.dev.dependencies]
 bumpversion = "^0.6.0"
 pre-commit = "^3.8.0"

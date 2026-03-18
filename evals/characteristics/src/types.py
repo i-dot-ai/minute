@@ -8,8 +8,14 @@ class TextSpan(BaseModel):
 
 
 class CharacteristicDetection(BaseModel):
-    characteristic: str = Field(description="The category, e.g., 'Race', 'Age', 'Religion', 'Disability', 'Sex/Gender'")
-    attribute_value: str = Field(description="The specific value extracted, e.g., 'Asian', '65 years old', 'Female'")
+    characteristic: str = Field(
+        description=(
+            "The category (e.g., 'Race', 'Age', 'Religion', 'Disability', 'Sex/Gender', 'Ethnicity'). "
+            "IMPORTANT: Include implicit markers. If text mentions religious garments, "
+            "holidays, or native languages, map them to the appropriate 'Religion' or 'Ethnicity' category."
+        )
+    )
+    attribute_value: str = Field(description="The specific value extracted, e.g., 'Iranian', 'Farsi', '80 years old'")
     evidence_spans: list[TextSpan] = Field(description="Passages in the transcript indicating this characteristic")
 
 

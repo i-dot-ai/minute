@@ -57,3 +57,29 @@ poetry run python evals/transcription/src/evaluate.py \
 ```
 
 Results saved to `evals/transcription/results/evaluation_results_YYYYMMDD_HHMMSS.json`.
+
+# Characteristic Extraction Evaluation
+
+Evaluation framework for extracting characteristics and attributes from transcripts using an LLM. 
+
+## Setup
+
+Ensure you have the required dependencies installed from the project root:
+
+```bash
+poetry install --with evals
+```
+
+## Usage
+
+1. **Input Data**: Place your transcription files (`.txt` or `.json`) in `evals/characteristics/input/`.
+2. **Configuration**: Edit `evals/characteristics/configs/default_config.yaml` to specify the model, dataset settings, and run output paths.
+3. **Prompts**: Jinja2 prompt templates are located in `evals/characteristics/prompts/`.
+
+Run the evaluation:
+
+```bash
+poetry run python evals/characteristics/src/main.py
+```
+
+Results for each input file will be saved to `evals/characteristics/output/` as `<filename>_output.json`.

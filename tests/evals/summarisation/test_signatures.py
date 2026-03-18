@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import dspy
 
 from evals.summarisation.src.signatures import DialogSumSignature, JudgeRatingSignature

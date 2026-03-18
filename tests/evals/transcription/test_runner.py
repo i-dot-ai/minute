@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
 
 from evals.transcription.src.core.runner import (
@@ -232,21 +234,30 @@ def test_run_engines_parallel_respects_max_workers(tmp_path):
 
     adapter = FakeAdapter("Engine_A", "hello", proc_sec=0.5)
 
-    results = run_engines_parallel(
-        adapters=[adapter],
-        indices=[0],
-        dataset=dataset,
-        wav_write_fn=lambda ex, _idx: ex.audio.path,
-        duration_fn=lambda _path: 2.0,
-        run_id="test_run",
-        timestamp="20240101_120000",
-        dataset_version="FakeDataset_v0",
-        dataset_split="test",
-        max_workers=2,
-    )
+    with patch("evals.transcription.src.core.runner.ThreadPoolExecutor") as mock_executor:
+        mock_executor.return_value.__enter__.return_value = mock_executor.return_value
+        mock_executor.return_value.submit.return_value.result.return_value = (
+            "Engine_A",
+            0,
+            None,
+            2.0,
+            0.5,
+        )
 
-    assert len(results) == 1
-    assert results[0].summary.engine_version == "Engine_A"
+        run_engines_parallel(
+            adapters=[adapter],
+            indices=[0],
+            dataset=dataset,
+            wav_write_fn=lambda ex, _idx: ex.audio.path,
+            duration_fn=lambda _path: 2.0,
+            run_id="test_run",
+            timestamp="20240101_120000",
+            dataset_version="FakeDataset_v0",
+            dataset_split="test",
+            max_workers=2,
+        )
+
+        mock_executor.assert_called_once_with(max_workers=2)
 
 
 def test_run_engines_parallel_sorts_samples_by_example_id(tmp_path):
@@ -315,6 +326,7 @@ def test_run_engines_parallel_accumulates_timing(tmp_path):
 
     summary = results[0].summary
     assert summary.n_examples == 2
+    assert summary.processing_speed_ratio == pytest.approx(0.25)
 
 
 def test_run_engines_parallel_includes_metadata_in_samples(tmp_path):
@@ -391,7 +403,8 @@ def test_run_engines_parallel_computes_latency_ms(tmp_path):
         ]
     )
 
-    adapter = FakeAdapter("Engine_A", "hello", proc_sec=1.5)
+    processing_time_sec = 1.5
+    adapter = FakeAdapter("Engine_A", "hello", proc_sec=processing_time_sec)
 
     results = run_engines_parallel(
         adapters=[adapter],
@@ -406,7 +419,8 @@ def test_run_engines_parallel_computes_latency_ms(tmp_path):
     )
 
     sample = results[0].samples[0]
-    assert sample.latency_ms == pytest.approx(1500.0)
+    expected_latency_ms = processing_time_sec * 1000
+    assert sample.latency_ms == pytest.approx(expected_latency_ms)
 
 
 def test_run_engines_parallel_handles_none_dataset_split(tmp_path):

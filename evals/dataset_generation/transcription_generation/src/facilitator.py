@@ -47,7 +47,7 @@ class Facilitator(Participant):
         for entry in self.history_manager.history:
             messages.append({"role": "user", "content": f"Speaker {entry.speaker_id} said: {entry.content}"})
 
-        spoken_speakers = {speaker_id for speaker_id, _ in self.history_manager.history}
+        spoken_speakers = {entry.speaker_id for entry in self.history_manager.history}
         unspoken_speakers = self.speaker_ids - spoken_speakers
 
         if unspoken_speakers:

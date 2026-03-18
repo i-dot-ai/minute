@@ -19,7 +19,7 @@ class Facilitator(Participant):
         self,
         history_manager: HistoryManager,
         actor_definitions: list[str],
-        speaker_ids: list[str],
+        speaker_ids: set[str],
         identifier: str = "facilitator",
         chatbot: ChatBot | None = None,
     ) -> None:

@@ -53,8 +53,8 @@ def main() -> None:
     parser.add_argument(
         "--config",
         type=str,
-        default="default.yaml",
-        help="Config file name in configs/ directory (default: default.yaml)",
+        default="smoketest.yaml",
+        help="Config file name in configs/ directory (default: smoketest.yaml)",
     )
     args = parser.parse_args()
 

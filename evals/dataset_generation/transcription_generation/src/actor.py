@@ -8,6 +8,10 @@ from .history_manager import HistoryManager
 from .participant import Participant
 
 
+def strip_speaker_prefix(text: str) -> str:
+    return re.sub(r"^speaker_\d+\s+said:\s*", "", text, flags=re.IGNORECASE)
+
+
 class Actor(Participant):
     def __init__(
         self, identifier: str, history_manager: HistoryManager, actor_definition: str, chatbot: ChatBot | None = None
@@ -23,6 +27,6 @@ class Actor(Participant):
     async def reply_to_last_message(self, notice_message: str | None = None) -> str:
         messages = self.get_new_messages(notice_message)
         response = await self.chatbot.chat(messages)
-        cleaned_response = re.sub(r"^speaker_\d+\s+said:\s*", "", response, flags=re.IGNORECASE)
+        cleaned_response = strip_speaker_prefix(response)
         self.history_manager.add_to_history(cleaned_response, self.identifier)
         return cleaned_response

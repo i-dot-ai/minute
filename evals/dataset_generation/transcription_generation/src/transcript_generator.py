@@ -7,7 +7,7 @@ from common.llm.client import FastOrBestLLM, create_default_chatbot
 from evals.dataset_generation.transcription_generation.src.actor import Actor
 from evals.dataset_generation.transcription_generation.src.config import TranscriptGenerationConfig
 from evals.dataset_generation.transcription_generation.src.constants import (
-    TIME_REMAINING_TEMPLATE,
+    ENDING_NOTICE_TEMPLATE,
     get_template,
 )
 from evals.dataset_generation.transcription_generation.src.facilitator import Facilitator
@@ -45,13 +45,13 @@ class TranscriptGenerator:
         if notice_type == NoticeType.NONE:
             return None
 
-        template = get_template(TIME_REMAINING_TEMPLATE)
+        template = get_template(ENDING_NOTICE_TEMPLATE)
         return template.render(
             use_hard_ending_notice=(notice_type == NoticeType.HARD),
             use_soft_ending_notice=(notice_type == NoticeType.SOFT),
         )
 
-    def _create_time_remaining_message(self, current_word_count: int) -> str | None:
+    def _create_ending_notice_message(self, current_word_count: int) -> str | None:
         notice_type = self._classify_notice_type(current_word_count)
         return self._get_notice_prompt(notice_type)
 
@@ -99,7 +99,7 @@ class TranscriptGenerator:
 
             current_actor = actors[current_speaker_id]
 
-            notice_message = self._create_time_remaining_message(word_count)
+            notice_message = self._create_ending_notice_message(word_count)
             reply = await current_actor.reply_to_last_message(notice_message)
             word_count += len(reply.split())
 

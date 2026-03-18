@@ -25,7 +25,7 @@ class Facilitator(Participant):
     ) -> None:
         super().__init__(identifier, history_manager, chatbot)
         self.actor_definitions = actor_definitions
-        self.speaker_ids = speaker_ids
+        self.speaker_ids = set(speaker_ids)
 
     @property
     def system_message_content(self) -> str:
@@ -34,7 +34,7 @@ class Facilitator(Participant):
     @cached_property
     def _static_system_prompt(self) -> str:
         template = get_template(FACILITATOR_TEMPLATE)
-        roles = list(zip(self.speaker_ids, self.actor_definitions, strict=False))
+        roles = list(zip(sorted(self.speaker_ids), self.actor_definitions, strict=False))
         return template.render(
             roles=roles,
             conversation_history=None,
@@ -47,12 +47,12 @@ class Facilitator(Participant):
         for entry in self.history_manager.history:
             messages.append({"role": "user", "content": f"Speaker {entry.speaker_id} said: {entry.content}"})
 
-        speakers_who_spoke = {speaker_id for speaker_id, _ in self.history_manager.history}
-        speakers_who_havent_spoken = [sid for sid in self.speaker_ids if sid not in speakers_who_spoke]
+        spoken_speakers = {speaker_id for speaker_id, _ in self.history_manager.history}
+        unspoken_speakers = self.speaker_ids - spoken_speakers
 
-        if speakers_who_havent_spoken:
+        if unspoken_speakers:
             reminder_template = get_template(FACILITATOR_REMINDER_TEMPLATE)
-            reminder = reminder_template.render(speakers_who_havent_spoken=speakers_who_havent_spoken)
+            reminder = reminder_template.render(speakers_who_havent_spoken=unspoken_speakers)
             messages.append({"role": "user", "content": reminder})
 
         messages.append(

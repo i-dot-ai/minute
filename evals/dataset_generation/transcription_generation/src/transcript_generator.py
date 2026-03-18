@@ -72,7 +72,7 @@ class TranscriptGenerator:
         facilitator = Facilitator(
             history_manager=history_manager,
             actor_definitions=actor_definitions,
-            speaker_ids=speaker_ids,
+            speaker_ids=set(speaker_ids),
             identifier="facilitator",
             chatbot=create_default_chatbot(FastOrBestLLM.BEST),
         )

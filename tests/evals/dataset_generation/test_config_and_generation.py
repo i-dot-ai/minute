@@ -5,7 +5,6 @@ from unittest.mock import Mock, patch
 import pytest
 from pydantic import ValidationError
 
-from common.database.postgres_models import DialogueEntry
 from evals.dataset_generation.transcription_generation.src.config import TranscriptGenerationConfig
 from evals.dataset_generation.transcription_generation.src.transcript_generator import (
     NoticeType,
@@ -51,9 +50,9 @@ def test_classify_notice_type():
     config = TranscriptGenerationConfig(theme="Test", word_target=100)
     generator = TranscriptGenerator(generation_config=config)
 
-    assert generator._classify_notice_type(50) == NoticeType.NONE
-    assert generator._classify_notice_type(92) == NoticeType.SOFT
-    assert generator._classify_notice_type(99) == NoticeType.HARD
+    assert generator._classify_notice_type(50) == NoticeType.NONE  # noqa: SLF001
+    assert generator._classify_notice_type(92) == NoticeType.SOFT  # noqa: SLF001
+    assert generator._classify_notice_type(99) == NoticeType.HARD  # noqa: SLF001
 
 
 @pytest.mark.asyncio
@@ -67,17 +66,13 @@ async def test_generate_transcript_raises_on_mismatched_actor_count(basic_config
 @pytest.mark.asyncio
 async def test_generate_transcript_returns_dialogue_entries(basic_config, mock_actor_definitions):
     from unittest.mock import AsyncMock
-    
+
     with (
-        patch(
-            "evals.dataset_generation.transcription_generation.src.transcript_generator.Actor"
-        ) as mock_actor_class,
+        patch("evals.dataset_generation.transcription_generation.src.transcript_generator.Actor") as mock_actor_class,
         patch(
             "evals.dataset_generation.transcription_generation.src.transcript_generator.Facilitator"
         ) as mock_facilitator_class,
-        patch(
-            "evals.dataset_generation.transcription_generation.src.transcript_generator.create_default_chatbot"
-        ),
+        patch("evals.dataset_generation.transcription_generation.src.transcript_generator.create_default_chatbot"),
         patch(
             "evals.dataset_generation.transcription_generation.src.transcript_generator.HistoryManager"
         ) as mock_history_class,

@@ -150,7 +150,7 @@ def test_facilitator_initialization(history_manager):
 def test_build_facilitator_messages_with_history(history_manager, mock_chatbot):
     actor_definitions = ["Doctor", "Patient"]
     speaker_ids = {"speaker_1", "speaker_2"}
-    
+
     history_manager.add_to_history("Hello doctor", "speaker_1")
     history_manager.add_to_history("Hello patient", "speaker_2")
 
@@ -161,7 +161,7 @@ def test_build_facilitator_messages_with_history(history_manager, mock_chatbot):
         chatbot=mock_chatbot,
     )
 
-    messages = facilitator._build_facilitator_messages()
+    messages = facilitator._build_facilitator_messages()  # noqa: SLF001
 
     assert messages[0]["role"] == "system"
     user_messages = [m for m in messages if m["role"] == "user"]
@@ -172,7 +172,7 @@ def test_build_facilitator_messages_with_history(history_manager, mock_chatbot):
 def test_build_facilitator_messages_includes_reminder_for_unspoken_speakers(history_manager, mock_chatbot):
     actor_definitions = ["Doctor", "Patient"]
     speaker_ids = {"speaker_1", "speaker_2"}
-    
+
     history_manager.add_to_history("Hello", "speaker_1")
 
     facilitator = Facilitator(
@@ -182,7 +182,7 @@ def test_build_facilitator_messages_includes_reminder_for_unspoken_speakers(hist
         chatbot=mock_chatbot,
     )
 
-    messages = facilitator._build_facilitator_messages()
+    messages = facilitator._build_facilitator_messages()  # noqa: SLF001
     user_messages = [m for m in messages if m["role"] == "user"]
 
     assert any("speaker_2" in m["content"] for m in user_messages)
@@ -192,7 +192,7 @@ def test_build_facilitator_messages_includes_reminder_for_unspoken_speakers(hist
 async def test_decide_next_speaker_returns_speaker_and_termination_flag(history_manager, mock_chatbot):
     actor_definitions = ["Doctor", "Patient"]
     speaker_ids = {"speaker_1", "speaker_2"}
-    
+
     mock_decision = FacilitatorDecision(next_speaker_id="speaker_2", should_terminate=False)
     mock_chatbot.structured_chat.return_value = mock_decision
 
@@ -214,7 +214,7 @@ async def test_decide_next_speaker_returns_speaker_and_termination_flag(history_
 async def test_decide_next_speaker_calls_structured_chat_with_correct_format(history_manager, mock_chatbot):
     actor_definitions = ["Doctor", "Patient"]
     speaker_ids = {"speaker_1", "speaker_2"}
-    
+
     mock_decision = FacilitatorDecision(next_speaker_id="speaker_1", should_terminate=False)
     mock_chatbot.structured_chat.return_value = mock_decision
 
@@ -308,8 +308,6 @@ def test_participant_get_new_messages_filters_cached_messages(history_manager, m
     assert len(messages) == 0
 
 
-
-
 def test_actor_definition_initialization():
     definitions = ["Doctor", "Patient"]
     actor_def = ActorDefinition(actors_definitions=definitions)
@@ -345,7 +343,7 @@ def test_chat_entry_initialization():
 def test_chat_entry_requires_both_fields():
     with pytest.raises(ValidationError):
         ChatEntry(content="Missing speaker")
-    
+
     with pytest.raises(ValidationError):
         ChatEntry(speaker_id="speaker_1")
 
@@ -416,9 +414,24 @@ async def test_three_actor_conversation():
     actor2_bot = FakeChatBot(["Let me add something"])
     actor3_bot = FakeChatBot(["That's a good perspective"])
 
-    actor1 = Actor(identifier="speaker_1", history_manager=history, actor_definition="First participant", chatbot=actor1_bot)
-    actor2 = Actor(identifier="speaker_2", history_manager=history, actor_definition="Second participant", chatbot=actor2_bot)
-    actor3 = Actor(identifier="speaker_3", history_manager=history, actor_definition="Third participant", chatbot=actor3_bot)
+    actor1 = Actor(
+        identifier="speaker_1",
+        history_manager=history,
+        actor_definition="First participant",
+        chatbot=actor1_bot,
+    )
+    actor2 = Actor(
+        identifier="speaker_2",
+        history_manager=history,
+        actor_definition="Second participant",
+        chatbot=actor2_bot,
+    )
+    actor3 = Actor(
+        identifier="speaker_3",
+        history_manager=history,
+        actor_definition="Third participant",
+        chatbot=actor3_bot,
+    )
 
     history.add_to_history("Let's start the discussion", "speaker_1")
 

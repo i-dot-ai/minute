@@ -83,7 +83,7 @@ sentry-sdk = {extras = ["fastapi"], version = "^2.18.0"}
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.42"}
 asyncpg = "^0.30.0"
 markdownify = "^1.2.0"
-python-multipart = "^0.0.20"
+python-multipart = "^0.0.22"
 i-dot-ai-utilities = "^0.4.4"
 azure-servicebus = "^7.14.2"
 mypy-boto3-sqs = "^1.42.3"

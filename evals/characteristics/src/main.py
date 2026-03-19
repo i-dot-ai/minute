@@ -1,23 +1,36 @@
+import argparse
 import asyncio
 import json
 import logging
-import re
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from pydantic import BaseModel
 
 from common.llm.client import create_chatbot
-from evals.characteristics.src.types import CharacteristicExtractionOutput
+from evals.characteristics.src.types import CharacteristicExtractionOutput, EvalsConfig
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def load_config(config_path: Path) -> dict[str, Any]:
+class TranscriptTurn(BaseModel):
+    speaker: str
+    text: str
+
+
+def load_config(config_path: Path) -> EvalsConfig:
+    if not config_path.exists():
+        logger.warning("Config file %s not found. Using default parameters.", config_path)
+        return EvalsConfig()  # Uses the Pydantic defaults automatically!
+
     with config_path.open("r", encoding="utf-8") as f:
-        return cast(dict[str, Any], yaml.safe_load(f))
+        raw_yaml = yaml.safe_load(f) or {}
+
+    # Pydantic will automatically raise detailed errors if the YAML has bad types
+    return EvalsConfig(**raw_yaml)
 
 
 def render_prompt(template_path: str, transcript: str) -> str:
@@ -31,22 +44,21 @@ def render_prompt(template_path: str, transcript: str) -> str:
 
 
 def load_transcript(file_path: Path) -> str:
+    # 1. Handle raw text as a baseline
     if file_path.suffix == ".txt":
         return file_path.read_text(encoding="utf-8")
 
+    # 2. Assume compliant JSON
     if file_path.suffix == ".json":
-        data = json.loads(file_path.read_text(encoding="utf-8"))
+        raw_data = json.loads(file_path.read_text(encoding="utf-8"))
+        # Using Pydantic to validate the input structure immediately
+        turns = [TranscriptTurn(**item) for item in raw_data]
+        return "\n".join(f"{t.speaker}: {t.text}" for t in turns)
 
-        if isinstance(data, list) and len(data) > 0 and "speaker" in data[0] and "text" in data[0]:
-            return "\n".join(f"{item['speaker']}: {item['text']}" for item in data)
+    raise ValueError(f"Unsupported format: {file_path.suffix}")
 
-        if isinstance(data, str):
-            return data
 
-        return json.dumps(data)
-
-    msg = f"Unsupported file format: {file_path.suffix}"
-    raise ValueError(msg)
+_WAF_TRANSLATION_TABLE = str.maketrans("-–—", "   ", "<>*;={}()`~|")  # noqa: RUF001
 
 
 def sanitize_for_waf(text: str) -> str:
@@ -54,39 +66,35 @@ def sanitize_for_waf(text: str) -> str:
     Aggressive sanitizer to bypass Azure WAF OWASP False Positives.
     Removes characters that trigger SQLi and XSS anomaly rules.
     """
-    # 1. Remove angle brackets (XSS triggers)
-    clean_text = re.sub(r"[<>]", "", text)
-    # 2. Remove ASTERISKS (Major SQLi wildcard trigger in Azure WAF)
-    clean_text = clean_text.replace("*", "")
-    # 3. Replace all dashes with spaces (SQL comment triggers)
-    clean_text = re.sub(r"[-–—]", " ", clean_text)  # noqa: RUF001
-    # 4. Remove semicolons, equals signs, and code block symbols
-    return re.sub(r"[;={}()`~|]", "", clean_text)
+    return text.translate(_WAF_TRANSLATION_TABLE)
 
 
-async def process_file(file_path: Path, config: dict[str, Any], root_dir: Path) -> dict[str, Any]:
-    prompt_rel_path = Path(config["prompts"]["extraction_template"])
+async def process_file(file_path: Path, config: EvalsConfig, root_dir: Path) -> dict[str, Any]:
+    prompt_rel_path = Path(config.prompts.extraction_template)
     template_name = prompt_rel_path.stem
     prompt_path = root_dir / prompt_rel_path
-    model_name = config["model"]["model"]
+    model_name = config.model.model
 
     logger.info("Processing %s using model '%s'", file_path.name, model_name)
 
     transcript = load_transcript(file_path)
 
     chatbot = create_chatbot(
-        model_type=config["model"]["provider"],
-        model_name=config["model"]["model"],
-        temperature=config["model"].get("temperature", 0.0),
+        model_type=config.model.provider,
+        model_name=config.model.model,
+        temperature=config.model.temperature,
     )
 
     # 3. Small Text Chunking for MAXIMUM RECALL (High Detail)
     chunk_size_chars = 1000
 
     all_detected_characteristics = []
+    chunks = []
+    failed_chunks = []
 
     for idx, char_offset in enumerate(range(0, len(transcript), chunk_size_chars)):
         chunk_text = transcript[char_offset : char_offset + chunk_size_chars]
+        chunks.append(chunk_text)
 
         logger.info("  -> Sending Chunk %d to Azure...", idx + 1)
 
@@ -109,6 +117,7 @@ async def process_file(file_path: Path, config: dict[str, Any], root_dir: Path) 
 
             logger.info("     Found %d characteristics in chunk %d", len(response.detected_characteristics), idx + 1)
         except Exception as e:  # noqa: BLE001
+            failed_chunks.append(idx + 1)
             logger.error("     Failed on chunk %d: %s", idx + 1, e)
 
     # Deduplicate the results
@@ -116,10 +125,10 @@ async def process_file(file_path: Path, config: dict[str, Any], root_dir: Path) 
     seen_signatures = set()
 
     for item in all_detected_characteristics:
-        cat = item.characteristic
-        val = item.attribute_value
+        category = item.characteristic
+        value = item.attribute_value
 
-        signature = f"{cat}|{val}"
+        signature = f"{category}|{value}"
 
         if signature not in seen_signatures:
             seen_signatures.add(signature)
@@ -128,28 +137,40 @@ async def process_file(file_path: Path, config: dict[str, Any], root_dir: Path) 
             pass
 
     # 5. Aggregate the results into final data contract
+
     return {
         "version": "1.0",
         "detected_characteristics": unique_characteristics,
         "metadata": {
-            "model_used": config["model"]["model"],
+            "model_used": config.model.model,
             "prompt_version": template_name,
-            "total_chunks_processed": idx + 1,
+            "total_chunks_processed": len(chunks),
+            "failed_chunks": failed_chunks,
         },
     }
 
 
 async def main() -> None:
+    parser = argparse.ArgumentParser(description="Run Characteristics Extraction Evals")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="evals/characteristics/configs/default_config.yaml",
+        help="Path to the YAML configuration file",
+    )
+    args = parser.parse_args()
     root_dir = Path(__file__).resolve().parent.parent.parent.parent
 
     if not (root_dir / "pyproject.toml").exists():
         root_dir = Path.cwd()
 
-    config_path = root_dir / "evals" / "characteristics" / "configs" / "default_config.yaml"
+    config_path = Path(args.config)
+    if not config_path.is_absolute():
+        config_path = root_dir / config_path
     config = load_config(config_path)
 
-    input_dir = root_dir / config["dataset"]["input_dir"]
-    output_dir = root_dir / config["run"]["output_dir"]
+    input_dir = root_dir / config.dataset.input_dir
+    output_dir = root_dir / config.run.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if not input_dir.exists():

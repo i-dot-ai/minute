@@ -57,3 +57,16 @@ class CharacteristicDetection(BaseModel):
 class CharacteristicExtractionOutput(BaseModel):
     version: str = Field(default="1.1")
     detected_characteristics: list[CharacteristicDetection]
+
+
+class ExtractionMetadata(BaseModel):
+    model_used: str
+    prompt_version: str
+    total_chunks_processed: int
+    failed_chunks: list[int]
+
+
+class ProcessedFileResult(BaseModel):
+    version: str = Field(default="1.0")
+    detected_characteristics: list[CharacteristicDetection]
+    metadata: ExtractionMetadata

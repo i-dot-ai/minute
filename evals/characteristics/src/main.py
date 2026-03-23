@@ -3,14 +3,19 @@ import asyncio
 import json
 import logging
 from pathlib import Path
-from typing import Any
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pydantic import BaseModel
 
 from common.llm.client import create_chatbot
-from evals.characteristics.src.types import CharacteristicExtractionOutput, EvalsConfig
+from evals.characteristics.src.types import (
+    CharacteristicDetection,
+    CharacteristicExtractionOutput,
+    EvalsConfig,
+    ExtractionMetadata,
+    ProcessedFileResult,
+)
 
 """
 Characteristic Extraction evaluation pipeline.
@@ -109,7 +114,7 @@ def sanitize_for_waf(text: str) -> str:
     return text.translate(_WAF_TRANSLATION_TABLE)
 
 
-def deduplicate_characteristics(characteristics: list[Any]) -> list[dict[str, Any]]:
+def deduplicate_characteristics(characteristics: list[CharacteristicDetection]) -> list[CharacteristicDetection]:
     """
     Removes duplicate characteristics based on their category and value.
     This is necessary because overlapping chunks may result in duplicate extractions.
@@ -118,7 +123,7 @@ def deduplicate_characteristics(characteristics: list[Any]) -> list[dict[str, An
         characteristics: A list of characteristic objects.
 
     Returns:
-        A list of unique characteristic dictionaries.
+        A list of unique characteristic objects.
     """
     unique_characteristics = []
     seen_signatures = set()
@@ -130,12 +135,12 @@ def deduplicate_characteristics(characteristics: list[Any]) -> list[dict[str, An
 
         if signature not in seen_signatures:
             seen_signatures.add(signature)
-            unique_characteristics.append(item.model_dump())
+            unique_characteristics.append(item)
 
     return unique_characteristics
 
 
-async def process_file(file_path: Path, config: EvalsConfig, root_dir: Path) -> dict[str, Any]:
+async def process_file(file_path: Path, config: EvalsConfig, root_dir: Path) -> ProcessedFileResult:
     """
     Processes a single transcript file, extracting characteristics in chunks.
 
@@ -145,7 +150,7 @@ async def process_file(file_path: Path, config: EvalsConfig, root_dir: Path) -> 
         root_dir: The project root directory.
 
     Returns:
-        A dictionary containing the extraction results and metadata.
+        A ProcessedFileResult containing the extraction results and metadata.
     """
     prompt_rel_path = Path(config.prompts.extraction_template)
     template_name = prompt_rel_path.stem
@@ -166,10 +171,10 @@ async def process_file(file_path: Path, config: EvalsConfig, root_dir: Path) -> 
     overlap_chars = 250
     stride = chunk_size_chars - overlap_chars
 
-    chunks = []
-    all_detected_characteristics = []
-    failed_chunks = []
-    char_offsets = []
+    chunks: list[str] = []
+    all_detected_characteristics: list[CharacteristicDetection] = []
+    failed_chunks: list[int] = []
+    char_offsets: list[int] = []
 
     # Split transcript into overlapping chunks
     start = 0
@@ -210,16 +215,19 @@ async def process_file(file_path: Path, config: EvalsConfig, root_dir: Path) -> 
         # Rate limiting / polite delay between requests
         await asyncio.sleep(2)
 
-    return {
-        "version": "1.0",
-        "detected_characteristics": deduplicate_characteristics(all_detected_characteristics),
-        "metadata": {
-            "model_used": model_name,
-            "prompt_version": template_name,
-            "total_chunks_processed": len(chunks),
-            "failed_chunks": failed_chunks,
-        },
-    }
+    # Prepare metadata
+    metadata = ExtractionMetadata(
+        model_used=model_name,
+        prompt_version=template_name,
+        total_chunks_processed=len(chunks),
+        failed_chunks=failed_chunks,
+    )
+
+    return ProcessedFileResult(
+        version="1.0",
+        detected_characteristics=deduplicate_characteristics(all_detected_characteristics),
+        metadata=metadata,
+    )
 
 
 async def main() -> None:
@@ -264,7 +272,7 @@ async def main() -> None:
 
                 # Save results to output directory
                 output_file = output_dir / f"{file_path.stem}_output.json"
-                output_file.write_text(json.dumps(result, indent=2))
+                output_file.write_text(json.dumps(result.model_dump(), indent=2))
                 logger.info("Saved result to %s", output_file)
 
             except (OSError, json.JSONDecodeError) as e:

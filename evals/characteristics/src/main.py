@@ -21,7 +21,7 @@ from evals.characteristics.src.types import (
 Characteristic Extraction evaluation pipeline.
 
 This script processes transcripts (TXT or JSON) to extract specific characteristics
-using an LLM. It handles large transcripts by chunking them with an overlap,
+using gpt4o on APIM. It handles large transcripts by chunking them with an overlap,
 sanitizes input to avoid WAF issues, and maps detected characteristics back
 to their original positions in the transcript.
 """
@@ -78,7 +78,7 @@ def render_prompt(template_path: str, transcript: str) -> str:
 
 def load_transcript(file_path: Path) -> str:
     """
-    Loads and formats a transcript from a file.
+    Loads and formats transcript from a file.
     Supports .txt (raw text) and .json (list of speaker/text pairs).
 
     Args:

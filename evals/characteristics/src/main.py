@@ -8,7 +8,7 @@ import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pydantic import BaseModel
 
-from common.llm.client import create_chatbot
+from common.llm.client import ChatBot, create_chatbot
 from evals.characteristics.src.types import (
     CharacteristicDetection,
     CharacteristicExtractionOutput,
@@ -140,6 +140,31 @@ def deduplicate_characteristics(characteristics: list[CharacteristicDetection]) 
     return unique_characteristics
 
 
+def build_chunks(transcript: str, chunk_size_chars: int = 1000, overlap_chars: int = 250) -> list[tuple[str, int]]:
+    stride = chunk_size_chars - overlap_chars
+    chunks = []
+    start = 0
+    while start < len(transcript):
+        chunks.append((transcript[start : start + chunk_size_chars], start))
+        start += stride
+    return chunks
+
+
+async def process_chunk(
+    chunk_text: str, offset: int, prompt_path: Path, chatbot: ChatBot
+) -> list[CharacteristicDetection]:
+    safe_chunk = sanitize_for_waf(chunk_text)
+    prompt_text = render_prompt(str(prompt_path), safe_chunk)
+    response = await chatbot.structured_chat([{"role": "user", "content": prompt_text}], CharacteristicExtractionOutput)
+    for item in response.detected_characteristics:
+        for span in item.evidence_spans:
+            if span.start_index is not None:
+                span.start_index += offset
+            if span.end_index is not None:
+                span.end_index += offset
+    return response.detected_characteristics
+
+
 async def process_file(file_path: Path, config: EvalsConfig, root_dir: Path) -> ProcessedFileResult:
     """
     Processes a single transcript file, extracting characteristics in chunks.
@@ -166,63 +191,28 @@ async def process_file(file_path: Path, config: EvalsConfig, root_dir: Path) -> 
         temperature=config.model.temperature,
     )
 
-    # Chunking configuration: sliding window to ensure context is preserved at boundaries.
-    chunk_size_chars = 1000
-    overlap_chars = 250
-    stride = chunk_size_chars - overlap_chars
-
-    chunks: list[str] = []
     all_detected_characteristics: list[CharacteristicDetection] = []
     failed_chunks: list[int] = []
-    char_offsets: list[int] = []
+    chunks = build_chunks(transcript)
 
-    # Split transcript into overlapping chunks
-    start = 0
-    while start < len(transcript):
-        chunks.append(transcript[start : start + chunk_size_chars])
-        char_offsets.append(start)
-        start += stride
-
-    # Process each chunk sequentially
-    for idx, (chunk_text, offset) in enumerate(zip(chunks, char_offsets, strict=False)):
+    for idx, (chunk_text, offset) in enumerate(chunks):
         logger.info("  -> Sending Chunk %d of %d to Azure...", idx + 1, len(chunks))
-
-        # Sanitize chunk text to avoid WAF false positives (e.g., specific SQL/XSS tokens)
-        safe_chunk = sanitize_for_waf(chunk_text)
-        prompt_text = render_prompt(str(prompt_path), safe_chunk)
-        messages = [{"role": "user", "content": prompt_text}]
-
         try:
-            # Get structured output from the LLM
-            response = await chatbot.structured_chat(messages, CharacteristicExtractionOutput)
-
-            # Adjust indices of detected spans to match the original transcript
-            for item in response.detected_characteristics:
-                for span in item.evidence_spans:
-                    if span.start_index is not None:
-                        span.start_index += offset
-                    if span.end_index is not None:
-                        span.end_index += offset
-
-                all_detected_characteristics.append(item)
-
-            logger.info("Found %d characteristics in chunk %d", len(response.detected_characteristics), idx + 1)
-
+            detected = await process_chunk(chunk_text, offset, prompt_path, chatbot)
+            all_detected_characteristics.extend(detected)
+            logger.info("     Found %d characteristics in chunk %d", len(detected), idx + 1)
         except (ValueError, RuntimeError, ConnectionError, TimeoutError) as e:
             failed_chunks.append(idx + 1)
             logger.error("     Failed on chunk %d: %s", idx + 1, e)
+        if idx < len(chunks) - 1:
+            await asyncio.sleep(2)
 
-        # Rate limiting / polite delay between requests
-        await asyncio.sleep(2)
-
-    # Prepare metadata
     metadata = ExtractionMetadata(
         model_used=model_name,
         prompt_version=template_name,
         total_chunks_processed=len(chunks),
         failed_chunks=failed_chunks,
     )
-
     return ProcessedFileResult(
         version="1.0",
         detected_characteristics=deduplicate_characteristics(all_detected_characteristics),

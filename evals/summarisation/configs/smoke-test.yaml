@@ -1,0 +1,25 @@
+run:
+  output_dir: evals/summarisation/output
+  seed: 0
+  split: test
+  limit: 2
+  prompt_version: dev
+
+dataset:
+  name: knkarthick/dialogsum
+  config: default
+  dialogue_field: dialogue
+  reference_summary_field: summary
+
+judge:
+  pass_threshold: 4
+
+metrics:
+  - faithfulness
+  - coverage
+  - conciseness
+  - coherence
+
+prompts:
+  summarizer_template_path: evals/summarisation/prompts/summarize.j2
+  judge_template_path: evals/summarisation/prompts/judge.j2

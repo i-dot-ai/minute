@@ -1,8 +1,25 @@
 from __future__ import annotations
 
+from pathlib import Path
+from types import SimpleNamespace
+
 import numpy as np
 
 from evals.transcription.src.models import AMIDatasetSample, AudioSample, TranscriptionResult
+
+
+class FakeServiceAdapter:
+    def __init__(self, name: str, hyp: str):
+        self.name = name
+        self.hyp = hyp
+
+    @classmethod
+    async def start(cls, _audio_file_path: Path):
+        return SimpleNamespace(transcript=[{"text": cls.hyp}])
+
+    @classmethod
+    def is_available(cls) -> bool:
+        return True
 
 
 class FakeAdapter:

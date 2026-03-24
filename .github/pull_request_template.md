@@ -2,7 +2,7 @@
 <!-- Required: what + why in 1–3 sentences. -->
 
 ## JIRA Ticket
-<!-- Required: link to the JIRA ticket -->
+https://mhclgdigital.atlassian.net/browse/AIILG-XXX
 
 ## Changes
 <!-- Required: bullet list of key changes. Keep it short. -->

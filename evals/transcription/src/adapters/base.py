@@ -32,19 +32,18 @@ class ServiceTranscriptionAdapter(EvalsTranscriptionAdapter):
     Adapter wrapping common transcription services for evaluation use.
     """
 
-    def __init__(self, service_adapter: type[CommonTranscriptionAdapter], service_name: str):
+    def __init__(self, service_adapter: type[CommonTranscriptionAdapter]):
         """
-        Initializes the service transcription adapter with the given adapter class and name.
+        Initializes the service transcription adapter with the given adapter class.
         """
         self._adapter = service_adapter
-        self._service_name = service_name
 
     @property
     def name(self) -> str:
         """
         Returns the name of the transcription service.
         """
-        return self._service_name
+        return self._adapter.name
 
     def transcribe(self, wav_path: str) -> TranscriptionResult:
         """
@@ -59,7 +58,7 @@ class ServiceTranscriptionAdapter(EvalsTranscriptionAdapter):
             dialogue_entries = result.transcript
 
             if not dialogue_entries:
-                logger.error("%s returned an empty transcript for %s", self._service_name, wav_path)
+                logger.error("%s returned an empty transcript for %s", self._adapter.name, wav_path)
                 return TranscriptionResult(
                     text="",
                     duration_sec=(end_time - start_time),
@@ -77,7 +76,7 @@ class ServiceTranscriptionAdapter(EvalsTranscriptionAdapter):
             )
 
         except (RuntimeError, ValueError, OSError, AttributeError) as error:
-            logger.error("%s transcription failed: %s", self._service_name, error)
+            logger.error("%s transcription failed: %s", self._adapter.name, error)
             end_time = time.time()
             return TranscriptionResult(
                 text="",

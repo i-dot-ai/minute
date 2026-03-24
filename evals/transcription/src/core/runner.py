@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 
@@ -81,7 +82,7 @@ def _validate_and_convert_diarization(
 
 
 def run_engines_parallel(
-    adapters: list[EvalsTranscriptionAdapter],
+    adapters: Sequence[EvalsTranscriptionAdapter],
     indices: list[int],
     *,
     dataset: DatasetProtocol,

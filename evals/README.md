@@ -62,6 +62,42 @@ poetry run python evals/transcription/src/evaluate.py --config larger_cloud_test
 
 **Results:** `evals/transcription/output/`
 
+# Characteristic Extraction Evaluation
+
+Evaluation framework for extracting characteristics and attributes from transcripts using an LLM. 
+
+## Setup
+
+Ensure you have the required dependencies installed from the project root:
+
+```bash
+poetry install --with evals
+```
+
+## Usage
+
+1. **Input Data**: Place your transcription files (`.txt` or `.json`) in `evals/characteristics/input/`.
+2. **Configuration**: Edit `evals/characteristics/configs/default_config.yaml` to specify the model, dataset settings, and run output paths.
+3. **Prompts**: Jinja2 prompt templates are located in `evals/characteristics/prompts/`.
+
+Run the evaluation:
+
+```bash
+poetry run python -m evals.characteristics.src.main
+```
+
+Results for each input file will be saved to `evals/characteristics/output/` as `<filename>_output.json`.
+
+### Code Structure
+
+- `main.py`: Entry point for the CLI.
+- `pipeline.py`: Orchestration of the extraction process.
+- `chunker.py`: Logic for transcript chunking and characteristic deduplication.
+- `transcript_loader.py`: Formats `.txt` and `.json` transcripts for extraction.
+- `sanitizer.py`: WAF-specific sanitization to prevent false-positive security blocks.
+- `config_loader.py`: Configuration loading and template rendering.
+- `schema.py`: Pydantic models for configuration and extraction results.
+
 # Dataset Generation
 
 Generate synthetic conversational transcripts using LLM-based role-playing.
@@ -111,26 +147,26 @@ flowchart TD
     Setup --> Init[Initialize<br/>word_count=0, speaker=speaker_1]
     Init --> CheckSoft
     
-    CheckSoft{word_count ≥90% target?} -->|No| ActorResp
-    CheckSoft -->|Yes| Soft[🟡 Inject: 'Start wrapping up']
+    CheckSoft{word_count ?90% target?} -->|No| ActorResp
+    CheckSoft -->|Yes| Soft[?? Inject: 'Start wrapping up']
     
-    Soft --> CheckHard{word_count ≥98% target?}
+    Soft --> CheckHard{word_count ?98% target?}
     CheckHard -->|No| ActorResp
-    CheckHard -->|Yes| Hard[🔴 Inject: 'Conclude immediately']
+    CheckHard -->|Yes| Hard[?? Inject: 'Conclude immediately']
     
-    Hard --> ActorResp[🗣️ Actor Response<br/>• Get history + notice if present<br/>• LLM generates with own role context<br/>• Add to shared history]
+    Hard --> ActorResp[?? Actor Response<br/>• Get history + notice if present<br/>• LLM generates with own role context<br/>• Add to shared history]
     
     ActorResp --> Count[word_count += response_words]
-    Count --> Facilitator[🎯 Facilitator Decision<br/>LLM with ALL definitions + history<br/>→ Returns: next_speaker_id + should_terminate]
+    Count --> Facilitator[? Facilitator Decision<br/>LLM with ALL definitions + history<br/>? Returns: next_speaker_id + should_terminate]
     
-    Facilitator -->|should_terminate=true| End([✅ Natural End])
-    Facilitator -->|should_terminate=false| CheckLimit{≥ word_target × 1.25?}
+    Facilitator -->|should_terminate=true| End([? Natural End])
+    Facilitator -->|should_terminate=false| CheckLimit{? word_target ? 1.25?}
     
     CheckLimit -->|No| UpdateSpeaker[speaker = next_speaker_id]
     UpdateSpeaker --> CheckSoft
-    CheckLimit -->|Yes| Safety([⚠️ Safety Stop])
+    CheckLimit -->|Yes| Safety([?? Safety Stop])
     
-    End --> Output[💾 JSON: theme, definitions, dialogue]
+    End --> Output[? JSON: theme, definitions, dialogue]
     Safety --> Output
     
     style Input fill:#e3f2fd,stroke:#1976d2,stroke-width:2px

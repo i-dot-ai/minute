@@ -79,7 +79,17 @@ poetry install --with evals
 Run the evaluation:
 
 ```bash
-poetry run python evals/characteristics/src/main.py
+poetry run python -m evals.characteristics.src.main
 ```
 
 Results for each input file will be saved to `evals/characteristics/output/` as `<filename>_output.json`.
+
+### Code Structure
+
+- `main.py`: Entry point for the CLI.
+- `pipeline.py`: Orchestration of the extraction process.
+- `chunker.py`: Logic for transcript chunking and characteristic deduplication.
+- `transcript_loader.py`: Formats `.txt` and `.json` transcripts for extraction.
+- `sanitizer.py`: WAF-specific sanitization to prevent false-positive security blocks.
+- `config_loader.py`: Configuration loading and template rendering.
+- `schema.py`: Pydantic models for configuration and extraction results.

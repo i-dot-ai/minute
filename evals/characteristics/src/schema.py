@@ -4,8 +4,8 @@ from pydantic import BaseModel, Field
 
 
 class ModelConfig(BaseModel):
-    provider: str = Field(default="azure_apim", description="LLM Provider")
-    model: str = Field(default="gpt-4o", description="Model name")
+    provider: str = Field(default="azure_apim")
+    model: str = Field(default="gpt-4o")
     temperature: float = Field(default=0.0)
 
 
@@ -43,14 +43,14 @@ class CharacteristicCategory(str, Enum):
 
 
 class TextSpan(BaseModel):
-    start_index: int | None = Field(None, description="Start index of the span")
-    end_index: int | None = Field(None, description="End index of the span")
+    start_index: int | None = Field(None)
+    end_index: int | None = Field(None)
     text: str = Field(..., description="The exact substring from the transcript")
 
 
 class CharacteristicDetection(BaseModel):
-    characteristic: CharacteristicCategory = Field(..., description="The characteristic")
-    attribute_value: str = Field(..., description="The value (e.g., 'Female', 'Muslim', 'Elderly')")
+    characteristic: CharacteristicCategory = Field(...)
+    attribute_value: str = Field(..., description="e.g., 'Female', 'Muslim', 'Elderly'")
     evidence_spans: list[TextSpan] = Field(default_factory=list)
 
 

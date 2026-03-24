@@ -133,7 +133,7 @@ services:
       start_period: 30s
 
   localstack: # LocalStack container
-    image: localstack/localstack:latest
+    image: localstack/localstack:3.8.1
     env_file:
       - .env
     ports:
@@ -145,6 +145,7 @@ services:
       - ./localstack-setup.sh:/etc/localstack/init/ready.d/script.sh
     environment:
       - AWS_DEFAULT_REGION=eu-west-2
+      - ACTIVATE_PRO=0
     healthcheck:
       test: ["CMD", "test", "-f", "/ready.txt"]
       interval: 1m30s

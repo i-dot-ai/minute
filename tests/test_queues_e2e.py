@@ -43,7 +43,7 @@ async def transcription_queue_service():
         settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
     )
     queue_service.purge_messages()
-    # needed to ensure sqs queue is purged (not sure if this long is needed for localstack)
+    # needed to ensure sqs queue is purged (not sure if this long is needed for elasticmq)
     await asyncio.sleep(1)
     return queue_service
 
@@ -55,7 +55,7 @@ async def llm_queue_service():
         settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
     )
     queue_service.purge_messages()
-    # needed to ensure sqs queue is purged (not sure if this long is needed for localstack)
+    # needed to ensure sqs queue is purged (not sure if this long is needed for elasticmq)
     await asyncio.sleep(1)
     return queue_service
 
@@ -102,7 +102,7 @@ async def test_e2e(worker_service):
 async def test_e2e_chat(worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
 
-    # needed to ensure sqs queue is purged (not sure if this long is needed for localstack)
+    # needed to ensure sqs queue is purged (not sure if this long is needed for elasticmq)
     await asyncio.sleep(1)
     transcription_ids = await load_db_test_instance(FileTypeTests.NORMAL)
     for transcription_id in transcription_ids:

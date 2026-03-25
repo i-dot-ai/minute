@@ -58,7 +58,7 @@ You need to launch the Ollama GUI application. Search for 'ollama' in your appli
 
 ## Architecture
 
-- **Docker**: Database, backend, frontend, localstack
+- **Docker**: Database, backend, frontend, elasticmq
 - **Local Worker**: Runs natively for GPU access (MPS on Apple Silicon)
 - **Transcription**: Whisply with hardware acceleration
 - **LLM**: Ollama (local, runs natively for MPS acceleration)

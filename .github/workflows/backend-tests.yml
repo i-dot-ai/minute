@@ -10,6 +10,10 @@ on:
         required: true
         type: string
 
+env:
+  ENVIRONMENT: test
+  USE_ELASTICMQ: true
+
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -43,7 +47,7 @@ jobs:
         run: poetry config virtualenvs.in-project true
 
       - name: Install dependencies
-        run: poetry install --no-root --no-ansi --with dev --sync
+        run: poetry sync --no-root --no-ansi --with dev 
 
       - name: Copy env file
         run: cp .env.example .env
@@ -52,7 +56,7 @@ jobs:
         run: mkdir -p .data/test_audio/normal
 
       - name: Start services
-        run: docker compose up -d db localstack --wait
+        run: docker compose up -d db elasticmq --wait
 
       - name: Run database migrations
         run: poetry run alembic upgrade head

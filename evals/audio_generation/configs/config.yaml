@@ -1,0 +1,18 @@
+
+voices:
+  social_care_worker: snf0TZa0mc0w5XBI
+  storyteller: AZnzlk1XvdvUeBnXmlld
+
+default_voices:
+    - 21m00Tcm4TlvDq8ikWAM # Rachel - calm female voice 
+    - EXAVITQu4vr4xnSDxMaL # Bella - soft female voice
+
+background_volume_offset: -10  # increase/decrease background volume by this many dB against baseline 
+background_sfx_file: "cafe_ambience.mp3"
+
+transcript_file: "two-teens.json"
+
+eleven_labs:
+  api_key_env: ELEVEN_LABS_API_KEY
+  model_id : "eleven_flash_v2_5"
+

@@ -187,3 +187,112 @@ flowchart TD
 ### Output
 
 Generated transcripts are saved to: `evals/dataset_generation/transcription_generation/output/transcript_<timestamp>.json`
+
+
+# Audio Generation
+
+## Eleven Labs
+
+This module generates speech audio from transcript files using ElevenLabs.
+The CLI supports separate operations for speech generation and audio transformation.
+
+### Setup
+#### Environment variables
+
+Set your ElevenLabs API key in your root .env file:
+
+```bash
+ELEVEN_LABS_API_KEY=your_api_key
+```
+
+### Input data
+
+ Place transcript files in:
+
+```evals/audio_generation/input/transcripts/```
+
+Each transcript should follow the expected format (see Data Contract). Example input within the configs directory.
+
+### Configuration
+#### Models
+Specify a model in the config:
+
+- eleven_flash_v2_5 (default)
+- eleven_turbo_v2_5
+- eleven_multilingual_v2
+- eleven_v3
+
+### Voices
+The system uses predefined public voices by default.
+
+Custom voices can be configured by adding their IDs to the voices section in the config.
+
+### Usage
+
+This tool uses a hybrid design:
+
+- Core generation is config-driven (TTS pipeline)
+- CLI is used only to toggle execution modes
+
+All inputs (transcripts, models, voices, background SFX) are configured via the config file.
+
+#### Generate TTS audio (default)
+
+With configs set, run the pipeline:
+
+```bash
+poetry run python evals/audio_generation/src/main.py
+
+```
+This will:
+
+- Load transcript from config
+- Generate speech audio using ElevenLabs
+- Save output to evals/audio_generation/output/
+
+
+### Output
+
+Generated audio files are saved to:
+
+```evals/audio_generation/output/```
+
+
+### Audio Transformation
+
+#### Generate TTS with background audio
+
+### Usage
+To generate speech and apply background sound effects:
+
+```bash
+poetry run python evals/audio_generation/src/main.py with-background-sfx
+  ```
+
+This will:
+
+- Generate speech audio from the configured transcript
+- Load background sound effect from config
+- Mix both audio tracks
+
+#### Inputs:
+
+- audio: file in output/ generated during tts operation
+- background: file in input/
+
+
+#### Output
+
+A new mixed audio file is saved to:
+
+```evals/audio_generation/output/```
+
+File format:
+
+``{speech_name}_mixed_{sfx_name}_{timestamp}.mp3```
+
+
+#### Notes
+- Background audio is automatically looped or trimmed to match speech length
+- Volume is adjusted using a predefined offset (config variable ```background_volume_offset```)
+- File names are normalized using the base name (prefix before _)

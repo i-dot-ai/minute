@@ -12,6 +12,7 @@ __pycache__/
 Brewfile.lock.json
 *.pdf
 .mypy_cache
+.ruff_cache
 
 # Terraform
 **/.terraform/*
@@ -128,3 +129,4 @@ evals/**/output/
 **/*.wav
 **/*.mp3
 **/*.m4a
+

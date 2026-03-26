@@ -1,5 +1,5 @@
 #!/bin/sh
-echo "Initializing localstack"
+echo "Initializing elasticMQ"
 
 if [ -f /ready.txt ]; then
   rm /ready.txt
@@ -19,7 +19,7 @@ echo "Dead letter queue URL: $TRANSCRIPTION_DEADLETTER_QUEUE_URL"
 echo "Purging $TRANSCRIPTION_QUEUE_URL"
 awslocal sqs purge-queue --queue-url $TRANSCRIPTION_QUEUE_URL
 # Extract the dead letter queue ARN from the URL
-# LocalStack URL format: http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/queue-name
+# ElasticMQ URL format: http://localhost:9324/queue/<queue-name>
 # ARN format: arn:aws:sqs:us-east-1:000000000000:queue-name
 TRANSCRIPTION_DEADLETTER_ARN="arn:aws:sqs:${AWS_DEFAULT_REGION}:000000000000:$DEADLETTER_QUEUE_NAME"
 
@@ -45,7 +45,7 @@ echo "LLM Dead letter queue URL: $LLM_DEADLETTER_QUEUE_URL"
 echo "Purging $LLM_QUEUE_URL"
 awslocal sqs purge-queue --queue-url $LLM_QUEUE_URL
 # Extract the dead letter queue ARN from the URL
-# LocalStack URL format: http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/queue-name
+# ElasticMQ URL format: http://localhost:9324/queue/<queue-name>
 # ARN format: arn:aws:sqs:us-east-1:000000000000:queue-name
 LLM_DEADLETTER_ARN="arn:aws:sqs:${AWS_DEFAULT_REGION}:000000000000:$DEADLETTER_QUEUE_NAME"
 

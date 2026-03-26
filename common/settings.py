@@ -1,5 +1,7 @@
 import logging
+import os
 from functools import lru_cache
+from pathlib import Path
 
 import dotenv
 from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
@@ -20,6 +22,17 @@ if dotenv_detected:
     logger.info("A .env file was detected and loaded. Values from it will override environment variables")
 else:
     logger.info("No .env file was detected. Using environment variables as is")
+
+
+def elasticmq_url() -> str:
+    url = os.getenv("ELASTICMQ_URL")
+    if url:
+        return url
+
+    if Path("/.dockerenv").exists():
+        return "http://elasticmq:9324"
+
+    return "http://localhost:9324"
 
 
 class Settings(BaseSettings):
@@ -86,10 +99,10 @@ class Settings(BaseSettings):
     GOOGLE_CLOUD_PROJECT: str | None = Field(description="Google Cloud project ID", default=None)
     GOOGLE_CLOUD_LOCATION: str | None = Field(description="Google Cloud region/location", default=None)
 
-    # if using LOCALSTACK for development (recommended)
-    USE_LOCALSTACK: bool = Field(description="Use LocalStack for local AWS services emulation in dev", default=True)
-    LOCALSTACK_URL: str = Field(
-        description="LocalStack service URL for local AWS services emulation", default="http://localhost:4566"
+    # ELASTICMQ for development
+    USE_ELASTICMQ: bool = Field(description="Use ElasticMQ for local AWS SQS emulation in dev", default=True)
+    ELASTICMQ_URL: str = Field(
+        description="ELASTICMQ service URL for local AWS services emulation", default_factory=elasticmq_url
     )
 
     TRANSCRIPTION_SERVICES: list[str] = Field(

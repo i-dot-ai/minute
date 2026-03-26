@@ -37,7 +37,7 @@ This will build and run 5 containers:
 2. Backend api available at http://localhost:8080
 3. Worker service, which process transcriptions and does not have a public facing url
 4. Postgres database hosted at http:localhost:5432
-5. Localstack to simulate AWS SQS
+5. ElasticMQ to simulate AWS SQS
 
 #### LLM and Transcription Services
 

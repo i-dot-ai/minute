@@ -104,7 +104,6 @@ azure-identity = "^1.23.1"
 
 [tool.poetry.group.local-dev.dependencies]
 whisply = "^0.13.1"
-nltk = "^3.9.3"  # Sub-dependency of whisply; pinned to avoid CVE-2025-14009
 
 [tool.poetry.group.evals-transcription.dependencies]
 datasets = "^3.0.0"

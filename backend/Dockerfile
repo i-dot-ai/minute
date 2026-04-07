@@ -1,34 +1,58 @@
-FROM python:3.12-slim
+# ==========================================
+# Stage 1: Builder
+# ==========================================
+FROM python:3.12-slim AS builder
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # Install system dependencies and Poetry
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir poetry
 
-# Set the working directory
 WORKDIR /app
 
-# Copy only requirements to cache them in docker layer
+# Tell Poetry to create the virtualenv inside the project directory (/app/.venv)
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+
+# Copy only dependency files first (for Docker layer caching)
 COPY pyproject.toml poetry.lock README.md ./
-
-# Configure poetry
-RUN poetry config virtualenvs.create false
-
-# Install project dependencies
 RUN poetry install --with backend --without dev --no-interaction --no-ansi --no-root
 
-# Copy the FastAPI application code
+# Copy application code
 COPY backend backend
 COPY common common
 COPY worker/__init__.py worker/__init__.py
 COPY alembic alembic
 COPY alembic.ini alembic.ini
-# Expose the port the app runs on
-EXPOSE 8080
+
+# Install again to include the root project and path dependencies
+RUN poetry install --with backend --without dev --no-interaction --no-ansi
+
+
+# ==========================================
+# Stage 2: Runner
+# ==========================================
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Copy the completely built virtual environment from the builder
+COPY --from=builder /app/.venv /app/.venv
+# Put the virtual environment on the path
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Copy the application code
+COPY backend backend
+COPY common common
+COPY worker/__init__.py worker/__init__.py
+COPY alembic alembic
+COPY alembic.ini alembic.ini
+
 RUN chmod +x backend/entrypoint.sh
 
-# Command to run the FastAPI app using Uvicorn
+EXPOSE 8080
 ENTRYPOINT ["backend/entrypoint.sh"]

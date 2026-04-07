@@ -8,4 +8,4 @@ export GOOGLE_APPLICATION_CREDENTIALS=/app/config/google-credentials.json
 # Main execution
 echo "Starting queue service..."
 
-exec poetry run python worker/main.py
+exec python worker/main.py

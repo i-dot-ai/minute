@@ -63,7 +63,7 @@ packages = [
     {include = "backend"},
     {include = "common"},
 ]
-requires-poetry = "=2.3.2"
+requires-poetry = "=2.3.3"
 
 # add common dependencies here
 [tool.poetry.dependencies]

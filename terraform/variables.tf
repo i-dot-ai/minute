@@ -66,5 +66,5 @@ variable "security_level" {
 
 variable "edge_networking_enabled" {
   type        = bool
-  description = "Whether to enable edge networking for public acess"
+  description = "Whether to enable edge networking for public access"
 }

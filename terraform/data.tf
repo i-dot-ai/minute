@@ -83,5 +83,6 @@ data "aws_secretsmanager_secret_version" "platform_slack_webhook" {
 }
 
 data "aws_ssm_parameter" "edge_secret" {
-  name = "/i-dot-ai-${terraform.workspace}-core-edge-network/header-secret"
+  count = var.edge_networking_enabled ? 1 : 0
+  name  = "/i-dot-ai-${terraform.workspace}-core-edge-network/header-secret"
 }

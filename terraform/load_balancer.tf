@@ -22,7 +22,7 @@ module "waf" {
 
   edge_router_bypass_configuration = var.edge_networking_enabled ? {
     header_name  = "x-custom-edge-router"
-    secret_value = data.aws_ssm_parameter.edge_secret.value
+    secret_value = data.aws_ssm_parameter.edge_secret[0].value
   } : null
 }
 

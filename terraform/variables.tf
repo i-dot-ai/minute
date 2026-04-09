@@ -63,3 +63,8 @@ variable "security_level" {
   default     = "base"
   description = "Security Level of the infrastructure."
 }
+
+variable "edge_networking_enabled" {
+  type        = bool
+  description = "Whether to enable edge networking for public acess"
+}

@@ -126,14 +126,19 @@ async def process_speakers_and_dialogue_entries(
         # Step 5: Update entries with predicted names
         predicted_entries = []
         for entry in labelled_dialogue_entries:
-            predicted_entries.append(
-                DialogueEntry(
-                    speaker=speaker_predictions.get(entry["speaker"], entry["speaker"]),
-                    text=entry["text"],
-                    start_time=entry["start_time"],
-                    end_time=entry["end_time"],
-                )
+            prediction = speaker_predictions.get(
+                entry["speaker"],
+                {"predicted_name": entry["speaker"], "confidence": None},
             )
+            dialogue_entry = DialogueEntry(
+                speaker=prediction["predicted_name"],
+                text=entry["text"],
+                start_time=entry["start_time"],
+                end_time=entry["end_time"],
+            )
+            if prediction["confidence"] is not None:
+                dialogue_entry["speaker_confidence"] = prediction["confidence"]
+            predicted_entries.append(dialogue_entry)
 
         return predicted_entries
     except Exception as e:  # noqa: BLE001 # flagged by ruff - investigate when we have time.

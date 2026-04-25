@@ -1,4 +1,4 @@
-[![build](https://github.com/i-dot-ai/minute/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/i-dot-ai/minute/actions/workflows/build.yml?query=branch%3Amain)
+[![build](https://github.com/i-dot-ai/minute/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/i-dot-ai/minute/actions/workflows/build.yml?query=branch%3Amain) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/i-dot-ai/minute)
 
 # Minute
 

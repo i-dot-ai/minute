@@ -1,4 +1,5 @@
 import logging
+from typing import TypedDict
 
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
@@ -7,7 +8,12 @@ from common.types import DialogueEntry, SpeakerPredictionOutput
 logger = logging.getLogger(__name__)
 
 
-async def generate_speaker_predictions(dialogue_entries: list[DialogueEntry]) -> dict[str, str]:
+class SpeakerPredictionResult(TypedDict):
+    predicted_name: str
+    confidence: float | None
+
+
+async def generate_speaker_predictions(dialogue_entries: list[DialogueEntry]) -> dict[str, SpeakerPredictionResult]:
     """
     Generate speaker name predictions based on dialogue entries.
 
@@ -15,7 +21,7 @@ async def generate_speaker_predictions(dialogue_entries: list[DialogueEntry]) ->
         dialogue_entries: List of DialogueEntry objects containing speaker and text
 
     Returns:
-        Dictionary mapping original speaker labels to predicted names
+        Dictionary mapping original speaker labels to predicted names and confidence
     """
     # Create a system message that explains the task
     system_message = """You are an expert at analysing conversation transcripts and identifying speakers.
@@ -44,9 +50,18 @@ Conversation:
 
         if not speaker_prediction.predictions:
             logger.warning("No predictions found, returning original speaker labels")
-            return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}
+            return {
+                entry["speaker"]: SpeakerPredictionResult(predicted_name=entry["speaker"], confidence=None)
+                for entry in dialogue_entries
+            }
 
-        return {pred.original_speaker: pred.predicted_name for pred in speaker_prediction.predictions}
+        return {
+            pred.original_speaker: SpeakerPredictionResult(
+                predicted_name=pred.predicted_name,
+                confidence=pred.confidence,
+            )
+            for pred in speaker_prediction.predictions
+        }
     except Exception as e:  # noqa: BLE001 # flagged by ruff - investigate when we have time.
         error_message = str(e)
         # Check for content filter errors from Azure OpenAI
@@ -66,8 +81,14 @@ Conversation:
             )
 
             # Return original speaker labels
-            return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}
+            return {
+                entry["speaker"]: SpeakerPredictionResult(predicted_name=entry["speaker"], confidence=None)
+                for entry in dialogue_entries
+            }
         else:
             # For other errors, log and return original speaker labels
             logger.error("Error predicting speaker names: %s", error_message)
-            return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}
+            return {
+                entry["speaker"]: SpeakerPredictionResult(predicted_name=entry["speaker"], confidence=None)
+                for entry in dialogue_entries
+            }

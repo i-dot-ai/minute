@@ -38,12 +38,12 @@ Follow the following format, adding as much detail as possible under each headin
 
 # Child / young person's details
 
-{Provide details of all subject children and young people discussed in the meeting using bullet point for their name and then sub-bullet points for characteristics: date of birth or expected delivery date, age, gender, ethnicity and religion where mentioned.}
+{Provide details of all subject children and young people as a markdown table with columns: Name | DOB | Age | Gender | Ethnicity | Religion. Use "Not stated" for any field not mentioned in the transcript.}
 
 
 # Family / household composition and significant others (e.g. maternal / paternal grandparents, aunts, uncles)
 
-{Who lives in the household? Include all family members and significant others such as maternal or paternal grandparents, aunts, and uncles. For each person, note their name as the top bullet point and then sub-bullet points for date of birth, gender, whether they hold parental responsibility, whether they live in the household, and their relationship to the child.}
+{Provide details of all family members and significant others as a markdown table with columns: Name | DOB | Gender | Parental Responsibility | Lives in Household | Relationship to Child. Use "Not stated" for any field not mentioned in the transcript.}
 
 
 # Communication needs (including language)
@@ -85,7 +85,7 @@ Follow the following format, adding as much detail as possible under each headin
 
 ## Record of Discussion
 
-{What was discussed during the meeting? Summarise the key points raised by professionals, family members, and the child or young person where present. Include any updates on the child's welfare, progress against previous plan actions, and any new concerns or changes in circumstances. Note any disagreements or differing views between participants.}
+{Write as prose paragraphs, not bullet points. Summarise the key points raised by each participant in turn — professionals, family members, and the child or young person where present. Include updates on the child's welfare, progress against previous plan actions, any new concerns or changes in circumstances, and any disagreements or differing views.}
 
 
 # Details of the Plan
@@ -97,7 +97,7 @@ Follow the following format, adding as much detail as possible under each headin
 
 ## Plan Actions
 
-{What actions were agreed during this meeting? For each action, note: which child or young person it relates to; what the concern or need is; what needs to happen; who is responsible (family member, professional, or other); the timescale or deadline; and any update on progress from a previous plan. Where the transcript references completion of previous actions, note these separately.}
+{Provide agreed actions as a markdown table with columns: Concern / Need | Action | Responsible | Timescale. One row per action. Where the transcript references completion of previous actions, note these in a short paragraph below the table.}
 
 
 ## Next Review

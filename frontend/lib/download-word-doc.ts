@@ -24,6 +24,20 @@ function getDocumentStyles(): string {
         padding-left: 10px;
         border-left: 3px solid #ccc;
       }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 8pt 0;
+      }
+      td, th {
+        border: 1px solid #000;
+        padding: 4pt 8pt;
+        vertical-align: top;
+      }
+      th {
+        background-color: #f0f0f0;
+        font-weight: bold;
+      }
     </style>
   `
 }

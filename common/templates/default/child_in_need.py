@@ -1,9 +1,5 @@
 # child_in_need.py
 # flake8: noqa: E501, RUF001
-#
-# Transcript template notes:
-# Apologies not included (these would require identifying missing participants which may be difficult to do reliably).
-
 from common.database.postgres_models import DialogueEntry
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.settings import get_settings

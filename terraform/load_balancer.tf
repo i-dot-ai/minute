@@ -8,16 +8,22 @@ module "load_balancer" {
   public_subnets  = data.terraform_remote_state.vpc.outputs.public_subnets
   certificate_arn = data.terraform_remote_state.universal.outputs.certificate_arn
   web_acl_arn     = module.waf.web_acl_arn
-  env             = var.env 
+  env             = var.env
 }
 
 module "waf" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   #source                      = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/waf" # For testing local changes
-  source = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/waf?ref=v7.1.1-waf"
-  name   = local.name
-  host   = local.host
-  env    = var.env
+  source      = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/waf?ref=v7.3.1-waf"
+  name        = local.name
+  host        = local.host
+  env         = var.env
+  public_host = var.edge_networking_enabled ? local.public_host : null
+
+  edge_router_bypass_configuration = var.edge_networking_enabled ? {
+    header_name  = "x-custom-edge-router"
+    secret_value = data.aws_ssm_parameter.edge_secret[0].value
+  } : null
 }
 
 resource "aws_route53_record" "type_a_record" {

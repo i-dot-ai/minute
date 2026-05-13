@@ -34,7 +34,11 @@ resource "aws_s3_bucket_cors_configuration" "cors" {
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["PUT", "GET", "POST"]
-    allowed_origins = ["https://${aws_route53_record.type_a_record.name}", "http://localhost:3000"]
+    allowed_origins = [
+      "https://${aws_route53_record.type_a_record.name}",
+      "https://${local.public_host}",
+      "http://localhost:3000",
+    ]
     max_age_seconds = 3000
   }
 }

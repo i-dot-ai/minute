@@ -118,3 +118,4 @@ different tests (see [test_queues_e2e.py](tests/test_queues_e2e.py) for an examp
 
 You can add your own templates by implementing either the `SimpleTemplate` or `SectionTemplate` protocols (see [here](backend/templates/types.py))
 Simply put them in the [templates](backend/templates) directory, and they will automatically be discovered when the backend starts.
+

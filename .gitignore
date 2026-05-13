@@ -12,6 +12,7 @@ __pycache__/
 Brewfile.lock.json
 *.pdf
 .mypy_cache
+scratch/
 
 # Terraform
 **/.terraform/*

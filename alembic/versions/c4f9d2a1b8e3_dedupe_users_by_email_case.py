@@ -27,7 +27,7 @@ def upgrade() -> None:
     # 1) canonical selects oldest lower case user email
     # 2) remap query finds user IDs in transcription table where the normalised email case matches, but the ID is
     # different
-    # 3) we then
+    # 3) we then update the transcription table by setting user_id to the User.id we want
 
     op.execute(
         """

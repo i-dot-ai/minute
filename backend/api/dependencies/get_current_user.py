@@ -30,7 +30,9 @@ async def get_current_user(
 
     try:
         user_auth_info = get_user_info(authorization)
-        email = user_auth_info.email
+        # Normalise email — different auth providers return different casing,
+        # and we look users up by exact match, so a casing change orphans their data.
+        email = user_auth_info.email.lower()
 
         if not user_auth_info.is_authorised:
             logger.info("User {email} does not have the required permissions", email=email)

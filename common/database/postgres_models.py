@@ -3,7 +3,7 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Column
+from sqlalchemy import TIMESTAMP, Column, Index, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
@@ -113,6 +113,10 @@ class Hallucination(BaseTableMixin, table=True):
 # Main models with table=True for DB tables
 class User(BaseTableMixin, table=True):
     __tablename__ = "user"
+    # Case-insensitive uniqueness on email — emails are stored lowercased
+    # (see backend/api/dependencies/get_current_user.py), but this guards
+    # against accidental case-variant duplicates regardless.
+    __table_args__ = (Index("ix_user_email_lower", text("lower(email)"), unique=True),)
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     email: str = Field(index=True)

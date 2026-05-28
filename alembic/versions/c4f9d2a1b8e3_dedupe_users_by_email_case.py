@@ -8,6 +8,7 @@ Create Date: 2026-05-28 00:00:00.000000
 
 from typing import Sequence, Union
 
+import sqlalchemy as sa
 from alembic import op
 
 revision: str = "c4f9d2a1b8e3"
@@ -63,8 +64,9 @@ def upgrade() -> None:
 
     op.execute('UPDATE "user" SET email = LOWER(email) WHERE email <> LOWER(email);')
 
-    op.execute('CREATE UNIQUE INDEX ix_user_email_lower ON "user" (LOWER(email));')
+    # Matches the Index declared on User.__table_args__ in common/database/postgres_models.py
+    op.create_index("ix_user_email_lower", "user", [sa.text("lower(email)")], unique=True)
 
 
 def downgrade() -> None:
-    op.execute("DROP INDEX IF EXISTS ix_user_email_lower;")
+    op.drop_index("ix_user_email_lower", table_name="user")

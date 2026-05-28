@@ -16,6 +16,10 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+# Tables with a user_id FK that we need to re-point at the canonical user.
+TABLES_WITH_USER_FK = ("transcription", "recording", "user_template")
+
+
 def upgrade() -> None:
     # Reassign all FK references from duplicate (case-variant) users to the
     # oldest user row sharing the same lowercase email, then drop the duplicates.
@@ -23,86 +27,39 @@ def upgrade() -> None:
     # emails in a different case than the old one — that silently created a
     # second User row for each affected person, orphaning their transcriptions.
 
-    # first query - update transcription table
-    # 1) canonical selects oldest lower case user email
-    # 2) remap query finds user IDs in transcription table where the normalised email case matches, but the ID is
-    # different
-    # 3) we then update the transcription table by setting user_id to the User.id we want
+    # Build a remap (old_id -> keep_id) once, in a temp table, then reuse it
+    # for every FK update below. The ON COMMIT DROP removes the temp table at the end of the migration
+    # 1) canonical picks the oldest row for each lowercase email as the "keeper"
+    # 2) user_remap lists every non-keeper user paired with its keeper
 
     op.execute(
         """
+        CREATE TEMP TABLE user_remap ON COMMIT DROP AS
         WITH canonical AS (
             SELECT DISTINCT ON (LOWER(email))
                 id AS keep_id,
                 LOWER(email) AS lower_email
             FROM "user"
             ORDER BY LOWER(email), created_datetime ASC, id ASC
-        ),
-        remap AS (
-            SELECT u.id AS old_id, c.keep_id
-            FROM "user" u
-            JOIN canonical c ON LOWER(u.email) = c.lower_email
-            WHERE u.id <> c.keep_id
         )
-        UPDATE transcription t
-        SET user_id = r.keep_id
-        FROM remap r
-        WHERE t.user_id = r.old_id;
+        SELECT u.id AS old_id, c.keep_id
+        FROM "user" u
+        JOIN canonical c ON LOWER(u.email) = c.lower_email
+        WHERE u.id <> c.keep_id;
         """
     )
-    op.execute(
-        """
-        WITH canonical AS (
-            SELECT DISTINCT ON (LOWER(email))
-                id AS keep_id,
-                LOWER(email) AS lower_email
-            FROM "user"
-            ORDER BY LOWER(email), created_datetime ASC, id ASC
-        ),
-        remap AS (
-            SELECT u.id AS old_id, c.keep_id
-            FROM "user" u
-            JOIN canonical c ON LOWER(u.email) = c.lower_email
-            WHERE u.id <> c.keep_id
+
+    for table in TABLES_WITH_USER_FK:
+        op.execute(
+            f"""
+            UPDATE {table}
+            SET user_id = user_remap.keep_id
+            FROM user_remap
+            WHERE {table}.user_id = user_remap.old_id;
+            """
         )
-        UPDATE recording r
-        SET user_id = rm.keep_id
-        FROM remap rm
-        WHERE r.user_id = rm.old_id;
-        """
-    )
-    op.execute(
-        """
-        WITH canonical AS (
-            SELECT DISTINCT ON (LOWER(email))
-                id AS keep_id,
-                LOWER(email) AS lower_email
-            FROM "user"
-            ORDER BY LOWER(email), created_datetime ASC, id ASC
-        ),
-        remap AS (
-            SELECT u.id AS old_id, c.keep_id
-            FROM "user" u
-            JOIN canonical c ON LOWER(u.email) = c.lower_email
-            WHERE u.id <> c.keep_id
-        )
-        UPDATE user_template ut
-        SET user_id = r.keep_id
-        FROM remap r
-        WHERE ut.user_id = r.old_id;
-        """
-    )
-    op.execute(
-        """
-        DELETE FROM "user" u
-        USING (
-            SELECT DISTINCT ON (LOWER(email)) id AS keep_id, LOWER(email) AS lower_email
-            FROM "user"
-            ORDER BY LOWER(email), created_datetime ASC, id ASC
-        ) c
-        WHERE LOWER(u.email) = c.lower_email AND u.id <> c.keep_id;
-        """
-    )
+
+    op.execute('DELETE FROM "user" WHERE id IN (SELECT old_id FROM user_remap);')
 
     op.execute('UPDATE "user" SET email = LOWER(email) WHERE email <> LOWER(email);')
 

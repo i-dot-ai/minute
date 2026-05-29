@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy.dialects.postgresql import insert
+from sqlmodel import func
 
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
@@ -46,7 +47,7 @@ async def get_current_user(
             insert(User)
             .values(email=email)
             .on_conflict_do_update(
-                index_elements=[User.email],
+                index_elements=[func.lower(User.email)],
                 set_={User.email: User.email},  # no-op, just so RETURNING fires
             )
             .returning(User)

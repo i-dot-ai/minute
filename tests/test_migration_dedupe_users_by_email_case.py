@@ -81,6 +81,9 @@ ALICE_EXACT_DUP = uuid.UUID("77777777-7777-7777-7777-777777777777")
 BOB = uuid.UUID("44444444-4444-4444-4444-444444444444")
 CAROL_NO_CHILDREN = uuid.UUID("55555555-5555-5555-5555-555555555555")
 CAROL_DUP = uuid.UUID("66666666-6666-6666-6666-666666666666")
+# Dave's duplicates all have finite retention so we exercise the MAX path.
+DAVE_OLDEST = uuid.UUID("88888888-8888-8888-8888-888888888888")
+DAVE_DUP = uuid.UUID("99999999-9999-9999-9999-999999999999")
 
 TRANS_ON_ALICE_OLDEST = uuid.UUID("a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1")
 TRANS_ON_ALICE_MIDDLE = uuid.UUID("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a2")
@@ -112,7 +115,9 @@ def _seed(conn: sa.Connection) -> None:
               (:a_new,   'ALICE@EXAMPLE.COM', '2025-03-01 00:00:00+00', '2025-03-01 00:00:00+00', 7),
               (:bob,     'bob@example.com',   '2025-01-15 00:00:00+00', '2025-01-15 00:00:00+00', NULL),
               (:carol_a, 'Carol@x.com',       '2024-12-01 00:00:00+00', '2024-12-01 00:00:00+00', NULL),
-              (:carol_b, 'carol@x.com',       '2025-04-01 00:00:00+00', '2025-04-01 00:00:00+00', 90);
+              (:carol_b, 'carol@x.com',       '2025-04-01 00:00:00+00', '2025-04-01 00:00:00+00', 90),
+              (:dave_a,  'Dave@x.com',        '2025-01-10 00:00:00+00', '2025-01-10 00:00:00+00', 7),
+              (:dave_b,  'dave@x.com',        '2025-03-10 00:00:00+00', '2025-03-10 00:00:00+00', 365);
             """
         ),
         {
@@ -123,6 +128,8 @@ def _seed(conn: sa.Connection) -> None:
             "bob": BOB,
             "carol_a": CAROL_NO_CHILDREN,
             "carol_b": CAROL_DUP,
+            "dave_a": DAVE_OLDEST,
+            "dave_b": DAVE_DUP,
         },
     )
 
@@ -194,17 +201,33 @@ def test_migration_merges_duplicates_reassigns_fks_and_lowercases(migration_db):
     command.upgrade(cfg, TARGET_REVISION)
 
     with engine.connect() as conn:
-        rows = conn.execute(sa.text('SELECT id, email FROM "user" ORDER BY created_datetime')).all()
+        rows = conn.execute(
+            sa.text('SELECT id, email, data_retention_days FROM "user" ORDER BY created_datetime')
+        ).all()
         ids_by_email = {r.email: r.id for r in rows}
+        retention_by_email = {r.email: r.data_retention_days for r in rows}
 
-        # Three users remain: oldest Alice, Bob, oldest Carol.
-        assert {r.email for r in rows} == {"alice@example.com", "bob@example.com", "carol@x.com"}
+        # Four users remain: oldest Alice, Bob, oldest Carol, oldest Dave.
+        assert {r.email for r in rows} == {
+            "alice@example.com",
+            "bob@example.com",
+            "carol@x.com",
+            "dave@x.com",
+        }
         assert ids_by_email["alice@example.com"] == ALICE_OLDEST
         assert ids_by_email["carol@x.com"] == CAROL_NO_CHILDREN
         assert ids_by_email["bob@example.com"] == BOB
+        assert ids_by_email["dave@x.com"] == DAVE_OLDEST
 
         # All emails are lowercased (even the ones that started lowercase, no-op).
         assert all(r.email == r.email.lower() for r in rows)
+
+        # The longest retention from each duplicate group wins. NULL ("indefinite")
+        # beats any finite number; otherwise the largest day count.
+        assert retention_by_email["alice@example.com"] is None  # ALICE_OLDEST had NULL
+        assert retention_by_email["carol@x.com"] is None  # CAROL_NO_CHILDREN had NULL
+        assert retention_by_email["dave@x.com"] == 365  # MAX(7, 365)
+        assert retention_by_email["bob@example.com"] is None  # untouched (no duplicates)
 
         # All four "Alice" transcriptions now point at the kept Alice.
         alice_trans = (

@@ -28,25 +28,32 @@ def upgrade() -> None:
     # emails in a different case than the old one — that silently created a
     # second User row for each affected person, orphaning their transcriptions.
 
-    # Build a remap (old_id -> keep_id) once, in a temp table, then reuse it
-    # for every FK update below. The ON COMMIT DROP removes the temp table at the end of the migration
-    # 1) canonical picks the oldest row for each lowercase email as the "keeper"
-    # 2) user_remap lists every non-keeper user paired with its keeper
-
+    # Build a remap (old_id -> keep_id, resolved_retention) once, in a temp table,
+    # then reuse it for every FK update below. The ON COMMIT DROP removes the temp
+    # table at the end of the migration.
+    # 1) groups picks the oldest row per lowercase email as the "keeper" and
+    #    computes the most generous retention across the group. NULL retention
+    #    means "indefinite" (the longest possible); if any row in the group is
+    #    NULL the merged user keeps NULL, otherwise we take the largest day count.
+    # 2) user_remap lists every non-keeper user paired with its keeper.
     op.execute(
         """
         CREATE TEMP TABLE user_remap ON COMMIT DROP AS
-        WITH canonical AS (
-            SELECT DISTINCT ON (LOWER(email))
-                id AS keep_id,
-                LOWER(email) AS lower_email
+        WITH groups AS (
+            SELECT
+                LOWER(email) AS lower_email,
+                (array_agg(id ORDER BY created_datetime ASC, id ASC))[1] AS keep_id,
+                CASE WHEN COUNT(*) <> COUNT(data_retention_days)
+                     THEN NULL
+                     ELSE MAX(data_retention_days)
+                END AS resolved_retention
             FROM "user"
-            ORDER BY LOWER(email), created_datetime ASC, id ASC
+            GROUP BY LOWER(email)
         )
-        SELECT u.id AS old_id, c.keep_id
+        SELECT u.id AS old_id, g.keep_id, g.resolved_retention
         FROM "user" u
-        JOIN canonical c ON LOWER(u.email) = c.lower_email
-        WHERE u.id <> c.keep_id;
+        JOIN groups g ON LOWER(u.email) = g.lower_email
+        WHERE u.id <> g.keep_id;
         """
     )
 
@@ -59,6 +66,17 @@ def upgrade() -> None:
             WHERE {table}.user_id = user_remap.old_id;
             """
         )
+
+    # Apply the resolved retention to the kept user. DISTINCT collapses the
+    # one-row-per-duplicate user_remap shape down to one row per keeper.
+    op.execute(
+        """
+        UPDATE "user" u
+        SET data_retention_days = m.resolved_retention
+        FROM (SELECT DISTINCT keep_id, resolved_retention FROM user_remap) m
+        WHERE u.id = m.keep_id;
+        """
+    )
 
     op.execute('DELETE FROM "user" WHERE id IN (SELECT old_id FROM user_remap);')
 

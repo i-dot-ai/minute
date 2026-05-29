@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException
-from sqlmodel import select
+from sqlalchemy.dialects.postgresql import insert
 
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
@@ -42,19 +42,19 @@ async def get_current_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Try to find existing user
+        stmt = (
+            insert(User)
+            .values(email=email)
+            .on_conflict_do_update(
+                index_elements=[User.email],
+                set_={User.email: User.email},  # no-op, just so RETURNING fires
+            )
+            .returning(User)
+        )
+        result = await session.execute(stmt)
+        await session.commit()
 
-        statement = select(User).where(User.email == email)
-        user = (await session.exec(statement)).first()
-
-        if not user:
-            # Create new user if doesn't exist
-            user = User(email=email)
-            session.add(user)
-            await session.commit()
-            await session.refresh(user)
-
-        return user
+        return result.scalar_one()
     except MissingAuthTokenError as e:
         logger.warning("No authorization header provided")
         raise HTTPException(

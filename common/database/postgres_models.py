@@ -120,7 +120,7 @@ class User(BaseTableMixin, table=True):
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     email: str = Field(index=True)
-    data_retention_days: int | None = Field(default=30)
+    data_retention_days: int | None = Field(default=30, sa_column_kwargs={"server_default": "30"})
     transcriptions: list["Transcription"] = Relationship(back_populates="user")
 
 

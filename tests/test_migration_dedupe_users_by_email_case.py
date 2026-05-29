@@ -102,7 +102,7 @@ TEMPLATE_ON_ALICE_NEWEST = uuid.UUID("d1d1d1d1-d1d1-d1d1-d1d1-d1d1d1d1d1d1")
 def _seed(conn: sa.Connection) -> None:
     """Insert the synthetic fixture.
 
-    Three case-variant Alice rows, one Bob (untouched), and a Carol duplicate
+    Four case-variant Alice rows, one Bob (untouched), and a Carol duplicate
     with no child rows (exercises the merge-with-nothing-to-reassign path).
     """
     conn.execute(

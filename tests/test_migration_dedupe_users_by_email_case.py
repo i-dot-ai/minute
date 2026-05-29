@@ -75,6 +75,9 @@ def migration_db(monkeypatch):
 ALICE_OLDEST = uuid.UUID("11111111-1111-1111-1111-111111111111")
 ALICE_MIDDLE = uuid.UUID("22222222-2222-2222-2222-222222222222")
 ALICE_NEWEST = uuid.UUID("33333333-3333-3333-3333-333333333333")
+# Exact-case duplicate of ALICE_OLDEST's email — covers identical (not just
+# case-variant) duplicate rows, which can exist before the unique index lands.
+ALICE_EXACT_DUP = uuid.UUID("77777777-7777-7777-7777-777777777777")
 BOB = uuid.UUID("44444444-4444-4444-4444-444444444444")
 CAROL_NO_CHILDREN = uuid.UUID("55555555-5555-5555-5555-555555555555")
 CAROL_DUP = uuid.UUID("66666666-6666-6666-6666-666666666666")
@@ -83,6 +86,7 @@ TRANS_ON_ALICE_OLDEST = uuid.UUID("a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1")
 TRANS_ON_ALICE_MIDDLE = uuid.UUID("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a2")
 TRANS_ON_ALICE_NEWEST_1 = uuid.UUID("a3a3a3a3-a3a3-a3a3-a3a3-a3a3a3a3a3a3")
 TRANS_ON_ALICE_NEWEST_2 = uuid.UUID("a4a4a4a4-a4a4-a4a4-a4a4-a4a4a4a4a4a4")
+TRANS_ON_ALICE_EXACT_DUP = uuid.UUID("a5a5a5a5-a5a5-a5a5-a5a5-a5a5a5a5a5a5")
 TRANS_ON_BOB = uuid.UUID("b1b1b1b1-b1b1-b1b1-b1b1-b1b1b1b1b1b1")
 
 REC_ON_ALICE_MIDDLE = uuid.UUID("c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1")
@@ -103,6 +107,7 @@ def _seed(conn: sa.Connection) -> None:
             """
             INSERT INTO "user" (id, email, created_datetime, updated_datetime, data_retention_days) VALUES
               (:a_old,   'Alice@Example.com', '2025-01-01 00:00:00+00', '2025-01-01 00:00:00+00', NULL),
+              (:a_dup,   'Alice@Example.com', '2025-01-20 00:00:00+00', '2025-01-20 00:00:00+00', 14),
               (:a_mid,   'alice@example.com', '2025-02-01 00:00:00+00', '2025-02-01 00:00:00+00', 30),
               (:a_new,   'ALICE@EXAMPLE.COM', '2025-03-01 00:00:00+00', '2025-03-01 00:00:00+00', 7),
               (:bob,     'bob@example.com',   '2025-01-15 00:00:00+00', '2025-01-15 00:00:00+00', NULL),
@@ -112,6 +117,7 @@ def _seed(conn: sa.Connection) -> None:
         ),
         {
             "a_old": ALICE_OLDEST,
+            "a_dup": ALICE_EXACT_DUP,
             "a_mid": ALICE_MIDDLE,
             "a_new": ALICE_NEWEST,
             "bob": BOB,
@@ -125,6 +131,7 @@ def _seed(conn: sa.Connection) -> None:
             """
             INSERT INTO transcription (id, user_id, created_datetime, updated_datetime) VALUES
               (:t_old,    :a_old, NOW(), NOW()),
+              (:t_dup,    :a_dup, NOW(), NOW()),
               (:t_mid,    :a_mid, NOW(), NOW()),
               (:t_new_1,  :a_new, NOW(), NOW()),
               (:t_new_2,  :a_new, NOW(), NOW()),
@@ -133,11 +140,13 @@ def _seed(conn: sa.Connection) -> None:
         ),
         {
             "t_old": TRANS_ON_ALICE_OLDEST,
+            "t_dup": TRANS_ON_ALICE_EXACT_DUP,
             "t_mid": TRANS_ON_ALICE_MIDDLE,
             "t_new_1": TRANS_ON_ALICE_NEWEST_1,
             "t_new_2": TRANS_ON_ALICE_NEWEST_2,
             "t_bob": TRANS_ON_BOB,
             "a_old": ALICE_OLDEST,
+            "a_dup": ALICE_EXACT_DUP,
             "a_mid": ALICE_MIDDLE,
             "a_new": ALICE_NEWEST,
             "bob": BOB,
@@ -208,6 +217,7 @@ def test_migration_merges_duplicates_reassigns_fks_and_lowercases(migration_db):
         )
         assert set(alice_trans) == {
             TRANS_ON_ALICE_OLDEST,
+            TRANS_ON_ALICE_EXACT_DUP,
             TRANS_ON_ALICE_MIDDLE,
             TRANS_ON_ALICE_NEWEST_1,
             TRANS_ON_ALICE_NEWEST_2,

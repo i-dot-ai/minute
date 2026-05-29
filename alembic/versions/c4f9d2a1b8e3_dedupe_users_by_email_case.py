@@ -84,7 +84,10 @@ def upgrade() -> None:
 
     # Matches the Index declared on User.__table_args__ in common/database/postgres_models.py
     op.create_index("ix_user_email_lower", "user", [sa.text("lower(email)")], unique=True)
+    # add 30 days server default to data retention
+    op.alter_column("user", "data_retention_days", server_default="30")
 
 
 def downgrade() -> None:
     op.drop_index("ix_user_email_lower", table_name="user")
+    op.alter_column("user", "data_retention_days", server_default=None)

@@ -53,11 +53,14 @@ export async function middleware(req: NextRequest) {
       }
     }
     if (authResult?.isAuthorised !== true) {
-      if (authResult?.authReason === 'TOKEN_EXPIRED') {
-        return signoutAndRedirect(req)
-      }
       console.error(`User is not authorised to access ${pathname}`)
       return redirectToUnauthorised(req)
+    }
+    const session_refreshed_cookie = req.cookies.get(
+      'SESSION_HAS_BEEN_REFRESHED'
+    )
+    if (!session_refreshed_cookie) {
+      return redirectToClearCookies(req)
     }
 
     console.info(
@@ -82,7 +85,7 @@ function redirectToGenericError(req: NextRequest) {
   url.pathname = '/generic-error'
   return NextResponse.redirect(url)
 }
-function signoutAndRedirect(req: NextRequest) {
+function redirectToClearCookies(req: NextRequest) {
   const url = req.nextUrl.clone()
   url.pathname = '/clear-cookies'
   return NextResponse.redirect(url)

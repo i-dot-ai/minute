@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   '/monitoring',
   '/privacy',
   '/support',
+  '/clear-cookies',
 ]
 
 export async function middleware(req: NextRequest) {
@@ -51,10 +52,10 @@ export async function middleware(req: NextRequest) {
         authReason: 'LOCAL_TESTING',
       }
     }
-    if (authResult?.authReason === 'TOKEN_EXPIRED') {
-      return signoutAndRedirect(req)
-    }
     if (authResult?.isAuthorised !== true) {
+      if (authResult?.authReason === 'TOKEN_EXPIRED') {
+        return signoutAndRedirect(req)
+      }
       console.error(`User is not authorised to access ${pathname}`)
       return redirectToUnauthorised(req)
     }
@@ -82,10 +83,8 @@ function redirectToGenericError(req: NextRequest) {
   return NextResponse.redirect(url)
 }
 function signoutAndRedirect(req: NextRequest) {
-  req.cookies.delete('X-Amzn-Oidc-Data-0')
-  req.cookies.delete('AWSALBAuthNonce')
   const url = req.nextUrl.clone()
-  url.pathname = '/'
+  url.pathname = '/clear-cookies'
   return NextResponse.redirect(url)
 }
 // Configure which paths this middleware should run on

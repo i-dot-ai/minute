@@ -53,14 +53,11 @@ export async function middleware(req: NextRequest) {
       }
     }
     if (authResult?.isAuthorised !== true) {
+      if (authResult?.authReason === 'TOKEN_EXPIRED') {
+        return redirectToClearCookies(req)
+      }
       console.error(`User is not authorised to access ${pathname}`)
       return redirectToUnauthorised(req)
-    }
-    const session_refreshed_cookie = req.cookies.get(
-      'SESSION_HAS_BEEN_REFRESHED'
-    )
-    if (!session_refreshed_cookie) {
-      return redirectToClearCookies(req)
     }
 
     console.info(

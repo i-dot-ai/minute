@@ -9,6 +9,10 @@ export async function GET() {
   cookieStore.delete('AWSALBAuthNonce')
   cookieStore.set('SESSION_HAS_BEEN_REFRESHED', 'TRUE', {
     maxAge: SEVEN_DAYS_SECONDS,
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    path: '/',
   })
   redirect('/')
 }

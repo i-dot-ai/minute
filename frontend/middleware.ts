@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   '/monitoring',
   '/privacy',
   '/support',
+  '/clear-cookies',
 ]
 
 export async function middleware(req: NextRequest) {
@@ -51,8 +52,10 @@ export async function middleware(req: NextRequest) {
         authReason: 'LOCAL_TESTING',
       }
     }
-
     if (authResult?.isAuthorised !== true) {
+      if (authResult?.authReason === 'TOKEN_EXPIRED') {
+        return redirectToClearCookies(req)
+      }
       console.error(`User is not authorised to access ${pathname}`)
       return redirectToUnauthorised(req)
     }
@@ -79,7 +82,11 @@ function redirectToGenericError(req: NextRequest) {
   url.pathname = '/generic-error'
   return NextResponse.redirect(url)
 }
-
+function redirectToClearCookies(req: NextRequest) {
+  const url = req.nextUrl.clone()
+  url.pathname = '/clear-cookies'
+  return NextResponse.redirect(url)
+}
 // Configure which paths this middleware should run on
 export const config = {
   matcher: [

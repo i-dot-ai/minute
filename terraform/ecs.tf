@@ -150,7 +150,8 @@ module "frontend" {
     client_id : aws_ssm_parameter.oidc_secrets["client_id"].value,
     client_secret : aws_ssm_parameter.oidc_secrets["client_secret"].value,
   }
-  user_session_timeout = 604800 # 7 days in seconds
+
+  user_session_timeout = 86400 # 7 days in seconds
 }
 
 module "worker" {

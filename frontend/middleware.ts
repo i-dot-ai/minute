@@ -1,6 +1,6 @@
 import { API_PROXY_PATH } from '@/providers/TanstackQueryProvider'
 import { NextRequest, NextResponse } from 'next/server'
-import { type UserAuthorisationResult } from '@i-dot-ai-npm/utilities'
+import { type UserAuthorisationResult } from '@i-dot-ai-npm/utilities-auth'
 import { parseAuthToken } from './utils/auth'
 
 // Define paths that should be public (no authorisation required)

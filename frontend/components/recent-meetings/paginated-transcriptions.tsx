@@ -29,9 +29,9 @@ export const PaginatedTranscriptions = () => {
     }),
     refetchInterval: (query) =>
       !!query.state.data &&
-      query.state.data.items?.some((t) =>
-        ['awaiting_start', 'in_progress'].includes(t.status)
-      )
+        query.state.data.items?.some((t) =>
+          ['awaiting_start', 'in_progress'].includes(t.status)
+        )
         ? 5000
         : false,
     placeholderData: keepPreviousData,
@@ -63,48 +63,45 @@ export const PaginatedTranscriptions = () => {
   return (
     <div>
       <OfflineRecordings />
-      <div className="pb-2">
-        <div className="flex items-center justify-between pb-2">
-          <h1 className="text-2xl font-bold">Recent meetings:</h1>
-          <div className="text-sm text-gray-600">
+      <div>
+        <div >
+          <h2 className="govuk-heading-m">Recent meetings:</h2>
+          <p className="govuk-body">
             {totalCount} transcription{totalCount !== 1 ? 's' : ''}
-          </div>
+          </p>
         </div>
+
         {user && user.data_retention_days && (
-          <div className="text-muted-foreground flex items-center gap-1 py-1 text-sm">
-            <div className="mb-[2px]">
-              <Info className="inline h-4 w-4" />
-            </div>
-            <div>
-              Your data retention period is set to {user.data_retention_days}{' '}
-              day
-              {user.data_retention_days > 1 ? 's' : ''}. Change this in{' '}
-              <Link
-                href="/settings"
-                className="inline text-sky-700 underline hover:decoration-2"
-              >
-                settings
-              </Link>
-              .
-            </div>
-          </div>
+          <p className="govuk-body">
+            <Info />
+            Your data retention period is set to {user.data_retention_days}{' '}
+            day
+            {user.data_retention_days > 1 ? 's' : ''}. Change this in{' '}
+            <Link
+              href="/settings"
+              className="govuk-link"
+            >
+              settings
+            </Link>
+            .
+          </p>
         )}
       </div>
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
-          <div className="text-gray-500">Loading transcriptions...</div>
+          <p className="govuk-body">Loading transcriptions...</p>
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-8">
-          <div className="text-red-500">Error loading transcriptions</div>
+          <p className="govuk-body">Error loading transcriptions</p>
         </div>
       ) : transcriptions.length === 0 ? (
         <div className="flex items-center justify-center py-8">
-          <div className="text-gray-500">No transcriptions found</div>
+          <p className="govuk-body">No transcriptions found</p>
         </div>
       ) : (
         <>
-          <ul className="mb-6 flex flex-col gap-2">
+          <ul className="govuk-list govuk-list--bullet">
             {transcriptions.map((transcription) => (
               <TranscriptionListItem
                 transcription={transcription}

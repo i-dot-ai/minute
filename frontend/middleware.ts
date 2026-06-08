@@ -63,8 +63,12 @@ export async function middleware(req: NextRequest) {
     console.info(
       `User ${authResult.email} authorisation result: ${authResult.isAuthorised}`
     )
+    const requestHeaders = new Headers(req.headers)
+    requestHeaders.set('x-pathname', pathname)
 
-    return NextResponse.next()
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    })
   } catch (error) {
     console.error('Error authorising token:', error)
     return redirectToGenericError(req)

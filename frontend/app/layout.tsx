@@ -22,19 +22,15 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={inter.className}>
-      <body>
+    <html lang="en" className={`${inter.className} govuk-template`}>
+      <body className="govuk-template__body">
         <TanstackQueryProvider>
           <PosthogProvider>
             <LockNavigationProvider>
               <RecordingDbProvider>
-                <div className="flex min-h-screen flex-col justify-between">
-                  <div>
-                    <Header />
-                    <main>{children}</main>
-                  </div>
-                  <Footer />
-                </div>
+                <Header />
+                <main id="main-content">{children}</main>
+                <Footer />
                 <Toaster />
               </RecordingDbProvider>
             </LockNavigationProvider>

@@ -1,42 +1,47 @@
 import { PosthogBanner } from '@/components/posthog-banner'
-import { PaginatedTranscriptions } from '@/components/recent-meetings/paginated-transcriptions'
-import { Button } from '@/components/ui/button'
-import { Loader2, Plus } from 'lucide-react'
-import Link from 'next/link'
-import { Suspense } from 'react'
 
 export default function Home() {
   return (
-    <div className="mx-auto max-w-3xl p-6">
-      <PosthogBanner />
-      <div className="mb-4">
-        <h1 className="mb-4 text-4xl font-bold">
-          AI transcription and drafting service
-        </h1>
-        <p className="text-slate-600">
-          Transcribe and summarise your meetings with AI. Click the New Meeting
-          button below to begin. Suitable up to{' '}
-          <span className="font-bold">OFFICIAL SENSITIVE</span>.
-        </p>
-      </div>
-      <Button
-        className="mb-6 w-full bg-blue-500 p-6 hover:bg-blue-800 active:bg-amber-400"
-        asChild
-      >
-        <Link href="/new">
-          <Plus />
-          New meeting
-        </Link>
-      </Button>
-      <Suspense
-        fallback={
-          <div className="flex w-full items-center justify-center">
-            <Loader2 className="animate-spin" />
+    <div className="govuk-main-wrapper">
+      <div className="govuk-width-container">
+        <div className="govuk-grid-row">
+          <div className="govuk-grid-column-two-thirds">
+            <PosthogBanner />
+            <h1 className="govuk-heading-xl">
+              Minute
+            </h1>
+            <p className="govuk-body-l">
+              Transcribe and summarise your meetings with AI. Suitable up to <span className="govuk-!-font-weight-bold">OFFICIAL SENSITIVE</span>.
+            </p>
+            <ul className="govuk-list">
+              <li className="homepage-list__list-item govuk-!-padding-top-2">
+                <h2 className="govuk-heading-s govuk-!-margin-bottom-1">
+                  <a href="/new/upload" draggable="false" className="govuk-link">
+                    Upload a file
+                  </a>
+                </h2>
+                <p className="govuk-body">Upload a file from your computer.</p>
+              </li>
+              <li className="homepage-list__list-item govuk-!-padding-top-2">
+                <h2 className="govuk-heading-s govuk-!-margin-bottom-1">
+                  <a href="/new/record-virtual" draggable="false" className="govuk-link">
+                    Record a virtual meeting
+                  </a>
+                </h2>
+                <p className="govuk-body">Capture audio from a virtual meeting in another tab.</p>
+              </li>
+              <li className="homepage-list__list-item govuk-!-padding-top-2">
+                <h2 className="govuk-heading-s govuk-!-margin-bottom-1">
+                  <a href="/new/record-audio" draggable="false" className="govuk-link">
+                    Record audio
+                  </a>
+                </h2>
+                <p className="govuk-body">Record audio directly from your device.</p>
+              </li>
+            </ul>
           </div>
-        }
-      >
-        <PaginatedTranscriptions />
-      </Suspense>
+        </div>
+      </div>
     </div>
   )
 }

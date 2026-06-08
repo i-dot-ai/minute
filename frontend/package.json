@@ -12,6 +12,7 @@
     "prettier:fix": "prettier --write ."
   },
   "dependencies": {
+    "@govuk-one-login/service-header": "^6.0.0",
     "@hey-api/client-next": "^0.5.1",
     "@i-dot-ai-npm/utilities-auth": "^1.0.0-EN-1538.1",
     "@radix-ui/react-accordion": "^1.2.11",
@@ -39,6 +40,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "file-saver": "^2.0.5",
+    "govuk-frontend": "^6.2.0",
     "html-docx-js-typescript": "^0.1.5",
     "jose": "^6.0.11",
     "lucide-react": "^0.544.0",

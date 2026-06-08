@@ -1,5 +1,28 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import "govuk-frontend/dist/govuk/govuk-frontend.min.css";
+
+
+.homepage-list__list-item {
+  position: relative;
+  border-top: 1px solid #b1b4b6;
+}
+
+.homepage-list__list-item::after {
+  content: "";
+  border: 2px solid #1d70b8;
+  border-width: 2px 2px 0 0;
+  width: .4375em;
+  height: .4375em;
+  margin: auto 0;
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: .1875em;
+  transform: rotate(45deg);
+}
+
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
@@ -117,6 +140,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -128,6 +152,7 @@
   grid-template-areas:
     'alpha'
     'nav';
+
   @media (width > 72rem) {
     grid-template-areas: 'nav alpha';
     grid-template-columns: 1fr max-content 1fr;
@@ -194,7 +219,7 @@
   list-style-type: none;
 }
 
-.editor-content ul > li::before {
+.editor-content ul>li::before {
   content: '•';
 }
 
@@ -203,11 +228,11 @@
   counter-reset: list-counter;
 }
 
-.editor-content ol > li {
+.editor-content ol>li {
   counter-increment: list-counter;
 }
 
-.editor-content ol > li::before {
+.editor-content ol>li::before {
   content: counter(list-counter) '.';
 }
 
@@ -253,22 +278,24 @@
   margin-bottom: 2.33em;
 }
 
-.editor-content p + p {
+.editor-content p+p {
   margin-top: 1em;
   /* Add margin only between consecutive paragraphs */
 }
 
-.editor-content pre > code {
+.editor-content pre>code {
   background-color: #444;
   color: white;
-  width: 100%!;
+  width: 100% !;
 }
+
 .editor-content pre {
-  width: 100%!;
+  width: 100% !;
   background-color: #444;
   padding: 0.5rem;
   border-radius: 0.5rem;
 }
+
 .editor-content code:not(pre code) {
   color: red;
 }

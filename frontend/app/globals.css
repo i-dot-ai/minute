@@ -3,12 +3,19 @@
 @import "govuk-frontend/dist/govuk/govuk-frontend.min.css";
 
 
-.homepage-list__list-item {
+.homepage__list-item {
   position: relative;
   border-top: 1px solid #b1b4b6;
 }
 
-.homepage-list__list-item::after {
+.transcriptions__list-item {
+  border-top: 1px solid #b1b4b6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.homepage__list-item::after {
   content: "";
   border: 2px solid #1d70b8;
   border-width: 2px 2px 0 0;

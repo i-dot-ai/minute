@@ -14,7 +14,7 @@ export default function Home() {
               Transcribe and summarise your meetings with AI. Suitable up to <span className="govuk-!-font-weight-bold">OFFICIAL SENSITIVE</span>.
             </p>
             <ul className="govuk-list">
-              <li className="homepage-list__list-item govuk-!-padding-top-2">
+              <li className="homepage__list-item govuk-!-padding-top-2">
                 <h2 className="govuk-heading-s govuk-!-margin-bottom-1">
                   <a href="/new/upload" draggable="false" className="govuk-link">
                     Upload a file
@@ -22,7 +22,7 @@ export default function Home() {
                 </h2>
                 <p className="govuk-body">Upload a file from your computer.</p>
               </li>
-              <li className="homepage-list__list-item govuk-!-padding-top-2">
+              <li className="homepage__list-item govuk-!-padding-top-2">
                 <h2 className="govuk-heading-s govuk-!-margin-bottom-1">
                   <a href="/new/record-virtual" draggable="false" className="govuk-link">
                     Record a virtual meeting
@@ -30,7 +30,7 @@ export default function Home() {
                 </h2>
                 <p className="govuk-body">Capture audio from a virtual meeting in another tab.</p>
               </li>
-              <li className="homepage-list__list-item govuk-!-padding-top-2">
+              <li className="homepage__list-item govuk-!-padding-top-2">
                 <h2 className="govuk-heading-s govuk-!-margin-bottom-1">
                   <a href="/new/record-audio" draggable="false" className="govuk-link">
                     Record audio

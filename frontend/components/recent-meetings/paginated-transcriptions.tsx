@@ -63,94 +63,100 @@ export const PaginatedTranscriptions = () => {
   return (
     <div>
       <OfflineRecordings />
-      <div>
-        <div >
-          <h2 className="govuk-heading-m">Recent meetings:</h2>
-          <p className="govuk-body">
-            {totalCount} transcription{totalCount !== 1 ? 's' : ''}
-          </p>
+      {user && user.data_retention_days && (
+        <div className="govuk-inset-text">
+          Your data retention period is set to {user.data_retention_days}{' '}
+          day
+          {user.data_retention_days > 1 ? 's' : ''}. Change this in{' '}
+          <Link
+            href="/settings"
+            className="govuk-link"
+          >
+            settings
+          </Link>
+          .
         </div>
-
-        {user && user.data_retention_days && (
-          <p className="govuk-body">
-            <Info />
-            Your data retention period is set to {user.data_retention_days}{' '}
-            day
-            {user.data_retention_days > 1 ? 's' : ''}. Change this in{' '}
-            <Link
-              href="/settings"
-              className="govuk-link"
-            >
-              settings
-            </Link>
-            .
-          </p>
-        )}
-      </div>
+      )}
+      <h2 className="govuk-heading-m">
+        {totalCount} transcriptions
+      </h2>
       {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <p className="govuk-body">Loading transcriptions...</p>
-        </div>
+        <p className="govuk-body">Loading transcriptions...</p>
       ) : error ? (
-        <div className="flex items-center justify-center py-8">
-          <p className="govuk-body">Error loading transcriptions</p>
-        </div>
+        <p className="govuk-body">Error loading transcriptions</p>
       ) : transcriptions.length === 0 ? (
-        <div className="flex items-center justify-center py-8">
-          <p className="govuk-body">No transcriptions found</p>
-        </div>
+        <p className="govuk-body">No transcriptions found</p>
       ) : (
         <>
-          <ul className="govuk-list govuk-list--bullet">
-            {transcriptions.map((transcription) => (
-              <TranscriptionListItem
-                transcription={transcription}
-                key={transcription.id}
-              />
-            ))}
+          <ul className="govuk-list">
+            {transcriptions.map((transcription) => {
+              const date = new Date(transcription.created_datetime).toLocaleString('en-GB', {
+                year: 'numeric', month: 'long', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+              })
+              return (
+                <li key={transcription.id} className="transcriptions__list-item govuk-!-padding-top-4">
+                  <div>
+                    <h3 className="govuk-heading-s govuk-!-margin-bottom-1">
+                      <Link href={`/transcriptions/${transcription.id}`} className="govuk-link">
+                        {transcription.title ||
+                          (['awaiting_start', 'in_progress'].includes(transcription.status)
+                            ? 'Generating title'
+                            : 'No title')}
+                      </Link>
+                    </h3>
+                    <p className="govuk-body-s">{date}</p>
+                  </div>
+                  <a href="#" role="button" draggable="false" className="govuk-button govuk-button--secondary govuk-!-margin-0" data-module="govuk-button">
+                    Delete
+                    <span className="govuk-visually-hidden">
+                      {['awaiting_start', 'in_progress'].includes(transcription.status)
+                        ? 'Generating title'
+                        : 'No title'}
+                      recorded on {date}
+                    </span>
+                  </a>
+                </li>
+              )
+            })}
           </ul>
           {totalPages > 1 && (
-            <div className="flex items-center justify-center space-x-2">
+            <nav className="govuk-pagination" aria-label="Pagination">
               {currentPage > 1 && (
-                <Button variant="outline" size="sm" asChild>
-                  <Link
-                    href={pathname + `?page=${currentPage - 1}`}
-                    scroll={false}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Previous
-                  </Link>
-                </Button>
+                <div className="govuk-pagination__prev">
+                  <a className="govuk-link govuk-pagination__link" href={`${pathname}?page=${currentPage - 1}`} rel="prev">
+                    <svg className="govuk-pagination__icon govuk-pagination__icon--prev" xmlns="http://www.w3.org/2000/svg" height="13" width="15" aria-hidden="true" focusable="false" viewBox="0 0 15 13">
+                      <path d="m6.5938-0.0078125-6.7266 6.7266 6.7441 6.4062 1.377-1.449-4.1856-3.9768h12.896v-2h-12.984l4.2931-4.293-1.414-1.414z"></path>
+                    </svg>
+                    <span className="govuk-pagination__link-title">
+                      Previous<span className="govuk-visually-hidden"> page</span>
+                    </span>
+                  </a>
+                </div>
               )}
-              {getPageNumbers().map((page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? 'default' : 'outline'}
-                  size="sm"
-                  className="min-w-10"
-                  asChild
-                >
-                  <Link href={pathname + `?page=${page}`} scroll={false}>
-                    {page}
-                  </Link>
-                </Button>
-              ))}
+              <ul className="govuk-pagination__list">
+                {getPageNumbers().map((page) => (
+                  <li key={page} className="govuk-pagination__item">
+                    <a className="govuk-link govuk-pagination__link" href={`${pathname}?page=${page}`} aria-label={`Page ${page}`}>
+                      {page}
+                    </a>
+                  </li>
+                ))}
+              </ul>
               {currentPage < totalPages && (
-                <Button variant="outline" size="sm" asChild>
-                  <Link
-                    href={pathname + `?page=${currentPage + 1}`}
-                    scroll={false}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                </Button>
+                <div className="govuk-pagination__next">
+                  <a className="govuk-link govuk-pagination__link" href={`${pathname}?page=${currentPage + 1}`} rel="next">
+                    <span className="govuk-pagination__link-title">
+                      Next<span className="govuk-visually-hidden"> page</span>
+                    </span>
+                    <svg className="govuk-pagination__icon govuk-pagination__icon--next" xmlns="http://www.w3.org/2000/svg" height="13" width="15" aria-hidden="true" focusable="false" viewBox="0 0 15 13">
+                      <path d="m8.107-0.0078125-1.4136 1.414 4.2926 4.293h-12.986v2h12.896l-4.1855 3.9766 1.377 1.4492 6.7441-6.4062-6.7246-6.7266z"></path>
+                    </svg>
+                  </a>
+                </div>
               )}
-            </div>
+            </nav>
           )}
-          <div className="mt-4 text-center text-sm text-gray-500">
-            Page {currentPage} of {totalPages}
-          </div>
         </>
       )}
     </div>

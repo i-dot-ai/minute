@@ -19,9 +19,9 @@ export const ServiceNavigation = () => {
               Menu
             </button>
             <ul className="govuk-service-navigation__list" id="navigation">
-              <li className={`govuk-service-navigation__item ${pathname.includes('/meetings') ? 'govuk-service-navigation__item--active' : ''}`}>
-                <Link className="govuk-service-navigation__link" href="/meetings">
-                  Previous meetings
+              <li className={`govuk-service-navigation__item ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__item--active' : ''}`}>
+                <Link className="govuk-service-navigation__link" href="/transcriptions">
+                  Transcriptions
                 </Link>
               </li>
               <li className={`govuk-service-navigation__item ${pathname.includes('/templates') ? 'govuk-service-navigation__item--active' : ''}`}>

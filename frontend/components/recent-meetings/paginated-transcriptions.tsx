@@ -1,14 +1,11 @@
 'use client'
 
 import { OfflineRecordings } from '@/components/recent-meetings/offline-recordings'
-import { TranscriptionListItem } from '@/components/recent-meetings/transcription-list-item'
-import { Button } from '@/components/ui/button'
 import {
   getUserUsersMeGetOptions,
   listTranscriptionsTranscriptionsGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Info } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 

@@ -11,9 +11,6 @@ export default function TranscriptionsPage() {
             <li className="govuk-breadcrumbs__list-item">
               <Link className="govuk-breadcrumbs__link" href="/">Home</Link>
             </li>
-            <li className="govuk-breadcrumbs__list-item">
-              <Link className="govuk-breadcrumbs__link" href="/transcriptions">Transcriptions</Link>
-            </li>
           </ol>
         </nav>
         <div className="govuk-grid-row">

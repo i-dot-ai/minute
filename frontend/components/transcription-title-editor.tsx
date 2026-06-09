@@ -87,19 +87,29 @@ export const TranscriptionTitleEditor = ({
   }
 
   return (
-    <div className="flex items-baseline gap-2">
-      <h1 className={cn('text-3xl font-bold', { 'text-gray-400': !title })}>
+    <>
+      <h1 className="govuk-heading-xl">
         {form.watch('title') || placeholder}
       </h1>
-      <Button
+      <button
         onClick={() => {
           setEditing(true)
         }}
-        variant="ghost"
-        className="text-slate-500"
+        data-module="govuk-button"
+        className="govuk-button govuk-button--secondary"
       >
-        <Edit /> Rename
-      </Button>
-    </div>
+        Rename
+      </button>
+      <button
+        onClick={() => {
+          setEditing(true)
+        }}
+        data-module="govuk-button"
+        className="govuk-button govuk-button--warning"
+      >
+        Delete
+      </button>
+
+    </>
   )
 }

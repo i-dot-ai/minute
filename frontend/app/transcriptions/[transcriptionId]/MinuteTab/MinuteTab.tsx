@@ -1,19 +1,22 @@
 'use client'
 
-import { MinuteEditor } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
+import { RatingButton } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/rating-dialog/rating-dialog'
+import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/ai-edit-popover'
+import {
+  MinuteEditState,
+  MinuteEditor,
+  MinuteExportState,
+} from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { AudioWav } from '@/components/icons/AudioWav'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from '@/components/ui/select'
+import CopyButton from '@/components/ui/copy-button'
 import { Transcription } from '@/lib/client'
 import { listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
 import { useQuery } from '@tanstack/react-query'
 import { AudioWaveform } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import posthog from 'posthog-js'
+import { useCallback, useEffect, useState } from 'react'
 
 export function MinuteTab({ transcription }: { transcription: Transcription }) {
   const { data: minutes = [], isLoading } = useQuery({
@@ -23,11 +26,34 @@ export function MinuteTab({ transcription }: { transcription: Transcription }) {
       }
     ),
   })
-  // Only see most recent minute of each template type
   const [selectedMinute, setSelectedMinute] = useState(0)
+  const [exportState, setExportState] = useState<MinuteExportState | null>(null)
+  const [editState, setEditState] = useState<MinuteEditState | null>(null)
   useEffect(() => {
     setSelectedMinute(0)
   }, [minutes])
+  useEffect(() => {
+    setExportState(null)
+    setEditState(null)
+  }, [selectedMinute])
+
+  const handleWordDocDownload = useCallback(() => {
+    if (!exportState) return
+    posthog.capture('minutes_downloaded', {
+      format: 'word',
+      version_id: exportState.minuteVersionId,
+    })
+
+    convertAIMinutesToWordDoc(
+      exportState.htmlContent,
+      transcription.dialogue_entries || [],
+      transcription.title || 'minutes.docx'
+    )
+  }, [
+    exportState,
+    transcription.dialogue_entries,
+    transcription.title,
+  ])
 
   if (isLoading) {
     return (
@@ -38,48 +64,140 @@ export function MinuteTab({ transcription }: { transcription: Transcription }) {
   }
   if (minutes.length == 0) {
     return (
-      <div className="mt-4 flex flex-col items-center justify-center gap-2 text-slate-500">
-        <AudioWaveform />
-        <p>No minutes generated yet.</p>
-        <div>
-          <NewMinuteDialog transcriptionId={transcription.id!} />
+      <div className="govuk-grid-row">
+        <div className="govuk-grid-column-two-thirds">
+          <AudioWaveform />
+          <p>No minutes generated yet.</p>
+          <div>
+            <NewMinuteDialog transcriptionId={transcription.id!} />
+          </div>
         </div>
       </div>
     )
   }
   return (
     <>
-      <div className="mb-4 flex flex-wrap gap-2">
-        <Select
-          value={`${selectedMinute}`}
-          onValueChange={(v) => setSelectedMinute(Number(v))}
-        >
-          <SelectTrigger>{minutes[selectedMinute].template_name}</SelectTrigger>
-          <SelectContent>
-            {minutes.map((minute, index) => {
-              const date = new Date(minute.updated_datetime)
-              return (
-                <SelectItem value={`${index}`} key={minute.id} className="">
-                  <div>
-                    <div>{minute.template_name}</div>
-                    <div className="text-muted-foreground flex gap-1 text-xs">
-                      {date.toDateString()} at {date.toLocaleTimeString()}
-                    </div>
+      <div className="govuk-grid-row">
+        <div className="side-panel__sticky-container govuk-grid-column-one-third">
+          <h2 className="govuk-heading-m">Export</h2>
+          {exportState && (
+            <div className="govuk-button-group">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className="govuk-button govuk-button--secondary"
+                  onClick={handleWordDocDownload}
+                >
+                  Download word doc
+                </button>
+                <CopyButton
+                  textToCopy={exportState.contentToCopy}
+                  posthogEvent="editor_content_copied"
+                />
+              </div>
+            </div>
+          )}
+          <div className="side-panel__section-divider" />
+
+          <h2 className="govuk-heading-m">Summaries</h2>
+          <div className="govuk-form-group govuk-!-margin-bottom-2">
+            <label className="govuk-label" htmlFor="sort">
+              Choose a summary
+            </label>
+            <select className="govuk-select" id="summary-history" name="summary-history" onChange={(e) => setSelectedMinute(Number(e.target.value))} value={selectedMinute}>
+              {minutes.map((minute, index) => {
+                const date = new Date(minute.updated_datetime).toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric' })
+                return (
+                  <option value={`${index}`} key={minute.id}>
+                    {minute.template_name} - {date}
+                  </option>
+                )
+              })}
+            </select>
+            <NewMinuteDialog
+              transcriptionId={transcription.id!}
+              agenda={minutes[selectedMinute].agenda ?? undefined}
+            />
+          </div>
+          <div className="side-panel__section-divider" />
+
+
+          {editState && (
+            <>
+              <h2 className="govuk-heading-m">Edit</h2>
+              <div className="govuk-form-group">
+                <label className="govuk-label" htmlFor="version">
+                  Choose an edit version
+                </label>
+                <select className="govuk-select" id="version" name="version" onChange={(e) => editState.setVersion(Number(e.target.value))} value={editState.version}>
+                  {editState.minuteVersions.map((version, index) => {
+                    const date = new Date(version.created_datetime).toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric' })
+                    const versionNumber = editState.minuteVersions.length - index;
+                    return (
+                      <option value={`${index}`} key={version.id}>
+                        {versionNumber} - {version.content_source === 'ai_edit' ? 'AI edited' : 'Manually edited'} - {date}
+                      </option>
+                    )
+                  })}
+                </select>
+                {editState.showEditActions && (
+                  <div className="govuk-button-group govuk-!-margin-top-2">
+                    <AiEditPopover
+                      disabled={editState.isEditable}
+                      minuteId={editState.minuteId}
+                      minuteVersionId={editState.minuteVersionId}
+                      onSuccess={editState.onSuccess}
+                    />
+                    <button
+                      className="govuk-button govuk-button--secondary"
+                      onClick={() => editState.setIsEditable(true)}
+                      type="button"
+                      disabled={editState.isEditable}
+                    >
+                      Edit Manually
+                    </button>
+                    {editState.isEditable && (
+                      <button
+                        className="govuk-button govuk-button--secondary"
+                        onClick={editState.onSave}
+                      >
+                        Save Changes
+                      </button>
+                    )}
                   </div>
-                </SelectItem>
-              )
-            })}
-          </SelectContent>
-        </Select>
-        <NewMinuteDialog
-          transcriptionId={transcription.id!}
-          agenda={minutes[selectedMinute].agenda ?? undefined}
-        />
+                )}
+              </div>
+
+              {editState.showEditActions && (
+                <>
+                  {editState.hasCitations && (
+                    <>
+                      <div className="side-panel__section-divider" />
+                      <h2 className="govuk-heading-m">View controls</h2>
+                      <div className="govuk-form-group govuk-!-margin-bottom-2">
+                        <button
+                          className="govuk-button govuk-button--secondary"
+                          onClick={editState.toggleHideCitations}
+                          disabled={editState.isEditable}
+                        >
+                          {editState.hideCitations ? 'Show citations' : 'Hide citations'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
+        <div className="govuk-grid-column-two-thirds">
+          <MinuteEditor
+            transcription={transcription}
+            minute={minutes[selectedMinute]}
+            onExportStateChange={setExportState}
+            onEditStateChange={setEditState}
+          />
+        </div>
       </div>
-      <MinuteEditor
-        transcription={transcription}
-        minute={minutes[selectedMinute]}
-      />
     </>
   )
 }

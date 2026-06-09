@@ -176,7 +176,7 @@ function SimpleEditor({
   }
 
   return (
-    <div className="relative rounded-md border border-gray-300">
+    <div>
       {isEditing && (
         <div className="flex items-center justify-between border-b border-gray-300 bg-gray-50 p-2">
           <div className="flex items-center">

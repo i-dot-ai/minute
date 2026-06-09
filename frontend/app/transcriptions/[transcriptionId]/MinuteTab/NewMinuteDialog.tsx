@@ -94,14 +94,14 @@ export function NewMinuteDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="flex gap-2 bg-blue-600 hover:bg-blue-800">
-          <Plus /> Generate New
-        </Button>
+        <button className="govuk-button govuk-button--secondary govuk-!-margin-top-2">
+          Generate new summary
+        </button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-auto lg:min-w-3xl">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold">
-            Generate a new minute
+            Generate a new summary
           </DialogTitle>
           <DialogDescription className="text-muted-foreground mt-1 mb-4 text-sm">
             Choose a template style for your meeting summary

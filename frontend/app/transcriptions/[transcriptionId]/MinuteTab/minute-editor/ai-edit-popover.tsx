@@ -50,17 +50,16 @@ export const AiEditPopover = ({
   )
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <Button
-        className="bg-indigo-700 hover:bg-indigo-800 active:bg-yellow-500"
+      <button
+        className="govuk-button govuk-button--secondary"
         type="button"
         disabled={disabled}
-        asChild
+        onClick={() => setOpen(true)}
       >
         <PopoverTrigger>
-          <Wand2Icon />
           AI Edit
         </PopoverTrigger>
-      </Button>
+      </button>
       <PopoverContent className="w-xl max-w-screen">
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <Textarea

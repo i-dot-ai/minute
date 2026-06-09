@@ -42,20 +42,12 @@ function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
   }
 
   return (
-    <Button
-      className="bg-emerald-500"
+    <button
+      className="govuk-button govuk-button--secondary"
       onClick={handleCopy}
-      title="Copy content"
-      type="button"
     >
-      <CopyIcon />
-      {!showCopied && <span>Copy</span>}
-      {showCopied && (
-        <span className="animate-fade-in text-xs font-medium text-white">
-          Copied!
-        </span>
-      )}
-    </Button>
+      Copy
+    </button>
   )
 }
 

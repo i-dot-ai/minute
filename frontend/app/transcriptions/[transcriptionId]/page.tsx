@@ -13,6 +13,7 @@ import {
 import { FeatureFlags } from '@/lib/feature-flags'
 import { useQuery } from '@tanstack/react-query'
 import { Clock, Frown, LoaderCircle, SearchX } from 'lucide-react'
+import Link from 'next/link'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
 
 export default function TranscriptionPage({
@@ -28,52 +29,51 @@ export default function TranscriptionPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-      ['awaiting_start', 'in_progress'].includes(query.state.data.status)
+        ['awaiting_start', 'in_progress'].includes(query.state.data.status)
         ? 2000
         : false,
   })
 
   if (isLoading) {
     return (
-      <div className="flex h-72 flex-col items-center justify-center">
-        <LoaderCircle size={80} className="animate-spin" />
-      </div>
+      <p className="govuk-body">Loading...</p>
     )
   }
 
   if (!transcription) {
     return (
-      <div className="flex flex-col items-center justify-center">
-        <SearchX size={100} />
-        <p>404 - Transcription not found</p>
-      </div>
+      <>
+        <p className="govuk-body">404 - Transcription not found</p>
+        <p className="govuk-body">The transcription you are looking for does not exist.</p>
+      </>
     )
   }
 
-  const date = new Date(transcription.created_datetime)
-  const dateLabel = `${date.toDateString()} at ${date.toLocaleTimeString()}`
+  const date = new Date(transcription.created_datetime).toLocaleString('en-GB', {
+    year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  })
 
   if (
     transcription.status &&
     ['awaiting_start', 'in_progress'].includes(transcription.status)
   ) {
     return (
-      <div>
-        <TranscriptionTitleEditor
-          title={transcription.title}
-          transcriptionId={transcription.id}
-          status={transcription.status}
-        />
-        <div className="flex items-center gap-1 text-xs text-slate-500">
-          <Clock size="0.8rem" />
-          {dateLabel}
-        </div>
-        <div className="flex flex-col items-center justify-center">
-          <AudioWav />
-          <p className="mb-4">
-            Transcription being processed, you can close the tab.
-          </p>
+      <div className="govuk-grid-row govuk-!-margin-bottom-2">
+        <div className="govuk-grid-column-two-thirds">
+          <h1>
+            Generating transcript
+          </h1>
+          <p className="govuk-body">{date}</p>
+          <p className="govuk-body">The transcription is being processed. Return later to view the transcript.</p>
           <AudioPlayer transcriptionId={transcription.id} />
+        </div>
+        <div className="govuk-grid-column-one-third">
+          <div className="govuk-button-group">
+            <a href={`/transcriptions/${transcription.id}/delete`} role="button" className="govuk-button govuk-button--warning">
+              Delete
+            </a>
+          </div>
         </div>
       </div>
     )
@@ -81,71 +81,69 @@ export default function TranscriptionPage({
 
   if (transcription.status == 'failed') {
     return (
-      <div>
-        <TranscriptionTitleEditor
-          title={transcription.title}
-          transcriptionId={transcription.id}
-          status={transcription.status}
-        />
-        <div className="flex items-center gap-1 text-xs text-slate-500">
-          <Clock size="0.8rem" />
-          {dateLabel}
-        </div>
-        <div className="flex flex-col items-center justify-center gap-2">
-          <Frown size={100} />
-          <p>
-            Something went wrong with your transcription. You may need to try
-            again.
-          </p>
-          <AudioPlayer transcriptionId={transcription.id} />
+      <div className="govuk-grid-row govuk-!-margin-bottom-2">
+        <div className="govuk-grid-column-two-thirds">
+          <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">
+            No title
+          </h1>
+          <p className="govuk-body">{date}</p>
+          <p className="govuk-body">The transcription failed to process. Please try again.</p>
+          <div className="govuk-button-group">
+            <a
+              href={`/transcriptions/${transcription.id}/delete`}
+              role="button"
+              data-module="govuk-button"
+              className="govuk-button govuk-button--warning"
+            >
+              Delete
+            </a>
+          </div>
         </div>
       </div>
     )
   }
   return (
-    <div className="flex w-full flex-col">
-      <TranscriptionTitleEditor
-        title={transcription.title}
-        transcriptionId={transcription.id}
-        status={transcription.status}
-      />
-      <div className="mb-4 flex items-center gap-1 text-xs text-slate-500">
-        <Clock size="0.8rem" />
-        {dateLabel}
+    <>
+      <div className="govuk-grid-row govuk-!-margin-bottom-2">
+        <div className="govuk-grid-column-two-thirds">
+          <p className="govuk-caption-l govuk-!-margin-top-0">Summary</p>
+          <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">
+            {transcription.title}
+          </h1>
+          <p className="govuk-body">{date}</p>
+          <div className="govuk-button-group">
+            <a
+              data-module="govuk-button"
+              href={`/transcriptions/${transcription.id}/rename`}
+              className="govuk-button govuk-button--secondary"
+            >
+              Rename
+            </a>
+            <a
+              href={`/transcriptions/${transcription.id}/delete`}
+              role="button"
+              data-module="govuk-button"
+              className="govuk-button govuk-button--warning"
+            >
+              Delete
+            </a>
+          </div>
+
+          <p className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">
+            <Link href={`/transcriptions/${transcription.id}/transcript`} className="govuk-link">
+              View transcript
+            </Link>
+          </p>
+          <p className="govuk-body">Read, edit and download the full transcript.</p>
+        </div>
+      </div >
+      <div className="govuk-grid-row">
+        <div className="govuk-grid-column-full govuk-!-margin-bottom-6">
+          <div style={{ borderBottom: '1px solid #b1b4b6' }} />
+        </div>
       </div>
-      <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="h-12 w-full">
-          <TabsTrigger
-            value="summary"
-            className="data-[state=active]:shadow-lg"
-          >
-            Meeting summary
-          </TabsTrigger>
-          <TabsTrigger
-            value="transcript"
-            className="data-[state=active]:shadow-lg"
-          >
-            Transcript
-          </TabsTrigger>
-          {isChatEnabled && (
-            <TabsTrigger value="chat" className="data-[state=active]:shadow-lg">
-              Chat with your meeting
-            </TabsTrigger>
-          )}
-        </TabsList>
-        <TabsContent value="summary">
-          <MinuteTab transcription={transcription} />
-        </TabsContent>
-        <TabsContent value="transcript">
-          <TranscriptionTab transcription={transcription} />
-        </TabsContent>
-        {isChatEnabled && (
-          <TabsContent value="chat">
-            <ChatTab transcription={transcription} />
-          </TabsContent>
-        )}
-      </Tabs>
-    </div>
+      <MinuteTab transcription={transcription} />
+    </>
   )
 }
 

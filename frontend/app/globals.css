@@ -5,6 +5,9 @@
 
 .homepage__list-item {
   position: relative;
+}
+
+.homepage__list-item:not(:first-child) {
   border-top: 1px solid #b1b4b6;
 }
 
@@ -28,6 +31,18 @@
   bottom: 0;
   right: .1875em;
   transform: rotate(45deg);
+}
+
+.side-panel__section-divider {
+  border-bottom: 1px solid #b1b4b6;
+  margin-bottom: 1.5em;
+}
+
+@media (width > 72rem) {
+  .side-panel__sticky-container {
+    position: sticky;
+    top: 15px;
+  }
 }
 
 @plugin "@tailwindcss/typography";
@@ -253,8 +268,11 @@
 .editor-content h2 {
   font-size: 1.5em;
   font-weight: bold;
-  margin-top: 0.83em;
   margin-bottom: 0.83em;
+}
+
+.editor-content h2:not(:first-child) {
+  margin-top: 0.83em;
 }
 
 .editor-content h3 {

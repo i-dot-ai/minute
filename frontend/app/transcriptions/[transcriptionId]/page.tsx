@@ -95,8 +95,7 @@ export default function TranscriptionPage({
     <>
       <div className="govuk-grid-row govuk-!-margin-bottom-2">
         <div className="govuk-grid-column-two-thirds">
-          <p className="govuk-caption-l govuk-!-margin-top-0">Summary</p>
-          <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">
+          <h1 className="govuk-heading-xl">
             {transcription.title}
           </h1>
           <p className="govuk-body">{date}</p>
@@ -114,7 +113,7 @@ export default function TranscriptionPage({
               data-module="govuk-button"
               className="govuk-button govuk-button--warning"
             >
-              Delete
+              Delete transcription
             </a>
           </div>
         </div>

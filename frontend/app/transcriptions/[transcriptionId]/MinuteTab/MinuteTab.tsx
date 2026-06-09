@@ -82,18 +82,16 @@ export function MinuteTab({ transcription }: { transcription: Transcription }) {
           <h2 className="govuk-heading-m">Export</h2>
           {exportState && (
             <div className="govuk-button-group">
-              <div className="flex flex-wrap gap-2">
-                <button
-                  className="govuk-button govuk-button--secondary"
-                  onClick={handleWordDocDownload}
-                >
-                  Download word doc
-                </button>
-                <CopyButton
-                  textToCopy={exportState.contentToCopy}
-                  posthogEvent="editor_content_copied"
-                />
-              </div>
+              <button
+                className="govuk-button"
+                onClick={handleWordDocDownload}
+              >
+                Download as Word doc
+              </button>
+              <CopyButton
+                textToCopy={exportState.contentToCopy}
+                posthogEvent="editor_content_copied"
+              />
             </div>
           )}
           <div className="side-panel__section-divider" />

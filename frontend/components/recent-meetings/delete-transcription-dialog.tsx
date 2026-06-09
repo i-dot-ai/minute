@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { StatusBadge } from '@/components/status-icon'
 import { TranscriptionMetadata } from '@/lib/client'
 import {
   deleteTranscriptionTranscriptionsTranscriptionIdDeleteMutation,
@@ -29,6 +30,7 @@ export const DeleteDialog = ({
   setOpen: Dispatch<SetStateAction<boolean>>
   transcription: TranscriptionMetadata
 }) => {
+  const date = new Date(transcription.created_datetime)
   const queryClient = useQueryClient()
   const { mutate: deleteTranscription, isPending } = useMutation({
     ...deleteTranscriptionTranscriptionsTranscriptionIdDeleteMutation(),
@@ -51,10 +53,20 @@ export const DeleteDialog = ({
           <DialogDescription>
             Are you sure you want to delete this transcription?
           </DialogDescription>
-          {/* <TranscriptionCard
-            transcription={transcription}
-            className="rounded-md border p-2 text-sm"
-          /> */}
+          <div className="rounded-md border p-2 text-sm">
+            <p className="govuk-!-margin-bottom-1 govuk-!-font-weight-bold">
+              {transcription.title ||
+                (['awaiting_start', 'in_progress'].includes(transcription.status)
+                  ? 'Generating title'
+                  : 'No title')}
+            </p>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span>
+                {date.toDateString()} at {date.toLocaleTimeString()}
+              </span>
+              <StatusBadge status={transcription.status} className="text-inherit" />
+            </div>
+          </div>
           <DialogClose />
         </DialogHeader>
         <DialogFooter>

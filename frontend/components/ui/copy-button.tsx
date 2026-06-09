@@ -7,7 +7,6 @@ interface CopyButtonProps {
 }
 
 function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
-  const [_showCopied, setShowCopied] = useState(false)
 
   const stripHtmlTags = (html: string) => {
     const tmp = document.createElement('DIV')
@@ -34,9 +33,6 @@ function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
     posthog.capture(posthogEvent, {
       contentLength: textToCopy.length,
     })
-
-    setShowCopied(true)
-    setTimeout(() => setShowCopied(false), 2000)
   }
 
   return (

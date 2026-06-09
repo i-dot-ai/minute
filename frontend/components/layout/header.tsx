@@ -8,7 +8,7 @@ export const Header = async () => {
       <div className="govuk-header">
         <div className="govuk-header__container govuk-width-container">
           <div className="govuk-header__logo">
-            <Link href="/" className="govuk-header__homepage-link">
+            <Link href="https://www.gov.uk/" className="govuk-header__homepage-link">
               <svg
                 focusable="false"
                 role="img"

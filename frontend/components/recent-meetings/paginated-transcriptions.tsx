@@ -43,6 +43,9 @@ export const PaginatedTranscriptions = () => {
   const transcriptions = paginatedResponse?.items || []
   const totalPages = paginatedResponse?.total_pages || 1
   const totalCount = paginatedResponse?.total_count || 0
+  // const start = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1
+  // const end = Math.min(currentPage * pageSize, totalCount)
+  // const showingCount = `${start} to ${end}`
 
   const getPageNumbers = () => {
     const pages = []
@@ -64,7 +67,7 @@ export const PaginatedTranscriptions = () => {
     <div>
       <OfflineRecordings />
       {user && user.data_retention_days && (
-        <div className="govuk-inset-text">
+        <p className="govuk-body">
           Your data retention period is set to {user.data_retention_days}{' '}
           day
           {user.data_retention_days > 1 ? 's' : ''}. Change this in{' '}
@@ -75,10 +78,10 @@ export const PaginatedTranscriptions = () => {
             settings
           </Link>
           .
-        </div>
+        </p>
       )}
       <h2 className="govuk-heading-m">
-        {totalCount} transcriptions
+        {totalCount} saved transcriptions
       </h2>
       {isLoading ? (
         <p className="govuk-body">Loading transcriptions...</p>
@@ -95,7 +98,7 @@ export const PaginatedTranscriptions = () => {
                 hour: '2-digit', minute: '2-digit'
               })
               return (
-                <li key={transcription.id} className="transcriptions__list-item govuk-!-padding-top-4">
+                <li key={transcription.id} className="transcriptions__list-item govuk-!-padding-top-3 govuk-!-padding-bottom-3">
                   <div>
                     <h3 className="govuk-heading-s govuk-!-margin-bottom-1">
                       <Link href={`/transcriptions/${transcription.id}`} className="govuk-link">
@@ -105,23 +108,35 @@ export const PaginatedTranscriptions = () => {
                             : 'No title')}
                       </Link>
                     </h3>
-                    <p className="govuk-body-s">{date}</p>
+                    <p className="govuk-body-s govuk-!-margin-bottom-0">{date}</p>
                   </div>
-                  <a href="#" role="button" draggable="false" className="govuk-button govuk-button--secondary govuk-!-margin-0" data-module="govuk-button">
-                    Delete
-                    <span className="govuk-visually-hidden">
-                      {['awaiting_start', 'in_progress'].includes(transcription.status)
-                        ? 'Generating title'
-                        : 'No title'}
-                      recorded on {date}
-                    </span>
-                  </a>
+                  {
+                    transcription.status === 'failed' && (
+                      <strong className="govuk-tag govuk-tag--red">
+                        Failed
+                      </strong>
+                    )
+                  }
+                  {
+                    transcription.status === 'awaiting_start' && (
+                      <strong className="govuk-tag govuk-tag--grey">
+                        Awaiting start
+                      </strong>
+                    )
+                  }
+                  {
+                    transcription.status === 'in_progress' && (
+                      <strong className="govuk-tag govuk-tag--grey">
+                        In progress
+                      </strong>
+                    )
+                  }
                 </li>
               )
             })}
           </ul>
           {totalPages > 1 && (
-            <nav className="govuk-pagination" aria-label="Pagination">
+            <nav className="govuk-pagination flex justify-center" aria-label="Pagination">
               {currentPage > 1 && (
                 <div className="govuk-pagination__prev">
                   <a className="govuk-link govuk-pagination__link" href={`${pathname}?page=${currentPage - 1}`} rel="prev">
@@ -158,7 +173,8 @@ export const PaginatedTranscriptions = () => {
             </nav>
           )}
         </>
-      )}
-    </div>
+      )
+      }
+    </div >
   )
 }

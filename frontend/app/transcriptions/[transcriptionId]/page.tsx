@@ -1,28 +1,17 @@
 'use client'
-import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
-import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
-import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
+import { GovukTranscriptionTabs } from '@/app/transcriptions/[transcriptionId]/GovukTranscriptionTabs'
 import { DownloadButton } from '@/components/download-button'
-import { AudioWav } from '@/components/icons/AudioWav'
-import { TranscriptionTitleEditor } from '@/components/transcription-title-editor'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
-import { FeatureFlags } from '@/lib/feature-flags'
 import { useQuery } from '@tanstack/react-query'
-import { Clock, Frown, LoaderCircle, SearchX } from 'lucide-react'
-import Link from 'next/link'
-import { useFeatureFlagEnabled } from 'posthog-js/react'
 
 export default function TranscriptionPage({
   params: { transcriptionId },
 }: {
   params: { transcriptionId: string }
 }) {
-  const isChatEnabled = useFeatureFlagEnabled(FeatureFlags.ChatEnabled)
-
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId },
@@ -128,21 +117,9 @@ export default function TranscriptionPage({
               Delete
             </a>
           </div>
-
-          <p className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">
-            <Link href={`/transcriptions/${transcription.id}/transcript`} className="govuk-link">
-              View transcript
-            </Link>
-          </p>
-          <p className="govuk-body">Read, edit and download the full transcript.</p>
         </div>
       </div >
-      <div className="govuk-grid-row">
-        <div className="govuk-grid-column-full govuk-!-margin-bottom-6">
-          <div style={{ borderBottom: '1px solid #b1b4b6' }} />
-        </div>
-      </div>
-      <MinuteTab transcription={transcription} />
+      <GovukTranscriptionTabs transcription={transcription} />
     </>
   )
 }

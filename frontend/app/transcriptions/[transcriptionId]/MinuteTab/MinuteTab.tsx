@@ -113,11 +113,11 @@ export function MinuteTab({ transcription }: { transcription: Transcription }) {
                 )
               })}
             </select>
-            <NewMinuteDialog
-              transcriptionId={transcription.id!}
-              agenda={minutes[selectedMinute].agenda ?? undefined}
-            />
           </div>
+          <NewMinuteDialog
+            transcriptionId={transcription.id!}
+            agenda={minutes[selectedMinute].agenda ?? undefined}
+          />
           <div className="side-panel__section-divider" />
 
 
@@ -189,7 +189,7 @@ export function MinuteTab({ transcription }: { transcription: Transcription }) {
             </>
           )}
         </div>
-        <div className="govuk-grid-column-two-thirds">
+        <div className="govuk-grid-column-two-thirds" style={{ borderLeft: '1px solid #b1b4b6' }}>
           <MinuteEditor
             transcription={transcription}
             minute={minutes[selectedMinute]}

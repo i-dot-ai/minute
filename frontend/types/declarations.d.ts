@@ -8,4 +8,10 @@ declare interface Window {
 
 declare module 'govuk-frontend' {
   export function initAll(): void
+
+  export class Tabs {
+    constructor(root: HTMLElement)
+    teardown(): void
+    static moduleName: string
+  }
 }

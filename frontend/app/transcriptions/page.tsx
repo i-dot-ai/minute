@@ -14,7 +14,7 @@ export default function TranscriptionsPage() {
           </ol>
         </nav>
         <div className="govuk-grid-row">
-          <div className="govuk-grid-column-full">
+          <div className="govuk-grid-column-two-thirds-from-desktop">
             <h1 className="govuk-heading-xl">
               Transcriptions
             </h1>

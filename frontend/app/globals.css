@@ -34,8 +34,25 @@
 }
 
 .side-panel__section-divider {
-  border-bottom: 1px solid #b1b4b6;
   margin-bottom: 1.5em;
+}
+
+.govuk-width-container {
+  max-width: 1200px !important;
+}
+
+@media (min-width: 1020px) {
+  .govuk-width-container {
+    margin-right: max(30px, calc(15px + env(safe-area-inset-right)));
+    margin-left: max(30px, calc(15px + env(safe-area-inset-left)));
+  }
+}
+
+@media (min-width: 1260px) {
+  .govuk-width-container {
+    margin-right: auto;
+    margin-left: auto;
+  }
 }
 
 @media (width > 72rem) {

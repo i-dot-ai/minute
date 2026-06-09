@@ -1,5 +1,3 @@
-import Link from 'next/link'
-
 export const Footer = () => (
   <footer>
     <div className="govuk-footer">

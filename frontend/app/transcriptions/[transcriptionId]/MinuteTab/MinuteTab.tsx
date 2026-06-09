@@ -1,6 +1,5 @@
 'use client'
 
-import { RatingButton } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/rating-dialog/rating-dialog'
 import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/ai-edit-popover'
 import {
   MinuteEditState,

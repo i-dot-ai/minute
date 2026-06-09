@@ -1,12 +1,9 @@
-import { Button } from '@/components/ui/button'
 import { JobStatus } from '@/lib/client'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
   saveTranscriptionTranscriptionsTranscriptionIdPatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
-import { cn } from '@/lib/utils'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Edit } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'

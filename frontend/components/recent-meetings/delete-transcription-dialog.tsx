@@ -1,6 +1,5 @@
 'use client'
 
-import { TranscriptionCard } from '@/components/recent-meetings/transcription-card'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -52,10 +51,10 @@ export const DeleteDialog = ({
           <DialogDescription>
             Are you sure you want to delete this transcription?
           </DialogDescription>
-          <TranscriptionCard
+          {/* <TranscriptionCard
             transcription={transcription}
             className="rounded-md border p-2 text-sm"
-          />
+          /> */}
           <DialogClose />
         </DialogHeader>
         <DialogFooter>

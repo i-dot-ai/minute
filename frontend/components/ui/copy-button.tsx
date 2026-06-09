@@ -1,5 +1,3 @@
-import { Button } from '@/components/ui/button'
-import { Copy as CopyIcon } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useState } from 'react'
 
@@ -9,7 +7,7 @@ interface CopyButtonProps {
 }
 
 function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
-  const [showCopied, setShowCopied] = useState(false)
+  const [_showCopied, setShowCopied] = useState(false)
 
   const stripHtmlTags = (html: string) => {
     const tmp = document.createElement('DIV')

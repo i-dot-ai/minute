@@ -1,5 +1,6 @@
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
+import { GovukInit } from '@/components/layout/govuk-init'
 import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { TanstackQueryProvider } from '@/providers/TanstackQueryProvider'
 import PosthogProvider from '@/providers/posthog'
@@ -23,7 +24,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.className} govuk-template`}>
-      <body className="govuk-template__body">
+      <body className="govuk-template__body govuk-frontend-supported">
+        <GovukInit />
         <TanstackQueryProvider>
           <PosthogProvider>
             <LockNavigationProvider>

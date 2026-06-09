@@ -5,3 +5,7 @@
 declare interface Window {
   webkitAudioContext: typeof AudioContext
 }
+
+declare module 'govuk-frontend' {
+  export function initAll(): void
+}

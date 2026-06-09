@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { PosthogBanner } from '@/components/posthog-banner'
 
 export default function Home() {
@@ -16,25 +17,25 @@ export default function Home() {
             <ul className="govuk-list">
               <li className="homepage__list-item govuk-!-padding-top-2">
                 <h2 className="govuk-heading-s govuk-!-margin-bottom-1">
-                  <a href="/new/upload" draggable="false" className="govuk-link">
+                  <Link href="/new/upload" draggable="false" className="govuk-link">
                     Upload a file
-                  </a>
+                  </Link>
                 </h2>
                 <p className="govuk-body">Upload a file from your computer.</p>
               </li>
               <li className="homepage__list-item govuk-!-padding-top-2">
                 <h2 className="govuk-heading-s govuk-!-margin-bottom-1">
-                  <a href="/new/record-virtual" draggable="false" className="govuk-link">
+                  <Link href="/new/record-virtual" draggable="false" className="govuk-link">
                     Record a virtual meeting
-                  </a>
+                  </Link>
                 </h2>
                 <p className="govuk-body">Capture audio from a virtual meeting in another tab.</p>
               </li>
               <li className="homepage__list-item govuk-!-padding-top-2">
                 <h2 className="govuk-heading-s govuk-!-margin-bottom-1">
-                  <a href="/new/record-audio" draggable="false" className="govuk-link">
+                  <Link href="/new/record-audio" draggable="false" className="govuk-link">
                     Record audio
-                  </a>
+                  </Link>
                 </h2>
                 <p className="govuk-body">Record audio directly from your device.</p>
               </li>

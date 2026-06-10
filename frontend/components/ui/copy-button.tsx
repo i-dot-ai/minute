@@ -7,6 +7,7 @@ interface CopyButtonProps {
 }
 
 function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
+  const [isCopied, setIsCopied] = useState(false)
 
   const stripHtmlTags = (html: string) => {
     const tmp = document.createElement('DIV')
@@ -33,6 +34,10 @@ function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
     posthog.capture(posthogEvent, {
       contentLength: textToCopy.length,
     })
+    setIsCopied(true)
+    setTimeout(() => {
+      setIsCopied(false)
+    }, 2000)
   }
 
   return (
@@ -40,7 +45,7 @@ function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
       className="govuk-button govuk-button--secondary"
       onClick={handleCopy}
     >
-      Copy
+      {isCopied ? 'Copied' : 'Copy'}
     </button>
   )
 }

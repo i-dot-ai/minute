@@ -8,6 +8,7 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
+import { useGovukModule } from '@/hooks/use-govuk-module'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
@@ -47,7 +48,10 @@ export default function SettingsPage() {
 
 function SettingsForm({ user }: { user: GetUserResponse }) {
   const [showSaved, setShowSaved] = useState(false)
+  const radiosRef = useRef<HTMLDivElement>(null)
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useGovukModule(radiosRef, 'Radios')
   const form = useForm<UserSettingsForm>({
     defaultValues: {
       dataRetention: user.data_retention_days
@@ -118,7 +122,7 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
             <div id="dataRetention-hint" className="govuk-hint">
               After this period the transcriptions, minutes and audio recording will be permentantly deleted.
             </div>
-            <div className="govuk-radios" data-module="govuk-radios">
+            <div ref={radiosRef} className="govuk-radios" data-module="govuk-radios">
               <div className="govuk-radios__item">
                 <input className="govuk-radios__input" id="keep-indefinitely" type="radio" value="none" {...form.register('dataRetention')} />
                 <label className="govuk-label govuk-radios__label" htmlFor="keep-indefinitely">

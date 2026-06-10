@@ -107,7 +107,7 @@ export const useStartTranscription = (
   const form = useForm<TranscriptionForm>({
     defaultValues: {
       file: null,
-      template: { name: 'General', agenda_usage: 'optional' },
+      template: { name: 'General', agenda_usage: 'optional', id: null },
       ...defaultValues,
     },
   })

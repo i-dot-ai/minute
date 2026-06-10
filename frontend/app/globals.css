@@ -66,6 +66,36 @@
   color: var(--color-destructive) !important;
 }
 
+.upload-radio__flex-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.upload-radio__item {
+  flex-basis: 100%;
+}
+
+
+@media (width > 48rem) {
+  .upload-radio__item {
+    flex-basis: 50%;
+  }
+}
+
+.upload-radio__item .govuk-radios__label {
+  align-self: start;
+}
+
+.upload-radio__item .govuk-radios__label::before {
+  top: 14px
+}
+
+.upload-radio__item .govuk-radios__input:checked+.govuk-radios__label:after {
+  top: 24px;
+}
+
+
+
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));

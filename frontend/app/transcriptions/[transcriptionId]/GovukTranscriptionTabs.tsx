@@ -2,8 +2,9 @@
 
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
+import { useGovukModule } from '@/hooks/use-govuk-module'
 import { MinuteListItem, Transcription } from '@/lib/client'
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 
 export function GovukTranscriptionTabs({
   transcription,
@@ -16,24 +17,7 @@ export function GovukTranscriptionTabs({
 }) {
   const tabsRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const el = tabsRef.current
-    if (!el) return
-
-    let cancelled = false
-    let tabsInstance: { teardown: () => void } | null = null
-
-    import('govuk-frontend').then(({ Tabs }) => {
-      if (cancelled) return
-      tabsInstance = new Tabs(el)
-    })
-
-    return () => {
-      cancelled = true
-      tabsInstance?.teardown()
-      el.removeAttribute('data-govuk-tabs-init')
-    }
-  }, [])
+  useGovukModule(tabsRef, 'Tabs')
 
   return (
     <div ref={tabsRef} className="govuk-tabs" data-module="govuk-tabs">

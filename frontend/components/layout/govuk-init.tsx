@@ -6,8 +6,8 @@ export function GovukInit() {
   useEffect(() => {
     document.body.classList.add('js-enabled')
 
-    import('govuk-frontend').then(({ initAll }) => {
-      initAll()
+    import('govuk-frontend').then(({ createAll, ServiceNavigation }) => {
+      createAll(ServiceNavigation)
     })
   }, [])
 

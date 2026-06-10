@@ -118,7 +118,7 @@ export function MinuteTab({
               </div>
               {editState.showEditActions && (
                 <>
-                  <p className="govuk-body-s">Describe the changes you want to make (you can always revert the changes if you don't like them).</p>
+                  <p className="govuk-body-s">Describe the changes you want to make (you can always revert the changes if you don&apos;t like them).</p>
                   <AiEditPopover
                     disabled={editState.isEditable}
                     minuteId={editState.minuteId}

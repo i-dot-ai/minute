@@ -15,59 +15,29 @@ import {
 
 export default function SupportPage() {
   return (
-    <div className="container max-w-4xl py-6 md:py-10">
-      <div className="space-y-6">
-        <h1 className="text-4xl font-bold tracking-tight">Support Center</h1>
+    <div className="govuk-width-container govuk-main-wrapper">
+      <div className="govuk-grid-row">
+        <div className="govuk-grid-column-two-thirds">
+          <h1 className="govuk-heading-xl">Support Center</h1>
+          <h2 className="govuk-heading-l">Need Help?</h2>
+          <p className="govuk-body">Contact our support team</p>
+          <p className="govuk-body">
+            Email us at:{' '}
+            <a href="mailto:minute-support@cabinetoffice.gov.uk" className="govuk-link">
+              minute-support@cabinetoffice.gov.uk
+            </a>
+          </p>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Need Help?</CardTitle>
-              <CardDescription>Contact our support team</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Email us at:{' '}
-                <a href="mailto:minute-support@cabinetoffice.gov.uk">
-                  minute-support@cabinetoffice.gov.uk
-                </a>
-              </p>
-            </CardContent>
-          </Card>
+          <h2 className="govuk-heading-m">Response Time</h2>
+          <p className="govuk-body">We aim to respond to all inquiries within 24 hours.</p>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Response Time</CardTitle>
-              <CardDescription>What to expect</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                We aim to respond to all inquiries within 24 hours.
-              </p>
-            </CardContent>
-          </Card>
+          <h2 className="govuk-heading-m">Frequently Asked Questions</h2>
+
+          <h3 className="govuk-heading-s">How do I start a new transcription?</h3>
+          <p className="govuk-body">Upload your audio/video file or start a new recording directly from your browser.</p>
+          <h3 className="govuk-heading-s">What file formats are supported?</h3>
+          <p className="govuk-body">We support most common audio and video formats including MP3, WAV, MP4, and M4A.</p>
         </div>
-
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="faq-1">
-            <AccordionTrigger>
-              How do I start a new transcription?
-            </AccordionTrigger>
-            <AccordionContent>
-              Upload your audio/video file or start a new recording directly
-              from your browser.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="faq-2">
-            <AccordionTrigger>
-              What file formats are supported?
-            </AccordionTrigger>
-            <AccordionContent>
-              We support most common audio and video formats including MP3, WAV,
-              MP4, and M4A.
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
       </div>
     </div>
   )

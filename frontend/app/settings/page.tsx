@@ -56,7 +56,7 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
     },
   })
   const queryClient = useQueryClient()
-  const { mutateAsync, isPending, isSuccess, reset } = useMutation({
+  const { mutateAsync, isPending } = useMutation({
     ...updateDataRetentionUsersDataRetentionPatchMutation(),
   })
 

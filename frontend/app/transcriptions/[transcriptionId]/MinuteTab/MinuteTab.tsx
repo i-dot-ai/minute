@@ -6,6 +6,7 @@ import {
   MinuteEditor,
   MinuteExportState,
 } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
+import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import CopyButton from '@/components/ui/copy-button'
 import { MinuteListItem, Transcription } from '@/lib/client'
 import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
@@ -16,14 +17,18 @@ import { useCallback, useEffect, useState } from 'react'
 export function MinuteTab({
   transcription,
   minutes,
-  selectedMinute,
 }: {
   transcription: Transcription
   minutes: MinuteListItem[]
-  selectedMinute: number
 }) {
+  const [selectedMinute, setSelectedMinute] = useState(0)
   const [exportState, setExportState] = useState<MinuteExportState | null>(null)
   const [editState, setEditState] = useState<MinuteEditState | null>(null)
+
+  useEffect(() => {
+    setSelectedMinute(0)
+  }, [minutes])
+
   useEffect(() => {
     setExportState(null)
     setEditState(null)
@@ -53,6 +58,9 @@ export function MinuteTab({
         <div className="govuk-grid-column-two-thirds">
           <AudioWaveform />
           <p>No minutes generated yet.</p>
+          <div>
+            <NewMinuteDialog transcriptionId={transcription.id!} />
+          </div>
         </div>
       </div>
     )
@@ -61,28 +69,38 @@ export function MinuteTab({
     <>
       <div className="govuk-grid-row">
         <div className="side-panel__sticky-container govuk-grid-column-one-third">
+          <h2 className="govuk-heading-m">Summaries</h2>
+          <div className="govuk-form-group govuk-!-margin-bottom-2">
+            <label className="govuk-label" htmlFor="summary-history">
+              Choose a summary
+            </label>
+            <select
+              className="govuk-select"
+              id="summary-history"
+              name="summary-history"
+              onChange={(e) => setSelectedMinute(Number(e.target.value))}
+              value={selectedMinute}
+            >
+              {minutes.map((minute, index) => {
+                const date = new Date(minute.updated_datetime).toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric' })
+                return (
+                  <option value={`${index}`} key={minute.id}>
+                    {minute.template_name} - {date}
+                  </option>
+                )
+              })}
+            </select>
+          </div>
+          <NewMinuteDialog
+            transcriptionId={transcription.id!}
+            agenda={minutes[selectedMinute]?.agenda ?? undefined}
+          />
+
           {editState && (
             <>
-              {editState.showEditActions && (
-                <>
-                  {editState.hasCitations && (
-                    <>
-                      <h2 className="govuk-heading-m">View controls</h2>
-                      <div className="govuk-form-group govuk-!-margin-bottom-2">
-                        <button
-                          className="govuk-button govuk-button--secondary"
-                          onClick={editState.toggleHideCitations}
-                          disabled={editState.isEditable}
-                        >
-                          {editState.hideCitations ? 'Show citations' : 'Hide citations'}
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
+              <div className="side-panel__section-divider" />
               <h2 className="govuk-heading-m">Edit</h2>
-              <div className="govuk-form-group">
+              <div className="govuk-form-group govuk-!-margin-bottom-7">
                 <label className="govuk-label" htmlFor="version">
                   Choose an edit version
                 </label>
@@ -97,49 +115,62 @@ export function MinuteTab({
                     )
                   })}
                 </select>
-                {editState.showEditActions && (
-                  <div className="govuk-button-group govuk-!-margin-top-2">
-                    <AiEditPopover
-                      disabled={editState.isEditable}
-                      minuteId={editState.minuteId}
-                      minuteVersionId={editState.minuteVersionId}
-                      onSuccess={editState.onSuccess}
-                    />
+              </div>
+              {editState.showEditActions && (
+                <>
+                  <p className="govuk-body-s">Describe the changes you want to make (you can always revert the changes if you don't like them).</p>
+                  <AiEditPopover
+                    disabled={editState.isEditable}
+                    minuteId={editState.minuteId}
+                    minuteVersionId={editState.minuteVersionId}
+                    onSuccess={editState.onSuccess}
+                  />
+                  <button
+                    className="govuk-button govuk-button--secondary"
+                    onClick={() => editState.setIsEditable(true)}
+                    type="button"
+                    disabled={editState.isEditable}
+                  >
+                    Edit Manually
+                  </button>
+                  {editState.isEditable && (
                     <button
                       className="govuk-button govuk-button--secondary"
-                      onClick={() => editState.setIsEditable(true)}
-                      type="button"
-                      disabled={editState.isEditable}
+                      onClick={editState.onSave}
                     >
-                      Edit Manually
+                      Save Changes
                     </button>
-                    {editState.isEditable && (
-                      <button
-                        className="govuk-button govuk-button--secondary"
-                        onClick={editState.onSave}
-                      >
-                        Save Changes
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
+                  )}
+                </>
+              )}
+              {editState.hasCitations && (
+                <button
+                  className="govuk-button govuk-button--secondary"
+                  onClick={editState.toggleHideCitations}
+                  disabled={editState.isEditable}
+                >
+                  {editState.hideCitations ? 'Show references' : 'Hide references'}
+                </button>
+              )}
             </>
           )}
-          <h2 className="govuk-heading-m">Export</h2>
           {exportState && (
-            <div className="govuk-button-group">
-              <button
-                className="govuk-button"
-                onClick={handleWordDocDownload}
-              >
-                Download as Word doc
-              </button>
-              <CopyButton
-                textToCopy={exportState.contentToCopy}
-                posthogEvent="editor_content_copied"
-              />
-            </div>
+            <>
+              <div className="side-panel__section-divider" />
+              <h2 className="govuk-heading-m">Export</h2>
+              <div className="govuk-button-group">
+                <button
+                  className="govuk-button"
+                  onClick={handleWordDocDownload}
+                >
+                  Download as Word doc
+                </button>
+                <CopyButton
+                  textToCopy={exportState.contentToCopy}
+                  posthogEvent="editor_content_copied"
+                />
+              </div>
+            </>
           )}
         </div>
         <div className="govuk-grid-column-two-thirds" style={{ borderLeft: '1px solid #b1b4b6' }}>

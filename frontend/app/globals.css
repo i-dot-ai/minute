@@ -62,6 +62,11 @@
   }
 }
 
+.side-panel__sticky-container .govuk-button,
+.side-panel__sticky-container .govuk-select {
+  width: 100%;
+}
+
 .link--warning {
   color: var(--color-destructive) !important;
 }
@@ -92,6 +97,10 @@
 
 .upload-radio__item .govuk-radios__input:checked+.govuk-radios__label:after {
   top: 24px;
+}
+
+.transcription-page__actions {
+  justify-content: flex-end;
 }
 
 

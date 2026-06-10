@@ -1,6 +1,5 @@
 'use client'
 import { GovukTranscriptionTabs } from '@/app/transcriptions/[transcriptionId]/GovukTranscriptionTabs'
-import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { DownloadButton } from '@/components/download-button'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
@@ -8,7 +7,6 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
 
 export default function TranscriptionPage({
   params: { transcriptionId },
@@ -36,12 +34,6 @@ export default function TranscriptionPage({
     }),
     enabled: minutesEnabled,
   })
-
-  const [selectedMinute, setSelectedMinute] = useState(0)
-
-  useEffect(() => {
-    setSelectedMinute(0)
-  }, [minutes])
 
   if (isLoading) {
     return (
@@ -97,6 +89,8 @@ export default function TranscriptionPage({
           </h1>
           <p className="govuk-body">{date}</p>
           <p className="govuk-body">The transcription failed to process. Please try again.</p>
+        </div>
+        <div className="govuk-grid-column-one-third">
           <div className="govuk-button-group">
             <a
               href={`/transcriptions/${transcription.id}/delete`}
@@ -119,7 +113,9 @@ export default function TranscriptionPage({
             {transcription.title}
           </h1>
           <p className="govuk-body">{date}</p>
-          <div className="govuk-button-group">
+        </div>
+        <div className="govuk-grid-column-one-third">
+          <div className="govuk-button-group transcription-page__actions">
             <a
               data-module="govuk-button"
               href={`/transcriptions/${transcription.id}/rename`}
@@ -131,51 +127,12 @@ export default function TranscriptionPage({
               href={`/transcriptions/${transcription.id}/delete`}
               className="govuk-link link--warning"
             >
-              Delete transcription
+              Delete
             </a>
           </div>
         </div>
       </div >
-      <div className="govuk-!-margin-bottom-4">
-        {minutes.length > 0 && (
-          <>
-            <label className="govuk-label" htmlFor="summary-history">
-              Choose a summary
-            </label>
-            <select
-              className="govuk-select"
-              id="summary-history"
-              name="summary-history"
-              onChange={(e) => setSelectedMinute(Number(e.target.value))}
-              value={selectedMinute}
-            >
-              {minutes.map((minute, index) => {
-                const minuteDate = new Date(minute.updated_datetime).toLocaleDateString('en-GB', {
-                  day: 'numeric',
-                  month: 'numeric',
-                  year: 'numeric',
-                  hour: 'numeric',
-                  minute: 'numeric',
-                })
-                return (
-                  <option value={`${index}`} key={minute.id}>
-                    {minute.template_name} - {minuteDate}
-                  </option>
-                )
-              })}
-            </select>
-            <NewMinuteDialog
-              transcriptionId={transcription.id!}
-              agenda={minutes[selectedMinute]?.agenda ?? undefined}
-            />
-          </>
-        )}
-      </div>
-      <GovukTranscriptionTabs
-        transcription={transcription}
-        minutes={minutes}
-        selectedMinute={selectedMinute}
-      />
+      <GovukTranscriptionTabs transcription={transcription} minutes={minutes} />
     </>
   )
 }

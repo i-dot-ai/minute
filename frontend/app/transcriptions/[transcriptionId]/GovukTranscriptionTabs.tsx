@@ -9,11 +9,9 @@ import { useRef } from 'react'
 export function GovukTranscriptionTabs({
   transcription,
   minutes,
-  selectedMinute,
 }: {
   transcription: Transcription
   minutes: MinuteListItem[]
-  selectedMinute: number
 }) {
   const tabsRef = useRef<HTMLDivElement>(null)
 
@@ -35,11 +33,7 @@ export function GovukTranscriptionTabs({
         </li>
       </ul>
       <div className="govuk-tabs__panel" id="summary">
-        <MinuteTab
-          transcription={transcription}
-          minutes={minutes}
-          selectedMinute={selectedMinute}
-        />
+        <MinuteTab transcription={transcription} minutes={minutes} />
       </div>
       <div
         className="govuk-tabs__panel govuk-tabs__panel--hidden"

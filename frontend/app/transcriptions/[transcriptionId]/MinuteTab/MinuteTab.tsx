@@ -6,31 +6,24 @@ import {
   MinuteEditor,
   MinuteExportState,
 } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
-import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
-import { AudioWav } from '@/components/icons/AudioWav'
 import CopyButton from '@/components/ui/copy-button'
-import { Transcription } from '@/lib/client'
-import { listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+import { MinuteListItem, Transcription } from '@/lib/client'
 import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
-import { useQuery } from '@tanstack/react-query'
 import { AudioWaveform } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useState } from 'react'
 
-export function MinuteTab({ transcription }: { transcription: Transcription }) {
-  const { data: minutes = [], isLoading } = useQuery({
-    ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(
-      {
-        path: { transcription_id: transcription.id! },
-      }
-    ),
-  })
-  const [selectedMinute, setSelectedMinute] = useState(0)
+export function MinuteTab({
+  transcription,
+  minutes,
+  selectedMinute,
+}: {
+  transcription: Transcription
+  minutes: MinuteListItem[]
+  selectedMinute: number
+}) {
   const [exportState, setExportState] = useState<MinuteExportState | null>(null)
   const [editState, setEditState] = useState<MinuteEditState | null>(null)
-  useEffect(() => {
-    setSelectedMinute(0)
-  }, [minutes])
   useEffect(() => {
     setExportState(null)
     setEditState(null)
@@ -54,22 +47,12 @@ export function MinuteTab({ transcription }: { transcription: Transcription }) {
     transcription.title,
   ])
 
-  if (isLoading) {
-    return (
-      <div className="flex w-full flex-col items-center justify-center">
-        <AudioWav />
-      </div>
-    )
-  }
   if (minutes.length == 0) {
     return (
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-two-thirds">
           <AudioWaveform />
           <p>No minutes generated yet.</p>
-          <div>
-            <NewMinuteDialog transcriptionId={transcription.id!} />
-          </div>
         </div>
       </div>
     )
@@ -78,48 +61,26 @@ export function MinuteTab({ transcription }: { transcription: Transcription }) {
     <>
       <div className="govuk-grid-row">
         <div className="side-panel__sticky-container govuk-grid-column-one-third">
-          <h2 className="govuk-heading-m">Export</h2>
-          {exportState && (
-            <div className="govuk-button-group">
-              <button
-                className="govuk-button"
-                onClick={handleWordDocDownload}
-              >
-                Download as Word doc
-              </button>
-              <CopyButton
-                textToCopy={exportState.contentToCopy}
-                posthogEvent="editor_content_copied"
-              />
-            </div>
-          )}
-          <div className="side-panel__section-divider" />
-
-          <h2 className="govuk-heading-m">Summaries</h2>
-          <div className="govuk-form-group govuk-!-margin-bottom-2">
-            <label className="govuk-label" htmlFor="sort">
-              Choose a summary
-            </label>
-            <select className="govuk-select" id="summary-history" name="summary-history" onChange={(e) => setSelectedMinute(Number(e.target.value))} value={selectedMinute}>
-              {minutes.map((minute, index) => {
-                const date = new Date(minute.updated_datetime).toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric' })
-                return (
-                  <option value={`${index}`} key={minute.id}>
-                    {minute.template_name} - {date}
-                  </option>
-                )
-              })}
-            </select>
-          </div>
-          <NewMinuteDialog
-            transcriptionId={transcription.id!}
-            agenda={minutes[selectedMinute].agenda ?? undefined}
-          />
-          <div className="side-panel__section-divider" />
-
-
           {editState && (
             <>
+              {editState.showEditActions && (
+                <>
+                  {editState.hasCitations && (
+                    <>
+                      <h2 className="govuk-heading-m">View controls</h2>
+                      <div className="govuk-form-group govuk-!-margin-bottom-2">
+                        <button
+                          className="govuk-button govuk-button--secondary"
+                          onClick={editState.toggleHideCitations}
+                          disabled={editState.isEditable}
+                        >
+                          {editState.hideCitations ? 'Show citations' : 'Hide citations'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
               <h2 className="govuk-heading-m">Edit</h2>
               <div className="govuk-form-group">
                 <label className="govuk-label" htmlFor="version">
@@ -163,31 +124,27 @@ export function MinuteTab({ transcription }: { transcription: Transcription }) {
                   </div>
                 )}
               </div>
-
-              {editState.showEditActions && (
-                <>
-                  {editState.hasCitations && (
-                    <>
-                      <div className="side-panel__section-divider" />
-                      <h2 className="govuk-heading-m">View controls</h2>
-                      <div className="govuk-form-group govuk-!-margin-bottom-2">
-                        <button
-                          className="govuk-button govuk-button--secondary"
-                          onClick={editState.toggleHideCitations}
-                          disabled={editState.isEditable}
-                        >
-                          {editState.hideCitations ? 'Show citations' : 'Hide citations'}
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
             </>
+          )}
+          <h2 className="govuk-heading-m">Export</h2>
+          {exportState && (
+            <div className="govuk-button-group">
+              <button
+                className="govuk-button"
+                onClick={handleWordDocDownload}
+              >
+                Download as Word doc
+              </button>
+              <CopyButton
+                textToCopy={exportState.contentToCopy}
+                posthogEvent="editor_content_copied"
+              />
+            </div>
           )}
         </div>
         <div className="govuk-grid-column-two-thirds" style={{ borderLeft: '1px solid #b1b4b6' }}>
           <MinuteEditor
+            key={minutes[selectedMinute].id}
             transcription={transcription}
             minute={minutes[selectedMinute]}
             onExportStateChange={setExportState}

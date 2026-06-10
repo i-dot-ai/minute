@@ -2,13 +2,17 @@
 
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
-import { Transcription } from '@/lib/client'
+import { MinuteListItem, Transcription } from '@/lib/client'
 import { useEffect, useRef } from 'react'
 
 export function GovukTranscriptionTabs({
   transcription,
+  minutes,
+  selectedMinute,
 }: {
   transcription: Transcription
+  minutes: MinuteListItem[]
+  selectedMinute: number
 }) {
   const tabsRef = useRef<HTMLDivElement>(null)
 
@@ -47,7 +51,11 @@ export function GovukTranscriptionTabs({
         </li>
       </ul>
       <div className="govuk-tabs__panel" id="summary">
-        <MinuteTab transcription={transcription} />
+        <MinuteTab
+          transcription={transcription}
+          minutes={minutes}
+          selectedMinute={selectedMinute}
+        />
       </div>
       <div
         className="govuk-tabs__panel govuk-tabs__panel--hidden"

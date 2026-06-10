@@ -62,6 +62,10 @@
   }
 }
 
+.link--warning {
+  color: var(--color-destructive) !important;
+}
+
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));

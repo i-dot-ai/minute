@@ -93,7 +93,7 @@ export function NewMinuteDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="govuk-button govuk-button--secondary govuk-!-margin-top-2">
+        <button className="govuk-button govuk-button--secondary govuk-!-margin-left-3">
           Generate new summary
         </button>
       </DialogTrigger>

@@ -122,7 +122,7 @@ export default function TranscriptionPage({
               href={`/transcriptions/${transcription.id}/rename`}
               className="govuk-button govuk-button--secondary"
             >
-              <PencilIcon /> Rename
+              <PencilIcon className="size-4" /> Rename
             </a>
             <a
               href={`/transcriptions/${transcription.id}/delete`}

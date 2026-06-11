@@ -55,7 +55,7 @@
   }
 }
 
-@media (width > 72rem) {
+@media (width > 48rem) {
   .side-panel__sticky-container {
     position: sticky;
     top: 15px;

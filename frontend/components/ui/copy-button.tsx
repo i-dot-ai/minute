@@ -5,9 +5,10 @@ import { Copy } from 'lucide-react'
 interface CopyButtonProps {
   textToCopy: string
   posthogEvent: string
+  disabled?: boolean
 }
 
-function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
+function CopyButton({ textToCopy, posthogEvent, disabled }: CopyButtonProps) {
   const [isCopied, setIsCopied] = useState(false)
 
   const stripHtmlTags = (html: string) => {
@@ -46,8 +47,9 @@ function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
       <button
         className="govuk-button govuk-button--secondary flex items-center gap-2"
         onClick={handleCopy}
+        disabled={disabled}
       >
-        <Copy />
+        <Copy className="size-4" />
         Copy
       </button>
       {isCopied && <p className="govuk-tag govuk-tag--green">Copied</p>}

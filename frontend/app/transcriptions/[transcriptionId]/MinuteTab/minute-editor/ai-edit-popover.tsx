@@ -1,12 +1,10 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { Textarea } from '@/components/ui/textarea'
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { createMinuteVersionMinutesMinuteIdVersionsPostMutation } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation } from '@tanstack/react-query'
 import { Wand2Icon } from 'lucide-react'
@@ -42,37 +40,70 @@ export const AiEditPopover = ({
               ai_edit_instructions: { instruction, source_id: minuteVersionId },
             },
           },
-          { onSuccess }
+          {
+            onSuccess: () => {
+              setOpen(false)
+              form.reset()
+              onSuccess()
+            },
+          }
         )
       }
     },
-    [minuteId, minuteVersionId, onSuccess, saveEdit]
+    [form, minuteId, minuteVersionId, onSuccess, saveEdit]
   )
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <button
-        className="govuk-button govuk-button--secondary"
-        type="button"
-        disabled={disabled}
-        onClick={() => setOpen(true)}
-      >
-        <Wand2Icon /> AI Edit
-      </button>
-      <PopoverContent className="w-xl max-w-screen">
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        setOpen(isOpen)
+        if (!isOpen) {
+          form.reset()
+        }
+      }}
+    >
+      <DialogTrigger asChild>
+        <button
+          className="govuk-button govuk-button--secondary govuk-!-margin-bottom-3"
+          type="button"
+          disabled={disabled}
+        >
+          <Wand2Icon className="size-4" /> AI edit
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-auto lg:min-w-xl">
+        <h1 className="govuk-heading-l">AI edit</h1>
+        <p className="govuk-body">
+          Describe the changes you want to make. You can always revert if you
+          don&apos;t like them.
+        </p>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <Textarea
-            placeholder="Describe the changes you want to make (you can always revert the changes if you don't like them)."
-            {...form.register('instruction')}
-          />
-          <button
-            className="govuk-button govuk-button--secondary"
-            type="submit"
-            disabled={!form.watch('instruction')}
-          >
-            <Wand2Icon /> Apply AI Edit
-          </button>
+          <div className="govuk-form-group">
+            <textarea
+              className="govuk-textarea"
+              rows={5}
+              placeholder="e.g. Make the tone more formal and shorten the eligibility section"
+              {...form.register('instruction')}
+            />
+          </div>
+          <div className="govuk-button-group">
+            <button
+              type="submit"
+              className="govuk-button"
+              disabled={!form.watch('instruction')}
+            >
+              <Wand2Icon className="size-4" /> Apply AI edit
+            </button>
+            <button
+              type="button"
+              className="govuk-button govuk-button--secondary"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </button>
+          </div>
         </form>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   )
 }

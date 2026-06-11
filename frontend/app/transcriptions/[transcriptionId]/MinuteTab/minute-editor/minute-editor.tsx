@@ -47,7 +47,6 @@ export type MinuteEditState = {
   hasCitations: boolean
   hideCitations: boolean
   toggleHideCitations: () => void
-  onSave: () => void
   onSuccess: () => void
 }
 
@@ -64,6 +63,7 @@ export function MinuteEditor({
 }) {
   const [version, setVersion] = useState(0)
   const [hideCitations, setHideCitations] = useState(false)
+  const [editorResetKey, setEditorResetKey] = useState(0)
   const { data: minuteVersions = [], isLoading } = useQuery({
     ...listMinuteVersionsMinutesMinuteIdVersionsGetOptions({
       path: { minute_id: minute.id! },
@@ -142,6 +142,11 @@ export function MinuteEditor({
     },
     [minute.id, minuteVersion?.html_content, onSuccess, saveEdit]
   )
+  const onCancel = useCallback(() => {
+    form.setValue('html', minuteVersion?.html_content || '')
+    setIsEditable(false)
+    setEditorResetKey((key) => key + 1)
+  }, [form, minuteVersion?.html_content])
   useEffect(() => {
     if (!onExportStateChange) return
     if (!minuteVersion || isGenerating || isError) {
@@ -181,7 +186,6 @@ export function MinuteEditor({
         hasCitations: false,
         hideCitations: false,
         toggleHideCitations: () => { },
-        onSave: () => { },
         onSuccess,
       })
       return
@@ -199,7 +203,6 @@ export function MinuteEditor({
       hasCitations,
       hideCitations,
       toggleHideCitations,
-      onSave: form.handleSubmit(onSubmit),
       onSuccess,
     })
   }, [
@@ -221,7 +224,7 @@ export function MinuteEditor({
   if (isLoading) {
     return (
       <div className="flex items-center gap-2">
-        <Loader2 className="animate-spin" />
+        <Loader2 className="size-4 animate-spin" />
         <p className="govuk-body govuk-!-margin-bottom-0">
           Loading...</p>
       </div>
@@ -241,7 +244,7 @@ export function MinuteEditor({
   if (isGenerating) {
     return (
       <div className="flex items-center gap-2">
-        <Loader2 className="animate-spin" />
+        <Loader2 className="size-4 animate-spin" />
         <p className="govuk-body govuk-!-margin-bottom-0">
           Minute generating...</p>
       </div>
@@ -250,7 +253,7 @@ export function MinuteEditor({
   if (isError) {
     return (
       <div className="flex items-center gap-2">
-        <FileX2 />
+        <FileX2 className="size-4" />
         <p className="govuk-body">There was a problem processing your request.</p>
         {true ? (
           <>
@@ -273,11 +276,14 @@ export function MinuteEditor({
           name="html"
           render={({ field: { onChange } }) => (
             <SimpleEditor
+              key={`${minuteVersion.id}-${editorResetKey}`}
               currentTranscription={transcription}
               initialContent={minuteVersion.html_content || ''}
               isEditing={isEditable}
               onContentChange={onChange}
               hideCitations={hideCitations && !isEditable}
+              onSave={form.handleSubmit(onSubmit)}
+              onCancel={onCancel}
             />
           )}
         />
@@ -315,11 +321,11 @@ const MinuteVersionDeleteButton = ({
     >
       {isPending ? (
         <>
-          <Loader2 className="animate-spin" /> Deleting
+          <Loader2 className="size-4 animate-spin" /> Deleting
         </>
       ) : (
         <>
-          <Undo /> Undo
+          <Undo className="size-4" /> Undo
         </>
       )}
     </Button>

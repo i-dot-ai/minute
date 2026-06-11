@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 export const ServiceNavigation = () => {
   const pathname = usePathname()
   return (
-    <section aria-label="Service information" className="govuk-service-navigation" data-module="govuk-service-navigation">
+    <section aria-label="Service information" className={`govuk-service-navigation ${pathname === '/' ? 'govuk-service-navigation--inverse' : ''}`} data-module="govuk-service-navigation">
       <div className="govuk-width-container">
         <div className="govuk-service-navigation__container">
           <span className="govuk-service-navigation__service-name">

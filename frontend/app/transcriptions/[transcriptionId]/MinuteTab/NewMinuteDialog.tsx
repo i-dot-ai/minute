@@ -31,9 +31,11 @@ type CreateMinuteForm = {
 export function NewMinuteDialog({
   transcriptionId,
   agenda,
+  disabled,
 }: {
   transcriptionId: string
   agenda?: string
+  disabled?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const form = useForm<CreateMinuteForm>({
@@ -94,8 +96,8 @@ export function NewMinuteDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="govuk-button govuk-button--secondary">
-          <Plus />
+        <button className="govuk-button govuk-button--secondary" disabled={disabled}>
+          <Plus className="size-4" />
           Generate new summary
         </button>
       </DialogTrigger>

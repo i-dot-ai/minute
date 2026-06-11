@@ -1,11 +1,20 @@
 import React from 'react'
 
-export function Bold({ size = 16, color = 'currentColor' }) {
+type IconProps = {
+  size?: number
+  color?: string
+  className?: string
+}
+
+function iconDimensions({ size = 16, className }: Pick<IconProps, 'size' | 'className'>) {
+  return className ? { className } : { width: size, height: size }
+}
+
+export function Bold({ size = 16, color = 'currentColor', className }: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
+      {...iconDimensions({ size, className })}
       viewBox="0 0 24 24"
       fill="none"
       stroke={color}
@@ -38,12 +47,11 @@ export function Underline({ size = 16, color = 'currentColor' }) {
   )
 }
 
-export function Italic({ size = 16, color = 'currentColor' }) {
+export function Italic({ size = 16, color = 'currentColor', className }: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
+      {...iconDimensions({ size, className })}
       viewBox="0 0 24 24"
       fill="none"
       stroke={color}
@@ -75,12 +83,11 @@ export function Link({ size = 16, color = 'currentColor' }) {
   )
 }
 
-export function Code({ size = 16, color = 'currentColor' }) {
+export function Code({ size = 16, color = 'currentColor', className }: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
+      {...iconDimensions({ size, className })}
       viewBox="0 0 24 24"
       fill="none"
       stroke={color}
@@ -94,12 +101,11 @@ export function Code({ size = 16, color = 'currentColor' }) {
   )
 }
 
-export function Strikethrough({ size = 16, color = 'currentColor' }) {
+export function Strikethrough({ size = 16, color = 'currentColor', className }: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
+      {...iconDimensions({ size, className })}
       viewBox="0 0 24 24"
       fill="none"
       stroke={color}
@@ -112,12 +118,11 @@ export function Strikethrough({ size = 16, color = 'currentColor' }) {
   )
 }
 
-export function RotateLeft({ size = 16, color = 'currentColor' }) {
+export function RotateLeft({ size = 16, color = 'currentColor', className }: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
+      {...iconDimensions({ size, className })}
       viewBox="0 0 24 24"
       fill="none"
       stroke={color}
@@ -130,12 +135,11 @@ export function RotateLeft({ size = 16, color = 'currentColor' }) {
   )
 }
 
-export function RotateRight({ size = 16, color = 'currentColor' }) {
+export function RotateRight({ size = 16, color = 'currentColor', className }: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
+      {...iconDimensions({ size, className })}
       viewBox="0 0 24 24"
       fill="none"
       stroke={color}
@@ -167,12 +171,11 @@ export function X({ size = 16, color = 'currentColor' }) {
   )
 }
 
-export function List({ size = 16, color = 'currentColor' }) {
+export function List({ size = 16, color = 'currentColor', className }: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
+      {...iconDimensions({ size, className })}
       viewBox="0 0 24 24"
       fill="none"
       stroke={color}
@@ -190,12 +193,11 @@ export function List({ size = 16, color = 'currentColor' }) {
   )
 }
 
-export function ListOrdered({ size = 16, color = 'currentColor' }) {
+export function ListOrdered({ size = 16, color = 'currentColor', className }: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
+      {...iconDimensions({ size, className })}
       viewBox="0 0 24 24"
       fill="none"
       stroke={color}

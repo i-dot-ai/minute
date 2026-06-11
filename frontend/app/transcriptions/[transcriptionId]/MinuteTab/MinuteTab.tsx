@@ -10,7 +10,7 @@ import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTa
 import CopyButton from '@/components/ui/copy-button'
 import { MinuteListItem, Transcription } from '@/lib/client'
 import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
-import { AudioWaveform, DownloadIcon, Eye, EyeOffIcon, PencilIcon, SaveIcon } from 'lucide-react'
+import { AudioWaveform, DownloadIcon, Eye, EyeOffIcon, PencilIcon } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -56,7 +56,7 @@ export function MinuteTab({
     return (
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-two-thirds">
-          <AudioWaveform />
+          <AudioWaveform className="size-4" />
           <p>No minutes generated yet.</p>
           <div>
             <NewMinuteDialog transcriptionId={transcription.id!} />
@@ -75,7 +75,7 @@ export function MinuteTab({
               onClick={editState.toggleHideCitations}
               disabled={editState.isEditable}
             >
-              {editState.hideCitations ? <Eye /> : <EyeOffIcon />}
+              {editState.hideCitations ? <Eye className="size-4" /> : <EyeOffIcon className="size-4" />}
               {editState.hideCitations ? 'Show references' : 'Hide references'}
             </button>
           )}
@@ -88,6 +88,7 @@ export function MinuteTab({
               className="govuk-select"
               id="summary-history"
               name="summary-history"
+              disabled={editState ? editState.isEditable : false}
               onChange={(e) => setSelectedMinute(Number(e.target.value))}
               value={selectedMinute}
             >
@@ -102,6 +103,7 @@ export function MinuteTab({
             </select>
           </div>
           <NewMinuteDialog
+            disabled={editState ? editState.isEditable : false}
             transcriptionId={transcription.id!}
             agenda={minutes[selectedMinute]?.agenda ?? undefined}
           />
@@ -110,11 +112,11 @@ export function MinuteTab({
             <>
               <div className="side-panel__section-divider" />
               <h2 className="govuk-heading-m">Edit</h2>
-              <div className="govuk-form-group govuk-!-margin-bottom-7">
+              <div className="govuk-form-group govuk-!-margin-bottom-3">
                 <label className="govuk-label" htmlFor="version">
                   Choose an edit version
                 </label>
-                <select className="govuk-select" id="version" name="version" onChange={(e) => editState.setVersion(Number(e.target.value))} value={editState.version}>
+                <select disabled={editState.isEditable} className="govuk-select" id="version" name="version" onChange={(e) => editState.setVersion(Number(e.target.value))} value={editState.version}>
                   {editState.minuteVersions.map((version, index) => {
                     const date = new Date(version.created_datetime).toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric' })
                     const versionNumber = editState.minuteVersions.length - index;
@@ -128,7 +130,6 @@ export function MinuteTab({
               </div>
               {editState.showEditActions && (
                 <>
-                  <p className="govuk-body-s">Describe the changes you want to make (you can always revert the changes if you don&apos;t like them).</p>
                   <AiEditPopover
                     disabled={editState.isEditable}
                     minuteId={editState.minuteId}
@@ -141,16 +142,8 @@ export function MinuteTab({
                     type="button"
                     disabled={editState.isEditable}
                   >
-                    <PencilIcon /> Edit Manually
+                    <PencilIcon className="size-4" /> Edit manually
                   </button>
-                  {editState.isEditable && (
-                    <button
-                      className="govuk-button govuk-button--secondary"
-                      onClick={editState.onSave}
-                    >
-                      <SaveIcon /> Save Changes
-                    </button>
-                  )}
                 </>
               )}
             </>
@@ -162,12 +155,14 @@ export function MinuteTab({
               <div className="govuk-button-group">
                 <button
                   className="govuk-button"
+                  disabled={editState ? editState.isEditable : false}
                   onClick={handleWordDocDownload}
                 >
-                  <DownloadIcon />
+                  <DownloadIcon className="size-4" />
                   Download as Word doc
                 </button>
                 <CopyButton
+                  disabled={editState ? editState.isEditable : false}
                   textToCopy={exportState.contentToCopy}
                   posthogEvent="editor_content_copied"
                 />

@@ -69,6 +69,15 @@ export function MinuteTab({
     <>
       <div className="govuk-grid-row">
         <div className="side-panel__sticky-container govuk-grid-column-one-third">
+          {editState && editState.hasCitations && (
+            <button
+              className="govuk-button govuk-button--secondary"
+              onClick={editState.toggleHideCitations}
+              disabled={editState.isEditable}
+            >
+              {editState.hideCitations ? 'Show references' : 'Hide references'}
+            </button>
+          )}
           <h2 className="govuk-heading-m">Summaries</h2>
           <div className="govuk-form-group govuk-!-margin-bottom-2">
             <label className="govuk-label" htmlFor="summary-history">
@@ -142,15 +151,6 @@ export function MinuteTab({
                     </button>
                   )}
                 </>
-              )}
-              {editState.hasCitations && (
-                <button
-                  className="govuk-button govuk-button--secondary"
-                  onClick={editState.toggleHideCitations}
-                  disabled={editState.isEditable}
-                >
-                  {editState.hideCitations ? 'Show references' : 'Hide references'}
-                </button>
               )}
             </>
           )}

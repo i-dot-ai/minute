@@ -51,15 +51,13 @@ export const SpeakerNamePopover = ({
   return (
     <Popover open={open} onOpenChange={(open) => setOpen(open)}>
       <PopoverTrigger asChild>
-        <div
-          className="group flex max-w-[200px] min-w-[100px] cursor-pointer items-start space-x-1"
+        <button
+          className="govuk-button govuk-button--secondary govuk-!-margin-0"
           onClick={() => setOpen(true)}
         >
-          <PenIcon className="mt-1 size-4 shrink-0 text-gray-400 transition-colors group-hover:text-blue-500" />
-          <span className="font-bold break-words group-hover:text-blue-500">
-            {entry.speaker}:
-          </span>
-        </div>
+          <PenIcon />
+          Edit name
+        </button>
       </PopoverTrigger>
       <PopoverContent className="w-80">
         <div className="grid gap-4">

@@ -1,5 +1,6 @@
 import posthog from 'posthog-js'
 import { useState } from 'react'
+import { Copy } from 'lucide-react'
 
 interface CopyButtonProps {
   textToCopy: string
@@ -41,12 +42,16 @@ function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
   }
 
   return (
-    <button
-      className="govuk-button govuk-button--secondary"
-      onClick={handleCopy}
-    >
-      {isCopied ? 'Copied' : 'Copy'}
-    </button>
+    <>
+      <button
+        className="govuk-button govuk-button--secondary flex items-center gap-2"
+        onClick={handleCopy}
+      >
+        <Copy />
+        Copy
+      </button>
+      {isCopied && <p className="govuk-tag govuk-tag--green">Copied</p>}
+    </>
   )
 }
 

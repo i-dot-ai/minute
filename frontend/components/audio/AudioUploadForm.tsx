@@ -38,7 +38,7 @@ export const AudioUploadForm = () => {
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className={`govuk-form-group${fileError ? ' govuk-form-group--error' : ''}`}>
-            <label className="govuk-label govuk-fieldset__legend--m" htmlFor="file-upload" id="file-upload-label">
+            <label className="govuk-label govuk-fieldset__legend--l" htmlFor="file-upload" id="file-upload-label">
               Select a file to upload
             </label>
 

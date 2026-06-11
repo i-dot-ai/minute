@@ -27,7 +27,7 @@ import { useWakeLock } from '@/hooks/use-wake-lock'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
-import AudioPlayerComponent from '../audio-player'
+import { getFileExtensionFromBlob } from '@/lib/getFileExtension'
 
 export const TabRecorderForm = () => {
   const { isPending, onSubmit, form } = useStartTranscription()
@@ -301,17 +301,12 @@ function TabRecorder({
   return (
     <div className="space-y-4">
       {recordedAudio ? (
-        <div className="mt-4 space-y-3">
-          <AudioPlayerComponent audioBlob={recordedAudio} />
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              onClick={() => setDiscardDialogOpen(true)}
-              variant="outline"
-              size="sm"
-            >
-              Discard Recording
-            </Button>
+        <div className="govuk-!-margin-bottom-9">
+          <h2 className="govuk-heading-l">Your recording</h2>
+          <audio src={URL.createObjectURL(recordedAudio)} controls className="w-full" />
+          <div className="govuk-button-group govuk-!-margin-top-2">
+            <a role="button" href={URL.createObjectURL(recordedAudio)} download={`audio-file.${getFileExtensionFromBlob(recordedAudio)}`} className="govuk-button govuk-button--secondary">Save Recording</a>
+            <button type="button" className="govuk-link link--warning" onClick={() => setDiscardDialogOpen(true)}>Discard recording</button>
           </div>
         </div>
       ) : (

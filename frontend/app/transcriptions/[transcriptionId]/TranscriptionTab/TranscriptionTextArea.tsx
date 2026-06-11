@@ -1,4 +1,5 @@
 import { DialogueEntryForm } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
+import { PenIcon } from 'lucide-react'
 import posthog from 'posthog-js'
 import { Control, Controller } from 'react-hook-form'
 
@@ -48,6 +49,9 @@ export const TranscriptionTextArea = ({
         control={control}
         name={`entries.${index}.text`}
       />
+      <button className="govuk-button govuk-button--secondary govuk-!-margin-top-2">
+        <PenIcon /> Edit text
+      </button>
     </div>
   )
 }

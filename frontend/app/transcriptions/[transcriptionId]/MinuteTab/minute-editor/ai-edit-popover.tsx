@@ -56,9 +56,7 @@ export const AiEditPopover = ({
         disabled={disabled}
         onClick={() => setOpen(true)}
       >
-        <PopoverTrigger>
-          AI Edit
-        </PopoverTrigger>
+        <Wand2Icon /> AI Edit
       </button>
       <PopoverContent className="w-xl max-w-screen">
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -66,13 +64,13 @@ export const AiEditPopover = ({
             placeholder="Describe the changes you want to make (you can always revert the changes if you don't like them)."
             {...form.register('instruction')}
           />
-          <Button
-            className="mt-2 bg-indigo-700 hover:bg-indigo-800 active:bg-yellow-500"
+          <button
+            className="govuk-button govuk-button--secondary"
             type="submit"
             disabled={!form.watch('instruction')}
           >
             <Wand2Icon /> Apply AI Edit
-          </Button>
+          </button>
         </form>
       </PopoverContent>
     </Popover>

@@ -22,23 +22,23 @@ export const DownloadButton = ({
   }
   if (recordings.length == 1) {
     return (
-      <Button asChild variant="link" onClick={onClick(recordings[0])}>
-        <a
-          href={recordings[0].url}
-          download
-          className="text-sm text-blue-600 hover:underline dark:text-blue-400"
-        >
-          <Download /> Download
-        </a>
-      </Button>
+      <a
+        href={recordings[0].url}
+        download
+        role="button"
+        onClick={onClick(recordings[0])}
+        className="govuk-button govuk-button--secondary"
+      >
+        <Download /> Download audio
+      </a>
     )
   }
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="link">
-          <Download /> Download
-        </Button>
+        <button className="govuk-button govuk-button--secondary">
+          <Download /> Download audio
+        </button>
       </PopoverTrigger>
       <PopoverContent>
         {recordings.map((recording) => (

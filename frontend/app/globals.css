@@ -62,6 +62,13 @@
   }
 }
 
+.govuk-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
 .side-panel__sticky-container .govuk-button,
 .side-panel__sticky-container .govuk-select {
   width: 100%;

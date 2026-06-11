@@ -18,6 +18,7 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import { Template } from '@/types/templates'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Plus } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useEffect, useState } from 'react'
 import { useController, useForm } from 'react-hook-form'
@@ -94,6 +95,7 @@ export function NewMinuteDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="govuk-button govuk-button--secondary">
+          <Plus />
           Generate new summary
         </button>
       </DialogTrigger>

@@ -18,7 +18,7 @@ export const StartTranscriptionSection = ({
   }
   return (
     <div>
-      <h2 className="govuk-heading-m">Select a template</h2>
+      <h2 className="govuk-heading-l">Select a template</h2>
       <Controller
         control={form.control}
         name="template"
@@ -30,7 +30,7 @@ export const StartTranscriptionSection = ({
         <div>
           <div className="govuk-form-group">
             <h3 className="govuk-label-wrapper">
-              <label className="govuk-label govuk-label--s" htmlFor="agenda">
+              <label className="govuk-label govuk-label--m" htmlFor="agenda">
                 Agenda (
                 {selectedTemplate.agenda_usage == 'optional'
                   ? 'optional'

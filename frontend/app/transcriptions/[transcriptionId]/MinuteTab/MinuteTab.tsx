@@ -10,7 +10,7 @@ import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTa
 import CopyButton from '@/components/ui/copy-button'
 import { MinuteListItem, Transcription } from '@/lib/client'
 import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
-import { AudioWaveform } from 'lucide-react'
+import { AudioWaveform, DownloadIcon, Eye, EyeOffIcon, PencilIcon, SaveIcon } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -75,6 +75,7 @@ export function MinuteTab({
               onClick={editState.toggleHideCitations}
               disabled={editState.isEditable}
             >
+              {editState.hideCitations ? <Eye /> : <EyeOffIcon />}
               {editState.hideCitations ? 'Show references' : 'Hide references'}
             </button>
           )}
@@ -140,14 +141,14 @@ export function MinuteTab({
                     type="button"
                     disabled={editState.isEditable}
                   >
-                    Edit Manually
+                    <PencilIcon /> Edit Manually
                   </button>
                   {editState.isEditable && (
                     <button
                       className="govuk-button govuk-button--secondary"
                       onClick={editState.onSave}
                     >
-                      Save Changes
+                      <SaveIcon /> Save Changes
                     </button>
                   )}
                 </>
@@ -163,6 +164,7 @@ export function MinuteTab({
                   className="govuk-button"
                   onClick={handleWordDocDownload}
                 >
+                  <DownloadIcon />
                   Download as Word doc
                 </button>
                 <CopyButton

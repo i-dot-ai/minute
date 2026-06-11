@@ -7,6 +7,7 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
+import { Loader2, PencilIcon } from 'lucide-react'
 
 export default function TranscriptionPage({
   params: { transcriptionId },
@@ -37,7 +38,10 @@ export default function TranscriptionPage({
 
   if (isLoading) {
     return (
-      <p className="govuk-body">Loading...</p>
+      <div className="flex items-center gap-2">
+        <Loader2 className="animate-spin" />
+        <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
+      </div>
     )
   }
 
@@ -62,16 +66,17 @@ export default function TranscriptionPage({
     return (
       <div className="govuk-grid-row govuk-!-margin-bottom-2">
         <div className="govuk-grid-column-two-thirds">
-          <h1>
+          <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">
             Generating transcript
           </h1>
           <p className="govuk-body">{date}</p>
           <p className="govuk-body">The transcription is being processed. Return later to view the transcript.</p>
+          <h2 className="govuk-heading-m">Audio</h2>
           <AudioPlayer transcriptionId={transcription.id} />
         </div>
         <div className="govuk-grid-column-one-third">
           <div className="govuk-button-group">
-            <a href={`/transcriptions/${transcription.id}/delete`} role="button" className="govuk-button govuk-button--warning">
+            <a href={`/transcriptions/${transcription.id}/delete`} className="govuk-link link--warning">
               Delete
             </a>
           </div>
@@ -91,16 +96,12 @@ export default function TranscriptionPage({
           <p className="govuk-body">The transcription failed to process. Please try again.</p>
         </div>
         <div className="govuk-grid-column-one-third">
-          <div className="govuk-button-group">
-            <a
-              href={`/transcriptions/${transcription.id}/delete`}
-              role="button"
-              data-module="govuk-button"
-              className="govuk-button govuk-button--warning"
-            >
-              Delete
-            </a>
-          </div>
+          <a
+            href={`/transcriptions/${transcription.id}/delete`}
+            className="govuk-link link--warning float-right"
+          >
+            Delete
+          </a>
         </div>
       </div>
     )
@@ -121,7 +122,7 @@ export default function TranscriptionPage({
               href={`/transcriptions/${transcription.id}/rename`}
               className="govuk-button govuk-button--secondary"
             >
-              Rename
+              <PencilIcon /> Rename
             </a>
             <a
               href={`/transcriptions/${transcription.id}/delete`}
@@ -147,9 +148,9 @@ const AudioPlayer = ({ transcriptionId }: { transcriptionId: string }) => {
     return null
   }
   return (
-    <div className="mb-2 flex w-full max-w-3xl flex-col gap-2 rounded border bg-white p-2">
+    <div>
       <audio controls src={recordings[0].url} className="w-full" />
-      <div className="flex justify-end">
+      <div className="govuk-!-margin-top-2">
         <DownloadButton recordings={recordings} />
       </div>
     </div>

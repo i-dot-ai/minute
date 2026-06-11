@@ -17,9 +17,9 @@ export const TemplateSelect = ({
 }) => {
   return (
     <div>
-      <h3 className="govuk-heading-s">Default templates</h3>
+      <h3 className="govuk-heading-m">Default templates</h3>
       <DefaultTemplateSelect value={value} onChange={onChange} />
-      <h3 className="govuk-heading-s">Your templates</h3>
+      <h3 className="govuk-heading-m">Your templates</h3>
       <UserTemplateSelect value={value} onChange={onChange} />
     </div>
   )

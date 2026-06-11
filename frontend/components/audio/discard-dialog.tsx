@@ -21,33 +21,29 @@ export const DiscardConfirmDialog = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            Are you sure you want to discard your recording?
-          </DialogTitle>
-          <DialogDescription>
-            Your recording has not been uploaded yet. Discarding it will delete
-            the recording permanently.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="flex gap-3">
-          <Button
+        <h1 className="govuk-heading-l">
+          Are you sure you want to discard your recording?
+        </h1>
+        <p className="govuk-body">
+          Your recording has not been uploaded yet. Discarding it will delete
+          the recording permanently.
+        </p>
+        <div className="govuk-button-group">
+          <button
             type="button"
-            variant="outline"
+            onClick={onClickConfirm}
+            className="govuk-button govuk-button--warning"
+          >
+            Discard recording
+          </button>
+          <button
+            type="button"
+            className="govuk-button govuk-button--secondary"
             onClick={() => setOpen(false)}
-            className="h-12"
           >
             Cancel
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={onClickConfirm}
-            className="h-12 hover:bg-red-800"
-          >
-            <Trash2 /> Discard recording
-          </Button>
-        </DialogFooter>
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   )

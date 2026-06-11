@@ -1,7 +1,6 @@
 'use client'
 
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
-import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { Button } from '@/components/ui/button'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import {
@@ -221,7 +220,11 @@ export function MinuteEditor({
   ])
   if (isLoading) {
     return (
-      <p className="govuk-body">Loading...</p>
+      <div className="flex items-center gap-2">
+        <Loader2 className="animate-spin" />
+        <p className="govuk-body govuk-!-margin-bottom-0">
+          Loading...</p>
+      </div>
     )
   }
 
@@ -230,41 +233,35 @@ export function MinuteEditor({
       <>
         <p className="govuk-body">
           Nothing has been generated for this &quot;{minute.template_name}&quot;
-          minute yet. Click below to generate a minute.
+          minute yet. Generate a new minute from the panel to the left.
         </p>
-        <NewMinuteDialog
-          transcriptionId={transcription.id!}
-          agenda={minute.agenda ?? undefined}
-        />
       </>
     )
   }
   if (isGenerating) {
     return (
-      <p className="govuk-body">Minute generating...</p>
+      <div className="flex items-center gap-2">
+        <Loader2 className="animate-spin" />
+        <p className="govuk-body govuk-!-margin-bottom-0">
+          Minute generating...</p>
+      </div>
     )
   }
   if (isError) {
     return (
-      <div className="pt-2">
-        <div className="mx-auto flex flex-col items-center justify-center pt-12 text-center">
-          <FileX2 />
-          <p>There was a problem processing your request.</p>
-          {minuteVersions.length > 1 ? (
-            <>
-              <p>Click undo to go back to the previous version.</p>
-              <MinuteVersionDeleteButton minuteVersion={minuteVersion} />
-            </>
-          ) : (
-            <>
-              <p>Try generating a new Minute</p>
-              <NewMinuteDialog
-                transcriptionId={transcription.id!}
-                agenda={minute.agenda ?? undefined}
-              />
-            </>
-          )}
-        </div>
+      <div className="flex items-center gap-2">
+        <FileX2 />
+        <p className="govuk-body">There was a problem processing your request.</p>
+        {true ? (
+          <>
+            <p>Click undo to go back to the previous version.</p>
+            <MinuteVersionDeleteButton minuteVersion={minuteVersion} />
+          </>
+        ) : (
+          <>
+            <p className="govuk-body">Generate a new minute from the panel to the left.</p>
+          </>
+        )}
       </div>
     )
   }

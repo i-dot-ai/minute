@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import { DialogueEntry, Transcription } from '@/lib/client'
-import { Edit2, Pause, Play } from 'lucide-react'
+import { Edit2, Pause, Play, User, } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useFormContext } from 'react-hook-form'
 
@@ -64,11 +64,11 @@ export const SpeakerEditor = ({
 
   return (
     <Dialog>
-      <DialogTrigger asChild className="mb-4">
-        <Button className="active:bg-yellow-400">
-          <Edit2 />
-          View/Edit Speaker Names
-        </Button>
+      <DialogTrigger asChild>
+        <button className="govuk-button govuk-button--secondary">
+          <User />
+          Edit speaker names
+        </button>
       </DialogTrigger>
       <DialogContent className="scroll max-h-screen overflow-y-auto sm:max-w-2xl">
         <DialogHeader>

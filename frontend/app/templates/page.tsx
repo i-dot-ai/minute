@@ -1,22 +1,25 @@
 import { UserTemplatesList } from '@/app/templates/components/user-templates-list'
+import Link from 'next/link'
 
 export default function TemplatesPage() {
   return (
-    <div>
-      <header className="mb-6">
-        <div className="flex justify-between">
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold">Your templates</h1>
-            <span className="bg-blue-200 px-2 py-0.5 text-xs font-medium uppercase">
-              Experimental
-            </span>
-          </div>
+    <div className="govuk-width-container govuk-main-wrapper">
+      <nav className="govuk-breadcrumbs govuk-!-margin-bottom-6" aria-label="Breadcrumb">
+        <ol className="govuk-breadcrumbs__list">
+          <li className="govuk-breadcrumbs__list-item">
+            <Link className="govuk-breadcrumbs__link" href="/">Home</Link>
+          </li>
+        </ol>
+      </nav>
+      <div className="govuk-grid-row">
+        <div className="govuk-grid-column-two-thirds">
+          <h1 className="govuk-heading-xl">Your templates</h1>
+          <p className="govuk-body-l">
+            Use templates to customise the structure and style of your minutes.
+          </p>
+          <UserTemplatesList />
         </div>
-        <p className="text-muted-foreground">
-          Use templates to customise the structure and style of your minutes.
-        </p>
-      </header>
-      <UserTemplatesList />
+      </div>
     </div>
   )
 }

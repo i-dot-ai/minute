@@ -36,10 +36,9 @@ export function ExampleTemplatesDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild type="button">
-        <Button variant="outline">
-          <FileText className="h-4 w-4" />
+        <button className="govuk-link">
           Try an example
-        </Button>
+        </button>
       </DialogTrigger>
       <DialogContent className="max-h-[80vh] min-w-3xl overflow-y-auto">
         <DialogHeader>

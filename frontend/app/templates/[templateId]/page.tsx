@@ -15,6 +15,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import posthog from 'posthog-js'
 import { useEffect } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
@@ -31,33 +32,42 @@ export default function EditTemplatePage({
     }),
     placeholderData: keepPreviousData,
   })
-
-  if (!template) {
-    return (
-      <>
-        <header className="mb-6">
-          <h1 className="text-3xl font-bold">Edit template</h1>
-        </header>
-        <Loader2 className="animate-spin" />
-      </>
-    )
-  }
   return (
-    <>
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold">Edit template</h1>
-      </header>
-      <TemplateEditorForm
-        templateId={templateId}
-        defaultValues={{
-          name: template.name,
-          description: template.description,
-          questions: template.questions,
-          type: template.type,
-          content: template.content,
-        }}
-      />
-    </>
+    <div className="govuk-width-container govuk-main-wrapper">
+      <nav className="govuk-breadcrumbs govuk-!-margin-bottom-6" aria-label="Breadcrumb">
+        <ol className="govuk-breadcrumbs__list">
+          <li className="govuk-breadcrumbs__list-item">
+            <Link className="govuk-breadcrumbs__link" href="/">Home</Link>
+          </li>
+          <li className="govuk-breadcrumbs__list-item">
+            <Link className="govuk-breadcrumbs__link" href="/templates">Templates</Link>
+          </li>
+        </ol>
+      </nav>
+      <div className="govuk-grid-row">
+        <div className="govuk-grid-column-two-thirds">
+          <h1 className="govuk-heading-xl">Edit template</h1>
+          {
+            template ? (
+              <TemplateEditorForm
+                templateId={templateId}
+                defaultValues={{
+                  name: template.name,
+                  description: template.description,
+                  questions: template.questions,
+                  type: template.type,
+                  content: template.content,
+                }}
+              />
+            ) : (
+              <div className="flex justify-center">
+                <Loader2 className="animate-spin" />
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </div>
   )
 }
 

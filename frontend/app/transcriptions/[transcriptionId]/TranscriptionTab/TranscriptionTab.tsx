@@ -2,12 +2,10 @@ import { SpeakerEditor } from '@/app/transcriptions/[transcriptionId]/Transcript
 import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNamePopover'
 import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTextArea'
 import { DownloadButton } from '@/components/download-button'
-import { Button } from '@/components/ui/button'
 import CopyButton from '@/components/ui/copy-button'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import { DialogueEntry, Transcription } from '@/lib/client'
 import { getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
-import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowDown, Play } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -91,7 +89,7 @@ export function TranscriptionTab({
               transcription={transcription}
               src={hasRecordings ? recordings[0].url : undefined}
             />
-            <p className="govuk-body">You can also click on the speaker's name to edit</p>
+            <p className="govuk-body">You can also click on the speaker&apos;s name to edit</p>
             <div className="side-panel__section-divider" />
             <h2 className="govuk-heading-m">Export</h2>
             <CopyButton

@@ -18,14 +18,24 @@ export const ServiceNavigation = () => {
               Menu
             </button>
             <ul className="govuk-service-navigation__list" id="navigation">
+              <li className={`govuk-service-navigation__item ${pathname.includes('/new') ? 'govuk-service-navigation__item--active' : ''}`}>
+                <Link className="govuk-service-navigation__link" href="/new">
+                  New transcription
+                </Link>
+              </li>
               <li className={`govuk-service-navigation__item ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__item--active' : ''}`}>
                 <Link className="govuk-service-navigation__link" href="/transcriptions">
-                  Transcriptions
+                  Saved transcriptions
                 </Link>
               </li>
               <li className={`govuk-service-navigation__item ${pathname.includes('/templates') ? 'govuk-service-navigation__item--active' : ''}`}>
                 <Link className="govuk-service-navigation__link" href="/templates">
                   Templates
+                </Link>
+              </li>
+              <li className={`govuk-service-navigation__item ${pathname.includes('/recordings') ? 'govuk-service-navigation__item--active' : ''}`}>
+                <Link className="govuk-service-navigation__link" href="/recordings">
+                  Offline recordings
                 </Link>
               </li>
               <li className={`govuk-service-navigation__item ${pathname.includes('/settings') ? 'govuk-service-navigation__item--active' : ''}`}>

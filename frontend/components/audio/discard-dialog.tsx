@@ -1,13 +1,4 @@
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Trash2 } from 'lucide-react'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Dispatch, SetStateAction } from 'react'
 export const DiscardConfirmDialog = ({
   open,

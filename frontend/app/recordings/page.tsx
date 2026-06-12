@@ -1,8 +1,8 @@
-import { PaginatedTranscriptions } from '@/components/recent-meetings/paginated-transcriptions'
+import { OfflineRecordings } from '@/components/recent-meetings/offline-recordings'
 import Link from 'next/link'
 import { Suspense } from 'react'
 
-export default function TranscriptionsPage() {
+export default function RecordingsPage() {
   return (
     <div className="govuk-main-wrapper">
       <div className="govuk-width-container">
@@ -16,10 +16,13 @@ export default function TranscriptionsPage() {
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-two-thirds-from-desktop">
             <h1 className="govuk-heading-xl">
-              Transcriptions
+              Offline recordings
             </h1>
+            <p className="govuk-body-l">
+              These are recording backups which are stored in this browser. We strongly recommend you delete or upload these so they are securely and reliably stored in the cloud.
+            </p>
             <Suspense fallback={<div>Loading...</div>}>
-              <PaginatedTranscriptions />
+              <OfflineRecordings />
             </Suspense>
           </div>
         </div>

@@ -1,37 +1,36 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { StatusBadge } from '@/components/status-icon'
-import { TranscriptionMetadata } from '@/lib/client'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { JobStatus } from '@/lib/client'
 import {
   deleteTranscriptionTranscriptionsTranscriptionIdDeleteMutation,
   listTranscriptionsTranscriptionsGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Loader, Trash } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { Dispatch, SetStateAction } from 'react'
 
-export const DeleteDialog = ({
+export type DeleteTranscription = {
+  id: string
+  title?: string | null
+  status: JobStatus
+  created_datetime: string
+}
+
+export const DeleteTranscriptionDialog = ({
   open,
   setOpen,
   transcription,
 }: {
   open: boolean
   setOpen: Dispatch<SetStateAction<boolean>>
-  transcription: TranscriptionMetadata
+  transcription: DeleteTranscription
 }) => {
   const date = new Date(transcription.created_datetime)
   const queryClient = useQueryClient()
+  const router = useRouter()
   const { mutate: deleteTranscription, isPending } = useMutation({
     ...deleteTranscriptionTranscriptionsTranscriptionIdDeleteMutation(),
     onSuccess() {
@@ -43,45 +42,40 @@ export const DeleteDialog = ({
         transcriptionDate: transcription.created_datetime,
       })
       setOpen(false)
+      router.push('/transcriptions')
     },
   })
+
+  const title =
+    transcription.title ||
+    (['awaiting_start', 'in_progress'].includes(transcription.status)
+      ? 'Generating title'
+      : 'No title')
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Are you sure?</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete this transcription?
-          </DialogDescription>
-          <div className="rounded-md border p-2 text-sm">
-            <p className="govuk-!-margin-bottom-1 govuk-!-font-weight-bold">
-              {transcription.title ||
-                (['awaiting_start', 'in_progress'].includes(transcription.status)
-                  ? 'Generating title'
-                  : 'No title')}
-            </p>
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span>
-                {date.toDateString()} at {date.toLocaleTimeString()}
-              </span>
-              <StatusBadge status={transcription.status} className="text-inherit" />
-            </div>
-          </div>
-          <DialogClose />
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button
-              variant="secondary"
-              type="button"
-              className="hover:bg-slate-200"
-            >
-              Cancel
-            </Button>
-          </DialogClose>
-          <Button
-            variant="destructive"
-            className="hover:bg-red-800 active:bg-yellow-400"
+        <h1 className="govuk-heading-l">
+          Are you sure you want to delete this transcription?
+        </h1>
+        <p className="govuk-body">
+          This will permanently delete the transcription and cannot be undone.
+        </p>
+        <p className="govuk-body govuk-!-font-weight-bold">{title}</p>
+        <p className="govuk-body-s">
+          {date.toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </p>
+        <div className="govuk-button-group">
+          <button
+            type="button"
+            className="govuk-button govuk-button--warning"
+            disabled={isPending}
             onClick={() =>
               deleteTranscription({
                 path: { transcription_id: transcription.id },
@@ -89,14 +83,22 @@ export const DeleteDialog = ({
             }
           >
             {isPending ? (
-              <Loader />
-            ) : (
               <>
-                <Trash /> Yes, delete
+                <Loader2 className="size-4 animate-spin" /> Deleting
               </>
+            ) : (
+              'Delete transcription'
             )}
-          </Button>
-        </DialogFooter>
+          </button>
+          <button
+            type="button"
+            className="govuk-button govuk-button--secondary"
+            disabled={isPending}
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   )

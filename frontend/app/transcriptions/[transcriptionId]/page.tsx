@@ -1,13 +1,16 @@
 'use client'
 import { GovukTranscriptionTabs } from '@/app/transcriptions/[transcriptionId]/GovukTranscriptionTabs'
 import { DownloadButton } from '@/components/download-button'
+import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
+import { RenameTranscriptionButton } from '@/components/recent-meetings/rename-transcription-button'
+import { getTranscriptionDisplayTitle } from '@/components/recent-meetings/rename-transcription-dialog'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
-import { Loader2, PencilIcon } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 export default function TranscriptionPage({
   params: { transcriptionId },
@@ -76,9 +79,7 @@ export default function TranscriptionPage({
         </div>
         <div className="govuk-grid-column-one-third">
           <div className="govuk-button-group">
-            <a href={`/transcriptions/${transcription.id}/delete`} className="govuk-link link--warning">
-              Delete
-            </a>
+            <DeleteTranscriptionButton transcription={transcription} />
           </div>
         </div>
       </div>
@@ -90,18 +91,16 @@ export default function TranscriptionPage({
       <div className="govuk-grid-row govuk-!-margin-bottom-2">
         <div className="govuk-grid-column-two-thirds">
           <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">
-            No title
+            {getTranscriptionDisplayTitle(transcription.title, transcription.status)}
           </h1>
           <p className="govuk-body">{date}</p>
           <p className="govuk-body">The transcription failed to process. Please try again.</p>
         </div>
         <div className="govuk-grid-column-one-third">
-          <a
-            href={`/transcriptions/${transcription.id}/delete`}
-            className="govuk-link link--warning float-right"
-          >
-            Delete
-          </a>
+          <div className="govuk-button-group transcription-page__actions float-right">
+            <RenameTranscriptionButton transcription={transcription} />
+            <DeleteTranscriptionButton transcription={transcription} />
+          </div>
         </div>
       </div>
     )
@@ -111,25 +110,14 @@ export default function TranscriptionPage({
       <div className="govuk-grid-row govuk-!-margin-bottom-2">
         <div className="govuk-grid-column-two-thirds">
           <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">
-            {transcription.title}
+            {getTranscriptionDisplayTitle(transcription.title, transcription.status)}
           </h1>
           <p className="govuk-body">{date}</p>
         </div>
         <div className="govuk-grid-column-one-third">
           <div className="govuk-button-group transcription-page__actions">
-            <a
-              data-module="govuk-button"
-              href={`/transcriptions/${transcription.id}/rename`}
-              className="govuk-button govuk-button--secondary"
-            >
-              <PencilIcon className="size-4" /> Rename
-            </a>
-            <a
-              href={`/transcriptions/${transcription.id}/delete`}
-              className="govuk-link link--warning"
-            >
-              Delete
-            </a>
+            <RenameTranscriptionButton transcription={transcription} />
+            <DeleteTranscriptionButton transcription={transcription} />
           </div>
         </div>
       </div >

@@ -2,6 +2,10 @@
 @import 'tw-animate-css';
 @import "govuk-frontend/dist/govuk/govuk-frontend.min.css";
 
+/* Override the margin-right: from the modal dialog */
+html body[data-scroll-locked] {
+  margin-right: 0 !important;
+}
 
 .homepage__list-item {
   position: relative;
@@ -117,6 +121,10 @@
 
 .play-section-trigger {
   color: var(--govuk-link-colour);
+}
+
+.play-section-trigger--border {
+  border: 1px solid;
 }
 
 .transcription-text-area {

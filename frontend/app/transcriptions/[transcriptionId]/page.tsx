@@ -138,7 +138,7 @@ const AudioPlayer = ({ transcriptionId }: { transcriptionId: string }) => {
   return (
     <div>
       <audio controls src={recordings[0].url} className="w-full" />
-      <div className="govuk-!-margin-top-2">
+      <div className="govuk-button-group govuk-!-margin-top-2">
         <DownloadButton recordings={recordings} />
       </div>
     </div>

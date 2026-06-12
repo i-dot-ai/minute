@@ -235,7 +235,7 @@ function MicRecorderComponent({
           <h2 className="govuk-heading-l">Your recording</h2>
           <audio src={URL.createObjectURL(recordedAudio)} controls className="w-full" />
           <div className="govuk-button-group govuk-!-margin-top-2">
-            <a role="button" href={URL.createObjectURL(recordedAudio)} download={`audio-file.${getFileExtensionFromBlob(recordedAudio)}`} className="govuk-button govuk-button--secondary">Save Recording</a>
+            <a role="button" href={URL.createObjectURL(recordedAudio)} download={`audio-file.${getFileExtensionFromBlob(recordedAudio)}`} className="govuk-button govuk-button--secondary">Download audio</a>
             <button type="button" className="govuk-link link--warning" onClick={() => setIsDialogOpen(true)}>Discard recording</button>
           </div>
         </div>

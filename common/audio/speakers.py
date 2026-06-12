@@ -78,17 +78,17 @@ def add_speaker_labels_to_dialogue_entries(
     entries: list[DialogueEntry],
 ) -> list[DialogueEntry]:
     """
-    Add 'Unknown speaker' prefix to speaker labels.
+    Add 'Speaker' prefix to speaker labels.
 
     Args:
         entries: List of DialogueEntry objects
 
     Returns:
-        List of DialogueEntry objects with 'Unknown speaker' prefix added to speaker labels
+        List of DialogueEntry objects with 'Speaker' prefix added to speaker labels
     """
     return [
         DialogueEntry(
-            speaker=f"Unknown speaker {entry['speaker']}",
+            speaker=f"Speaker {entry['speaker']}",
             text=entry["text"],
             start_time=entry["start_time"],
             end_time=entry["end_time"],

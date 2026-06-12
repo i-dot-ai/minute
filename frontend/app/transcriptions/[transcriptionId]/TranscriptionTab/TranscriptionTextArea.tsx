@@ -1,6 +1,4 @@
 import { DialogueEntryForm } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
-import { PenIcon } from 'lucide-react'
-import posthog from 'posthog-js'
 import { Control, Controller } from 'react-hook-form'
 
 export const TranscriptionTextArea = ({

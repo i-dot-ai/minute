@@ -3,11 +3,12 @@ import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/Trans
 import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTextArea'
 import { DownloadButton } from '@/components/download-button'
 import CopyButton from '@/components/ui/copy-button'
+import { formatTime } from '@/components/audio/audio-player'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import { DialogueEntry, Transcription } from '@/lib/client'
 import { getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowDown, Play } from 'lucide-react'
+import { ArrowDown, Play, CirclePlay } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 
@@ -89,17 +90,23 @@ export function TranscriptionTab({
               transcription={transcription}
               src={hasRecordings ? recordings[0].url : undefined}
             />
-            <p className="govuk-body">You can also click on the speaker&apos;s name to edit</p>
+            <p className="govuk-body-s govuk-!-margin-bottom-1">Renaming speakers updates the meeting summary too.</p>
+            <p className="govuk-body-s govuk-!-margin-bottom-1">Click a name to rename it.</p>
+            <p className="govuk-body-s govuk-!-margin-bottom-1">Click any text box to edit the text.</p>
+            <p className="govuk-body-s govuk-!-margin-bottom-1">Click a timestamp to play from that point.</p>
             <div className="side-panel__section-divider" />
             <h2 className="govuk-heading-m">Export</h2>
-            <CopyButton
-              textToCopy={transcriptionString}
-              posthogEvent="transcript_content_copied"
-            />
+            <div className="govuk-button-group">
+              <CopyButton
+                textToCopy={transcriptionString}
+                posthogEvent="transcript_content_copied"
+              />
+              {hasRecordings && <DownloadButton recordings={recordings} />}
+            </div>
           </div>
           <div className="govuk-grid-column-two-thirds" style={{ borderLeft: '1px solid #b1b4b6' }}>
             {hasRecordings && (
-              <div className="sticky top-0 bg-white govuk-!-margin-bottom-4" style={{ borderBottom: '1px solid #b1b4b6' }}>
+              <div className="sticky top-0 bg-white govuk-!-margin-bottom-4 flex gap-2" style={{ borderBottom: '1px solid #b1b4b6' }}>
                 <audio
                   controls
                   src={recordings[0].url}
@@ -112,12 +119,9 @@ export function TranscriptionTab({
                     }
                   }}
                 />
-                <div className="govuk-button-group govuk-!-margin-top-2">
-                  <DownloadButton recordings={recordings} />
-                  <button onClick={scrollToPlaying} className="govuk-button govuk-button--secondary">
-                    <ArrowDown /> Scroll to playing
-                  </button>
-                </div>
+                <button onClick={scrollToPlaying} className="govuk-button govuk-button--secondary">
+                  Scroll to current section
+                </button>
               </div>
             )}
             <div className="flex flex-col gap-6">
@@ -128,12 +132,16 @@ export function TranscriptionTab({
                   (!array[index + 1] || time < array[index + 1].start_time)
                 return (
                   <div
-                    className={isPlaying ? 'bg-blue-100' : ''}
+                    className={`transcription-text-area ${isPlaying ? 'transcription-text-area--playing' : ''}`}
                     key={entry.id}
                     ref={isPlaying ? playingRef : null}
                   >
                     <div className="flex justify-between">
-                      <p className="govuk-body govuk-!-font-weight-bold">{entry.speaker}:</p>
+                      <SpeakerNamePopover
+                        entry={entry}
+                        index={index}
+                        update={update}
+                      />
                       <div className="govuk-button-group govuk-!-margin-right-0">
                         {hasRecordings && (
                           <button
@@ -146,17 +154,13 @@ export function TranscriptionTab({
                                 }
                               }
                             }}
-                            className="govuk-button govuk-button--secondary"
+                            className="play-section-trigger govuk-link govuk-link--no-visited-state"
                           >
-                            <Play />
-                            Play
+                            <Play className="size-4" />
+                            <span className="govuk-visually-hidden">Play section from </span>
+                            {formatTime(entry.start_time)}
                           </button>
                         )}
-                        <SpeakerNamePopover
-                          entry={entry}
-                          index={index}
-                          update={update}
-                        />
                       </div>
                     </div>
                     <TranscriptionTextArea control={control} index={index} />

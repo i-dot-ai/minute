@@ -67,7 +67,7 @@ export const SpeakerEditor = ({
       <DialogTrigger asChild>
         <button className="govuk-button govuk-button--secondary">
           <User />
-          Edit speaker names
+          Name all speakers
         </button>
       </DialogTrigger>
       <DialogContent className="scroll max-h-screen overflow-y-auto sm:max-w-2xl">

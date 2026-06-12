@@ -22,7 +22,7 @@ export function TranscriptionsList({
         return (
           <li
             key={transcription.id}
-            className="transcriptions__list-item govuk-!-padding-top-3 govuk-!-padding-bottom-3"
+            className="transcriptions__list-item govuk-!-padding-top-3 govuk-!-padding-bottom-3 flex items-center justify-between"
           >
             <div>
               <h3 className="govuk-heading-s govuk-!-margin-bottom-1">

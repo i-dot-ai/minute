@@ -107,7 +107,48 @@
   justify-content: flex-end;
 }
 
+.speaker-name-popover__trigger,
+.play-section-trigger {
+  display: flex !important;
+  align-items: center;
+  font-weight: bold;
+  gap: 0.5rem;
+}
 
+.play-section-trigger {
+  color: var(--govuk-link-colour);
+}
+
+.transcription-text-area {
+  border-left: 4px solid transparent;
+  padding-left: 0.5rem;
+}
+
+.transcription-text-area--playing {
+  background-color: #d2e2f1;
+  border-color: var(--govuk-brand-colour);
+}
+
+.transcription-text-area__text-box {
+  cursor: text;
+  padding: 0.5rem;
+  border: 3px dashed #cecece;
+  transition: background-color 0.2s ease-in-out;
+  width: 100%;
+  field-sizing: content;
+}
+
+.transcription-text-area__text-box:hover {
+  background-color: #f3f3f3;
+  border-color: #858686;
+}
+
+.transcription-text-area__text-box:focus-visible {
+  border: 3px solid #0b0c0c;
+  outline: 3px solid;
+  outline-color: var(--govuk-focus-colour, #fd0);
+  outline-offset: 0;
+}
 
 @plugin "@tailwindcss/typography";
 

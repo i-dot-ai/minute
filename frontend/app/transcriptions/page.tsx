@@ -16,7 +16,7 @@ export default function TranscriptionsPage() {
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-two-thirds-from-desktop">
             <h1 className="govuk-heading-xl">
-              Transcriptions
+              Saved transcriptions
             </h1>
             <Suspense fallback={<div>Loading...</div>}>
               <PaginatedTranscriptions />

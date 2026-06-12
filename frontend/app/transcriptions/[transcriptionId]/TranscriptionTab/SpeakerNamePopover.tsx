@@ -52,11 +52,12 @@ export const SpeakerNamePopover = ({
     <Popover open={open} onOpenChange={(open) => setOpen(open)}>
       <PopoverTrigger asChild>
         <button
-          className="govuk-button govuk-button--secondary govuk-!-margin-0"
+          className="speaker-name-popover__trigger govuk-link govuk-link--no-visited-state"
           onClick={() => setOpen(true)}
         >
-          <PenIcon />
-          Edit name
+          <PenIcon className="size-4" />
+          <span className="sr-only">Edit speaker name for </span>
+          {entry.speaker}:
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-80">

@@ -29,7 +29,7 @@ export const DownloadButton = ({
         onClick={onClick(recordings[0])}
         className="govuk-button govuk-button--secondary"
       >
-        <Download /> Download audio
+        <Download className="size-4" /> Download audio
       </a>
     )
   }

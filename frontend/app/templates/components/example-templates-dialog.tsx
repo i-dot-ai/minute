@@ -10,7 +10,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { TemplateData } from '@/types/templates'
-import { FileText } from 'lucide-react'
 import posthog from 'posthog-js'
 
 import { useState } from 'react'

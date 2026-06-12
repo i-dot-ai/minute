@@ -1,11 +1,11 @@
 'use client'
 
+import { ExampleTemplatesDialog } from '@/app/templates/components/example-templates-dialog'
+import { exampleFormTemplates } from '@/app/templates/data/example-templates'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { TemplateData } from '@/types/templates'
-import { ArrowDown, ArrowUp, Save, Trash } from 'lucide-react'
+import { ArrowDown, ArrowUp, Plus, Save, Trash } from 'lucide-react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
 
 export const FormTemplateEditor = ({
@@ -27,83 +27,92 @@ export const FormTemplateEditor = ({
       className="flex flex-col gap-4"
       onSubmit={form.handleSubmit(onSubmit)}
     >
-      <div className="flex gap-2">
-        <Button type="submit">
-          <Save />
+      <div className="govuk-button-group">
+        <button type="submit" className="govuk-button">
+          <Save className="size-4" />
           Save
-        </Button>
-        <div className="flex-1 text-xs text-red-600">
-          <p>
-            {form.formState.errors.questions?.root?.message
-              ? form.formState.errors.questions?.root?.message
-              : null}
-          </p>
-          <p>
-            {form.formState.errors.name?.message
-              ? form.formState.errors.name?.message
-              : null}
-          </p>
-          <p>
-            {form.formState.errors.description?.message
-              ? form.formState.errors.description?.message
-              : null}
-          </p>
-        </div>
+        </button>
+        <ExampleTemplatesDialog
+          examples={exampleFormTemplates}
+          onSelectTemplate={(template) => form.reset(template)}
+        />
       </div>
-      <div className="flex flex-col gap-4 rounded-lg border p-4">
-        <div>
-          <h4 className="font-semibold">Template details</h4>
-          <p className="text-muted-foreground text-sm">
-            Add a name and description so you can find your template later. Name
-            and description are not used to generate your minute, any structure
-            and style instructions should be added to the template content
-            field.
-          </p>
-        </div>
-        <div>
-          <Label htmlFor="name">Template Name</Label>
-          <Input
-            {...form.register('name', {
-              required: { value: true, message: 'Name required' },
-            })}
-            className="mt-2"
-            placeholder="Name your template"
-          />
-        </div>
-        <div>
-          <Label htmlFor="name">Description</Label>
-          <Textarea
-            {...form.register('description', {
-              required: { value: true, message: 'Description required' },
-            })}
-            className="mt-2"
-            placeholder="A description to help identify the template."
-          />
-        </div>
+      <div className="text-red-600">
+        <p className="govuk-body">
+          {form.formState.errors.questions?.root?.message
+            ? form.formState.errors.questions?.root?.message
+            : null}
+        </p>
+        <p className="govuk-body">
+          {form.formState.errors.name?.message
+            ? form.formState.errors.name?.message
+            : null}
+        </p>
+        <p className="govuk-body">
+          {form.formState.errors.description?.message
+            ? form.formState.errors.description?.message
+            : null}
+        </p>
       </div>
-      <div className="flex flex-col gap-4 rounded-lg border p-4">
-        <div className="mb-4">
-          <h4 className="font-semibold">Template content</h4>
-          <p className="text-muted-foreground text-sm">
-            Add questions that you would like to be answered based on the
-            transcript, for each question you can provide a description of how
-            to answer that question including any style guidance specific to
-            that question. Use the &ldquo;Style guide&rdquo; to provide style
-            guidance that will apply every question.
-          </p>
+      <h2 className="govuk-heading-l">Template details</h2>
+      <p className="govuk-body">
+        Add a name and description so you can find your template later. Name
+        and description are not used to generate your minute, any structure
+        and style instructions should be added to the template content
+        field.
+      </p>
+      <div className="govuk-form-group">
+        <label className="govuk-label govuk-label--m" htmlFor="name">
+          Template name
+        </label>
+        <input className="govuk-input" id="name" type="text" {...form.register('name')} />
+      </div>
+      <div className="govuk-form-group">
+        <label className="govuk-label govuk-label--m" htmlFor="description">
+          Description
+        </label>
+        <div id="description-hint" className="govuk-hint">
+          A description to help identify the template.
         </div>
-        <div>
-          <Label>Style guide</Label>
-          <Textarea
-            {...form.register('content')}
-            className="mt-2"
-            placeholder="Enter any guidance that should be followed throughout the whole form."
-          />
+        <textarea
+          className="govuk-textarea"
+          id="description"
+          {...form.register('description', {
+            required: { value: true, message: 'Description required' },
+          })}
+          aria-describedby="description-hint"
+        />
+      </div>
+      <h2 className="govuk-heading-l">Template content</h2>
+      <div className="govuk-form-group">
+        <label className="govuk-label govuk-label--m" htmlFor="content">
+          Style guide
+        </label>
+        <div id="content-hint" className="govuk-hint">
+          the &ldquo;Style guide&rdquo; to provide style
+          guidance that will apply every question.
         </div>
-        <div>
-          <Label className="mb-2">Questions</Label>
+        <textarea
+          className="govuk-textarea"
+          id="content"
+          {...form.register('content')}
+          aria-describedby="content-hint"
+        />
+      </div>
+      <div className="govuk-form-group">
+        <label className="govuk-label govuk-label--m" htmlFor="questions">
+          Questions
+        </label>
+        <div id="questions-hint" className="govuk-hint">
+          Add questions that you would like to be answered based on the
+          transcript, for each question you can provide a description of how
+          to answer that question including any style guidance specific to
+          that question.
+        </div>
+        <ul className="govuk-list">
+
           {fieldArray.fields.map((field, index, array) => (
-            <div
+            <li
               key={field.id}
               className="mb-4 flex gap-1 rounded-md border p-2"
             >
@@ -157,22 +166,23 @@ export const FormTemplateEditor = ({
                   placeholder="(optional) Description of how to answer the question, what information to include, and style guidance."
                 />
               </div>
-            </div>
+            </li>
           ))}
-          <Button
-            type="button"
-            onClick={() =>
-              fieldArray.append({
-                title: '',
-                description: '',
-                position: form.watch('questions')?.length || 0,
-              })
-            }
-          >
-            Add question
-          </Button>
-        </div>
+        </ul>
+        <button
+          type="button"
+          className="govuk-button govuk-button--secondary"
+          onClick={() =>
+            fieldArray.append({
+              title: '',
+              description: '',
+              position: form.watch('questions')?.length || 0,
+            })
+          }
+        >
+          <Plus className="size-4" /> Add question
+        </button>
       </div>
-    </form>
+    </form >
   )
 }

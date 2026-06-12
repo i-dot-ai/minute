@@ -1,10 +1,8 @@
 'use client'
 
 import { TemplateEditorToolbar } from '@/app/templates/components/editor/editor-toolbar'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { ExampleTemplatesDialog } from '@/app/templates/components/example-templates-dialog'
+import { exampleDocumentTemplates } from '@/app/templates/data/example-templates'
 import { TemplateData } from '@/types/templates'
 import Document from '@tiptap/extension-document'
 import HardBreak from '@tiptap/extension-hard-break'
@@ -23,13 +21,15 @@ export const DocumentTemplateEditor = ({
 }) => {
   const form = useFormContext<TemplateData>()
   return (
-    <form
-      onSubmit={form.handleSubmit(onSubmit)}
-    >
+    <form onSubmit={form.handleSubmit(onSubmit)}>
       <div className="govuk-button-group">
         <button type="submit" className="govuk-button">
           <Save className="size-4" /> Save
         </button>
+        <ExampleTemplatesDialog
+          examples={exampleDocumentTemplates}
+          onSelectTemplate={(template) => form.reset(template)}
+        />
         {form.formState.isSubmitting && (
           <p className="govuk-body">
             <Loader2 className="animate-spin" />
@@ -75,7 +75,14 @@ export const DocumentTemplateEditor = ({
         <div id="description-hint" className="govuk-hint">
           A description to help identify the template.
         </div>
-        <textarea className="govuk-textarea" id="description" {...form.register('description', { required: { value: true, message: 'Description required' } })} aria-describedby="description-hint" />
+        <textarea
+          className="govuk-textarea"
+          id="description"
+          {...form.register('description', {
+            required: { value: true, message: 'Description required' },
+          })}
+          aria-describedby="description-hint"
+        />
       </div>
       <div className="govuk-form-group">
         <label className="govuk-label govuk-label--m" htmlFor="content">
@@ -97,7 +104,7 @@ export const DocumentTemplateEditor = ({
           )}
         />
       </div>
-    </form >
+    </form>
   )
 }
 

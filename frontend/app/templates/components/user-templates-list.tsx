@@ -7,24 +7,10 @@ import {
 } from '@/app/templates/data/example-templates'
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+
 import { TemplateResponse } from '@/lib/client'
 import {
   deleteUserTemplateUserTemplatesTemplateIdDeleteMutation,
@@ -35,17 +21,12 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   CopyPlus,
-  Edit,
-  FileSpreadsheet,
-  FileType,
   FileWarning,
   Loader2,
   Plus,
-  Trash2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Http2ServerRequest } from 'node:http2'
 import posthog from 'posthog-js'
 import { useMemo } from 'react'
 
@@ -86,7 +67,7 @@ export const UserTemplatesList = () => {
         Document templates
       </h2>
       <p className="govuk-body">
-        Customise the style of your minutes.
+        Customise the structure and style of your minutes.
       </p>
       <div className="govuk-button-group">
         <Link className="govuk-button" role="button" href="/templates/new?type=document">

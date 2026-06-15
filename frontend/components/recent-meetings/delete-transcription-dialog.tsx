@@ -74,6 +74,14 @@ export const DeleteTranscriptionDialog = ({
         <div className="govuk-button-group">
           <button
             type="button"
+            className="govuk-button govuk-button--secondary"
+            disabled={isPending}
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
             className="govuk-button govuk-button--warning"
             disabled={isPending}
             onClick={() =>
@@ -89,14 +97,6 @@ export const DeleteTranscriptionDialog = ({
             ) : (
               'Delete transcription'
             )}
-          </button>
-          <button
-            type="button"
-            className="govuk-button govuk-button--secondary"
-            disabled={isPending}
-            onClick={() => setOpen(false)}
-          >
-            Cancel
           </button>
         </div>
       </DialogContent>

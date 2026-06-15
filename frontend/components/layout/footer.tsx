@@ -46,23 +46,23 @@ export const Footer = () => (
           </p>
         </div>
         <nav aria-label="Footer navigation" className="grid grid-cols-12 gap-4 mt-4">
-          <h2 className="col-span-3 row-start-1">Navigation</h2>
-          <ul className="col-span-3 row-start-2">
+          <h2 className="col-span-4 md:col-span-3 row-start-1">Navigation</h2>
+          <ul className="col-span-4 md:col-span-3 row-start-2">
             <li><Link className="govuk-link" href="/">Home</Link></li>
             <li><Link className="govuk-link" href="/new">New transcription</Link></li>
             <li><Link className="govuk-link" href="/transcriptions">Saved transcriptions</Link></li>
             <li><Link className="govuk-link" href="/templates">Templates</Link></li>
             <li><Link className="govuk-link" href="/settings">Settings</Link></li>
           </ul>
-          <h2 className="mt-4 md:mt-0 col-span-3 row-start-1">Links</h2>
-          <ul className="col-span-3 row-start-2">
+          <h2 className="mt-4 md:mt-0 col-span-4 md:col-span-3 row-start-1">Links</h2>
+          <ul className="col-span-4 md:col-span-3 row-start-2">
             <li><Link className="govuk-link" href="/privacy">Privacy</Link></li>
             <li><Link className="govuk-link" href="/support">Support</Link></li>
           </ul>
-          <h2 className="mt-4 md:mt-0 col-span-3 lg:col-span-2 row-start-1">Connect</h2>
-          <ul className="col-span-6 row-start-2">
+          <h2 className="mt-4 md:mt-0 col-span-4 md:col-span-3 lg:col-span-2 row-start-1">Connect</h2>
+          <ul className="col-span-4 md:col-span-6 row-start-2">
             <li>
-              <a className="govuk-link" href="mailto:i-dot-ai-enquiries@cabinetoffice.gov.uk">Email i-dot-ai-enquiries@cabinetoffice.gov.uk</a>
+              <a className="govuk-link break-words" href="mailto:minute-support@cabinetoffice.gov.uk">Email minute-support@cabinetoffice.gov.uk</a>
             </li>
             <li><a className="govuk-link" href="https://www.linkedin.com/company/i-dot-ai/posts/?feedView=all">LinkedIn</a></li>
             <li><a className="govuk-link" href="https://github.com/i-dot-ai">Github</a></li>

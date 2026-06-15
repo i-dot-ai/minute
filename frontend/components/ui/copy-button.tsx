@@ -6,9 +6,10 @@ interface CopyButtonProps {
   textToCopy: string
   posthogEvent: string
   disabled?: boolean
+  documentType?: 'transcript' | 'summary'
 }
 
-function CopyButton({ textToCopy, posthogEvent, disabled }: CopyButtonProps) {
+function CopyButton({ textToCopy, posthogEvent, disabled, documentType = 'transcript' }: CopyButtonProps) {
   const [isCopied, setIsCopied] = useState(false)
 
   const stripHtmlTags = (html: string) => {
@@ -50,7 +51,7 @@ function CopyButton({ textToCopy, posthogEvent, disabled }: CopyButtonProps) {
         disabled={disabled}
       >
         <Copy className="size-4" />
-        Copy
+        Copy {documentType}
       </button>
       {isCopied && <p className="govuk-tag govuk-tag--green">Copied</p>}
     </>

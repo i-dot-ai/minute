@@ -96,7 +96,7 @@ export const SpeakerEditor = ({
           You can edit speaker names here or on the transcript. Click on the
           speaker&apos;s name to edit
         </p>
-        <div>
+        <div className="max-h-[50vh] overflow-y-auto overflow-x-hidden">
           <ul>
 
             {Array.from(speakers.entries()).map(([speaker, speakerEntries], index) => (

@@ -165,6 +165,7 @@ export function MinuteTab({
                   disabled={editState ? editState.isEditable : false}
                   textToCopy={exportState.contentToCopy}
                   posthogEvent="editor_content_copied"
+                  documentType="summary"
                 />
               </div>
             </>

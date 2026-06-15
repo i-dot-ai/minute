@@ -69,45 +69,6 @@ export function MinuteTab({
     <>
       <div className="govuk-grid-row">
         <div className="side-panel__sticky-container govuk-grid-column-one-third">
-          {editState && editState.hasCitations && (
-            <button
-              className="govuk-button govuk-button--secondary"
-              onClick={editState.toggleHideCitations}
-              disabled={editState.isEditable}
-            >
-              {editState.hideCitations ? <Eye className="size-4" /> : <EyeOffIcon className="size-4" />}
-              {editState.hideCitations ? 'Show references' : 'Hide references'}
-            </button>
-          )}
-          <h2 className="govuk-heading-m">Summaries</h2>
-          <div className="govuk-form-group govuk-!-margin-bottom-2">
-            <label className="govuk-label" htmlFor="summary-history">
-              Choose a summary
-            </label>
-            <select
-              className="govuk-select"
-              id="summary-history"
-              name="summary-history"
-              disabled={editState ? editState.isEditable : false}
-              onChange={(e) => setSelectedMinute(Number(e.target.value))}
-              value={selectedMinute}
-            >
-              {minutes.map((minute, index) => {
-                const date = new Date(minute.updated_datetime).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit', hour: 'numeric', minute: 'numeric' })
-                return (
-                  <option value={`${index}`} key={minute.id}>
-                    {minute.template_name} - {date}
-                  </option>
-                )
-              })}
-            </select>
-          </div>
-          <NewMinuteDialog
-            disabled={editState ? editState.isEditable : false}
-            transcriptionId={transcription.id!}
-            agenda={minutes[selectedMinute]?.agenda ?? undefined}
-          />
-
           {editState && (
             <>
               <div className="side-panel__section-divider" />
@@ -148,6 +109,44 @@ export function MinuteTab({
               )}
             </>
           )}
+          {editState && editState.hasCitations && (
+            <button
+              className="govuk-button govuk-button--secondary"
+              onClick={editState.toggleHideCitations}
+              disabled={editState.isEditable}
+            >
+              {editState.hideCitations ? <Eye className="size-4" /> : <EyeOffIcon className="size-4" />}
+              {editState.hideCitations ? 'Show references' : 'Hide references'}
+            </button>
+          )}
+          <h2 className="govuk-heading-m">Summaries</h2>
+          <div className="govuk-form-group govuk-!-margin-bottom-2">
+            <label className="govuk-label" htmlFor="summary-history">
+              Choose a summary
+            </label>
+            <select
+              className="govuk-select"
+              id="summary-history"
+              name="summary-history"
+              disabled={editState ? editState.isEditable : false}
+              onChange={(e) => setSelectedMinute(Number(e.target.value))}
+              value={selectedMinute}
+            >
+              {minutes.map((minute, index) => {
+                const date = new Date(minute.updated_datetime).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit', hour: 'numeric', minute: 'numeric' })
+                return (
+                  <option value={`${index}`} key={minute.id}>
+                    {minute.template_name} - {date}
+                  </option>
+                )
+              })}
+            </select>
+          </div>
+          <NewMinuteDialog
+            disabled={editState ? editState.isEditable : false}
+            transcriptionId={transcription.id!}
+            agenda={minutes[selectedMinute]?.agenda ?? undefined}
+          />
           {exportState && (
             <>
               <div className="side-panel__section-divider" />

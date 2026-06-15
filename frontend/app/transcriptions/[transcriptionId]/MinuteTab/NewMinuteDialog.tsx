@@ -1,7 +1,6 @@
 'use client'
 
 import { TemplateSelect } from '@/components/template-select/template-select'
-import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -11,7 +10,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
@@ -103,51 +101,54 @@ export function NewMinuteDialog({
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-auto lg:min-w-3xl">
         <DialogHeader>
-          <DialogTitle className="text-3xl font-bold">
+          <DialogTitle className="govuk-heading-l">
             Generate a new summary
           </DialogTitle>
-          <DialogDescription className="text-muted-foreground mt-1 mb-4 text-sm">
+          <DialogDescription className="govuk-body">
             Choose a template style for your meeting summary
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <TemplateSelect value={field.value} onChange={field.onChange} />
           {selectedTemplate && selectedTemplate.agenda_usage != 'not_used' && (
-            <div className="mb-4 rounded">
-              <h3 className="text-semibold m">
-                Agenda (
-                {selectedTemplate.agenda_usage == 'optional'
-                  ? 'optional'
-                  : 'required'}
-                ):
-              </h3>
-              <p className="text-muted-foreground text-sm">
-                Add discussion points from the meeting that should be included
-                in the summary.
-              </p>
-              <Textarea
-                className="bg-white"
-                placeholder={`Agenda item 1
-Agenda item 2
-Agenda item 3
-...`}
-                {...form.register('agenda', {
-                  required: selectedTemplate.agenda_usage == 'required',
-                })}
-              />
+            <div>
+              <div className="govuk-form-group">
+                <h3 className="govuk-label-wrapper">
+                  <label className="govuk-label govuk-label--m" htmlFor="agenda">
+                    Agenda (
+                    {selectedTemplate.agenda_usage == 'optional'
+                      ? 'optional'
+                      : 'required'}
+                    ):
+                  </label>
+                </h3>
+                <div id="agenda-hint" className="govuk-hint">
+                  Add discussion points from the meeting that should be included in
+                  the summary.
+                </div>
+                <textarea
+                  className="govuk-textarea"
+                  id="agenda"
+                  rows={5}
+                  aria-describedby="agenda-hint"
+                  {...form.register('agenda', {
+                    required: selectedTemplate.agenda_usage == 'required',
+                  })}
+                />
+              </div>
             </div>
           )}
           <DialogFooter>
-            <Button
-              variant="secondary"
+            <button
+              className="govuk-button govuk-button--secondary"
               type="button"
               onClick={() => setOpen(false)}
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
+              className="govuk-button"
               type="submit"
-              className="bg-blue-500 hover:bg-blue-800 active:bg-yellow-400"
               disabled={
                 !selectedTemplate ||
                 (selectedTemplate.agenda_usage == 'required' &&
@@ -155,7 +156,7 @@ Agenda item 3
               }
             >
               Generate minute
-            </Button>
+            </button>
           </DialogFooter>
         </form>
       </DialogContent>

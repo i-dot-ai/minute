@@ -1,3 +1,6 @@
+import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
+import { RenameTranscriptionButton } from '@/components/recent-meetings/rename-transcription-button'
+import { getTranscriptionDisplayTitle } from '@/components/recent-meetings/rename-transcription-dialog'
 import { TranscriptionMetadata } from '@/lib/client'
 import Link from 'next/link'
 
@@ -30,27 +33,33 @@ export function TranscriptionsList({
                   href={`/transcriptions/${transcription.id}`}
                   className="govuk-link"
                 >
-                  {transcription.title ||
-                    (['awaiting_start', 'in_progress'].includes(
-                      transcription.status
-                    )
-                      ? 'Generating title'
-                      : 'No title')}
+                  {getTranscriptionDisplayTitle(
+                    transcription.title,
+                    transcription.status
+                  )}
                 </Link>
               </h3>
               <p className="govuk-body-s govuk-!-margin-bottom-0">{date}</p>
             </div>
-            {transcription.status === 'failed' && (
-              <strong className="govuk-tag govuk-tag--red">Failed</strong>
-            )}
-            {transcription.status === 'awaiting_start' && (
-              <strong className="govuk-tag govuk-tag--grey">
-                Awaiting start
-              </strong>
-            )}
-            {transcription.status === 'in_progress' && (
-              <strong className="govuk-tag govuk-tag--grey">In progress</strong>
-            )}
+            <div className="govuk-button-group">
+              <RenameTranscriptionButton
+                transcription={transcription}
+                className="govuk-button govuk-button--secondary"
+              />
+              <DeleteTranscriptionButton transcription={transcription} />
+
+              {transcription.status === 'failed' && (
+                <strong className="govuk-tag govuk-tag--red">Failed</strong>
+              )}
+              {transcription.status === 'awaiting_start' && (
+                <strong className="govuk-tag govuk-tag--grey">
+                  Awaiting start
+                </strong>
+              )}
+              {transcription.status === 'in_progress' && (
+                <strong className="govuk-tag govuk-tag--grey">In progress</strong>
+              )}
+            </div>
           </li>
         )
       })}

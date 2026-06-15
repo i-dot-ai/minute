@@ -10,7 +10,7 @@ export const ServiceNavigation = () => {
         <div className="govuk-service-navigation__container">
           <span className={`govuk-service-navigation__service-name ${pathname === '/' ? 'govuk-!-margin-right-3' : ''}`}>
             <Link href="/" className={`govuk-service-navigation__link ${pathname === '/' ? 'govuk-!-padding-right-3' : ''}`}>
-              Minute
+              Home
             </Link>
           </span>
           <nav aria-label="Menu" className="govuk-service-navigation__wrapper">

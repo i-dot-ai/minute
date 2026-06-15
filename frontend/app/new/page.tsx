@@ -15,26 +15,58 @@ export default function NewTranscriptPage() {
           <h1 className="govuk-heading-xl">
             Start a new transcription
           </h1>
-          <ul className="govuk-list" data-onboarding="new-transcription-page">
-            <li className="homepage__list-item govuk-!-padding-top-2">
-              <Link href="/new/upload" draggable="false" className="govuk-link govuk-!-font-weight-bold">
+          <p className="govuk-body-l">
+            There are three ways to start a new transcription:
+          </p>
+        </div>
+      </div>
+      <div className="govuk-grid-row" data-onboarding="new-transcription-page">
+        <div className="govuk-grid-column-one-third govuk-!-margin-bottom-4">
+          <div className="govuk-!-padding-4 bg-[#d2e2f1]">
+            <h2 className="govuk-heading-l">
+              Upload a file from your computer
+            </h2>
+            <div className="govuk-button-group">
+              <Link href="/new/upload" draggable role="button" className="govuk-button govuk-button--start govuk-button--inverse govuk-!-margin-top-3">
                 Upload a file
+                <svg className="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false">
+                  <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
+                </svg>
               </Link>
-              <p className="govuk-body govuk-!-margin-top-2">Upload a file from your computer.</p>
-            </li>
-            <li className="homepage__list-item govuk-!-padding-top-2">
-              <Link href="/new/record-virtual" draggable="false" className="govuk-link govuk-!-font-weight-bold">
-                Record a virtual meeting
+            </div>
+          </div>
+        </div>
+        <div className="govuk-grid-column-one-third govuk-!-margin-bottom-4">
+          <div className="govuk-!-padding-4 bg-[#d2e2f1]">
+            <h2 className="govuk-heading-l">
+              Record a virtual meeting
+            </h2>
+            <div className="govuk-button-group">
+              <Link href="/new/record-virtual" role="button" className="govuk-button govuk-button--start govuk-button--inverse govuk-!-margin-top-3">
+                Record a tab
+                <svg className="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false">
+                  <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
+                </svg>
               </Link>
-              <p className="govuk-body govuk-!-margin-top-2">Capture audio from a virtual meeting in another tab.</p>
-            </li>
-            <li className="homepage__list-item govuk-!-padding-top-2">
-              <Link href="/new/record-audio" draggable="false" className="govuk-link govuk-!-font-weight-bold">
+            </div>
+          </div>
+        </div>
+        <div className="govuk-grid-column-one-third govuk-!-margin-bottom-4">
+          <div className="govuk-!-padding-4 bg-[#d2e2f1]">
+            <h2 className="govuk-heading-l">
+              Record audio from your device
+            </h2>
+            {/* <Mic className="w-full h-70 bg-[#D2E2F1] text-white p-20" /> */}
+            {/* <p className="govuk-body govuk-!-margin-top-2">Record audio directly from your device.</p> */}
+            <div className="govuk-button-group">
+              <Link href="/new/record-audio" role="button" className="govuk-button govuk-button--start govuk-button--inverse govuk-!-margin-top-3">
                 Record audio
+                <svg className="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false">
+                  <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
+                </svg>
               </Link>
-              <p className="govuk-body govuk-!-margin-top-2">Record audio directly from your device.</p>
-            </li>
-          </ul>
+            </div>
+          </div>
         </div>
       </div>
     </>

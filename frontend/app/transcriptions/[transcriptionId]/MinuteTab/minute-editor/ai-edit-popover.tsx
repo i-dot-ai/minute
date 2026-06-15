@@ -3,6 +3,8 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { createMinuteVersionMinutesMinuteIdVersionsPostMutation } from '@/lib/client/@tanstack/react-query.gen'
@@ -72,15 +74,19 @@ export const AiEditPopover = ({
         </button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-auto lg:min-w-xl">
-        <h1 className="govuk-heading-l">AI edit</h1>
-        <p className="govuk-body">
+        <DialogTitle className="govuk-heading-l">AI edit</DialogTitle>
+        <DialogDescription className="govuk-body">
           Describe the changes you want to make. You can always revert if you
           don&apos;t like them.
-        </p>
+        </DialogDescription>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="govuk-form-group">
+            <label className="govuk-label" htmlFor="ai-edit-instruction">
+              Edit instruction
+            </label>
             <textarea
               className="govuk-textarea"
+              id="ai-edit-instruction"
               rows={5}
               placeholder="e.g. Make the tone more formal and shorten the eligibility section"
               {...form.register('instruction')}

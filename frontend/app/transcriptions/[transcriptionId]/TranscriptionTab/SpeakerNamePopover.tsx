@@ -4,6 +4,8 @@ import { DialogueEntryForm } from '@/app/transcriptions/[transcriptionId]/Transc
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { PenIcon } from 'lucide-react'
@@ -70,15 +72,15 @@ export const SpeakerNamePopover = ({
         </button>
       </DialogTrigger>
       <DialogContent>
-        <h1 className="govuk-heading-m">Edit speaker name</h1>
+        <DialogTitle className="govuk-heading-m">Edit speaker name</DialogTitle>
         <div className="govuk-form-group">
           <label className="govuk-label" htmlFor={inputId}>
             Speaker name
           </label>
-          <div id={hintId} className="govuk-hint">
+          <DialogDescription id={hintId} className="govuk-hint">
             Update either this occurrence or all occurrences of &apos;
             {entry.speaker}&apos;
-          </div>
+          </DialogDescription>
           <input
             className="govuk-input"
             value={newName}

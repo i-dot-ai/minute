@@ -5,6 +5,8 @@ import { formatTime } from '@/components/audio/audio-player'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
@@ -91,11 +93,11 @@ export const SpeakerEditor = ({
         </button>
       </DialogTrigger>
       <DialogContent>
-        <h1 className="govuk-heading-m">Edit speaker names</h1>
-        <p className="govuk-body">
+        <DialogTitle className="govuk-heading-m">Edit speaker names</DialogTitle>
+        <DialogDescription className="govuk-body">
           You can edit speaker names here or on the transcript. Click on the
           speaker&apos;s name to edit
-        </p>
+        </DialogDescription>
         <div className="max-h-[50vh] overflow-y-auto overflow-x-hidden">
           <ul>
 

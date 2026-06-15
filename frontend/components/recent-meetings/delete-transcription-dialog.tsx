@@ -1,6 +1,11 @@
 'use client'
 
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { JobStatus } from '@/lib/client'
 import {
   deleteTranscriptionTranscriptionsTranscriptionIdDeleteMutation,
@@ -55,12 +60,12 @@ export const DeleteTranscriptionDialog = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
-        <h1 className="govuk-heading-l">
+        <DialogTitle className="govuk-heading-l">
           Are you sure you want to delete this transcription?
-        </h1>
-        <p className="govuk-body">
+        </DialogTitle>
+        <DialogDescription className="govuk-body">
           This will permanently delete the transcription and cannot be undone.
-        </p>
+        </DialogDescription>
         <p className="govuk-body govuk-!-font-weight-bold">{title}</p>
         <p className="govuk-body-s">
           {date.toLocaleDateString('en-GB', {

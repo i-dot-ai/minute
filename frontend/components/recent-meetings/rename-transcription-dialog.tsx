@@ -1,6 +1,10 @@
 'use client'
 
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { JobStatus } from '@/lib/client'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
@@ -80,7 +84,7 @@ export const RenameTranscriptionDialog = ({
             })
           })}
         >
-          <h1 className="govuk-heading-l">Rename transcription</h1>
+          <DialogTitle className="govuk-heading-l">Rename transcription</DialogTitle>
           <div className="govuk-form-group">
             <label className="govuk-label" htmlFor="transcription-title">
               Title

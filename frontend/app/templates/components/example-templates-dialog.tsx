@@ -3,6 +3,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { TemplateData } from '@/types/templates'
@@ -36,7 +37,9 @@ export function ExampleTemplatesDialog({
         </button>
       </DialogTrigger>
       <DialogContent>
-        <h1 className="govuk-heading-l">Choose an example template</h1>
+        <DialogTitle className="govuk-heading-l">
+          Choose an example template
+        </DialogTitle>
         <ul className="govuk-list">
           {examples.map((template, index) => (
             <li key={index} className="transcriptions__list-item flex items-center justify-between govuk-!-padding-top-3" >
@@ -46,6 +49,7 @@ export function ExampleTemplatesDialog({
               </div>
               <div className="govuk-button-group">
                 <button
+                  type="button"
                   onClick={() => handleSelectExample(template)}
                   className="govuk-button"
                 >
@@ -56,7 +60,13 @@ export function ExampleTemplatesDialog({
           ))}
         </ul>
         <div className="govuk-button-group">
-          <button className="govuk-button govuk-button--secondary" onClick={() => setOpen(false)}>Close</button>
+          <button
+            type="button"
+            className="govuk-button govuk-button--secondary"
+            onClick={() => setOpen(false)}
+          >
+            Close
+          </button>
         </div>
       </DialogContent>
     </Dialog>

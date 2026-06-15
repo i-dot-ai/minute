@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogTitle,
 } from '@/components/ui/dialog'
 import { CitationPopoverState } from '@/hooks/use-citation-popover'
 import { Transcription } from '@/lib/client'
@@ -27,9 +28,9 @@ export function CitationPopoverWrapper({
   return (
     <Dialog open={isPopoverOpen} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[85vh] flex-col gap-4 sm:max-w-2xl">
-        <h1 className="govuk-heading-m govuk-!-margin-bottom-0">
+        <DialogTitle className="govuk-heading-m govuk-!-margin-bottom-0">
           Transcript excerpt
-        </h1>
+        </DialogTitle>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {transcription?.dialogue_entries && (
             <CitationPopoverContent

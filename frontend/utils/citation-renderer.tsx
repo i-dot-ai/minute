@@ -28,7 +28,7 @@ export function CitationContent({
 }: {
   linkChildren: React.ReactNode
   href: string | undefined
-  onCitationClick: (index: number, rect: DOMRect) => void
+  onCitationClick: (index: number) => void
 }) {
   const regex = /^\d+$/
   let match: RegExpExecArray | null
@@ -41,9 +41,8 @@ export function CitationContent({
       <span
         key={`${idx}-${citationNumber}`}
         className="citation-link cursor-pointer text-blue-600 underline"
-        onClick={(e) => {
-          const rect = (e.target as HTMLElement).getBoundingClientRect()
-          onCitationClick(citationNumber, rect)
+        onClick={() => {
+          onCitationClick(citationNumber)
         }}
       >
         {linkChildren}

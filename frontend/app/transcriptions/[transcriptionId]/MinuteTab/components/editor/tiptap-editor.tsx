@@ -101,11 +101,10 @@ function SimpleEditor({
                   const match = domNode.textContent?.match(citationRegex)
                   if (match) {
                     const index = parseInt(match[1], 10)
-                    const rect = domNode.getBoundingClientRect()
                     posthog.capture('citation_clicked', {
                       citationIndex: index,
                     })
-                    handleCitationClick(index, rect)
+                    handleCitationClick(index)
                     return true
                   }
                 }

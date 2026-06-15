@@ -158,6 +158,11 @@ html body[data-scroll-locked] {
   outline-offset: 0;
 }
 
+/* Override service nav product name inverse to be more prominent */
+.govuk-service-navigation--inverse .govuk-service-navigation__service-name .govuk-service-navigation__link {
+  border-right: 1px solid #fff;
+}
+
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));

@@ -4,15 +4,29 @@ import Link from 'next/link'
 export default function TemplatesPage() {
   return (
     <div className="govuk-width-container govuk-main-wrapper">
-      <nav className="govuk-breadcrumbs govuk-!-margin-bottom-6" aria-label="Breadcrumb">
-        <ol className="govuk-breadcrumbs__list">
-          <li className="govuk-breadcrumbs__list-item">
-            <Link className="govuk-breadcrumbs__link" href="/">Home</Link>
-          </li>
-        </ol>
-      </nav>
+
       <div className="govuk-grid-row">
+        <div className="govuk-grid-column-one-third">
+          <h2 className="govuk-caption-m govuk-!-margin-bottom-1 govuk-!-margin-top-0 govuk-!-margin-bottom-3">Contents</h2>
+          <nav>
+            <ul className="govuk-list govuk-list--spaced">
+              <li>
+                <Link className="govuk-link govuk-link--no-underline" href="#document-templates">Document templates</Link>
+              </li>
+              <li>
+                <Link className="govuk-link govuk-link--no-underline" href="#form-templates">Form templates</Link>
+              </li>
+            </ul>
+          </nav>
+        </div>
         <div className="govuk-grid-column-two-thirds">
+          <nav className="govuk-breadcrumbs govuk-!-margin-bottom-6" aria-label="Breadcrumb">
+            <ol className="govuk-breadcrumbs__list">
+              <li className="govuk-breadcrumbs__list-item">
+                <Link className="govuk-breadcrumbs__link" href="/">Home</Link>
+              </li>
+            </ol>
+          </nav>
           <h1 className="govuk-heading-xl">Your templates</h1>
           <p className="govuk-body-l">
             Use templates to customise the structure and style of your minutes.

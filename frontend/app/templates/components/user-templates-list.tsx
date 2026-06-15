@@ -63,7 +63,7 @@ export const UserTemplatesList = () => {
 
   return (
     <>
-      <h2 className="govuk-heading-l govuk-!-margin-bottom-2">
+      <h2 className="govuk-heading-l govuk-!-margin-bottom-2" id="document-templates">
         Document templates
       </h2>
       <p className="govuk-body">
@@ -94,7 +94,7 @@ export const UserTemplatesList = () => {
           </>
         )
       }
-      <h2 className="govuk-heading-l govuk-!-margin-bottom-2">
+      <h2 className="govuk-heading-l govuk-!-margin-bottom-2" id="form-templates">
         Form templates
       </h2>
       <p className="govuk-body">

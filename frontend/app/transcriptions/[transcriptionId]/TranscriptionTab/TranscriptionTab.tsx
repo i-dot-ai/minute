@@ -8,7 +8,7 @@ import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import { DialogueEntry, Transcription } from '@/lib/client'
 import { getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
-import { Play } from 'lucide-react'
+import { PencilIcon, Play, SquarePen } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 
@@ -91,15 +91,16 @@ export function TranscriptionTab({
               src={hasRecordings ? recordings[0].url : undefined}
             />
             <p className="govuk-body-s govuk-!-margin-bottom-1">Renaming speakers updates the meeting summary too.</p>
-            <p className="govuk-body-s govuk-!-margin-bottom-1">Click a name to rename it.</p>
-            <p className="govuk-body-s govuk-!-margin-bottom-1">Click any text box to edit the text.</p>
-            <p className="govuk-body-s govuk-!-margin-bottom-1">Click a timestamp to play from that point.</p>
+            <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><PencilIcon className="size-4" /> Click a name to rename it.</p>
+            <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><SquarePen className="size-4" /> Click any text box to edit the text.</p>
+            <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><Play className="size-4" /> Click a timestamp to play from that point.</p>
             <div className="side-panel__section-divider" />
             <h2 className="govuk-heading-m">Export</h2>
             <div className="govuk-button-group">
               <CopyButton
                 textToCopy={transcriptionString}
                 posthogEvent="transcript_content_copied"
+                documentType="transcript"
               />
               {hasRecordings && <DownloadButton recordings={recordings} />}
             </div>

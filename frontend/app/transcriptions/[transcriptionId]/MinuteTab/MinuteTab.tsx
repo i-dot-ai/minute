@@ -71,7 +71,6 @@ export function MinuteTab({
         <div className="side-panel__sticky-container govuk-grid-column-one-third">
           {editState && (
             <>
-              <div className="side-panel__section-divider" />
               <h2 className="govuk-heading-m">Edit</h2>
               <div className="govuk-form-group govuk-!-margin-bottom-3">
                 <label className="govuk-label" htmlFor="version">
@@ -98,7 +97,7 @@ export function MinuteTab({
                     onSuccess={editState.onSuccess}
                   />
                   <button
-                    className="govuk-button govuk-button--secondary"
+                    className="govuk-button govuk-button--secondary govuk-!-margin-bottom-3"
                     onClick={() => editState.setIsEditable(true)}
                     type="button"
                     disabled={editState.isEditable}

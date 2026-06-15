@@ -90,12 +90,6 @@ export function MinuteTab({
               </div>
               {editState.showEditActions && (
                 <>
-                  <AiEditPopover
-                    disabled={editState.isEditable}
-                    minuteId={editState.minuteId}
-                    minuteVersionId={editState.minuteVersionId}
-                    onSuccess={editState.onSuccess}
-                  />
                   <button
                     className="govuk-button govuk-button--secondary govuk-!-margin-bottom-3"
                     onClick={() => editState.setIsEditable(true)}
@@ -104,6 +98,12 @@ export function MinuteTab({
                   >
                     <PencilIcon className="size-4" /> Edit manually
                   </button>
+                  <AiEditPopover
+                    disabled={editState.isEditable}
+                    minuteId={editState.minuteId}
+                    minuteVersionId={editState.minuteVersionId}
+                    onSuccess={editState.onSuccess}
+                  />
                 </>
               )}
             </>

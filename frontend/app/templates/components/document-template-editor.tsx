@@ -78,6 +78,7 @@ export const DocumentTemplateEditor = ({
         <textarea
           className="govuk-textarea"
           id="description"
+          rows={10}
           {...form.register('description', {
             required: { value: true, message: 'Description required' },
           })}

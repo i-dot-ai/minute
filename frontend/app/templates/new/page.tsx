@@ -29,16 +29,16 @@ function NewTemplateContent() {
     defaultValues: foundExample
       ? foundExample
       : {
-          name: '',
-          description: '',
-          content: '',
-          questions: [],
-          type:
-            templateTypeParam &&
+        name: '',
+        description: '',
+        content: '',
+        questions: [],
+        type:
+          templateTypeParam &&
             ['document', 'form'].includes(templateTypeParam)
-              ? (templateTypeParam as TemplateType)
-              : undefined,
-        },
+            ? (templateTypeParam as TemplateType)
+            : undefined,
+      },
   })
   const navigation = useRouter()
   const { mutateAsync: saveTemplate } = useMutation({
@@ -77,7 +77,7 @@ function NewTemplateContent() {
         </nav>
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-two-thirds">
-            <h1 className="govuk-heading-xl">New template</h1>
+            <h1 className="govuk-heading-xl">New {templateType} template</h1>
             <p className="govuk-body">
               Design your minute template. You can describe a structure and
               provide style guidance. Try an example to get started.

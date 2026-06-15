@@ -93,7 +93,7 @@ export function MinuteTab({
               value={selectedMinute}
             >
               {minutes.map((minute, index) => {
-                const date = new Date(minute.updated_datetime).toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric' })
+                const date = new Date(minute.updated_datetime).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit', hour: 'numeric', minute: 'numeric' })
                 return (
                   <option value={`${index}`} key={minute.id}>
                     {minute.template_name} - {date}
@@ -118,7 +118,7 @@ export function MinuteTab({
                 </label>
                 <select disabled={editState.isEditable} className="govuk-select" id="version" name="version" onChange={(e) => editState.setVersion(Number(e.target.value))} value={editState.version}>
                   {editState.minuteVersions.map((version, index) => {
-                    const date = new Date(version.created_datetime).toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric' })
+                    const date = new Date(version.created_datetime).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit', hour: 'numeric', minute: 'numeric' })
                     const versionNumber = editState.minuteVersions.length - index;
                     return (
                       <option value={`${index}`} key={version.id}>

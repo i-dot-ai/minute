@@ -1,12 +1,8 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { TemplateData } from '@/types/templates'
@@ -39,30 +35,28 @@ export function ExampleTemplatesDialog({
           Try an example
         </button>
       </DialogTrigger>
-      <DialogContent className="max-h-[80vh] min-w-3xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Choose an example template</DialogTitle>
-        </DialogHeader>
-        <div className="grid grid-cols-3 gap-4">
+      <DialogContent>
+        <h1 className="govuk-heading-l">Choose an example template</h1>
+        <ul className="govuk-list">
           {examples.map((template, index) => (
-            <Card key={index} className="p-4">
+            <li key={index} className="transcriptions__list-item flex items-center justify-between govuk-!-padding-top-3" >
               <div>
-                <h3 className="mb-1 text-lg font-semibold">{template.name}</h3>
-                <p className="text-sm text-gray-600">{template.description}</p>
+                <h2 className="govuk-heading-m govuk-!-margin-bottom-1">{template.name}</h2>
+                <p className="govuk-body">{template.description}</p>
               </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
+              <div className="govuk-button-group">
+                <button
                   onClick={() => handleSelectExample(template)}
-                  className="flex items-center gap-1"
+                  className="govuk-button"
                 >
                   Use this template
-                </Button>
+                </button>
               </div>
-            </Card>
+            </li>
           ))}
+        </ul>
+        <div className="govuk-button-group">
+          <button className="govuk-button govuk-button--secondary" onClick={() => setOpen(false)}>Close</button>
         </div>
       </DialogContent>
     </Dialog>

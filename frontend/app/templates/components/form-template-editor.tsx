@@ -2,10 +2,8 @@
 
 import { ExampleTemplatesDialog } from '@/app/templates/components/example-templates-dialog'
 import { exampleFormTemplates } from '@/app/templates/data/example-templates'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { TemplateData } from '@/types/templates'
-import { ArrowDown, ArrowUp, Plus, Save, Trash } from 'lucide-react'
+import { ArrowDown, ArrowUp, Plus, Save } from 'lucide-react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
 
 export const FormTemplateEditor = ({
@@ -77,6 +75,7 @@ export const FormTemplateEditor = ({
         <textarea
           className="govuk-textarea"
           id="description"
+          rows={10}
           {...form.register('description', {
             required: { value: true, message: 'Description required' },
           })}
@@ -95,6 +94,7 @@ export const FormTemplateEditor = ({
         <textarea
           className="govuk-textarea"
           id="content"
+          rows={10}
           {...form.register('content')}
           aria-describedby="content-hint"
         />
@@ -109,62 +109,72 @@ export const FormTemplateEditor = ({
           to answer that question including any style guidance specific to
           that question.
         </div>
-        <ul className="govuk-list">
-
+        <ul className="govuk-list govuk-list--spaced">
           {fieldArray.fields.map((field, index, array) => (
             <li
               key={field.id}
-              className="mb-4 flex gap-1 rounded-md border p-2"
+              className="govuk-summary-card"
             >
-              <div className="flex min-h-full flex-col justify-center gap-1">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  disabled={index == 0}
-                  onClick={() => {
-                    fieldArray.swap(index, index - 1)
-                  }}
-                >
-                  <ArrowUp />
-                </Button>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  disabled={index == array.length - 1}
-                  onClick={() => {
-                    fieldArray.swap(index, index + 1)
-                  }}
-                >
-                  <ArrowDown />
-                </Button>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  onClick={() => {
-                    fieldArray.remove(index)
-                  }}
-                >
-                  <Trash />
-                </Button>
-              </div>
-              <div className="flex-1">
-                <div className="text-muted-foreground mb-2 rounded text-xs">
-                  Question {index + 1}
+              <div>
+                <div className="govuk-summary-card__title-wrapper">
+                  <h3 className="govuk-summary-card__title">
+                    Question {index + 1}
+                  </h3>
+                  <ul className="govuk-summary-card__actions">
+                    <li className="govuk-summary-card__action">
+                      <button
+                        type="button"
+                        disabled={index === 0}
+                        className="govuk-button govuk-button--secondary govuk-!-margin-0"
+                        onClick={() => {
+                          fieldArray.swap(index, index - 1)
+                        }}
+                      >
+                        <ArrowUp className="size-4" /> Move up
+                      </button>
+                    </li>
+                    <li className="govuk-summary-card__action">
+                      <button
+                        type="button"
+                        className="govuk-button govuk-button--secondary govuk-!-margin-0"
+                        disabled={index === array.length - 1}
+                        onClick={() => {
+                          fieldArray.swap(index + 1, index)
+                        }}
+                      >
+                        <ArrowDown className="size-4" /> Move down
+                      </button>
+                    </li>
+                    <li className="govuk-summary-card__action">
+                      <button
+                        type="button"
+                        className="govuk-link link--warning align-sub"
+                        onClick={() => {
+                          fieldArray.remove(index)
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </li>
+                  </ul>
                 </div>
-                <Textarea
-                  {...form.register(`questions.${index}.title`)}
-                  placeholder="Question text"
-                  className="min-h-none mb-2"
-                  rows={1}
-                />
-                <Textarea
-                  {...form.register(`questions.${index}.description`)}
-                  rows={3}
-                  placeholder="(optional) Description of how to answer the question, what information to include, and style guidance."
-                />
+                <div className="govuk-summary-card__content">
+                  <div className="govuk-form-group">
+                    <label className="govuk-label" htmlFor={`questions.${index}.title`}>
+                      Question text
+                    </label>
+                    <input className="govuk-input" id={`questions.${index}.title`} type="text" {...form.register(`questions.${index}.title`)} />
+                  </div>
+                  <div className="govuk-form-group">
+                    <label className="govuk-label" htmlFor={`questions.${index}.description`}>
+                      Question description
+                    </label>
+                    <div id="questions-description-hint" className="govuk-hint">
+                      A description of how to answer the question, what information to include, and style guidance.
+                    </div>
+                    <textarea className="govuk-textarea" id={`questions.${index}.description`} rows={3} {...form.register(`questions.${index}.description`)} aria-describedby="questions-description-hint"></textarea>
+                  </div>
+                </div>
               </div>
             </li>
           ))}
@@ -182,7 +192,7 @@ export const FormTemplateEditor = ({
         >
           <Plus className="size-4" /> Add question
         </button>
-      </div>
+      </div >
     </form >
   )
 }

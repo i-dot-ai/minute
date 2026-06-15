@@ -442,3 +442,21 @@ html body[data-scroll-locked] {
 .editor-content code:not(pre code) {
   color: red;
 }
+
+.joyride-govuk-tooltip {
+  position: relative;
+  max-width: 380px;
+  padding: 20px;
+  background: #fff;
+}
+
+.joyride-govuk-tooltip__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: 0;
+  background: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #0b0c0c;
+}

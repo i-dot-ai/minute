@@ -37,7 +37,7 @@ export default function SettingsPage() {
         </ol>
       </nav>
       <div className="govuk-grid-row">
-        <div className="govuk-grid-column-two-thirds">
+        <div className="govuk-grid-column-two-thirds" data-onboarding="settings-page">
           <h1 className="govuk-heading-xl">Settings</h1>
           <SettingsForm user={user} />
         </div>

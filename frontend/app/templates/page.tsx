@@ -19,7 +19,7 @@ export default function TemplatesPage() {
             </ul>
           </nav>
         </div>
-        <div className="govuk-grid-column-two-thirds">
+        <div className="govuk-grid-column-two-thirds" data-onboarding="templates-page">
           <nav className="govuk-breadcrumbs govuk-!-margin-bottom-6" aria-label="Breadcrumb">
             <ol className="govuk-breadcrumbs__list">
               <li className="govuk-breadcrumbs__list-item">

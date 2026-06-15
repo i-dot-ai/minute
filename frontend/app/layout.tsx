@@ -1,3 +1,4 @@
+import { OnboardingTour } from '@/components/onboarding/onboarding-tour'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { GovukInit } from '@/components/layout/govuk-init'
@@ -31,6 +32,7 @@ export default function RootLayout({
             <LockNavigationProvider>
               <RecordingDbProvider>
                 <Header />
+                <OnboardingTour />
                 <main id="main-content">{children}</main>
                 <Footer />
                 <Toaster />

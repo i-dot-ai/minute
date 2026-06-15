@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { RestartTourButton } from '@/components/onboarding/restart-tour-button'
 import { PosthogBanner } from '@/components/posthog-banner'
 import { RecentOfflineRecordingsSection } from '@/components/recent-meetings/recent-offline-recordings-section'
 import { RecentTranscriptions } from '@/components/recent-meetings/recent-transcriptions'
@@ -42,6 +45,10 @@ export default function Home() {
             </Suspense>
             <Link href="/transcriptions" className="govuk-link govuk-!-font-weight-bold govuk-!-margin-bottom-6">View all transcriptions</Link>
           </div>
+        </div>
+
+        <div className="govuk-!-margin-top-9">
+          <RestartTourButton />
         </div>
       </div>
     </>

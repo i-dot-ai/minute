@@ -63,68 +63,73 @@ export const UserTemplatesList = () => {
 
   return (
     <>
-      <h2 className="govuk-heading-l govuk-!-margin-bottom-2" id="document-templates">
-        Document templates
-      </h2>
-      <p className="govuk-body">
-        Customise the structure and style of your minutes.
-      </p>
-      <div className="govuk-button-group">
-        <Link className="govuk-button" role="button" href="/templates/new?type=document">
-          <Plus className="size-4" /> Create a new document template
-        </Link>
-        <ExampleTemplatesDialog
-          onSelectTemplate={(example) => {
-            router.push(`/templates/new?example=${example.name}`)
-          }}
-          examples={exampleDocumentTemplates}
-        />
+      <div data-onboarding="document-templates">
+
+        <h2 className="govuk-heading-l govuk-!-margin-bottom-2" id="document-templates">
+          Document templates
+        </h2>
+        <p className="govuk-body">
+          Customise the structure and style of your minutes.
+        </p>
+        <div className="govuk-button-group">
+          <Link className="govuk-button" role="button" href="/templates/new?type=document">
+            <Plus className="size-4" /> Create a new document template
+          </Link>
+          <ExampleTemplatesDialog
+            onSelectTemplate={(example) => {
+              router.push(`/templates/new?example=${example.name}`)
+            }}
+            examples={exampleDocumentTemplates}
+          />
+        </div>
+        {
+          documentTemplates.length > 0 && (
+            <>
+              <h3 className="govuk-heading-m govuk-!-margin-bottom-2">
+                Your document templates
+              </h3>
+              <ul className="govuk-list">
+                {documentTemplates.map((template) => (
+                  <TemplateListItem template={template} key={template.id} />
+                ))}
+              </ul>
+            </>
+          )
+        }
       </div>
-      {
-        documentTemplates.length > 0 && (
-          <>
-            <h3 className="govuk-heading-m govuk-!-margin-bottom-2">
-              Your document templates
-            </h3>
-            <ul className="govuk-list">
-              {documentTemplates.map((template) => (
-                <TemplateListItem template={template} key={template.id} />
-              ))}
-            </ul>
-          </>
-        )
-      }
-      <h2 className="govuk-heading-l govuk-!-margin-bottom-2" id="form-templates">
-        Form templates
-      </h2>
-      <p className="govuk-body">
-        For complex summarisation of meetings into many questions and answers.
-      </p>
-      <div className="govuk-button-group">
-        <Link href="/templates/new?type=form" className="govuk-button" role="button">
-          <Plus className="size-4" /> Create a new form template
-        </Link>
-        <ExampleTemplatesDialog
-          onSelectTemplate={(example) => {
-            router.push(`/templates/new?example=${example.name}`)
-          }}
-          examples={exampleFormTemplates}
-        />
+      <div data-onboarding="form-templates">
+        <h2 className="govuk-heading-l govuk-!-margin-bottom-2" id="form-templates">
+          Form templates
+        </h2>
+        <p className="govuk-body">
+          For complex summarisation of meetings into many questions and answers.
+        </p>
+        <div className="govuk-button-group">
+          <Link href="/templates/new?type=form" className="govuk-button" role="button">
+            <Plus className="size-4" /> Create a new form template
+          </Link>
+          <ExampleTemplatesDialog
+            onSelectTemplate={(example) => {
+              router.push(`/templates/new?example=${example.name}`)
+            }}
+            examples={exampleFormTemplates}
+          />
+        </div>
+        {
+          formTemplates.length > 0 && (
+            <>
+              <h3 className="govuk-heading-m govuk-!-margin-bottom-2">
+                Your form templates
+              </h3>
+              <ul className="govuk-list">
+                {formTemplates.map((template) => (
+                  <TemplateListItem template={template} key={template.id} />
+                ))}
+              </ul>
+            </>
+          )
+        }
       </div>
-      {
-        formTemplates.length > 0 && (
-          <>
-            <h3 className="govuk-heading-m govuk-!-margin-bottom-2">
-              Your form templates
-            </h3>
-            <ul className="govuk-list">
-              {formTemplates.map((template) => (
-                <TemplateListItem template={template} key={template.id} />
-              ))}
-            </ul>
-          </>
-        )
-      }
     </>
   )
 }

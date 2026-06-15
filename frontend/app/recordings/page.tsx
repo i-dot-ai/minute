@@ -14,7 +14,7 @@ export default function RecordingsPage() {
           </ol>
         </nav>
         <div className="govuk-grid-row">
-          <div className="govuk-grid-column-two-thirds-from-desktop">
+          <div className="govuk-grid-column-two-thirds-from-desktop" data-onboarding="offline-recordings-page">
             <h1 className="govuk-heading-xl">
               Offline recordings
             </h1>

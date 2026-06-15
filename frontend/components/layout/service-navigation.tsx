@@ -19,27 +19,47 @@ export const ServiceNavigation = () => {
             </button>
             <ul className="govuk-service-navigation__list" id="navigation">
               <li className={`govuk-service-navigation__item ${pathname.includes('/new') ? 'govuk-service-navigation__item--active' : ''}`}>
-                <Link className="govuk-service-navigation__link" href="/new">
+                <Link
+                  className="govuk-service-navigation__link"
+                  href="/new"
+                  data-onboarding="new-transcription-nav"
+                >
                   New transcription
                 </Link>
               </li>
               <li className={`govuk-service-navigation__item ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__item--active' : ''}`}>
-                <Link className="govuk-service-navigation__link" href="/transcriptions">
+                <Link
+                  className="govuk-service-navigation__link"
+                  href="/transcriptions"
+                  data-onboarding="saved-transcriptions-nav"
+                >
                   Saved transcriptions
                 </Link>
               </li>
               <li className={`govuk-service-navigation__item ${pathname.includes('/templates') ? 'govuk-service-navigation__item--active' : ''}`}>
-                <Link className="govuk-service-navigation__link" href="/templates">
+                <Link
+                  className="govuk-service-navigation__link"
+                  href="/templates"
+                  data-onboarding="templates-nav"
+                >
                   Templates
                 </Link>
               </li>
               <li className={`govuk-service-navigation__item ${pathname.includes('/recordings') ? 'govuk-service-navigation__item--active' : ''}`}>
-                <Link className="govuk-service-navigation__link" href="/recordings">
+                <Link
+                  className="govuk-service-navigation__link"
+                  href="/recordings"
+                  data-onboarding="offline-recordings-nav"
+                >
                   Offline recordings
                 </Link>
               </li>
               <li className={`govuk-service-navigation__item ${pathname.includes('/settings') ? 'govuk-service-navigation__item--active' : ''}`}>
-                <Link className="govuk-service-navigation__link" href="/settings">
+                <Link
+                  className="govuk-service-navigation__link"
+                  href="/settings"
+                  data-onboarding="settings-nav"
+                >
                   Settings
                 </Link>
               </li>

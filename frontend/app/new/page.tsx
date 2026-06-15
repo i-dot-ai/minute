@@ -12,8 +12,10 @@ export default function NewTranscriptPage() {
       </nav>
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-two-thirds">
-          <h1 className="govuk-heading-xl">Start a new transcription</h1>
-          <ul className="govuk-list">
+          <h1 className="govuk-heading-xl">
+            Start a new transcription
+          </h1>
+          <ul className="govuk-list" data-onboarding="new-transcription-page">
             <li className="homepage__list-item govuk-!-padding-top-2">
               <Link href="/new/upload" draggable="false" className="govuk-link govuk-!-font-weight-bold">
                 Upload a file

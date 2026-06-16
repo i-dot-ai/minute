@@ -60,7 +60,7 @@ export const onboardingSteps: Step[] = [
   {
     target: '[data-onboarding="saved-transcriptions-page"]',
     content: 'All your saved transcriptions will be listed here. From this page you can view, edit, delete and generate new summaries.',
-    placement: 'top',
+    placement: 'right',
   },
   {
     target: '[data-onboarding="templates-nav"]',
@@ -94,7 +94,7 @@ export const onboardingSteps: Step[] = [
   {
     target: '[data-onboarding="offline-recordings-page"]',
     content: 'If you begin a recording and stop the process before it is complete, the recording will be stored here as a backup. You can upload or delete it to store it securely in the cloud.',
-    placement: 'top',
+    placement: 'right',
   },
   {
     target: '[data-onboarding="settings-nav"]',
@@ -106,7 +106,7 @@ export const onboardingSteps: Step[] = [
   {
     target: '[data-onboarding="settings-page"]',
     content: 'You can set your data retention period here. After this period the transcriptions, minutes and audio recording will be permentantly deleted.',
-    placement: 'top',
+    placement: 'right',
   },
 ]
 

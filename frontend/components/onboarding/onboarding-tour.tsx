@@ -25,12 +25,12 @@ const NAV_STEP_ADVANCES: Record<string, number> = {
 
 function getInitialRun() {
   if (typeof window === 'undefined') return false
-  return sessionStorage.getItem(ONBOARDING_STORAGE_KEY) !== 'done'
+  return localStorage.getItem(ONBOARDING_STORAGE_KEY) !== 'done'
 }
 
 function getInitialStepIndex() {
   if (typeof window === 'undefined') return 0
-  const stored = sessionStorage.getItem(ONBOARDING_STORAGE_KEY)
+  const stored = localStorage.getItem(ONBOARDING_STORAGE_KEY)
   if (!stored || stored === 'done') return 0
   const index = Number(stored)
   return Number.isFinite(index) ? index : 0
@@ -43,12 +43,13 @@ export function OnboardingTour() {
   const [stepIndex, setStepIndex] = useState(getInitialStepIndex)
 
   const finishTour = useCallback(() => {
-    sessionStorage.setItem(ONBOARDING_STORAGE_KEY, 'done')
+    localStorage.setItem(ONBOARDING_STORAGE_KEY, 'done')
     setRun(false)
-  }, [])
+    router.push('/')
+  }, [router])
 
   const restartTour = useCallback(() => {
-    sessionStorage.removeItem(ONBOARDING_STORAGE_KEY)
+    localStorage.removeItem(ONBOARDING_STORAGE_KEY)
     setStepIndex(0)
     setRun(false)
     queueMicrotask(() => setRun(true))
@@ -65,7 +66,7 @@ export function OnboardingTour() {
       finishTour()
       return
     }
-    sessionStorage.setItem(ONBOARDING_STORAGE_KEY, String(stepIndex))
+    localStorage.setItem(ONBOARDING_STORAGE_KEY, String(stepIndex))
   }, [finishTour, run, stepIndex])
 
   useEffect(() => {
@@ -85,9 +86,6 @@ export function OnboardingTour() {
         data.status === STATUS.FINISHED
       ) {
         finishTour()
-        if (data.status === STATUS.FINISHED) {
-          router.push('/')
-        }
         return
       }
 
@@ -97,9 +95,6 @@ export function OnboardingTour() {
         const nextIndex = data.index + 1
         if (nextIndex >= onboardingSteps.length) {
           finishTour()
-          if (data.action === ACTIONS.NEXT) {
-            router.push('/')
-          }
         } else {
           setStepIndex(nextIndex)
         }

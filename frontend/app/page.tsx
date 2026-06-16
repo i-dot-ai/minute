@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { RestartTourButton } from '@/components/onboarding/restart-tour-button'
-import { PosthogBanner } from '@/components/posthog-banner'
+// import { PosthogBanner } from '@/components/posthog-banner'
 import { RecentOfflineRecordingsSection } from '@/components/recent-meetings/recent-offline-recordings-section'
 import { RecentTranscriptions } from '@/components/recent-meetings/recent-transcriptions'
 import { Suspense } from 'react'
@@ -35,7 +35,7 @@ export default function Home() {
       <div className="govuk-width-container govuk-main-wrapper">
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-two-thirds">
-            <PosthogBanner />
+            {/* <PosthogBanner /> */}
             <h2 className="govuk-heading-l govuk-!-margin-top-6">Your recent transcriptions</h2>
             <Suspense fallback={null}>
               <RecentOfflineRecordingsSection />

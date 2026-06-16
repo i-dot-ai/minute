@@ -86,7 +86,7 @@ export const onboardingSteps: Step[] = [
   },
   {
     target: '[data-onboarding="offline-recordings-nav"]',
-    content: 'Click "Offline recordings" to see recordings stored in this browser.',
+    content: 'Click "Incomplete recordings" to see recordings stored in this browser.',
     placement: 'bottom',
     blockTargetInteraction: false,
     buttons: ['back', 'close'],

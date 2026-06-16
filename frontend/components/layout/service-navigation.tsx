@@ -51,7 +51,7 @@ export const ServiceNavigation = () => {
                   href="/recordings"
                   data-onboarding="offline-recordings-nav"
                 >
-                  Offline recordings
+                  Incomplete recordings
                 </Link>
               </li>
               <li className={`govuk-service-navigation__item ${pathname.includes('/settings') ? 'govuk-service-navigation__item--active' : ''}`}>

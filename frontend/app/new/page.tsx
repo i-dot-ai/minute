@@ -24,11 +24,11 @@ export default function NewTranscriptPage() {
         <div className="govuk-grid-column-one-third govuk-!-margin-bottom-4">
           <div className="govuk-!-padding-4 bg-[#8eb8dc]">
             <h2 className="govuk-heading-l">
-              Upload a file from your computer
+              Record an in person meeting
             </h2>
             <div className="govuk-button-group">
-              <Link href="/new/upload" draggable role="button" className="govuk-button govuk-button--start govuk-button--inverse govuk-!-margin-top-3">
-                Upload a file
+              <Link href="/new/record-audio" role="button" className="govuk-button govuk-button--start govuk-button--inverse govuk-!-margin-top-3">
+                Record audio
                 <svg className="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false">
                   <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
                 </svg>
@@ -54,13 +54,11 @@ export default function NewTranscriptPage() {
         <div className="govuk-grid-column-one-third govuk-!-margin-bottom-4">
           <div className="govuk-!-padding-4 bg-[#8eb8dc]">
             <h2 className="govuk-heading-l">
-              Record audio from your device
+              Upload a file from your computer
             </h2>
-            {/* <Mic className="w-full h-70 bg-[#8eb8dc] text-white p-20" /> */}
-            {/* <p className="govuk-body govuk-!-margin-top-2">Record audio directly from your device.</p> */}
             <div className="govuk-button-group">
-              <Link href="/new/record-audio" role="button" className="govuk-button govuk-button--start govuk-button--inverse govuk-!-margin-top-3">
-                Record audio
+              <Link href="/new/upload" draggable role="button" className="govuk-button govuk-button--start govuk-button--inverse govuk-!-margin-top-3">
+                Upload a file
                 <svg className="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false">
                   <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
                 </svg>

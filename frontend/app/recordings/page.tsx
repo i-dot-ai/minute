@@ -16,7 +16,7 @@ export default function RecordingsPage() {
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-two-thirds-from-desktop" data-onboarding="offline-recordings-page">
             <h1 className="govuk-heading-xl">
-              Offline recordings
+              Incomplete recordings
             </h1>
             <p className="govuk-body-l">
               These are recording backups which are stored in this browser. We strongly recommend you delete or upload these so they are securely and reliably stored in the cloud.

@@ -10,13 +10,13 @@ export const OfflineRecordings = () => {
   const { data: dbRecordings = [], isLoading } = useOfflineRecordings()
 
   if (isLoading) {
-    return <p className="govuk-body">Loading offline recordings...</p>
+    return <p className="govuk-body">Loading incomplete recordings...</p>
   }
 
   if (dbRecordings.length === 0) {
     return (
       <p className="govuk-body">
-        No offline recordings found. Any recordings that have been made are
+        No incomplete recordings found. Any recordings that have been made are
         either deleted or have been uploaded to the cloud.
       </p>
     )

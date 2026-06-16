@@ -164,7 +164,7 @@ html body[data-scroll-locked] {
 }
 
 @media (min-width: 640px) {
-  .govuk-tabs__list-item--selected {
+  .tabs--blue .govuk-tabs__list-item--selected {
     background: #8eb8dc !important;
   }
 }

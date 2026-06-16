@@ -14,8 +14,8 @@ export function RecentOfflineRecordingsSection() {
 
   return (
     <div className="govuk-inset-text">
-      You have <strong>{dbRecordings.length} offline recordings</strong> stored only in this browser.{' '}
-      <Link className="govuk-notification-banner__link" href="/recordings">View offline recordings</Link> to upload them to the cloud or delete them.
+      You have <strong>{dbRecordings.length} incomplete recordings</strong> stored only in this browser.{' '}
+      <Link className="govuk-notification-banner__link" href="/recordings">View incomplete recordings</Link> to upload them to the cloud or delete them.
     </div>
   )
 }

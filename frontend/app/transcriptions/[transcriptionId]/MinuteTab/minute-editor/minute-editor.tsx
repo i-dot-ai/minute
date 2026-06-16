@@ -243,9 +243,9 @@ export function MinuteEditor({
   }
   if (isGenerating) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2 w-full govuk-!-padding-top-6">
         <Loader2 className="size-4 animate-spin" />
-        <p className="govuk-body govuk-!-margin-bottom-0">
+        <p className="govuk-body">
           Minute generating...</p>
       </div>
     )

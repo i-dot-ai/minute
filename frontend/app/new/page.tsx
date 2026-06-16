@@ -22,7 +22,7 @@ export default function NewTranscriptPage() {
       </div>
       <div className="govuk-grid-row" data-onboarding="new-transcription-page">
         <div className="govuk-grid-column-one-third govuk-!-margin-bottom-4">
-          <div className="govuk-!-padding-4 bg-[#d2e2f1]">
+          <div className="govuk-!-padding-4 bg-[#8eb8dc]">
             <h2 className="govuk-heading-l">
               Upload a file from your computer
             </h2>
@@ -37,7 +37,7 @@ export default function NewTranscriptPage() {
           </div>
         </div>
         <div className="govuk-grid-column-one-third govuk-!-margin-bottom-4">
-          <div className="govuk-!-padding-4 bg-[#d2e2f1]">
+          <div className="govuk-!-padding-4 bg-[#8eb8dc]">
             <h2 className="govuk-heading-l">
               Record a virtual meeting
             </h2>
@@ -52,11 +52,11 @@ export default function NewTranscriptPage() {
           </div>
         </div>
         <div className="govuk-grid-column-one-third govuk-!-margin-bottom-4">
-          <div className="govuk-!-padding-4 bg-[#d2e2f1]">
+          <div className="govuk-!-padding-4 bg-[#8eb8dc]">
             <h2 className="govuk-heading-l">
               Record audio from your device
             </h2>
-            {/* <Mic className="w-full h-70 bg-[#D2E2F1] text-white p-20" /> */}
+            {/* <Mic className="w-full h-70 bg-[#8eb8dc] text-white p-20" /> */}
             {/* <p className="govuk-body govuk-!-margin-top-2">Record audio directly from your device.</p> */}
             <div className="govuk-button-group">
               <Link href="/new/record-audio" role="button" className="govuk-button govuk-button--start govuk-button--inverse govuk-!-margin-top-3">

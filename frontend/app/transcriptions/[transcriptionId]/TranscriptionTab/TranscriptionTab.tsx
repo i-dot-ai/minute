@@ -8,7 +8,7 @@ import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import { DialogueEntry, Transcription } from '@/lib/client'
 import { getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
-import { PencilIcon, Play, SquarePen } from 'lucide-react'
+import { ArrowDown, PencilIcon, Play, SquarePen } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 
@@ -81,33 +81,28 @@ export function TranscriptionTab({
     new Promise((resolve) => setTimeout(resolve, 100)).then(scrollToPlaying)
 
   return (
-    <div className="govuk-grid-row">
-      <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(saveTranscription)}>
-          <div className="side-panel__sticky-container govuk-grid-column-one-third">
-            <h2 className="govuk-heading-m">Speakers</h2>
-            <SpeakerEditor
-              transcription={transcription}
-              src={hasRecordings ? recordings[0].url : undefined}
-            />
-            <p className="govuk-body-s govuk-!-margin-bottom-1">Renaming speakers updates the meeting summary too.</p>
-            <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><PencilIcon className="size-4" /> Click a name to rename it.</p>
-            <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><SquarePen className="size-4" /> Click any text box to edit the text.</p>
-            <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><Play className="size-4" /> Click a timestamp to play from that point.</p>
-            <div className="side-panel__section-divider" />
-            <h2 className="govuk-heading-m">Export</h2>
-            <div className="govuk-button-group">
-              <CopyButton
-                textToCopy={transcriptionString}
-                posthogEvent="transcript_content_copied"
-                documentType="transcript"
-              />
-              {hasRecordings && <DownloadButton recordings={recordings} />}
-            </div>
-          </div>
-          <div className="govuk-grid-column-two-thirds" style={{ borderLeft: '1px solid #b1b4b6' }}>
-            {hasRecordings && (
-              <div className="sticky top-0 bg-white govuk-!-margin-bottom-4 flex gap-2" style={{ borderBottom: '1px solid #b1b4b6' }}>
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(saveTranscription)}>
+        <div className="bg-[#8eb8dc] sticky top-0 z-10 border-b border-(--govuk-border-colour)" style={{ margin: '-30px -20px 0', padding: '30px 20px 10px' }}>
+          <div className="govuk-grid-row">
+            <div className="govuk-grid-column-two-thirds">
+              <div className="govuk-button-group govuk-!-margin-bottom-0">
+                {/* <h2 className="govuk-heading-m">Speakers</h2> */}
+                <SpeakerEditor
+                  transcription={transcription}
+                  src={hasRecordings ? recordings[0].url : undefined}
+                />
+                {/* <h2 className="govuk-heading-m">Export</h2> */}
+                <CopyButton
+                  textToCopy={transcriptionString}
+                  posthogEvent="transcript_content_copied"
+                />
+                {hasRecordings && <DownloadButton recordings={recordings} inverse={true} />}
+                <button onClick={scrollToPlaying} className="govuk-button govuk-button--inverse">
+                  <ArrowDown className="size-4" /> Scroll to current section
+                </button>
+              </div>
+              {hasRecordings && (
                 <audio
                   controls
                   src={recordings[0].url}
@@ -120,11 +115,32 @@ export function TranscriptionTab({
                     }
                   }}
                 />
-                <button onClick={scrollToPlaying} className="govuk-button govuk-button--secondary">
-                  Scroll to current section
-                </button>
+              )}
+            </div>
+            <div className="govuk-grid-column-one-third">
+              <div>
+                <p className="govuk-body-s govuk-!-margin-bottom-1">Renaming speakers updates the meeting summary too.</p>
+                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><PencilIcon className="size-4" /> Click a name to rename it.</p>
+                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><SquarePen className="size-4" /> Click any text box to edit the text.</p>
+                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><Play className="size-4" /> Click a timestamp to play from that point.</p>
               </div>
+            </div>
+          </div>
+          <div className="govuk-grid-row">
+            {hasRecordings && (
+              <>
+                <div className="govuk-grid-column-two-thirds">
+                </div>
+                <div className="govuk-grid-column-one-third">
+                  <div className="govuk-button-group govuk-!-margin-top-2 govuk-!-margin-bottom-0">
+                  </div>
+                </div>
+              </>
             )}
+          </div>
+        </div>
+        <div className="govuk-grid-row">
+          <div className="govuk-grid-column-full">
             <div className="flex flex-col gap-6">
               {fields.map((entry, index, array) => {
                 const isPlaying =
@@ -170,8 +186,8 @@ export function TranscriptionTab({
               })}
             </div>
           </div>
-        </form>
-      </FormProvider>
-    </div>
+        </div>
+      </form>
+    </FormProvider >
   )
 }

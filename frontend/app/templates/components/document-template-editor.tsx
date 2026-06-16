@@ -132,7 +132,7 @@ const ControlledEditor = ({
   return (
     <div>
       <TemplateEditorToolbar editor={editor} />
-      <div className="border">
+      <div className="border border-2 border-(--govuk-input-border-colour)">
         <EditorContent editor={editor} className="editor-content" />
       </div>
     </div>

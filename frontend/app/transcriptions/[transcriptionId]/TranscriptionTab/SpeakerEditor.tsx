@@ -87,8 +87,8 @@ export const SpeakerEditor = ({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <button type="button" className="govuk-button govuk-button--secondary">
-          <User />
+        <button type="button" className="govuk-button govuk-button--inverse">
+          <User className="size-4" />
           Name all speakers
         </button>
       </DialogTrigger>
@@ -100,7 +100,6 @@ export const SpeakerEditor = ({
         </DialogDescription>
         <div className="max-h-[50vh] overflow-y-auto overflow-x-hidden">
           <ul>
-
             {Array.from(speakers.entries()).map(([speaker, speakerEntries], index) => (
               <li key={speaker} className="govuk-!-margin-bottom-4">
                 <SpeakerNameField

@@ -36,17 +36,18 @@ const OfflineRecordingItem = ({ recording }: { recording: RecordingDbItem }) => 
     [recording.blob]
   )
   return (
-    <li className="transcriptions__list-item govuk-!-padding-top-3">
-      <h3 className="govuk-heading-s govuk-!-margin-bottom-1">
-        {recording.updated_at.toDateString()} at{' '}
-        {recording.updated_at.toLocaleTimeString()}
-      </h3>
-      <audio src={url} controls className="w-full" />
-      <ul className="govuk-button-group">
-        <li>
+    <li className="transcriptions__list-item govuk-!-padding-top-3 govuk-!-padding-bottom-3">
+      <div className="flex justify-between">
+
+        <h3 className="govuk-heading-s govuk-!-margin-bottom-1">
+          {recording.updated_at.toDateString()} at{' '}
+          {recording.updated_at.toLocaleTimeString()}
+        </h3>
+        <div className="govuk-button-group">
           <Link
             href={`/recordings/${recording.recording_id}`}
-            className="govuk-link"
+            className="govuk-button govuk-button--secondary"
+            role="button"
           >
             Upload
             <span className="govuk-visually-hidden">
@@ -55,12 +56,11 @@ const OfflineRecordingItem = ({ recording }: { recording: RecordingDbItem }) => 
               at {recording.updated_at.toLocaleTimeString()}
             </span>
           </Link>
-        </li>
-        <li>
           <a
             href={url}
             download={`audio-recording-${recording.updated_at.toISOString()}.webm`}
-            className="govuk-link"
+            className="govuk-button govuk-button--secondary"
+            role="button"
           >
             Save to device
             <span className="govuk-visually-hidden">
@@ -69,8 +69,6 @@ const OfflineRecordingItem = ({ recording }: { recording: RecordingDbItem }) => 
               at {recording.updated_at.toLocaleTimeString()}
             </span>
           </a>
-        </li>
-        <li>
           <button
             type="button"
             className="govuk-link text-red-700"
@@ -83,8 +81,9 @@ const OfflineRecordingItem = ({ recording }: { recording: RecordingDbItem }) => 
               at {recording.updated_at.toLocaleTimeString()}
             </span>
           </button>
-        </li>
-      </ul>
+        </div>
+      </div>
+      <audio src={url} controls className="w-full" />
       <DiscardConfirmDialog
         open={open}
         setOpen={setOpen}

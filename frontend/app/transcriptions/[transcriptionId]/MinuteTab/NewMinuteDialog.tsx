@@ -94,7 +94,7 @@ export function NewMinuteDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="govuk-button govuk-button--secondary" disabled={disabled}>
+        <button className="govuk-button govuk-button--inverse govuk-!-margin-bottom-2 govuk-!-margin-top-6" disabled={disabled}>
           <Plus className="size-4" />
           Generate new summary
         </button>

@@ -11,8 +11,10 @@ import posthog from 'posthog-js'
 
 export const DownloadButton = ({
   recordings,
+  inverse = false,
 }: {
   recordings: SingleRecording[]
+  inverse?: boolean
 }) => {
   const onClick = (recording: SingleRecording) => () => {
     posthog.capture('recording_downloaded', {
@@ -27,17 +29,17 @@ export const DownloadButton = ({
         download
         role="button"
         onClick={onClick(recordings[0])}
-        className="govuk-button govuk-button--secondary"
+        className={`govuk-button ${inverse ? "govuk-button--inverse" : "govuk-button--secondary"}`}
       >
-        <Download className="size-4" /> Download audio
+        <Download className="size-4" /> Download
       </a>
     )
   }
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="govuk-button govuk-button--secondary">
-          <Download /> Download audio
+        <button className={`govuk-button ${inverse ? "govuk-button--inverse" : "govuk-button--secondary"}`}>
+          <Download className="size-4" /> Download
         </button>
       </PopoverTrigger>
       <PopoverContent>

@@ -68,8 +68,8 @@ export default function TranscriptionPage({
   ) {
     return (
       <div className="govuk-grid-row govuk-!-margin-bottom-2">
-        <div className="govuk-grid-column-two-thirds">
-          <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">
+        <div className="govuk-grid-column-three-quarters">
+          <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
             Generating transcript
           </h1>
           <p className="govuk-body">{date}</p>
@@ -77,7 +77,7 @@ export default function TranscriptionPage({
           <h2 className="govuk-heading-m">Audio</h2>
           <AudioPlayer transcriptionId={transcription.id} />
         </div>
-        <div className="govuk-grid-column-one-third">
+        <div className="govuk-grid-column-one-quarter">
           <div className="govuk-button-group">
             <DeleteTranscriptionButton transcription={transcription} />
           </div>
@@ -89,14 +89,14 @@ export default function TranscriptionPage({
   if (transcription.status == 'failed') {
     return (
       <div className="govuk-grid-row govuk-!-margin-bottom-2">
-        <div className="govuk-grid-column-two-thirds">
+        <div className="govuk-grid-column-three-quarters">
           <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">
             {getTranscriptionDisplayTitle(transcription.title, transcription.status)}
           </h1>
           <p className="govuk-body">{date}</p>
           <p className="govuk-body">The transcription failed to process. Please try again.</p>
         </div>
-        <div className="govuk-grid-column-one-third">
+        <div className="govuk-grid-column-one-quarter">
           <div className="govuk-button-group transcription-page__actions float-right">
             <RenameTranscriptionButton transcription={transcription} />
             <DeleteTranscriptionButton transcription={transcription} />
@@ -108,13 +108,13 @@ export default function TranscriptionPage({
   return (
     <>
       <div className="govuk-grid-row govuk-!-margin-bottom-2">
-        <div className="govuk-grid-column-two-thirds">
+        <div className="govuk-grid-column-three-quarters">
           <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">
             {getTranscriptionDisplayTitle(transcription.title, transcription.status)}
           </h1>
           <p className="govuk-body">{date}</p>
         </div>
-        <div className="govuk-grid-column-one-third">
+        <div className="govuk-grid-column-one-quarter">
           <div className="govuk-button-group transcription-page__actions">
             <RenameTranscriptionButton transcription={transcription} />
             <DeleteTranscriptionButton transcription={transcription} />

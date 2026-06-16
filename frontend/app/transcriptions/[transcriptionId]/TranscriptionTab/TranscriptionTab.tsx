@@ -159,7 +159,7 @@ export function TranscriptionTab({
                         index={index}
                         update={update}
                       />
-                      <div className="govuk-button-group govuk-!-margin-right-0">
+                      <div className="govuk-button-group govuk-!-margin-right-0 govuk-!-margin-bottom-0">
                         {hasRecordings && (
                           <button
                             type="button"
@@ -171,7 +171,7 @@ export function TranscriptionTab({
                                 }
                               }
                             }}
-                            className="play-section-trigger govuk-link govuk-link--no-visited-state"
+                            className="play-section-trigger govuk-link govuk-link--no-visited-state govuk-!-margin-top-4 govuk-!-margin-bottom-4"
                           >
                             <Play className="size-4" />
                             <span className="govuk-visually-hidden">Play section from </span>

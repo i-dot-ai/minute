@@ -6,7 +6,7 @@ export const Header = async () => {
   return (
     <header>
       <div className="govuk-header">
-        <div className="govuk-header__container govuk-width-container">
+        <div className="govuk-header__container govuk-width-container flex justify-between items-center">
           <div className="govuk-header__logo">
             <Link href="/" className="govuk-header__homepage-link">
               <svg
@@ -37,21 +37,19 @@ export const Header = async () => {
               </span>
             </Link>
           </div>
+          <p className="govuk-phase-banner__content">
+            <strong className="govuk-tag govuk-phase-banner__content__tag">
+              Alpha
+            </strong>
+            <span className="govuk-phase-banner__text text-white">
+              This is a new service. Help us improve it and <a className="govuk-link govuk-link--inverse" href="https://surveys.publishing.service.gov.uk/s/MAQMR1/">give your feedback</a>.
+            </span>
+          </p>
         </div>
       </div>
       <Suspense fallback={<div>Loading...</div>}>
         <ServiceNavigation />
       </Suspense>
-      <div className="govuk-phase-banner govuk-width-container">
-        <p className="govuk-phase-banner__content">
-          <strong className="govuk-tag govuk-phase-banner__content__tag">
-            Alpha
-          </strong>
-          <span className="govuk-phase-banner__text">
-            This is a new service. Help us improve it and <a className="govuk-link" href="https://surveys.publishing.service.gov.uk/s/MAQMR1/">give your feedback</a>.
-          </span>
-        </p>
-      </div>
     </header>
   )
 }

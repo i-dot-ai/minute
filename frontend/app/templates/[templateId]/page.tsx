@@ -34,7 +34,7 @@ export default function EditTemplatePage({
   })
   return (
     <div className="govuk-width-container govuk-main-wrapper">
-      <nav className="govuk-breadcrumbs govuk-!-margin-bottom-6" aria-label="Breadcrumb">
+      <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
         <ol className="govuk-breadcrumbs__list">
           <li className="govuk-breadcrumbs__list-item">
             <Link className="govuk-breadcrumbs__link" href="/">Home</Link>

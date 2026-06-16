@@ -83,16 +83,14 @@ export function TranscriptionTab({
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(saveTranscription)}>
-        <div className="bg-[#8eb8dc] sticky top-0 z-10 border-b border-(--govuk-border-colour)" style={{ margin: '-30px -20px 0', padding: '30px 20px 10px' }}>
+        <div className="bg-[#8eb8dc] sm:sticky top-0 z-10 border-b border-(--govuk-border-colour) sm:mt-[-30px] sm:mx-[-20px] px-[20px] pt-[30px] pb-[10px]">
           <div className="govuk-grid-row">
             <div className="govuk-grid-column-two-thirds">
               <div className="govuk-button-group govuk-!-margin-bottom-0">
-                {/* <h2 className="govuk-heading-m">Speakers</h2> */}
                 <SpeakerEditor
                   transcription={transcription}
                   src={hasRecordings ? recordings[0].url : undefined}
                 />
-                {/* <h2 className="govuk-heading-m">Export</h2> */}
                 <CopyButton
                   textToCopy={transcriptionString}
                   posthogEvent="transcript_content_copied"
@@ -119,7 +117,7 @@ export function TranscriptionTab({
             </div>
             <div className="govuk-grid-column-one-third">
               <div>
-                <p className="govuk-body-s govuk-!-margin-bottom-1">Renaming speakers updates the meeting summary too.</p>
+                <p className="govuk-body-s govuk-!-margin-bottom-1">If you rename a speaker, you must re-generate the summary to use the new names.</p>
                 <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><PencilIcon className="size-4" /> Click a name to rename it.</p>
                 <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><SquarePen className="size-4" /> Click any text box to edit the text.</p>
                 <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><Play className="size-4" /> Click a timestamp to play from that point.</p>

@@ -163,8 +163,10 @@ html body[data-scroll-locked] {
   border-right: 1px solid #fff;
 }
 
-.govuk-tabs__list-item--selected {
-  background: #8eb8dc !important;
+@media (min-width: 640px) {
+  .govuk-tabs__list-item--selected {
+    background: #8eb8dc !important;
+  }
 }
 
 .editor-content [contenteditable='true'] {

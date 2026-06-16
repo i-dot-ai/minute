@@ -67,9 +67,9 @@ export function MinuteTab({
   }
   return (
     <>
-      <div className="bg-[#8eb8dc] sticky top-0 z-10 border-b border-(--govuk-border-colour)" style={{ margin: '-30px -20px 0', padding: '30px 20px 10px' }}>
+      <div className="bg-[#8eb8dc] sm:sticky top-0 z-10 border-b border-(--govuk-border-colour) sm:mt-[-30px] sm:mx-[-20px] px-[20px] pt-[30px] pb-[10px]">
         <div className="govuk-grid-row">
-          <div className="govuk-grid-column-one-third">
+          <div className="govuk-grid-column-one-half govuk-grid-column-one-third-from-desktop">
 
             <div className="govuk-form-group govuk-!-margin-bottom-2">
               <label className="govuk-label" htmlFor="summary-history">
@@ -94,7 +94,7 @@ export function MinuteTab({
               </select>
             </div>
           </div>
-          <div className="govuk-grid-column-two-thirds">
+          <div className="govuk-grid-column-one-half govuk-grid-column-two-thirds-from-desktop">
             <NewMinuteDialog
               disabled={editState ? editState.isEditable : false}
               transcriptionId={transcription.id!}
@@ -105,7 +105,7 @@ export function MinuteTab({
         {editState && (
           <>
             <div className="govuk-grid-row">
-              <div className="govuk-grid-column-one-third">
+              <div className="govuk-grid-column-one-half govuk-grid-column-one-third-from-desktop">
                 <div className="govuk-form-group govuk-!-margin-bottom-3">
                   <label className="govuk-label" htmlFor="version">
                     Choose an edit version
@@ -123,7 +123,7 @@ export function MinuteTab({
                   </select>
                 </div>
               </div>
-              <div className="govuk-grid-column-two-thirds">
+              <div className="govuk-grid-column-one-half govuk-grid-column-two-thirds-from-desktop">
                 <div className="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-top-6">
                   {editState.showEditActions && (
                     <>

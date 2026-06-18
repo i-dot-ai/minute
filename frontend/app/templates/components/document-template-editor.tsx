@@ -72,9 +72,6 @@ export const DocumentTemplateEditor = ({
         <label className="govuk-label govuk-label--m" htmlFor="description">
           Description
         </label>
-        <div id="description-hint" className="govuk-hint">
-          A description to help identify the template.
-        </div>
         <textarea
           className="govuk-textarea"
           id="description"
@@ -82,13 +79,14 @@ export const DocumentTemplateEditor = ({
           {...form.register('description', {
             required: { value: true, message: 'Description required' },
           })}
-          aria-describedby="description-hint"
         />
       </div>
       <div className="govuk-form-group">
-        <label className="govuk-label govuk-label--m" htmlFor="content">
-          Template content
-        </label>
+        <h2>
+          <label className="govuk-label govuk-label--l" htmlFor="content">
+            Template content
+          </label>
+        </h2>
         <div id="content-hint" className="govuk-hint">
           The template content should look how you would like the minutes to
           look. Use placeholder text to describe what you would like in each

@@ -80,7 +80,7 @@ export const onboardingSteps: Step[] = [
   },
   {
     target: '[data-onboarding="form-templates"]',
-    content: 'Form templates are like document templates but have the extra feature of being able to set questions that should be answered in the summary.',
+    content: 'Form templates are used by setting questions that should be answered in the summary. You can also customise the style that the answers should take.',
     placement: 'top',
   },
   {

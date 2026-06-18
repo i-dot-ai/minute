@@ -78,5 +78,8 @@
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "handlebars@<=4.7.8": "4.7.9"
   }
 }

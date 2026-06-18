@@ -8,7 +8,7 @@ import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 export const useStartTranscription = (
@@ -16,16 +16,14 @@ export const useStartTranscription = (
 ) => {
   const router = useRouter()
   const { removeRecording } = useRecordingDb()
-  const { mutateAsync: createTranscription, isPending: isCreating } =
-    useMutation({
-      ...createTranscriptionTranscriptionsPostMutation(),
-    })
-  const { mutateAsync: createRecording, isPending: isConfirming } = useMutation(
-    {
-      ...createRecordingRecordingsPostMutation(),
-    }
-  )
-  const { mutateAsync: uploadBlob, isPending: isUploading } = useMutation({
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { mutateAsync: createTranscription } = useMutation({
+    ...createTranscriptionTranscriptionsPostMutation(),
+  })
+  const { mutateAsync: createRecording } = useMutation({
+    ...createRecordingRecordingsPostMutation(),
+  })
+  const { mutateAsync: uploadBlob } = useMutation({
     mutationFn: async ({
       uploadUrl,
       file,
@@ -51,49 +49,39 @@ export const useStartTranscription = (
       if (!file) {
         return
       }
-      const isFile = file instanceof File
-      const source = !!defaultValues?.recordingId
-        ? 'offline-recording'
-        : isFile
-          ? 'upload'
-          : 'recording'
-      const file_extension = isFile ? getFileExtension(file.name) : 'webm'
-      posthog.capture('transcription_started', {
-        file_type: file.type || '',
-        source,
-      })
-      await createRecording(
-        { body: { file_extension } },
-        {
-          onSuccess: async (recordingData) => {
-            await uploadBlob(
-              { file, uploadUrl: recordingData.upload_url },
-              {
-                onSuccess: async () => {
-                  createTranscription(
-                    {
-                      body: {
-                        recording_id: recordingData.id,
-                        template_id: template.id,
-                        template_name: template.name,
-                        agenda,
-                      },
-                    },
-                    {
-                      onSuccess: async (transcriptionData) => {
-                        if (recordingId) {
-                          await removeRecording(recordingId)
-                        }
-                        router.push(`/transcriptions/${transcriptionData.id}`)
-                      },
-                    }
-                  )
-                },
-              }
-            )
+      setIsSubmitting(true)
+      try {
+        const isFile = file instanceof File
+        const source = !!defaultValues?.recordingId
+          ? 'offline-recording'
+          : isFile
+            ? 'upload'
+            : 'recording'
+        const file_extension = isFile ? getFileExtension(file.name) : 'webm'
+        posthog.capture('transcription_started', {
+          file_type: file.type || '',
+          source,
+        })
+
+        const recordingData = await createRecording({
+          body: { file_extension },
+        })
+        await uploadBlob({ file, uploadUrl: recordingData.upload_url })
+        const transcriptionData = await createTranscription({
+          body: {
+            recording_id: recordingData.id,
+            template_id: template.id,
+            template_name: template.name,
+            agenda,
           },
+        })
+        if (recordingId) {
+          await removeRecording(recordingId)
         }
-      )
+        router.push(`/transcriptions/${transcriptionData.id}`)
+      } catch {
+        setIsSubmitting(false)
+      }
     },
     [
       createRecording,
@@ -112,7 +100,7 @@ export const useStartTranscription = (
     },
   })
   return {
-    isPending: isCreating || isConfirming || isUploading,
+    isPending: isSubmitting,
     onSubmit,
     form,
   }

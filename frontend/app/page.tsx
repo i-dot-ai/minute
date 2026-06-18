@@ -12,7 +12,7 @@ export default function Home() {
     <>
       <div className="govuk-main-wrapper" style={{ backgroundColor: '#1d70b8' }}>
         <div className="govuk-width-container">
-          <div className="govuk-grid-row">
+          <div className="govuk-grid-row flex items-center justify-center h-full">
             <div className="govuk-grid-column-two-thirds">
               <h1 className="govuk-heading-xl govuk-!-margin-bottom-6" style={{ color: '#ffffff' }}>
                 Minute
@@ -28,6 +28,9 @@ export default function Home() {
                   </svg>
                 </a>
               </div>
+            </div>
+            <div className="govuk-grid-column-one-third">
+              <img src="/images/minute-icon-waveform.svg" alt="" className="w-full" />
             </div>
           </div>
         </div>

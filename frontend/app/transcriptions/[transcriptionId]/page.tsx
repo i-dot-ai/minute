@@ -11,6 +11,7 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
+import { AudioWav } from '@/components/icons/AudioWav'
 
 export default function TranscriptionPage({
   params: { transcriptionId },
@@ -74,6 +75,9 @@ export default function TranscriptionPage({
           </h1>
           <p className="govuk-body">{date}</p>
           <p className="govuk-body">The transcription is being processed. Return later to view the transcript.</p>
+          <div className="flex justify-center w-full">
+            <AudioWav />
+          </div>
           <h2 className="govuk-heading-m">Audio</h2>
           <AudioPlayer transcriptionId={transcription.id} />
         </div>

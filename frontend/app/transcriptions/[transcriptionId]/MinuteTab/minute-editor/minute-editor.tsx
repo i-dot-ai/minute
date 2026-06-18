@@ -1,6 +1,7 @@
 'use client'
 
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
+import { AudioWav } from '@/components/icons/AudioWav'
 import { Button } from '@/components/ui/button'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import {
@@ -243,10 +244,11 @@ export function MinuteEditor({
   }
   if (isGenerating) {
     return (
-      <div className="flex items-center justify-center gap-2 w-full govuk-!-padding-top-6">
-        <Loader2 className="size-4 animate-spin" />
-        <p className="govuk-body">
-          Minute generating...</p>
+      <div className="flex flex-col items-center justify-center gap-2 w-full govuk-!-padding-top-6">
+        <div className="flex justify-center w-full">
+          <AudioWav />
+        </div>
+        <p className="govuk-body govuk-!-margin-bottom-0">Minute generating...</p>
       </div>
     )
   }

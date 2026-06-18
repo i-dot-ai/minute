@@ -42,23 +42,22 @@ export function TranscriptionsList({
               <p className="govuk-body-s govuk-!-margin-bottom-0">{date}</p>
             </div>
             <div className="govuk-button-group">
+              {transcription.status === 'failed' && (
+                <strong className="govuk-tag govuk-tag--red govuk-!-margin-right-2">Failed</strong>
+              )}
+              {transcription.status === 'awaiting_start' && (
+                <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">
+                  Awaiting start
+                </strong>
+              )}
+              {transcription.status === 'in_progress' && (
+                <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">In progress</strong>
+              )}
               <RenameTranscriptionButton
                 transcription={transcription}
                 className="govuk-button govuk-button--secondary"
               />
               <DeleteTranscriptionButton transcription={transcription} />
-
-              {transcription.status === 'failed' && (
-                <strong className="govuk-tag govuk-tag--red">Failed</strong>
-              )}
-              {transcription.status === 'awaiting_start' && (
-                <strong className="govuk-tag govuk-tag--grey">
-                  Awaiting start
-                </strong>
-              )}
-              {transcription.status === 'in_progress' && (
-                <strong className="govuk-tag govuk-tag--grey">In progress</strong>
-              )}
             </div>
           </li>
         )

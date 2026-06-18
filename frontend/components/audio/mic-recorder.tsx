@@ -95,6 +95,7 @@ function MicRecorderComponent({
           echoCancellation: false,
         },
       })
+      micStreamRef.current = micStream
       const options = { mimeType: 'audio/webm' }
       const mediaRecorder = new MediaRecorder(micStream, options)
       mediaRecorderRef.current = mediaRecorder

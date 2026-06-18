@@ -1,11 +1,13 @@
 'use client'
 
+import { RecentOfflineRecordingsSection } from '@/components/recent-meetings/recent-offline-recordings-section'
 import { TranscriptionsList } from '@/components/recent-meetings/transcriptions-list'
 import { useTranscriptions } from '@/components/recent-meetings/use-transcriptions'
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
 const PAGE_SIZE = 10
 
@@ -56,6 +58,9 @@ export const PaginatedTranscriptions = () => {
           .
         </p>
       )}
+      <Suspense fallback={null}>
+        <RecentOfflineRecordingsSection />
+      </Suspense>
       <h2 className="govuk-heading-m">{totalCount} saved transcriptions</h2>
       {isLoading ? (
         <p className="govuk-body">Loading transcriptions...</p>

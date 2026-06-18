@@ -39,10 +39,10 @@ export default function Home() {
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-two-thirds">
             {/* <PosthogBanner /> */}
-            <h2 className="govuk-heading-l govuk-!-margin-top-6">Your recent transcriptions</h2>
             <Suspense fallback={null}>
               <RecentOfflineRecordingsSection />
             </Suspense>
+            <h2 className="govuk-heading-l govuk-!-margin-top-6">Your recent transcriptions</h2>
             <Suspense fallback={<div>Loading...</div>}>
               <RecentTranscriptions />
             </Suspense>

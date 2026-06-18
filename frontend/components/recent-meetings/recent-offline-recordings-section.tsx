@@ -1,9 +1,10 @@
 'use client'
 
+import { OfflineRecordingsList } from '@/components/recent-meetings/offline-recordings-list'
 import {
   useOfflineRecordings,
 } from '@/components/recent-meetings/use-offline-recordings'
-import Link from 'next/link'
+import { Suspense } from 'react'
 
 export function RecentOfflineRecordingsSection() {
   const { data: dbRecordings = [], isLoading } = useOfflineRecordings()
@@ -13,9 +14,22 @@ export function RecentOfflineRecordingsSection() {
   }
 
   return (
-    <div className="govuk-inset-text">
-      You have <strong>{dbRecordings.length} incomplete recordings</strong> stored only in this browser.{' '}
-      <Link className="govuk-notification-banner__link" href="/recordings">View incomplete recordings</Link> to upload them to the cloud or delete them.
-    </div>
+    <>
+      <div className="govuk-error-summary" data-module="govuk-error-summary">
+        <div role="alert">
+          <h2 className="govuk-error-summary__title">
+            You have <strong>{dbRecordings.length} incomplete recordings</strong> stored only in this browser.{' '}
+          </h2>
+          <div className="govuk-error-summary__body">
+            <p className="govuk-body">
+              Please upload them to the cloud or delete them.
+            </p>
+            <Suspense fallback={<div>Loading...</div>}>
+              <OfflineRecordingsList recordings={dbRecordings} />
+            </Suspense>
+          </div>
+        </div>
+      </div>
+    </>
   )
 }

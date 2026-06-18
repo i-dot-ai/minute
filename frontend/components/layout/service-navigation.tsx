@@ -45,15 +45,6 @@ export const ServiceNavigation = () => {
                   Templates
                 </Link>
               </li>
-              <li className={`govuk-service-navigation__item ${pathname.includes('/recordings') ? 'govuk-service-navigation__item--active' : ''}`}>
-                <Link
-                  className="govuk-service-navigation__link"
-                  href="/recordings"
-                  data-onboarding="offline-recordings-nav"
-                >
-                  Incomplete recordings
-                </Link>
-              </li>
               <li className={`govuk-service-navigation__item ${pathname.includes('/settings') ? 'govuk-service-navigation__item--active' : ''}`}>
                 <Link
                   className="govuk-service-navigation__link"

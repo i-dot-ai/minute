@@ -12,8 +12,7 @@ export function requestOnboardingTourRestart() {
 export const NEW_TRANSCRIPTION_NAV_STEP_INDEX = 4
 export const SAVED_TRANSCRIPTIONS_NAV_STEP_INDEX = 6
 export const TEMPLATES_NAV_STEP_INDEX = 8
-export const OFFLINE_RECORDINGS_NAV_STEP_INDEX = 12
-export const SETTINGS_NAV_STEP_INDEX = 14
+export const SETTINGS_NAV_STEP_INDEX = 12
 
 export const onboardingSteps: Step[] = [
   {
@@ -83,18 +82,6 @@ export const onboardingSteps: Step[] = [
     target: '[data-onboarding="form-templates"]',
     content: 'Form templates are like document templates but have the extra feature of being able to set questions that should be answered in the summary.',
     placement: 'top',
-  },
-  {
-    target: '[data-onboarding="offline-recordings-nav"]',
-    content: 'Click "Incomplete recordings" to see recordings stored in this browser.',
-    placement: 'bottom',
-    blockTargetInteraction: false,
-    buttons: ['back', 'close'],
-  },
-  {
-    target: '[data-onboarding="offline-recordings-page"]',
-    content: 'If you begin a recording and stop the process before it is complete, the recording will be stored here as a backup. You can upload or delete it to store it securely in the cloud.',
-    placement: 'right',
   },
   {
     target: '[data-onboarding="settings-nav"]',

@@ -26,10 +26,6 @@ export const OfflineRecordings = () => {
 
   return (
     <>
-      <h2 className="govuk-heading-l">
-        {dbRecordings.length} offline recording
-        {dbRecordings.length === 1 ? '' : 's'}
-      </h2>
       <OfflineRecordingsList recordings={recordings} />
     </>
   )

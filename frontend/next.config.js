@@ -2,6 +2,13 @@ import { withSentryConfig } from '@sentry/nextjs'
 
 let nextConfig = {
   output: 'standalone',
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.html$/,
+      type: 'asset/source',
+    })
+    return config
+  },
 }
 
 const sentryConfig = {

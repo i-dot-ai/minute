@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import "govuk-frontend/dist/govuk/govuk-frontend.min.css";
+@import "../styles/public-page.css";
 
 /* Override the margin-right: from the modal dialog */
 html body[data-scroll-locked] {
@@ -36,24 +37,6 @@ html body[data-scroll-locked] {
 
 .side-panel__section-divider {
   margin-bottom: 1.5em;
-}
-
-.govuk-width-container {
-  max-width: 1200px !important;
-}
-
-@media (min-width: 1020px) {
-  .govuk-width-container {
-    margin-right: max(30px, calc(15px + env(safe-area-inset-right)));
-    margin-left: max(30px, calc(15px + env(safe-area-inset-left)));
-  }
-}
-
-@media (min-width: 1260px) {
-  .govuk-width-container {
-    margin-right: auto;
-    margin-left: auto;
-  }
 }
 
 @media (width > 48rem) {

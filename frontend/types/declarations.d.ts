@@ -6,6 +6,11 @@ declare interface Window {
   webkitAudioContext: typeof AudioContext
 }
 
+declare module '*.html' {
+  const content: string
+  export default content
+}
+
 declare module 'govuk-frontend' {
   export function initAll(): void
   export function createAll(

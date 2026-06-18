@@ -243,6 +243,9 @@ function MicRecorderComponent({
       {!recordedAudio && !isRecording && (
         <div>
           <div>
+            <p className="govuk-body">
+              Remember to inform all participants that they are being recorded.
+            </p>
             <div className="govuk-form-group">
               <label className="govuk-label govuk-label--l" htmlFor="microphone">
                 Choose microphone
@@ -258,7 +261,6 @@ function MicRecorderComponent({
           </div>
 
           <div>
-            {/* <label className="govuk-label govuk-label--m" htmlFor="start-recording">2. Start recording</label> */}
             <button
               type="button"
               onClick={startRecording}

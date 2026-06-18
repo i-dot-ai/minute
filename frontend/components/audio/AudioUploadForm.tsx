@@ -43,7 +43,7 @@ export const AudioUploadForm = () => {
             </label>
 
             <div id="file-upload-hint" className="govuk-hint">
-              Maximum file size: 5GB
+              Maximum file size: 5GB. Please ensure that all participants are aware that they have been recorded.
             </div>
             {fileError && (
               <p id="file-upload-error" className="govuk-error-message">

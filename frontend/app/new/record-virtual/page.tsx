@@ -15,7 +15,7 @@ export default function RecordAudio() {
           </li>
         </ol>
       </nav>
-      <h1 className="govuk-heading-xl">Record a meeting</h1>
+      <h1 className="govuk-heading-xl">Record a virtual meeting</h1>
       <TabRecorderForm />
     </>
   )

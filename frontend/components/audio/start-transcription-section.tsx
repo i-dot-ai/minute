@@ -1,6 +1,5 @@
 import { TranscriptionForm } from '@/components/audio/types'
 import { TemplateSelect } from '@/components/template-select/template-select'
-import { Loader2 } from 'lucide-react'
 import { Controller, useFormContext } from 'react-hook-form'
 
 export const StartTranscriptionSection = ({
@@ -64,14 +63,13 @@ export const StartTranscriptionSection = ({
           (selectedTemplate.agenda_usage == 'required' && !form.watch('agenda'))
         }
       >
-        {isPending ? (
-          <>
-            <Loader2 className="animate-spin" /> Uploading
-          </>
-        ) : (
-          'Upload'
-        )}
+        Upload
       </button>
+      {isPending && (
+        <strong className="govuk-tag">
+          Uploading...
+        </strong>
+      )}
     </div>
   )
 }

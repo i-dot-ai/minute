@@ -307,6 +307,9 @@ function TabRecorder({
             {!isRecording ? (
               <>
                 <InstructionsTabs />
+                <p className="govuk-body">
+                  Remember to inform all participants that they are being recorded.
+                </p>
                 <div className="govuk-form-group">
                   <h2>
                     <label className="govuk-label govuk-label--l" htmlFor="microphone">

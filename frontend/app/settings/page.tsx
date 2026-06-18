@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { useGovukModule } from '@/hooks/use-govuk-module'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { Save } from 'lucide-react'
 
 type UserSettingsForm = { dataRetention: 'none' | `${number}` }
 
@@ -163,7 +164,7 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
             data-module="govuk-button"
             disabled={isPending}
           >
-            Save
+            <Save className="size-4" /> Save
           </button>
           {isPending && (
             <strong className="govuk-tag">

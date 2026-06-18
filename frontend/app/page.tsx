@@ -37,7 +37,7 @@ export default function Home() {
       </div>
       <div className="govuk-width-container govuk-main-wrapper">
         <div className="govuk-grid-row">
-          <div className="govuk-grid-column-two-thirds">
+          <div className="govuk-grid-column-full govuk-grid-column-two-thirds-from-desktop">
             {/* <PosthogBanner /> */}
             <Suspense fallback={null}>
               <RecentOfflineRecordingsSection />

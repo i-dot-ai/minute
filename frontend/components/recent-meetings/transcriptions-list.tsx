@@ -31,7 +31,7 @@ export function TranscriptionsList({
               <h3 className="govuk-heading-s govuk-!-margin-bottom-1">
                 <Link
                   href={`/transcriptions/${transcription.id}`}
-                  className="govuk-link"
+                  className="govuk-link govuk-link--no-visited-state"
                 >
                   {getTranscriptionDisplayTitle(
                     transcription.title,

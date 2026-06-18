@@ -12,7 +12,7 @@ import {
   saveTranscriptionTranscriptionsTranscriptionIdPatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Save } from 'lucide-react'
 import posthog from 'posthog-js'
 import { Dispatch, SetStateAction, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
@@ -108,7 +108,9 @@ export const RenameTranscriptionDialog = ({
                   <Loader2 className="size-4 animate-spin" /> Saving
                 </>
               ) : (
-                'Save title'
+                <>
+                  <Save className="size-4" /> Save title
+                </>
               )}
             </button>
             <button

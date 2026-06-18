@@ -28,6 +28,7 @@ import {
   Strikethrough as StrikethroughIcon,
   List as UnorderedListIcon,
 } from './Icons'
+import { Save } from 'lucide-react'
 
 function SimpleEditor({
   initialContent,
@@ -287,7 +288,7 @@ function SimpleEditor({
               className="govuk-button govuk-!-margin-bottom-0"
               onClick={onSave}
             >
-              Save changes
+              <Save className="size-4" /> Save changes
             </button>
           </div>
         </div>

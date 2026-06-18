@@ -12,6 +12,10 @@ html body[data-scroll-locked] {
   position: relative;
 }
 
+.homepage__list-item h2 {
+  color: var(--govuk-link-colour) !important;
+}
+
 .homepage__list-item:not(:first-child) {
   border-top: 1px solid #b1b4b6;
 }

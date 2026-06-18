@@ -8,7 +8,7 @@ export const ServiceNavigation = () => {
     <section aria-label="Service information" className={`govuk-service-navigation ${pathname === '/' ? 'govuk-service-navigation--inverse' : ''}`} data-module="govuk-service-navigation">
       <div className="govuk-width-container">
         <div className="govuk-service-navigation__container">
-          <span className={`govuk-service-navigation__service-name ${pathname === '/' ? 'govuk-!-margin-right-3' : ''}`}>
+          <span className={`govuk-service-navigation__service-name ${pathname === '/' ? 'govuk-!-margin-right-3 govuk-service-navigation__item--active' : ''}`}>
             <Link href="/" className={`govuk-service-navigation__link ${pathname === '/' ? 'govuk-!-padding-right-3' : ''}`}>
               Home
             </Link>

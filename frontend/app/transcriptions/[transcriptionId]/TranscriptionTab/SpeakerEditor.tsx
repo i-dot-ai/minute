@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import { DialogueEntry, Transcription } from '@/lib/client'
-import { Pause, Play, User } from 'lucide-react'
+import { Pause, Play, Save, User } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
 
@@ -130,7 +130,7 @@ export const SpeakerEditor = ({
         </div>
         <div className="govuk-button-group govuk-!-margin-top-4">
           <button type="button" className="govuk-button" onClick={handleSaveAll}>
-            Save all
+            <Save className="size-4" /> Save all
           </button>
           <button
             type="button"

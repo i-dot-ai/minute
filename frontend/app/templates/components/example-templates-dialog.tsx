@@ -42,19 +42,12 @@ export function ExampleTemplatesDialog({
         </DialogTitle>
         <ul className="govuk-list">
           {examples.map((template, index) => (
-            <li key={index} className="transcriptions__list-item flex items-center justify-between govuk-!-padding-top-3" >
+            <li key={index} className="homepage__list-item flex items-center justify-between govuk-!-padding-top-3" >
               <div>
-                <h2 className="govuk-heading-m govuk-!-margin-bottom-1">{template.name}</h2>
-                <p className="govuk-body">{template.description}</p>
-              </div>
-              <div className="govuk-button-group">
-                <button
-                  type="button"
-                  onClick={() => handleSelectExample(template)}
-                  className="govuk-button"
-                >
-                  Use this template
+                <button onClick={() => handleSelectExample(template)} className="govuk-link">
+                  <h2 className="govuk-heading-m govuk-!-margin-bottom-1">{template.name}</h2>
                 </button>
+                <p className="govuk-body">{template.description}</p>
               </div>
             </li>
           ))}

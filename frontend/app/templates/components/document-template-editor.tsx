@@ -65,6 +65,9 @@ export const DocumentTemplateEditor = ({
         <label className="govuk-label govuk-label--m" htmlFor="name">
           Template name
         </label>
+        <div id="name-hint" className="govuk-hint">
+          A short memorable name to help you find this template later.
+        </div>
         <input className="govuk-input" id="name" type="text" {...form.register('name')} />
       </div>
 
@@ -72,6 +75,9 @@ export const DocumentTemplateEditor = ({
         <label className="govuk-label govuk-label--m" htmlFor="description">
           Description
         </label>
+        <div id="description-hint" className="govuk-hint">
+          A description to help identify the template - for example, who&apos;s it for or when to use it.
+        </div>
         <textarea
           className="govuk-textarea"
           id="description"

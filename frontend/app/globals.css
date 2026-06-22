@@ -75,10 +75,16 @@ html body[data-scroll-locked] {
   flex-basis: 100%;
 }
 
-
-@media (width > 48rem) {
+@media (width > 42rem) {
   .upload-radio__item {
     flex-basis: 50%;
+  }
+}
+
+
+@media (width > 64rem) {
+  .upload-radio__item {
+    flex-basis: 33.333%;
   }
 }
 

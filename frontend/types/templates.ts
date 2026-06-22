@@ -8,6 +8,7 @@ import {
 export type Template = {
   id: string | null
   name: string
+  description: string
   agenda_usage: AgendaUsage
 }
 

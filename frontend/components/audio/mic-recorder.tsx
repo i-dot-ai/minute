@@ -223,56 +223,66 @@ function MicRecorderComponent({
   }
   return (
     <div>
-      <div className="govuk-inset-text">
-        This will record the audio from your device&apos;s microphone.
-        That means only in-person meetings or calls that are played out
-        loud will be picked up. Make sure you check there are sound
-        waves appearing in the audio recorder. If not, refresh the page
-        and make sure you&apos;ve allowed microphone access in your
-        browser.
-      </div>
       {recordedAudio && (
-        <div className="govuk-!-margin-bottom-9">
-          <h2 className="govuk-heading-l">Your recording</h2>
-          <audio src={URL.createObjectURL(recordedAudio)} controls className="w-full" />
-          <div className="govuk-button-group govuk-!-margin-top-2">
-            <a role="button" href={URL.createObjectURL(recordedAudio)} download={`audio-file.${getFileExtensionFromBlob(recordedAudio)}`} className="govuk-button govuk-button--secondary">Download audio</a>
-            <button type="button" className="govuk-link link--warning" onClick={() => setIsDialogOpen(true)}>Discard recording</button>
-          </div>
-        </div>
-      )}
-      {!recordedAudio && !isRecording && (
-        <div>
-          <div>
-            <p className="govuk-body">
-              Remember to inform all participants that they are being recorded.
-            </p>
-            <div className="govuk-form-group">
-              <label className="govuk-label govuk-label--l" htmlFor="microphone">
-                Choose microphone
-              </label>
-              <select className="govuk-select" id="microphone" name="microphone" value={selectedDeviceId} onChange={(e) => setSelectedDeviceId(e.target.value)}>
-                {audioDevices.map((device) => (
-                  <option key={device.deviceId} value={device.deviceId}>
-                    {device.label}
-                  </option>
-                ))}
-              </select>
+        <>
+          <div className="govuk-grid-row">
+            <div className="govuk-grid-column-one-third">
+              <h2 className="govuk-heading-m">Your recording:</h2>
+            </div>
+            <div className="govuk-grid-column-two-thirds">
+              <audio src={URL.createObjectURL(recordedAudio)} controls className="w-full" />
+              <div className="govuk-button-group govuk-!-margin-top-2 ">
+                <a role="button" href={URL.createObjectURL(recordedAudio)} download={`audio-file.${getFileExtensionFromBlob(recordedAudio)}`} className="govuk-button govuk-button--secondary">Download audio</a>
+                <button type="button" className="govuk-link link--warning" onClick={() => setIsDialogOpen(true)}>Discard recording</button>
+              </div>
             </div>
           </div>
-
-          <div>
-            <button
-              type="button"
-              onClick={startRecording}
-              id="start-recording"
-              className="govuk-button govuk-button--start"
-            >
-              <Mic />
-              Start recording
-            </button>
+        </>
+      )}
+      {!recordedAudio && (
+        <>
+          <div className="govuk-inset-text">
+            This will record the audio from your device&apos;s microphone.
+            That means only in-person meetings or calls that are played out
+            loud will be picked up. Make sure you check there are sound
+            waves appearing in the audio recorder. If not, refresh the page
+            and make sure you&apos;ve allowed microphone access in your
+            browser.
           </div>
-        </div>
+          {!isRecording && (
+            <div>
+              <div>
+                <p className="govuk-body">
+                  Remember to inform all participants that they are being recorded.
+                </p>
+                <div className="govuk-form-group">
+                  <label className="govuk-label govuk-label--l" htmlFor="microphone">
+                    Choose microphone
+                  </label>
+                  <select className="govuk-select" id="microphone" name="microphone" value={selectedDeviceId} onChange={(e) => setSelectedDeviceId(e.target.value)}>
+                    {audioDevices.map((device) => (
+                      <option key={device.deviceId} value={device.deviceId}>
+                        {device.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  id="start-recording"
+                  className="govuk-button govuk-button--start"
+                >
+                  <Mic />
+                  Start recording
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
       {isRecording && (
         <div>

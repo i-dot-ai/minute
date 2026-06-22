@@ -38,14 +38,26 @@ export function NewMinuteDialog({
   const [open, setOpen] = useState(false)
   const form = useForm<CreateMinuteForm>({
     defaultValues: {
-      template: { name: 'General', agenda_usage: 'optional', id: null },
+      template: {
+        name: 'General',
+        description:
+          'Standard meeting summary with key points, decisions, and action items',
+        agenda_usage: 'optional',
+        id: null,
+      },
       agenda,
     },
   })
   useEffect(() => {
     if (open) {
       form.reset({
-        template: { name: 'General', agenda_usage: 'optional', id: null },
+        template: {
+          name: 'General',
+          description:
+            'Standard meeting summary with key points, decisions, and action items',
+          agenda_usage: 'optional',
+          id: null,
+        },
         agenda,
       })
     }
@@ -99,7 +111,7 @@ export function NewMinuteDialog({
           Generate new summary
         </button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-auto lg:min-w-3xl">
+      <DialogContent wideModal>
         <DialogHeader>
           <DialogTitle className="govuk-heading-l">
             Generate a new summary

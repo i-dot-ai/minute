@@ -27,7 +27,7 @@ export function TranscriptionsList({
             key={transcription.id}
             className="transcriptions__list-item govuk-!-padding-top-3 govuk-!-padding-bottom-3 flex items-center justify-between"
           >
-            <div>
+            <div className="flex-2">
               <h3 className="govuk-heading-s govuk-!-margin-bottom-1">
                 <Link
                   href={`/transcriptions/${transcription.id}`}
@@ -41,7 +41,7 @@ export function TranscriptionsList({
               </h3>
               <p className="govuk-body-s govuk-!-margin-bottom-0">{date}</p>
             </div>
-            <div className="govuk-button-group">
+            <div className="govuk-button-group flex-1 flex justify-end">
               {transcription.status === 'failed' && (
                 <strong className="govuk-tag govuk-tag--red govuk-!-margin-right-2">Failed</strong>
               )}

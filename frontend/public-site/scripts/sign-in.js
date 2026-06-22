@@ -4,7 +4,7 @@
  * @param {string} hostname
  * @returns {string}
  */
-function getSignInHref (hostname) {
+const getSignInHref = (hostname) => {
   if (hostname === 'localhost') return 'http://localhost:3000/'
 
   if (!hostname.endsWith('.i.ai.gov.uk')) {
@@ -23,7 +23,8 @@ function getSignInHref (hostname) {
   return 'https://minute.ai.cabinetoffice.gov.uk/'
 }
 
-function initSignInLinks () {
+const initSignInLinks = () => {
+  /** @type {NodeListOf<HTMLAnchorElement>} */
   const signInButtons = document.querySelectorAll('.sign-in-button')
   if (!signInButtons.length) return
 

@@ -72,6 +72,7 @@ export const DefaultTemplateSelect = ({
                   onChange({
                     id: null,
                     name: selectedTemplate.name,
+                    description: selectedTemplate.description,
                     agenda_usage: selectedTemplate.agenda_usage,
                   })
                 }
@@ -151,6 +152,7 @@ export const UserTemplateSelect = ({
                   onChange({
                     id: selectedTemplate.id!,
                     name: selectedTemplate.name,
+                    description: selectedTemplate.description,
                     agenda_usage: 'not_used',
                   })
                 }

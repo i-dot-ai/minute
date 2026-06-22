@@ -95,7 +95,13 @@ export const useStartTranscription = (
   const form = useForm<TranscriptionForm>({
     defaultValues: {
       file: null,
-      template: { name: 'General', agenda_usage: 'optional', id: null },
+      template: {
+        name: 'General',
+        description:
+          'Standard meeting summary with key points, decisions, and action items',
+        agenda_usage: 'optional',
+        id: null,
+      },
       ...defaultValues,
     },
   })

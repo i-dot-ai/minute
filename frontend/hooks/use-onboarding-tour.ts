@@ -19,7 +19,8 @@ export const onboardingSteps: Step[] = [
     target: 'body',
     placement: 'center',
     skipScroll: true,
-    content: 'We have recently updated the styling of the app. Everything is the same place, just with a new look. Take this tour to see the changes.',
+    content:
+      'We have recently updated the styling of the app. Everything is the same place, just with a new look. Take this tour to see the changes.',
     title: 'Welcome to Minute',
   },
   {

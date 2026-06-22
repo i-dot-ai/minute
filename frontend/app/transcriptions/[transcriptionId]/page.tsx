@@ -25,7 +25,7 @@ export default function TranscriptionPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-        ['awaiting_start', 'in_progress'].includes(query.state.data.status)
+      ['awaiting_start', 'in_progress'].includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -120,7 +120,15 @@ export default function TranscriptionPage({
               The transcription failed to process. Please try again.
             </p>
             <p className="govuk-inset-text">
-              You can either <Link href="/new" className="govuk-link">start a new transcription</Link> or download the audio file below and  <Link href="/new/upload" className="govuk-link">upload it</Link>.
+              You can either{' '}
+              <Link href="/new" className="govuk-link">
+                start a new transcription
+              </Link>{' '}
+              or download the audio file below and{' '}
+              <Link href="/new/upload" className="govuk-link">
+                upload it
+              </Link>
+              .
             </p>
           </div>
           <div className="govuk-grid-column-one-quarter">

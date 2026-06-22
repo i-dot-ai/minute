@@ -19,13 +19,13 @@ export const useSaveTranscription = (transcription_id: string) => {
           body: { dialogue_entries: data.entries },
         },
         {
-          onSuccess() {
-            queryClient.invalidateQueries({
-              queryKey:
-                getTranscriptionTranscriptionsTranscriptionIdGetQueryKey({
-                  path: { transcription_id },
-                }),
-            })
+          onSuccess(updatedTranscription) {
+            queryClient.setQueryData(
+              getTranscriptionTranscriptionsTranscriptionIdGetQueryKey({
+                path: { transcription_id },
+              }),
+              updatedTranscription
+            )
           },
         }
       )

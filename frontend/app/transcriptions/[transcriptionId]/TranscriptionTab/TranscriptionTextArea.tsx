@@ -14,7 +14,8 @@ export const TranscriptionTextArea = ({
       <Controller
         render={({ field: { onChange, ...field } }) => (
           <p
-            className="flex-1 cursor-text rounded px-2 transition-all hover:bg-gray-100 hover:shadow-sm"
+            className="transcription-text-area__text-box"
+            id={`transcription-text-area-${index}`}
             onClick={(e) => {
               const target = e.target as HTMLParagraphElement
               if (target.getAttribute('contenteditable') !== 'true') {

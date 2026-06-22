@@ -1,15 +1,15 @@
-import { Button } from '@/components/ui/button'
-import { Copy as CopyIcon } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useState } from 'react'
+import { Copy } from 'lucide-react'
 
 interface CopyButtonProps {
   textToCopy: string
   posthogEvent: string
+  disabled?: boolean
 }
 
-function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
-  const [showCopied, setShowCopied] = useState(false)
+function CopyButton({ textToCopy, posthogEvent, disabled }: CopyButtonProps) {
+  const [isCopied, setIsCopied] = useState(false)
 
   const stripHtmlTags = (html: string) => {
     const tmp = document.createElement('DIV')
@@ -36,26 +36,24 @@ function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
     posthog.capture(posthogEvent, {
       contentLength: textToCopy.length,
     })
-
-    setShowCopied(true)
-    setTimeout(() => setShowCopied(false), 2000)
+    setIsCopied(true)
+    setTimeout(() => {
+      setIsCopied(false)
+    }, 2000)
   }
 
   return (
-    <Button
-      className="bg-emerald-500"
-      onClick={handleCopy}
-      title="Copy content"
-      type="button"
-    >
-      <CopyIcon />
-      {!showCopied && <span>Copy</span>}
-      {showCopied && (
-        <span className="animate-fade-in text-xs font-medium text-white">
-          Copied!
-        </span>
-      )}
-    </Button>
+    <>
+      <button
+        className="govuk-button govuk-button--inverse flex items-center gap-2"
+        onClick={handleCopy}
+        disabled={disabled}
+      >
+        <Copy className="size-4" />
+        Copy
+      </button>
+      {isCopied && <p className="govuk-tag govuk-tag--green">Copied</p>}
+    </>
   )
 }
 

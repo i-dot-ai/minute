@@ -1,16 +1,8 @@
 'use client'
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { FeatureFlags } from '@/lib/feature-flags'
-import { Info, TriangleAlert } from 'lucide-react'
+import Link from 'next/link'
 import { useFeatureFlagPayload } from 'posthog-js/react'
-
-function Icon({ type }: { type: string }) {
-  if (type === 'warning') {
-    return <TriangleAlert />
-  }
-  return <Info />
-}
 
 export function PosthogBanner() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -21,16 +13,36 @@ export function PosthogBanner() {
   }
 
   return (
-    <Alert
-      variant={payload.type === 'warning' ? 'destructive' : 'info'}
-      className="my-4"
-    >
-      <Icon type={payload.type} />
-      <AlertTitle>{payload.title || "Head's up!"}</AlertTitle>
-      <AlertDescription>
-        {payload.message ||
-          'There is a problem with Minute. Our team is working to resolve this issue as quickly as possible. We apologise for any inconvenience'}
-      </AlertDescription>
-    </Alert>
+    <>
+      <div
+        className="govuk-notification-banner"
+        role="region"
+        aria-labelledby="govuk-notification-banner-title"
+        data-module="govuk-notification-banner"
+      >
+        <div className="govuk-notification-banner__header">
+          <h2
+            className="govuk-notification-banner__title"
+            id="govuk-notification-banner-title"
+          >
+            {payload.title || 'Important'}
+          </h2>
+        </div>
+        <div className="govuk-notification-banner__content">
+          <p className="govuk-notification-banner__heading">
+            {payload.message ||
+              'There is a problem with Minute. Our team is working to resolve this issue as quickly as possible. We apologise for any inconvenience'}
+            {payload.linkHref && (
+              <>
+                {' '}
+                <Link href={payload.linkHref} className="govuk-link">
+                  {payload.linkText || 'Learn more'}
+                </Link>
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+    </>
   )
 }

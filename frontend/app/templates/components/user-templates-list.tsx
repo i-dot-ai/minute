@@ -7,24 +7,10 @@ import {
 } from '@/app/templates/data/example-templates'
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+
 import { TemplateResponse } from '@/lib/client'
 import {
   deleteUserTemplateUserTemplatesTemplateIdDeleteMutation,
@@ -33,16 +19,7 @@ import {
   getUserTemplatesUserTemplatesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  Copy,
-  Edit,
-  FileSpreadsheet,
-  FileType,
-  FileWarning,
-  Loader2,
-  Plus,
-  Trash2,
-} from 'lucide-react'
+import { CopyPlus, FileWarning, Loader2, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
@@ -74,78 +51,95 @@ export const UserTemplatesList = () => {
     return (
       <div>
         <FileWarning />
-        <p>Something went wrong fetching your templates</p>
+        <p className="govuk-body">
+          Something went wrong fetching your templates
+        </p>
       </div>
     )
   }
 
   return (
-    <div>
-      <div className="mb-2">
-        <div className="flex items-center gap-4">
-          <h3 className="flex items-center gap-1 text-xl font-bold">
-            <FileType />
-            Document
-          </h3>
-        </div>
-        <p className="text-muted-foreground">
-          Customise the style and style your minutes.
+    <>
+      <div data-onboarding="document-templates">
+        <h2
+          className="govuk-heading-l govuk-!-margin-bottom-2"
+          id="document-templates"
+        >
+          Document templates
+        </h2>
+        <p className="govuk-body">
+          Customise the structure and style of your minutes.
         </p>
-      </div>
-      <div className="mb-6 grid auto-rows-fr gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardContent className="flex h-full min-h-45 flex-col gap-2">
-            <Button asChild className="flex-1" variant="outline">
-              <Link href="/templates/new?type=document">
-                <Plus /> Create a new template
-              </Link>
-            </Button>
-            <ExampleTemplatesDialog
-              onSelectTemplate={(example) => {
-                router.push(`/templates/new?example=${example.name}`)
-              }}
-              examples={exampleDocumentTemplates}
-            />
-          </CardContent>
-        </Card>
-        {documentTemplates.map((template) => (
-          <TemplateCard template={template} key={template.id} />
-        ))}
-      </div>
-      <div className="mb-2">
-        <div className="flex items-center gap-4">
-          <h3 className="flex items-center gap-1 text-xl font-bold">
-            <FileSpreadsheet /> Form
-          </h3>
+        <div className="govuk-button-group">
+          <Link
+            className="govuk-button"
+            role="button"
+            href="/templates/new?type=document"
+          >
+            <Plus className="size-4" /> Create a new document template
+          </Link>
+          <ExampleTemplatesDialog
+            onSelectTemplate={(example) => {
+              router.push(`/templates/new?example=${example.name}`)
+            }}
+            examples={exampleDocumentTemplates}
+          />
         </div>
-        <p className="text-muted-foreground">
+        {documentTemplates.length > 0 && (
+          <>
+            <h3 className="govuk-heading-m govuk-!-margin-bottom-2">
+              Your document templates
+            </h3>
+            <ul className="govuk-list">
+              {documentTemplates.map((template) => (
+                <TemplateListItem template={template} key={template.id} />
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+      <div data-onboarding="form-templates">
+        <h2
+          className="govuk-heading-l govuk-!-margin-bottom-2"
+          id="form-templates"
+        >
+          Form templates
+        </h2>
+        <p className="govuk-body">
           For complex summarisation of meetings into many questions and answers.
         </p>
+        <div className="govuk-button-group">
+          <Link
+            href="/templates/new?type=form"
+            className="govuk-button"
+            role="button"
+          >
+            <Plus className="size-4" /> Create a new form template
+          </Link>
+          <ExampleTemplatesDialog
+            onSelectTemplate={(example) => {
+              router.push(`/templates/new?example=${example.name}`)
+            }}
+            examples={exampleFormTemplates}
+          />
+        </div>
+        {formTemplates.length > 0 && (
+          <>
+            <h3 className="govuk-heading-m govuk-!-margin-bottom-2">
+              Your form templates
+            </h3>
+            <ul className="govuk-list">
+              {formTemplates.map((template) => (
+                <TemplateListItem template={template} key={template.id} />
+              ))}
+            </ul>
+          </>
+        )}
       </div>
-      <div className="grid auto-rows-fr gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardContent className="flex h-full min-h-45 flex-col justify-evenly gap-2">
-            <Button asChild className="flex-1" variant="outline">
-              <Link href="/templates/new?type=form">
-                <Plus /> Create a new template
-              </Link>
-            </Button>
-            <ExampleTemplatesDialog
-              onSelectTemplate={(example) => {
-                router.push(`/templates/new?example=${example.name}`)
-              }}
-              examples={exampleFormTemplates}
-            />
-          </CardContent>
-        </Card>
-        {formTemplates.map((template) => (
-          <TemplateCard template={template} key={template.id} />
-        ))}
-      </div>
-    </div>
+    </>
   )
 }
-const TemplateCard = ({ template }: { template: TemplateResponse }) => {
+const TemplateListItem = ({ template }: { template: TemplateResponse }) => {
   const queryClient = useQueryClient()
   const deleteMutation = useMutation({
     ...deleteUserTemplateUserTemplatesTemplateIdDeleteMutation(),
@@ -166,44 +160,34 @@ const TemplateCard = ({ template }: { template: TemplateResponse }) => {
     },
   })
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-1">
-          {template.type === 'document' ? <FileType /> : <FileSpreadsheet />}
-          {template.name}
-        </CardTitle>
-        <CardDescription>
-          <p className="text-sm text-gray-600">
-            Updated {new Date(template.updated_datetime!).toLocaleDateString()}
-          </p>
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="prose prose-sm max-w-none flex-1 overflow-hidden text-sm text-gray-700">
-        {template.description}
-      </CardContent>
-      <CardFooter className="flex-wrap gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          asChild
-          className="flex items-center gap-1"
-        >
-          <Link href={`/templates/${template.id}`}>
-            <Edit size={14} />
-            Edit template
+    <li
+      key={template.id}
+      className="transcriptions__list-item govuk-!-padding-top-3 govuk-!-padding-bottom-3 flex items-start justify-between"
+    >
+      <div>
+        <h4 className="govuk-heading-s govuk-!-margin-bottom-1">
+          <Link className="govuk-link" href={`/templates/${template.id}`}>
+            {template.name || 'Untitled template'}
           </Link>
-        </Button>
-
-        <Button
+        </h4>
+        <p className="govuk-body govuk-!-margin-bottom-1">
+          {template.description}
+        </p>
+        <p className="govuk-body-s">
+          Updated {new Date(template.updated_datetime!).toLocaleDateString()}
+        </p>
+      </div>
+      <div className="govuk-button-group">
+        <button
           onClick={() => {
             duplicationMutation.mutate({
               path: { template_id: template.id },
             })
           }}
-          variant="outline"
+          className="govuk-button govuk-button--secondary"
         >
-          <Copy /> Make a copy
-        </Button>
+          <CopyPlus className="size-4" /> Duplicate
+        </button>
         <DeleteConfirmDialog
           template={template}
           onConfirm={() => {
@@ -212,8 +196,8 @@ const TemplateCard = ({ template }: { template: TemplateResponse }) => {
             })
           }}
         />
-      </CardFooter>
-    </Card>
+      </div>
+    </li>
   )
 }
 
@@ -226,31 +210,23 @@ const DeleteConfirmDialog = ({
 }) => (
   <AlertDialog>
     <AlertDialogTrigger asChild>
-      <Button
-        variant="outline"
-        size="sm"
-        className="text-red-600 hover:bg-red-50 hover:text-red-700"
-      >
-        <Trash2 size={14} /> Delete
-      </Button>
+      <button className="govuk-link link--warning">Delete</button>
     </AlertDialogTrigger>
     <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Delete Template</AlertDialogTitle>
-        <AlertDialogDescription>
-          Are you sure you want to delete &quot;{template.name}
-          &quot;? This action cannot be undone.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>Cancel</AlertDialogCancel>
-        <AlertDialogAction
+      <h1 className="govuk-heading-l">Delete Template</h1>
+      <p className="govuk-body">
+        Are you sure you want to delete <strong>{template.name}</strong>? This
+        action cannot be undone.
+      </p>
+      <div className="govuk-button-group">
+        <button
+          className="govuk-button govuk-button--warning"
           onClick={onConfirm}
-          className="bg-red-600 hover:bg-red-700"
         >
           Delete
-        </AlertDialogAction>
-      </AlertDialogFooter>
+        </button>
+        <button className="govuk-button govuk-button--secondary">Cancel</button>
+      </div>
     </AlertDialogContent>
   </AlertDialog>
 )

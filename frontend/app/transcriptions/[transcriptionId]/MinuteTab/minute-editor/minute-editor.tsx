@@ -1,12 +1,8 @@
 'use client'
 
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
-import { RatingButton } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/rating-dialog/rating-dialog'
-import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/ai-edit-popover'
-import { MinuteVersionSelect } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-version-select'
-import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
+import { AudioWav } from '@/components/icons/AudioWav'
 import { Button } from '@/components/ui/button'
-import CopyButton from '@/components/ui/copy-button'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import {
   MinuteListItem,
@@ -19,37 +15,59 @@ import {
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
-import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  Download,
-  Edit,
-  Eye,
-  EyeOff,
-  FilePenLine,
-  FileQuestion,
-  FileX2,
-  Loader2,
-  Save,
-  Undo,
-} from 'lucide-react'
+import { FileX2, Loader2, Undo } from 'lucide-react'
 import posthog from 'posthog-js'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 type MinuteEditorForm = {
   html: string
 }
 
+export type MinuteExportState = {
+  htmlContent: string
+  contentToCopy: string
+  minuteVersionId: string
+}
+
+export type MinuteEditState = {
+  minuteVersions: MinuteVersionResponse[]
+  version: number
+  setVersion: Dispatch<SetStateAction<number>>
+  minuteId: string
+  minuteVersionId: string
+  minuteVersionHtml: string
+  showEditActions: boolean
+  isEditable: boolean
+  setIsEditable: (editable: boolean) => void
+  hasCitations: boolean
+  hideCitations: boolean
+  toggleHideCitations: () => void
+  onSuccess: () => void
+}
+
 export function MinuteEditor({
   transcription,
   minute,
+  onExportStateChange,
+  onEditStateChange,
 }: {
   transcription: Transcription
   minute: MinuteListItem
+  onExportStateChange?: (state: MinuteExportState | null) => void
+  onEditStateChange?: (state: MinuteEditState | null) => void
 }) {
   const [version, setVersion] = useState(0)
   const [hideCitations, setHideCitations] = useState(false)
+  const [editorResetKey, setEditorResetKey] = useState(0)
   const { data: minuteVersions = [], isLoading } = useQuery({
     ...listMinuteVersionsMinutesMinuteIdVersionsGetOptions({
       path: { minute_id: minute.id! },
@@ -92,7 +110,9 @@ export function MinuteEditor({
   const hasCitations = useMemo(() => {
     return !!htmlContent?.match(citationRegex)
   }, [htmlContent])
-  useEffect(() => {}, [htmlContent])
+  const toggleHideCitations = useCallback(() => {
+    setHideCitations((h) => !h)
+  }, [])
   const { mutate: saveEdit } = useMutation({
     ...createMinuteVersionMinutesMinuteIdVersionsPostMutation(),
   })
@@ -126,183 +146,154 @@ export function MinuteEditor({
     },
     [minute.id, minuteVersion?.html_content, onSuccess, saveEdit]
   )
-  const handleWordDocDownload = useCallback(() => {
-    posthog.capture('minutes_downloaded', {
-      format: 'word',
-      version_id: minuteVersion?.id,
+  const onCancel = useCallback(() => {
+    form.setValue('html', minuteVersion?.html_content || '')
+    setIsEditable(false)
+    setEditorResetKey((key) => key + 1)
+  }, [form, minuteVersion?.html_content])
+  useEffect(() => {
+    if (!onExportStateChange) return
+    if (!minuteVersion || isGenerating || isError) {
+      onExportStateChange(null)
+      return
+    }
+    onExportStateChange({
+      htmlContent: htmlContent || '',
+      contentToCopy,
+      minuteVersionId: minuteVersion.id!,
     })
-
-    convertAIMinutesToWordDoc(
-      htmlContent,
-      transcription.dialogue_entries || [],
-      transcription.title || 'minutes.docx'
-    )
   }, [
+    contentToCopy,
     htmlContent,
-    minuteVersion?.id,
-    transcription.dialogue_entries,
-    transcription.title,
+    isError,
+    isGenerating,
+    minuteVersion,
+    onExportStateChange,
   ])
-
+  useEffect(() => {
+    if (!onEditStateChange) return
+    if (!minuteVersion || isGenerating) {
+      onEditStateChange(null)
+      return
+    }
+    if (isError) {
+      onEditStateChange({
+        minuteVersions,
+        version,
+        setVersion,
+        minuteId: minute.id!,
+        minuteVersionId: minuteVersion.id!,
+        minuteVersionHtml: minuteVersion.html_content || '',
+        showEditActions: false,
+        isEditable: false,
+        setIsEditable: () => {},
+        hasCitations: false,
+        hideCitations: false,
+        toggleHideCitations: () => {},
+        onSuccess,
+      })
+      return
+    }
+    onEditStateChange({
+      minuteVersions,
+      version,
+      setVersion,
+      minuteId: minute.id!,
+      minuteVersionId: minuteVersion.id!,
+      minuteVersionHtml: minuteVersion.html_content || '',
+      showEditActions: true,
+      isEditable,
+      setIsEditable,
+      hasCitations,
+      hideCitations,
+      toggleHideCitations,
+      onSuccess,
+    })
+  }, [
+    form,
+    hasCitations,
+    hideCitations,
+    isEditable,
+    isError,
+    isGenerating,
+    minute.id,
+    minuteVersion,
+    minuteVersions,
+    onEditStateChange,
+    onSubmit,
+    onSuccess,
+    toggleHideCitations,
+    version,
+  ])
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center">
-        <p>Loading...</p>
+      <div className="flex items-center gap-2">
+        <Loader2 className="size-4 animate-spin" />
+        <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
       </div>
     )
   }
 
   if (!minuteVersion) {
     return (
-      <div className="flex flex-col items-center gap-2">
-        <FileQuestion />
-        <p>
+      <>
+        <p className="govuk-body">
           Nothing has been generated for this &quot;{minute.template_name}&quot;
-          minute yet. Click below to generate a minute.
+          minute yet. Generate a new minute from the panel to the left.
         </p>
-        <NewMinuteDialog
-          transcriptionId={transcription.id!}
-          agenda={minute.agenda ?? undefined}
-        />
-      </div>
+      </>
     )
   }
   if (isGenerating) {
     return (
-      <div className="pt-2">
-        <div className="mb-2 flex flex-wrap justify-between gap-y-2">
-          <div className="flex flex-wrap gap-2">
-            <MinuteVersionSelect
-              minuteVersions={minuteVersions}
-              version={version}
-              setVersion={setVersion}
-            />
-          </div>
+      <div className="govuk-!-padding-top-6 flex w-full flex-col items-center justify-center gap-2">
+        <div className="flex w-full justify-center">
+          <AudioWav />
         </div>
-        <div className="flex h-36 animate-pulse flex-col items-center justify-center pt-12">
-          <FilePenLine />
+        <p className="govuk-body govuk-!-margin-bottom-0">
           Minute generating...
-        </div>
+        </p>
       </div>
     )
   }
   if (isError) {
     return (
-      <div className="pt-2">
-        <div className="mb-2 flex flex-wrap justify-between gap-y-2">
-          <div className="flex flex-wrap gap-2">
-            <MinuteVersionSelect
-              minuteVersions={minuteVersions}
-              version={version}
-              setVersion={setVersion}
-            />
-          </div>
-        </div>
-        <div className="mx-auto flex flex-col items-center justify-center pt-12 text-center">
-          <FileX2 />
-          <p>There was a problem processing your request.</p>
-          {minuteVersions.length > 1 ? (
-            <>
-              <p>Click undo to go back to the previous version.</p>
-              <MinuteVersionDeleteButton minuteVersion={minuteVersion} />
-            </>
-          ) : (
-            <>
-              <p>Try generating a new Minute</p>
-              <NewMinuteDialog
-                transcriptionId={transcription.id!}
-                agenda={minute.agenda ?? undefined}
-              />
-            </>
-          )}
-        </div>
+      <div className="flex items-center gap-2">
+        <FileX2 className="size-4" />
+        <p className="govuk-body">
+          There was a problem processing your request.
+        </p>
+        {true ? (
+          <>
+            <p>Click undo to go back to the previous version.</p>
+            <MinuteVersionDeleteButton minuteVersion={minuteVersion} />
+          </>
+        ) : (
+          <>
+            <p className="govuk-body">
+              Generate a new minute from the panel to the left.
+            </p>
+          </>
+        )}
       </div>
     )
   }
   return (
-    <div className="pt-2">
-      <div className="mb-2 flex flex-wrap justify-between gap-y-2">
-        <div className="flex flex-wrap gap-2">
-          <MinuteVersionSelect
-            minuteVersions={minuteVersions}
-            version={version}
-            setVersion={setVersion}
-          />
-          <AiEditPopover
-            disabled={isEditable}
-            minuteId={minute.id!}
-            minuteVersionId={minuteVersion.id}
-            onSuccess={onSuccess}
-          />
-          {isEditable ? (
-            <Button
-              className="bg-blue-600 hover:bg-blue-800 active:bg-yellow-500"
-              onClick={form.handleSubmit(onSubmit)}
-            >
-              <Save /> Save Changes
-            </Button>
-          ) : (
-            <Button
-              className="bg-blue-600 hover:bg-blue-800 active:bg-yellow-500"
-              onClick={() => setIsEditable(true)}
-              type="button"
-            >
-              <Edit />
-              Edit Manually
-            </Button>
-          )}
-          <Button
-            type="button"
-            className="bg-green-600 text-white hover:bg-green-700 active:bg-yellow-500"
-            onClick={handleWordDocDownload}
-          >
-            <Download />
-            Download
-          </Button>
-          <CopyButton
-            textToCopy={contentToCopy}
-            posthogEvent="editor_content_copied"
-          />
-          {hasCitations && (
-            <Button
-              variant="outline"
-              onClick={() => setHideCitations((h) => !h)}
-              disabled={isEditable}
-            >
-              {isEditable ? (
-                'Citations shown when editing'
-              ) : hideCitations ? (
-                <>
-                  <Eye /> Show Citations
-                </>
-              ) : (
-                <>
-                  <EyeOff />
-                  Hide Citations
-                </>
-              )}
-            </Button>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <RatingButton
-            minuteVersionId={minuteVersion.id}
-            minutes={minuteVersion.html_content}
-            transcript={transcription.dialogue_entries!}
-          />
-        </div>
-      </div>
+    <div>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Controller
           control={form.control}
           name="html"
           render={({ field: { onChange } }) => (
             <SimpleEditor
+              key={`${minuteVersion.id}-${editorResetKey}`}
               currentTranscription={transcription}
               initialContent={minuteVersion.html_content || ''}
               isEditing={isEditable}
               onContentChange={onChange}
               hideCitations={hideCitations && !isEditable}
+              onSave={form.handleSubmit(onSubmit)}
+              onCancel={onCancel}
             />
           )}
         />
@@ -340,11 +331,11 @@ const MinuteVersionDeleteButton = ({
     >
       {isPending ? (
         <>
-          <Loader2 className="animate-spin" /> Deleting
+          <Loader2 className="size-4 animate-spin" /> Deleting
         </>
       ) : (
         <>
-          <Undo /> Undo
+          <Undo className="size-4" /> Undo
         </>
       )}
     </Button>

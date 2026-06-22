@@ -31,7 +31,7 @@ export const RatingButton = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild type="button">
         <div className="flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-900">
-          <span className="text-sm">Rate summary</span>
+          {/* <span className="text-sm">Rate summary</span> */}
           <div className="flex items-center gap-1">
             <Rating className="size-4" value={rating} onChange={setRating} />
           </div>

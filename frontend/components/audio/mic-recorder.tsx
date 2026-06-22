@@ -1,6 +1,6 @@
 'use client'
 
-import { Info, Mic } from 'lucide-react'
+import { Mic } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import RecordingControl from './recording-control'
@@ -16,16 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
 import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
 import { TranscriptionForm } from '@/components/audio/types'
@@ -34,8 +24,8 @@ import { useWakeLock } from '@/hooks/use-wake-lock'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
-import AudioPlayerComponent from './audio-player'
 import { AudioDevice, MicrophonePermission } from './microphone-permission'
+import { getFileExtensionFromBlob } from '@/lib/getFileExtension'
 
 export function MicRecorderForm() {
   const { isPending, onSubmit, form } = useStartTranscription()
@@ -105,6 +95,7 @@ function MicRecorderComponent({
           echoCancellation: false,
         },
       })
+      micStreamRef.current = micStream
       const options = { mimeType: 'audio/webm' }
       const mediaRecorder = new MediaRecorder(micStream, options)
       mediaRecorderRef.current = mediaRecorder
@@ -231,74 +222,96 @@ function MicRecorderComponent({
     )
   }
   return (
-    <div className="space-y-4">
-      {recordedAudio ? (
-        <div className="mt-4 space-y-3">
-          <AudioPlayerComponent audioBlob={recordedAudio} />
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              onClick={() => setIsDialogOpen(true)}
-              variant="outline"
-              size="sm"
-            >
-              Discard Recording
-            </Button>
-          </div>
-        </div>
-      ) : !isRecording ? (
-        <div className="flex flex-col space-y-4">
-          <div className="flex flex-col items-start">
-            <span className="mb-2 text-sm font-medium">
-              1. Choose microphone
-            </span>
-            <Select
-              onValueChange={(value) => {
-                setSelectedDeviceId(value)
-              }}
-              value={selectedDeviceId}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select microphone" />
-              </SelectTrigger>
-              <SelectContent>
-                {audioDevices.map((device) => (
-                  <SelectItem key={device.deviceId} value={device.deviceId}>
-                    {device.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex flex-col items-start">
-            <span className="mb-2 text-sm font-medium">2. Start recording</span>
-            <Alert variant="default" className="mb-2">
-              <Info className="size-4" aria-hidden="true" />
-              <AlertDescription className="ml-2 text-sm">
-                This will record the audio from your device&apos;s microphone.
-                That means only in-person meetings or calls that are played out
-                loud will be picked up. Make sure you check there are sound
-                waves appearing in the audio recorder. If not, refresh the page
-                and make sure you&apos;ve allowed microphone access in your
-                browser.
-              </AlertDescription>
-            </Alert>
-            <div className="w-full">
-              <Button
-                type="button"
-                onClick={startRecording}
-                className="mt-2 h-12 w-full"
-                size="lg"
-              >
-                <Mic className="mr-2 size-4" />
-                Start new recording
-              </Button>
+    <div>
+      {recordedAudio && (
+        <>
+          <div className="govuk-grid-row">
+            <div className="govuk-grid-column-one-third">
+              <h2 className="govuk-heading-m">Your recording:</h2>
+            </div>
+            <div className="govuk-grid-column-two-thirds">
+              <audio
+                src={URL.createObjectURL(recordedAudio)}
+                controls
+                className="w-full"
+              />
+              <div className="govuk-button-group govuk-!-margin-top-2">
+                <a
+                  role="button"
+                  href={URL.createObjectURL(recordedAudio)}
+                  download={`audio-file.${getFileExtensionFromBlob(recordedAudio)}`}
+                  className="govuk-button govuk-button--secondary"
+                >
+                  Download audio
+                </a>
+                <button
+                  type="button"
+                  className="govuk-link link--warning"
+                  onClick={() => setIsDialogOpen(true)}
+                >
+                  Discard recording
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="flex flex-col space-y-2">
+        </>
+      )}
+      {!recordedAudio && (
+        <>
+          <div className="govuk-inset-text">
+            This will record the audio from your device&apos;s microphone. That
+            means only in-person meetings or calls that are played out loud will
+            be picked up. Make sure you check there are sound waves appearing in
+            the audio recorder. If not, refresh the page and make sure
+            you&apos;ve allowed microphone access in your browser.
+          </div>
+          {!isRecording && (
+            <div>
+              <div>
+                <p className="govuk-body">
+                  Remember to inform all participants that they are being
+                  recorded.
+                </p>
+                <div className="govuk-form-group">
+                  <label
+                    className="govuk-label govuk-label--l"
+                    htmlFor="microphone"
+                  >
+                    Choose microphone
+                  </label>
+                  <select
+                    className="govuk-select"
+                    id="microphone"
+                    name="microphone"
+                    value={selectedDeviceId}
+                    onChange={(e) => setSelectedDeviceId(e.target.value)}
+                  >
+                    {audioDevices.map((device) => (
+                      <option key={device.deviceId} value={device.deviceId}>
+                        {device.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  id="start-recording"
+                  className="govuk-button govuk-button--start"
+                >
+                  <Mic />
+                  Start recording
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+      {isRecording && (
+        <div>
           <RecordingControl
             stream={mediaRecorderRef.current?.stream || null}
             isRecording={isRecording}

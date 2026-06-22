@@ -1,23 +1,19 @@
 'use client'
 
 import { DialogueEntryForm } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
-import { Button } from '@/components/ui/button'
+import { formatTime } from '@/components/audio/audio-player'
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import { DialogueEntry, Transcription } from '@/lib/client'
-import { Edit2, Pause, Play } from 'lucide-react'
+import { Pause, Play, Save, User } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { FormProvider, useFieldArray, useFormContext } from 'react-hook-form'
+import { useFieldArray, useFormContext } from 'react-hook-form'
 
 export const SpeakerEditor = ({
   transcription,
@@ -28,25 +24,47 @@ export const SpeakerEditor = ({
 }) => {
   const { saveTranscription } = useSaveTranscription(transcription.id!)
 
+  const form = useFormContext<DialogueEntryForm>()
+  const entries = form.watch('entries')
+  const fieldArray = useFieldArray({ control: form.control, name: 'entries' })
+  const [open, setOpen] = useState(false)
+  const [draftNames, setDraftNames] = useState<Record<string, string>>({})
+
   const speakers = useMemo(() => {
     const speakerMap: Map<string, DialogueEntry[]> = new Map<
       string,
       DialogueEntry[]
     >()
-    transcription.dialogue_entries?.forEach((entry) => {
+    entries?.forEach((entry) => {
       speakerMap.set(entry.speaker, [
         ...(speakerMap.get(entry.speaker) || []),
         entry,
       ])
     })
     return speakerMap
-  }, [transcription.dialogue_entries])
+  }, [entries])
 
-  const form = useFormContext<DialogueEntryForm>()
-  const fieldArray = useFieldArray({ control: form.control, name: 'entries' })
-  const [selected, setSelected] = useState<string | undefined>()
-  const onSave = useCallback(
-    (originalSpeaker: string) => (newSpeaker: string) => {
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen) {
+        const names: Record<string, string> = {}
+        entries?.forEach((entry) => {
+          if (!(entry.speaker in names)) {
+            names[entry.speaker] = entry.speaker
+          }
+        })
+        setDraftNames(names)
+      }
+      setOpen(nextOpen)
+    },
+    [entries]
+  )
+
+  const handleSaveAll = useCallback(() => {
+    Object.entries(draftNames).forEach(([originalSpeaker, newSpeaker]) => {
+      const trimmed = newSpeaker.trim()
+      if (!trimmed || trimmed === originalSpeaker) return
+
       form
         .getValues('entries')
         .map((e, i) => ({
@@ -55,129 +73,111 @@ export const SpeakerEditor = ({
         }))
         .filter((e) => e.speaker === originalSpeaker)
         .forEach(({ i, ...entry }) => {
-          fieldArray.update(i, { ...entry, speaker: newSpeaker })
+          fieldArray.update(i, { ...entry, speaker: trimmed })
         })
-      form.handleSubmit(saveTranscription)()
-    },
-    [fieldArray, form, saveTranscription]
-  )
+    })
+    form.handleSubmit(saveTranscription)()
+    setOpen(false)
+  }, [draftNames, fieldArray, form, saveTranscription])
+
+  const handleCancel = useCallback(() => {
+    setOpen(false)
+  }, [])
 
   return (
-    <Dialog>
-      <DialogTrigger asChild className="mb-4">
-        <Button className="active:bg-yellow-400">
-          <Edit2 />
-          View/Edit Speaker Names
-        </Button>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <button type="button" className="govuk-button govuk-button--inverse">
+          <User className="size-4" />
+          Name all speakers
+        </button>
       </DialogTrigger>
-      <DialogContent className="scroll max-h-screen overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Edit speaker names</DialogTitle>
-          <DialogDescription>
-            You can edit speaker names here or on the transcript. Click on the
-            speaker&apos;s name to edit
-          </DialogDescription>
-        </DialogHeader>
-        <FormProvider {...form}>
-          <form className="flex flex-col gap-2">
-            {Array.from(speakers.entries()).map(([speaker, entries]) => (
-              <div key={speaker} className="flex w-full justify-between gap-1">
-                <SpeakerNameEditor
-                  speaker={speaker}
-                  onSave={onSave(speaker)}
-                  selected={selected == speaker}
-                  setSelected={setSelected}
-                />
-                <div className="flex gap-1">
-                  {src &&
-                    entries
-                      .slice(0, 3)
-                      .map((entry) => (
-                        <PlayClipButton
-                          key={entry.start_time}
-                          src={src}
-                          startTime={entry.start_time}
-                          endTime={entry.end_time}
-                        />
+      <DialogContent>
+        <DialogTitle className="govuk-heading-m">
+          Edit speaker names
+        </DialogTitle>
+        <DialogDescription className="govuk-body">
+          You can edit speaker names here or on the transcript. Click on the
+          speaker&apos;s name to edit
+        </DialogDescription>
+        <div className="max-h-[50vh] overflow-x-hidden overflow-y-auto">
+          <ul>
+            {Array.from(speakers.entries()).map(
+              ([speaker, speakerEntries], index) => (
+                <li key={speaker} className="govuk-!-margin-bottom-4">
+                  <SpeakerNameField
+                    label={`Speaker ${index + 1}`}
+                    inputId={`speaker-name-${index}`}
+                    value={draftNames[speaker] ?? speaker}
+                    onChange={(value) =>
+                      setDraftNames((prev) => ({ ...prev, [speaker]: value }))
+                    }
+                  />
+                  <ul className="govuk-button-group govuk-!-margin-top-2">
+                    {src &&
+                      speakerEntries.slice(0, 3).map((entry) => (
+                        <li key={entry.start_time}>
+                          <PlayClipButton
+                            src={src}
+                            startTime={entry.start_time}
+                            endTime={entry.end_time}
+                          />
+                        </li>
                       ))}
-                </div>
-              </div>
-            ))}
-          </form>
-        </FormProvider>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Done</Button>
-          </DialogClose>
-        </DialogFooter>
+                  </ul>
+                </li>
+              )
+            )}
+          </ul>
+        </div>
+        <div className="govuk-button-group govuk-!-margin-top-4">
+          <button
+            type="button"
+            className="govuk-button"
+            onClick={handleSaveAll}
+          >
+            <Save className="size-4" /> Save all
+          </button>
+          <button
+            type="button"
+            className="govuk-button govuk-button--secondary"
+            onClick={handleCancel}
+          >
+            Cancel
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   )
 }
 
-const SpeakerNameEditor = ({
-  speaker,
-  onSave,
-  selected,
-  setSelected,
+const SpeakerNameField = ({
+  label,
+  inputId,
+  value,
+  onChange,
 }: {
-  speaker: string
-  onSave: (name: string) => void
-  selected: boolean
-  setSelected: (n: string | undefined) => void
-}) => {
-  const [value, setValue] = useState(speaker)
-  const inputRef = useRef<HTMLInputElement | null>(null)
-
-  useEffect(() => {
-    if (selected && inputRef.current) {
-      inputRef.current.focus()
-    }
-  }, [selected])
-
-  if (!selected) {
-    return (
-      <Button
-        onClick={() => {
-          setSelected(speaker)
-        }}
-        variant="link"
-        type="button"
-      >
-        <Edit2 /> {speaker}
-      </Button>
-    )
-  }
-
-  return (
-    <div className="flex flex-1 gap-1">
-      <Input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        ref={inputRef}
-      />
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={() => {
-          setValue(speaker)
-          setSelected(undefined)
-        }}
-      >
-        Cancel
-      </Button>
-      <Button
-        type="button"
-        onClick={() => {
-          onSave(value)
-          setSelected(undefined)
-        }}
-      >
-        Save
-      </Button>
+  label: string
+  inputId: string
+  value: string
+  onChange: (value: string) => void
+}) => (
+  <div className="govuk-form-group govuk-!-margin-bottom-0">
+    <div className="govuk-label-wrapper">
+      <label className="govuk-label govuk-label--s" htmlFor={inputId}>
+        {label}
+      </label>
     </div>
-  )
-}
+    <input
+      className="govuk-input"
+      id={inputId}
+      name={inputId}
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  </div>
+)
 
 const PlayClipButton = ({
   src,
@@ -223,9 +223,9 @@ const PlayClipButton = ({
   }, [endTime, src, startTime])
 
   return (
-    <Button
+    <button
       type="button"
-      className="size-8 rounded-full bg-blue-500 text-xs text-white hover:bg-blue-800 hover:text-white"
+      className="govuk-button govuk-button--inverse play-section-trigger play-section-trigger--border"
       onClick={() => {
         if (audioRef.current) {
           if (audioRef.current.paused) {
@@ -237,6 +237,8 @@ const PlayClipButton = ({
       }}
     >
       {isPlaying ? <Pause /> : <Play />}
-    </Button>
+      <span className="govuk-visually-hidden">Play clip</span>
+      {formatTime(startTime)}
+    </button>
   )
 }

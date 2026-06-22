@@ -2,7 +2,7 @@ import {
   AuthApiClient,
   createAuthUtils,
   type UserAuthorisationResult,
-} from '@i-dot-ai-npm/utilities'
+} from '@i-dot-ai-npm/utilities-auth'
 
 // Logger configuration
 const logger = console

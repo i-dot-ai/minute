@@ -2,8 +2,6 @@ import { useState } from 'react'
 
 export interface CitationPopoverState {
   index: number
-  x: number
-  y: number
 }
 
 export function useCitationPopover() {
@@ -11,8 +9,8 @@ export function useCitationPopover() {
     useState<CitationPopoverState | null>(null)
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
 
-  const handleCitationClick = (index: number, rect: DOMRect) => {
-    setCitationPopover({ index, x: rect.left, y: rect.bottom })
+  const handleCitationClick = (index: number) => {
+    setCitationPopover({ index })
     setIsPopoverOpen(true)
   }
 

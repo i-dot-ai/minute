@@ -1,5 +1,7 @@
+import { OnboardingTour } from '@/components/onboarding/onboarding-tour'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
+import { GovukInit } from '@/components/layout/govuk-init'
 import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { TanstackQueryProvider } from '@/providers/TanstackQueryProvider'
 import PosthogProvider from '@/providers/posthog'
@@ -14,6 +16,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Minute',
   description: 'Minutes and transcriptions',
+  icons: {
+    icon: '/images/favicon.ico',
+  },
 }
 
 export default function RootLayout({
@@ -22,19 +27,17 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={inter.className}>
-      <body>
+    <html lang="en" className={`${inter.className} govuk-template`}>
+      <body className="govuk-template__body govuk-frontend-supported">
+        <GovukInit />
         <TanstackQueryProvider>
           <PosthogProvider>
             <LockNavigationProvider>
               <RecordingDbProvider>
-                <div className="flex min-h-screen flex-col justify-between">
-                  <div>
-                    <Header />
-                    <main>{children}</main>
-                  </div>
-                  <Footer />
-                </div>
+                <Header />
+                <OnboardingTour />
+                <main id="main-content">{children}</main>
+                <Footer />
                 <Toaster />
               </RecordingDbProvider>
             </LockNavigationProvider>

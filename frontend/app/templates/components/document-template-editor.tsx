@@ -1,10 +1,8 @@
 'use client'
 
 import { TemplateEditorToolbar } from '@/app/templates/components/editor/editor-toolbar'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { ExampleTemplatesDialog } from '@/app/templates/components/example-templates-dialog'
+import { exampleDocumentTemplates } from '@/app/templates/data/example-templates'
 import { TemplateData } from '@/types/templates'
 import Document from '@tiptap/extension-document'
 import HardBreak from '@tiptap/extension-hard-break'
@@ -23,77 +21,89 @@ export const DocumentTemplateEditor = ({
 }) => {
   const form = useFormContext<TemplateData>()
   return (
-    <form
-      className="flex flex-col gap-4"
-      onSubmit={form.handleSubmit(onSubmit)}
-    >
-      <div className="flex gap-2">
-        <Button type="submit">
-          <Save /> Save
-        </Button>
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      <div className="govuk-button-group">
+        <ExampleTemplatesDialog
+          examples={exampleDocumentTemplates}
+          onSelectTemplate={(template) => form.reset(template)}
+        />
         {form.formState.isSubmitting && (
-          <div>
+          <p className="govuk-body">
             <Loader2 className="animate-spin" />
             Submitting...
-          </div>
+          </p>
         )}
-        <div className="flex-1 text-xs text-red-600">
-          <p>
+        <div className="text-red-600">
+          <p className="govuk-body">
             {form.formState.errors.content?.message
               ? form.formState.errors.content.message
               : null}
           </p>
-          <p>
+          <p className="govuk-body">
             {form.formState.errors.name?.message
               ? form.formState.errors.name?.message
               : null}
           </p>
-          <p>
+          <p className="govuk-body">
             {form.formState.errors.description?.message
               ? form.formState.errors.description?.message
               : null}
           </p>
         </div>
       </div>
-      <div className="flex flex-col gap-4 rounded-lg border p-4">
-        <div>
-          <h4 className="font-semibold">Template details</h4>
-          <p className="text-muted-foreground text-sm">
-            Add a name and description so you can find your template later. Name
-            and description are not used to generate your minute, any structure
-            and style instructions should be added to the template content
-            field.
-          </p>
+      <h2 className="govuk-heading-l">Template details</h2>
+      <p className="govuk-body">
+        Add a name and description so you can find your template later. Name and
+        description are not used to generate your minute, any structure and
+        style instructions should be added to the template content field.
+      </p>
+      <div className="govuk-form-group">
+        <label className="govuk-label govuk-label--m" htmlFor="name">
+          Template name
+        </label>
+        <div id="name-hint" className="govuk-hint">
+          A short memorable name to help you find this template later.
         </div>
-        <div>
-          <Label htmlFor="name">Template Name</Label>
-          <Input
-            {...form.register('name')}
-            className="mt-2"
-            placeholder="Name your template"
-          />
-        </div>
-        <div>
-          <Label htmlFor="name">Description</Label>
-          <Textarea
-            {...form.register('description', {
-              required: { value: true, message: 'Description required' },
-            })}
-            className="mt-2"
-            placeholder="A description to help identify the template."
-          />
-        </div>
+        <input
+          required
+          className="govuk-input"
+          id="name"
+          type="text"
+          {...form.register('name', {
+            required: { value: true, message: 'Template name required' },
+          })}
+        />
       </div>
-      <div className="rounded-md border p-4">
-        <Label htmlFor="content" className="text-md font-semibold">
-          Template Content
-        </Label>
-        <p className="text-muted-foreground mt-1 mb-2 text-sm">
+
+      <div className="govuk-form-group">
+        <label className="govuk-label govuk-label--m" htmlFor="description">
+          Description
+        </label>
+        <div id="description-hint" className="govuk-hint">
+          A description to help identify the template, NOT a style guide or
+          instructions for the summary.
+        </div>
+        <input
+          className="govuk-input"
+          id="description"
+          type="text"
+          {...form.register('description', {
+            required: { value: true, message: 'Description required' },
+          })}
+        />
+      </div>
+      <div className="govuk-form-group">
+        <h2>
+          <label className="govuk-label govuk-label--l" htmlFor="content">
+            Template content
+          </label>
+        </h2>
+        <div id="content-hint" className="govuk-hint">
           The template content should look how you would like the minutes to
           look. Use placeholder text to describe what you would like in each
           section and provide style guidance, including examples if necessary.
           You may need to iterate on your template to get the best results.
-        </p>
+        </div>
         <Controller
           name="content"
           control={form.control}
@@ -105,6 +115,9 @@ export const DocumentTemplateEditor = ({
           )}
         />
       </div>
+      <button type="submit" className="govuk-button govuk-button--start">
+        <Save /> Save template
+      </button>
     </form>
   )
 }
@@ -132,7 +145,7 @@ const ControlledEditor = ({
   return (
     <div>
       <TemplateEditorToolbar editor={editor} />
-      <div className="rounded-xl rounded-t-none border border-t-0 shadow">
+      <div className="border border-2 border-(--govuk-input-border-colour)">
         <EditorContent editor={editor} className="editor-content" />
       </div>
     </div>

@@ -4,7 +4,6 @@ import { Mic } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
 
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
 import {
@@ -15,19 +14,12 @@ import RecordingControl from '@/components/audio/recording-control'
 import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
 import { InstructionsTabs } from '@/components/audio/tab-recorder/instructions'
 import { TranscriptionForm } from '@/components/audio/types'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
-import AudioPlayerComponent from '../audio-player'
+import { getFileExtensionFromBlob } from '@/lib/getFileExtension'
 
 export const TabRecorderForm = () => {
   const { isPending, onSubmit, form } = useStartTranscription()
@@ -301,60 +293,84 @@ function TabRecorder({
   return (
     <div className="space-y-4">
       {recordedAudio ? (
-        <div className="mt-4 space-y-3">
-          <AudioPlayerComponent audioBlob={recordedAudio} />
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              onClick={() => setDiscardDialogOpen(true)}
-              variant="outline"
-              size="sm"
+        <div className="govuk-!-margin-bottom-9">
+          <h2 className="govuk-heading-l">Your recording</h2>
+          <audio
+            src={URL.createObjectURL(recordedAudio)}
+            controls
+            className="w-full"
+          />
+          <div className="govuk-button-group govuk-!-margin-top-2">
+            <a
+              role="button"
+              href={URL.createObjectURL(recordedAudio)}
+              download={`audio-file.${getFileExtensionFromBlob(recordedAudio)}`}
+              className="govuk-button govuk-button--secondary"
             >
-              Discard Recording
-            </Button>
+              Download audio
+            </a>
+            <button
+              type="button"
+              className="govuk-link link--warning"
+              onClick={() => setDiscardDialogOpen(true)}
+            >
+              Discard recording
+            </button>
           </div>
         </div>
       ) : (
-        <div className="flex flex-col space-y-4">
-          {!isRecording ? (
-            <>
-              <div className="space-y-4 py-2">
+        <div className="govuk-grid-row">
+          <div className="govuk-grid-column-two-thirds">
+            {!isRecording ? (
+              <>
                 <InstructionsTabs />
+                <p className="govuk-body">
+                  Remember to inform all participants that they are being
+                  recorded.
+                </p>
+                <div className="govuk-form-group">
+                  <h2>
+                    <label
+                      className="govuk-label govuk-label--l"
+                      htmlFor="microphone"
+                    >
+                      Choose microphone
+                    </label>
+                  </h2>
+                  <select
+                    className="govuk-select"
+                    id="microphone"
+                    name="microphone"
+                    value={selectedDeviceId}
+                    onChange={(e) => setSelectedDeviceId(e.target.value)}
+                  >
+                    {audioDevices.map((device) => (
+                      <option key={device.deviceId} value={device.deviceId}>
+                        {device.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  className="govuk-button govuk-button--start"
+                >
+                  <Mic className="mr-2 size-4" />
+                  Start recording
+                </button>
+              </>
+            ) : (
+              <div className="space-y-4">
+                <RecordingControl
+                  stream={streamRef.current}
+                  isRecording={isRecording}
+                  onStopRecording={stopRecording}
+                  onPauseStateChange={handlePauseStateChange}
+                />
               </div>
-              <span className="mb-2 text-sm font-medium">
-                Choose your microphone:
-              </span>
-              <Select
-                onValueChange={setSelectedDeviceId}
-                disabled={isRecording}
-                value={selectedDeviceId}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select microphone" />
-                </SelectTrigger>
-                <SelectContent>
-                  {audioDevices.map((device) => (
-                    <SelectItem key={device.deviceId} value={device.deviceId}>
-                      {device.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button type="button" onClick={startRecording}>
-                <Mic className="mr-2 size-4" />
-                Start Recording Virtual Meeting
-              </Button>
-            </>
-          ) : (
-            <div className="space-y-4">
-              <RecordingControl
-                stream={streamRef.current}
-                isRecording={isRecording}
-                onStopRecording={stopRecording}
-                onPauseStateChange={handlePauseStateChange}
-              />
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 

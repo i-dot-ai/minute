@@ -9,11 +9,13 @@
     "start": "next start",
     "lint": "next lint",
     "openapi-ts": "openapi-ts",
-    "prettier:fix": "prettier --write ."
+    "prettier:fix": "prettier --write .",
+    "public-site": "npm run public-site:build && npx --yes serve dist -p 5000",
+    "public-site:build": "node scripts/build-public-site.mjs"
   },
   "dependencies": {
     "@hey-api/client-next": "^0.5.1",
-    "@i-dot-ai-npm/utilities": "1.0.1",
+    "@i-dot-ai-npm/utilities-auth": "^1.0.0-EN-1538.1",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-checkbox": "^1.3.2",
@@ -39,6 +41,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "file-saver": "^2.0.5",
+    "govuk-frontend": "^6.2.0",
     "html-docx-js-typescript": "^0.1.5",
     "jose": "^6.0.11",
     "lucide-react": "^0.544.0",
@@ -52,6 +55,7 @@
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.57.0",
+    "react-joyride": "^3.1.0",
     "react-markdown": "^10.1.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1"
@@ -73,5 +77,10 @@
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "handlebars@<=4.7.8": "4.7.9",
+    "lodash@<=4.18.0": "4.18.1",
+    "form-data@<=4.0.5": "4.0.6"
   }
 }

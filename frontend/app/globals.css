@@ -1,5 +1,172 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import 'govuk-frontend/dist/govuk/govuk-frontend.min.css';
+@import '../styles/public-page.css';
+
+/* Override the margin-right: from the modal dialog */
+html body[data-scroll-locked] {
+  margin-right: 0 !important;
+}
+
+.homepage__list-item {
+  position: relative;
+}
+
+.homepage__list-item h2 {
+  color: var(--govuk-link-colour) !important;
+}
+
+.homepage__list-item:not(:first-child) {
+  border-top: 1px solid #b1b4b6;
+}
+
+.transcriptions__list-item {
+  border-top: 1px solid #b1b4b6;
+}
+
+.homepage__list-item::after {
+  content: '';
+  border: 2px solid #1d70b8;
+  border-width: 2px 2px 0 0;
+  width: 0.4375em;
+  height: 0.4375em;
+  margin: auto 0;
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0.1875em;
+  transform: rotate(45deg);
+}
+
+.side-panel__section-divider {
+  margin-bottom: 1.5em;
+}
+
+@media (width > 48rem) {
+  .side-panel__sticky-container {
+    position: sticky;
+    top: 15px;
+  }
+}
+
+.govuk-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.side-panel__sticky-container .govuk-button,
+.side-panel__sticky-container .govuk-select {
+  width: 100%;
+}
+
+.link--warning {
+  color: var(--color-destructive) !important;
+}
+
+.upload-radio__flex-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.upload-radio__item {
+  flex-basis: 100%;
+}
+
+@media (width > 42rem) {
+  .upload-radio__item {
+    flex-basis: 50%;
+  }
+}
+
+@media (width > 64rem) {
+  .upload-radio__item {
+    flex-basis: 33.333%;
+  }
+}
+
+.upload-radio__item .govuk-radios__label {
+  align-self: start;
+}
+
+.upload-radio__item .govuk-radios__label::before {
+  top: 14px;
+}
+
+.upload-radio__item .govuk-radios__input:checked + .govuk-radios__label:after {
+  top: 24px;
+}
+
+.transcription-page__actions {
+  justify-content: flex-end;
+}
+
+.speaker-name-popover__trigger,
+.play-section-trigger {
+  display: flex !important;
+  align-items: center;
+  font-weight: bold;
+  gap: 0.5rem;
+}
+
+.play-section-trigger {
+  color: var(--govuk-link-colour);
+}
+
+.play-section-trigger--border {
+  border: 1px solid;
+}
+
+.transcription-text-area {
+  border-left: 4px solid transparent;
+  padding-left: 0.5rem;
+}
+
+.transcription-text-area--playing {
+  background-color: #d2e2f1;
+  border-color: var(--govuk-brand-colour);
+}
+
+.transcription-text-area__text-box {
+  cursor: text;
+  padding: 0.5rem;
+  border: 3px dashed #cecece;
+  transition: background-color 0.2s ease-in-out;
+  width: 100%;
+  field-sizing: content;
+}
+
+.transcription-text-area__text-box:hover {
+  background-color: #f3f3f3;
+  border-color: #858686;
+}
+
+.transcription-text-area__text-box:focus-visible {
+  border: 3px solid #0b0c0c;
+  outline: 3px solid;
+  outline-color: var(--govuk-focus-colour, #fd0);
+  outline-offset: 0;
+}
+
+/* Override service nav product name inverse to be more prominent */
+.govuk-service-navigation--inverse
+  .govuk-service-navigation__service-name
+  .govuk-service-navigation__link {
+  border-right: 1px solid #fff;
+}
+
+@media (min-width: 640px) {
+  .tabs--blue .govuk-tabs__list-item--selected {
+    background: #8eb8dc !important;
+  }
+}
+
+.editor-content [contenteditable='true'] {
+  min-height: 12em;
+}
+
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
@@ -117,6 +284,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -128,6 +296,7 @@
   grid-template-areas:
     'alpha'
     'nav';
+
   @media (width > 72rem) {
     grid-template-areas: 'nav alpha';
     grid-template-columns: 1fr max-content 1fr;
@@ -221,8 +390,11 @@
 .editor-content h2 {
   font-size: 1.5em;
   font-weight: bold;
-  margin-top: 0.83em;
   margin-bottom: 0.83em;
+}
+
+.editor-content h2:not(:first-child) {
+  margin-top: 0.83em;
 }
 
 .editor-content h3 {
@@ -261,14 +433,34 @@
 .editor-content pre > code {
   background-color: #444;
   color: white;
-  width: 100%!;
+  width: 100% !;
 }
+
 .editor-content pre {
-  width: 100%!;
+  width: 100% !;
   background-color: #444;
   padding: 0.5rem;
   border-radius: 0.5rem;
 }
+
 .editor-content code:not(pre code) {
   color: red;
+}
+
+.joyride-govuk-tooltip {
+  position: relative;
+  max-width: 380px;
+  padding: 20px;
+  background: #fff;
+}
+
+.joyride-govuk-tooltip__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: 0;
+  background: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #0b0c0c;
 }

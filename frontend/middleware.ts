@@ -1,6 +1,6 @@
 import { API_PROXY_PATH } from '@/providers/TanstackQueryProvider'
 import { NextRequest, NextResponse } from 'next/server'
-import { type UserAuthorisationResult } from '@i-dot-ai-npm/utilities'
+import { type UserAuthorisationResult } from '@i-dot-ai-npm/utilities-auth'
 import { parseAuthToken } from './utils/auth'
 
 // Define paths that should be public (no authorisation required)
@@ -63,8 +63,12 @@ export async function middleware(req: NextRequest) {
     console.info(
       `User ${authResult.email} authorisation result: ${authResult.isAuthorised}`
     )
+    const requestHeaders = new Headers(req.headers)
+    requestHeaders.set('x-pathname', pathname)
 
-    return NextResponse.next()
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    })
   } catch (error) {
     console.error('Error authorising token:', error)
     return redirectToGenericError(req)

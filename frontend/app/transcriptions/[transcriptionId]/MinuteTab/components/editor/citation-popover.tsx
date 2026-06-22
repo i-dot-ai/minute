@@ -19,17 +19,17 @@ export default function CitationPopoverContent({
   }, [selectedIndex])
 
   return (
-    <div className="max-h-[300px] space-y-2 overflow-y-auto p-2">
+    <div className="space-y-2">
       {dialogueEntries.map((entry, index) => (
         <div
           key={index}
           ref={index === selectedIndex ? selectedRef : null}
-          className={`${
-            index === selectedIndex ? '-mx-2 bg-blue-50 px-2' : ''
+          className={` transcription-text-area${
+            index === selectedIndex ? 'transcription-text-area--playing' : ''
           }`}
         >
-          <div className="font-semibold">{entry.speaker}</div>
-          <div>{entry.text}</div>
+          <h2 className="govuk-heading-s">{entry.speaker}</h2>
+          <p className="govuk-body">{entry.text}</p>
         </div>
       ))}
     </div>

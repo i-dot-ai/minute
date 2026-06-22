@@ -1,42 +1,95 @@
-import { PosthogBanner } from '@/components/posthog-banner'
-import { PaginatedTranscriptions } from '@/components/recent-meetings/paginated-transcriptions'
-import { Button } from '@/components/ui/button'
-import { Loader2, Plus } from 'lucide-react'
+'use client'
+
 import Link from 'next/link'
+import { RestartTourButton } from '@/components/onboarding/restart-tour-button'
+import { PosthogBanner } from '@/components/posthog-banner'
+import { RecentOfflineRecordingsSection } from '@/components/recent-meetings/recent-offline-recordings-section'
+import { RecentTranscriptions } from '@/components/recent-meetings/recent-transcriptions'
 import { Suspense } from 'react'
 
 export default function Home() {
   return (
-    <div className="mx-auto max-w-3xl p-6">
-      <PosthogBanner />
-      <div className="mb-4">
-        <h1 className="mb-4 text-4xl font-bold">
-          AI transcription and drafting service
-        </h1>
-        <p className="text-slate-600">
-          Transcribe and summarise your meetings with AI. Click the New Meeting
-          button below to begin. Suitable up to{' '}
-          <span className="font-bold">OFFICIAL SENSITIVE</span>.
-        </p>
-      </div>
-      <Button
-        className="mb-6 w-full bg-blue-500 p-6 hover:bg-blue-800 active:bg-amber-400"
-        asChild
+    <>
+      <div
+        className="govuk-main-wrapper"
+        style={{ backgroundColor: '#1d70b8' }}
       >
-        <Link href="/new">
-          <Plus />
-          New meeting
-        </Link>
-      </Button>
-      <Suspense
-        fallback={
-          <div className="flex w-full items-center justify-center">
-            <Loader2 className="animate-spin" />
+        <div className="govuk-width-container">
+          <div className="govuk-grid-row flex h-full items-center justify-center">
+            <div className="govuk-grid-column-two-thirds">
+              <h1
+                className="govuk-heading-xl govuk-!-margin-bottom-6"
+                style={{ color: '#ffffff' }}
+              >
+                Minute
+              </h1>
+              <p className="govuk-body-l" style={{ color: '#ffffff' }}>
+                Transcribe and summarise your meetings with AI. Suitable up to{' '}
+                <span className="govuk-!-font-weight-bold">
+                  OFFICIAL SENSITIVE
+                </span>
+                .
+              </p>
+              <div className="govuk-button-group">
+                <a
+                  href="/new"
+                  role="button"
+                  className="govuk-button govuk-button--start govuk-button--inverse"
+                >
+                  Start a new transcription
+                  <svg
+                    className="govuk-button__start-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="17.5"
+                    height="19"
+                    viewBox="0 0 33 40"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M0 0h13l20 20-20 20H0l20-20z"
+                    />
+                  </svg>
+                </a>
+              </div>
+            </div>
+            <div className="govuk-grid-column-one-third">
+              <img
+                src="/images/minute-icon-waveform.svg"
+                alt=""
+                className="w-full"
+              />
+            </div>
           </div>
-        }
-      >
-        <PaginatedTranscriptions />
-      </Suspense>
-    </div>
+        </div>
+      </div>
+      <div className="govuk-width-container govuk-main-wrapper">
+        <div className="govuk-grid-row">
+          <div className="govuk-grid-column-full govuk-grid-column-two-thirds-from-desktop">
+            <PosthogBanner />
+            <Suspense fallback={null}>
+              <RecentOfflineRecordingsSection />
+            </Suspense>
+            <h2 className="govuk-heading-l govuk-!-margin-top-6">
+              Your recent transcriptions
+            </h2>
+            <Suspense fallback={<div>Loading...</div>}>
+              <RecentTranscriptions />
+            </Suspense>
+            <Link
+              href="/transcriptions"
+              className="govuk-link govuk-!-font-weight-bold govuk-!-margin-bottom-6"
+            >
+              View all transcriptions
+            </Link>
+          </div>
+        </div>
+
+        <div className="govuk-!-margin-top-9">
+          <RestartTourButton />
+        </div>
+      </div>
+    </>
   )
 }

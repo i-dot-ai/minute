@@ -1,27 +1,24 @@
 'use client'
-import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
-import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
-import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
+import { GovukTranscriptionTabs } from '@/app/transcriptions/[transcriptionId]/GovukTranscriptionTabs'
 import { DownloadButton } from '@/components/download-button'
-import { AudioWav } from '@/components/icons/AudioWav'
-import { TranscriptionTitleEditor } from '@/components/transcription-title-editor'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
+import { RenameTranscriptionButton } from '@/components/recent-meetings/rename-transcription-button'
+import { getTranscriptionDisplayTitle } from '@/components/recent-meetings/rename-transcription-dialog'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
+  listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
-import { FeatureFlags } from '@/lib/feature-flags'
 import { useQuery } from '@tanstack/react-query'
-import { Clock, Frown, LoaderCircle, SearchX } from 'lucide-react'
-import { useFeatureFlagEnabled } from 'posthog-js/react'
+import { Loader2 } from 'lucide-react'
+import { AudioWav } from '@/components/icons/AudioWav'
+import Link from 'next/link'
 
 export default function TranscriptionPage({
   params: { transcriptionId },
 }: {
   params: { transcriptionId: string }
 }) {
-  const isChatEnabled = useFeatureFlagEnabled(FeatureFlags.ChatEnabled)
-
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId },
@@ -33,47 +30,75 @@ export default function TranscriptionPage({
         : false,
   })
 
+  const minutesEnabled =
+    !!transcription?.status &&
+    !['awaiting_start', 'in_progress', 'failed'].includes(transcription.status)
+
+  const { data: minutes = [] } = useQuery({
+    ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(
+      {
+        path: { transcription_id: transcriptionId },
+      }
+    ),
+    enabled: minutesEnabled,
+  })
+
   if (isLoading) {
     return (
-      <div className="flex h-72 flex-col items-center justify-center">
-        <LoaderCircle size={80} className="animate-spin" />
+      <div className="flex items-center gap-2">
+        <Loader2 className="animate-spin" />
+        <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
       </div>
     )
   }
 
   if (!transcription) {
     return (
-      <div className="flex flex-col items-center justify-center">
-        <SearchX size={100} />
-        <p>404 - Transcription not found</p>
-      </div>
+      <>
+        <p className="govuk-body">404 - Transcription not found</p>
+        <p className="govuk-body">
+          The transcription you are looking for does not exist.
+        </p>
+      </>
     )
   }
 
-  const date = new Date(transcription.created_datetime)
-  const dateLabel = `${date.toDateString()} at ${date.toLocaleTimeString()}`
+  const date = new Date(transcription.created_datetime).toLocaleString(
+    'en-GB',
+    {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }
+  )
 
   if (
     transcription.status &&
     ['awaiting_start', 'in_progress'].includes(transcription.status)
   ) {
     return (
-      <div>
-        <TranscriptionTitleEditor
-          title={transcription.title}
-          transcriptionId={transcription.id}
-          status={transcription.status}
-        />
-        <div className="flex items-center gap-1 text-xs text-slate-500">
-          <Clock size="0.8rem" />
-          {dateLabel}
-        </div>
-        <div className="flex flex-col items-center justify-center">
-          <AudioWav />
-          <p className="mb-4">
-            Transcription being processed, you can close the tab.
+      <div className="govuk-grid-row govuk-!-margin-bottom-2">
+        <div className="govuk-grid-column-three-quarters">
+          <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
+            Generating transcript
+          </h1>
+          <p className="govuk-body">{date}</p>
+          <p className="govuk-body">
+            The transcription is being processed. Return later to view the
+            transcript.
           </p>
+          <div className="flex w-full justify-center">
+            <AudioWav />
+          </div>
+          <h2 className="govuk-heading-m">Audio</h2>
           <AudioPlayer transcriptionId={transcription.id} />
+        </div>
+        <div className="govuk-grid-column-one-quarter">
+          <div className="govuk-button-group">
+            <DeleteTranscriptionButton transcription={transcription} />
+          </div>
         </div>
       </div>
     )
@@ -81,71 +106,68 @@ export default function TranscriptionPage({
 
   if (transcription.status == 'failed') {
     return (
-      <div>
-        <TranscriptionTitleEditor
-          title={transcription.title}
-          transcriptionId={transcription.id}
-          status={transcription.status}
-        />
-        <div className="flex items-center gap-1 text-xs text-slate-500">
-          <Clock size="0.8rem" />
-          {dateLabel}
+      <>
+        <div className="govuk-grid-row govuk-!-margin-bottom-2">
+          <div className="govuk-grid-column-three-quarters">
+            <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">
+              {getTranscriptionDisplayTitle(
+                transcription.title,
+                transcription.status
+              )}
+            </h1>
+            <p className="govuk-body">{date}</p>
+            <p className="govuk-body">
+              The transcription failed to process. Please try again.
+            </p>
+            <p className="govuk-inset-text">
+              You can either{' '}
+              <Link href="/new" className="govuk-link">
+                start a new transcription
+              </Link>{' '}
+              or download the audio file below and{' '}
+              <Link href="/new/upload" className="govuk-link">
+                upload it
+              </Link>
+              .
+            </p>
+          </div>
+          <div className="govuk-grid-column-one-quarter">
+            <div className="govuk-button-group transcription-page__actions float-right">
+              <RenameTranscriptionButton transcription={transcription} />
+              <DeleteTranscriptionButton transcription={transcription} />
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col items-center justify-center gap-2">
-          <Frown size={100} />
-          <p>
-            Something went wrong with your transcription. You may need to try
-            again.
-          </p>
-          <AudioPlayer transcriptionId={transcription.id} />
+        <div className="govuk-grid-row govuk-!-margin-bottom-2">
+          <div className="govuk-grid-column-two-thirds">
+            <h2 className="govuk-heading-m">Audio:</h2>
+            <AudioPlayer transcriptionId={transcription.id} />
+          </div>
         </div>
-      </div>
+      </>
     )
   }
   return (
-    <div className="flex w-full flex-col">
-      <TranscriptionTitleEditor
-        title={transcription.title}
-        transcriptionId={transcription.id}
-        status={transcription.status}
-      />
-      <div className="mb-4 flex items-center gap-1 text-xs text-slate-500">
-        <Clock size="0.8rem" />
-        {dateLabel}
+    <>
+      <div className="govuk-grid-row govuk-!-margin-bottom-2">
+        <div className="govuk-grid-column-three-quarters">
+          <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">
+            {getTranscriptionDisplayTitle(
+              transcription.title,
+              transcription.status
+            )}
+          </h1>
+          <p className="govuk-body">{date}</p>
+        </div>
+        <div className="govuk-grid-column-one-quarter">
+          <div className="govuk-button-group transcription-page__actions">
+            <RenameTranscriptionButton transcription={transcription} />
+            <DeleteTranscriptionButton transcription={transcription} />
+          </div>
+        </div>
       </div>
-      <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="h-12 w-full">
-          <TabsTrigger
-            value="summary"
-            className="data-[state=active]:shadow-lg"
-          >
-            Meeting summary
-          </TabsTrigger>
-          <TabsTrigger
-            value="transcript"
-            className="data-[state=active]:shadow-lg"
-          >
-            Transcript
-          </TabsTrigger>
-          {isChatEnabled && (
-            <TabsTrigger value="chat" className="data-[state=active]:shadow-lg">
-              Chat with your meeting
-            </TabsTrigger>
-          )}
-        </TabsList>
-        <TabsContent value="summary">
-          <MinuteTab transcription={transcription} />
-        </TabsContent>
-        <TabsContent value="transcript">
-          <TranscriptionTab transcription={transcription} />
-        </TabsContent>
-        {isChatEnabled && (
-          <TabsContent value="chat">
-            <ChatTab transcription={transcription} />
-          </TabsContent>
-        )}
-      </Tabs>
-    </div>
+      <GovukTranscriptionTabs transcription={transcription} minutes={minutes} />
+    </>
   )
 }
 
@@ -159,9 +181,9 @@ const AudioPlayer = ({ transcriptionId }: { transcriptionId: string }) => {
     return null
   }
   return (
-    <div className="mb-2 flex w-full max-w-3xl flex-col gap-2 rounded border bg-white p-2">
+    <div>
       <audio controls src={recordings[0].url} className="w-full" />
-      <div className="flex justify-end">
+      <div className="govuk-button-group govuk-!-margin-top-2">
         <DownloadButton recordings={recordings} />
       </div>
     </div>

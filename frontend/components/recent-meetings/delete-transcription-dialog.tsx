@@ -1,36 +1,42 @@
 'use client'
 
-import { TranscriptionCard } from '@/components/recent-meetings/transcription-card'
-import { Button } from '@/components/ui/button'
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { TranscriptionMetadata } from '@/lib/client'
+import { JobStatus } from '@/lib/client'
 import {
   deleteTranscriptionTranscriptionsTranscriptionIdDeleteMutation,
   listTranscriptionsTranscriptionsGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Loader, Trash } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { Dispatch, SetStateAction } from 'react'
 
-export const DeleteDialog = ({
+export type DeleteTranscription = {
+  id: string
+  title?: string | null
+  status: JobStatus
+  created_datetime: string
+}
+
+export const DeleteTranscriptionDialog = ({
   open,
   setOpen,
   transcription,
 }: {
   open: boolean
   setOpen: Dispatch<SetStateAction<boolean>>
-  transcription: TranscriptionMetadata
+  transcription: DeleteTranscription
 }) => {
+  const date = new Date(transcription.created_datetime)
   const queryClient = useQueryClient()
+  const router = useRouter()
+  const pathname = usePathname()
   const { mutate: deleteTranscription, isPending } = useMutation({
     ...deleteTranscriptionTranscriptionsTranscriptionIdDeleteMutation(),
     onSuccess() {
@@ -42,35 +48,50 @@ export const DeleteDialog = ({
         transcriptionDate: transcription.created_datetime,
       })
       setOpen(false)
+      if (pathname.startsWith('/transcriptions/')) {
+        router.push('/transcriptions')
+      }
     },
   })
+
+  const title =
+    transcription.title ||
+    (['awaiting_start', 'in_progress'].includes(transcription.status)
+      ? 'Generating title'
+      : 'No title')
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Are you sure?</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete this transcription?
-          </DialogDescription>
-          <TranscriptionCard
-            transcription={transcription}
-            className="rounded-md border p-2 text-sm"
-          />
-          <DialogClose />
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button
-              variant="secondary"
-              type="button"
-              className="hover:bg-slate-200"
-            >
-              Cancel
-            </Button>
-          </DialogClose>
-          <Button
-            variant="destructive"
-            className="hover:bg-red-800 active:bg-yellow-400"
+        <DialogTitle className="govuk-heading-l">
+          Are you sure you want to delete this transcription?
+        </DialogTitle>
+        <DialogDescription className="govuk-body">
+          This will permanently delete the transcription and cannot be undone.
+        </DialogDescription>
+        <p className="govuk-body govuk-!-font-weight-bold">{title}</p>
+        <p className="govuk-body-s">
+          {date.toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </p>
+        <div className="govuk-button-group">
+          <button
+            type="button"
+            className="govuk-button govuk-button--secondary"
+            disabled={isPending}
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="govuk-button govuk-button--warning"
+            disabled={isPending}
             onClick={() =>
               deleteTranscription({
                 path: { transcription_id: transcription.id },
@@ -78,14 +99,14 @@ export const DeleteDialog = ({
             }
           >
             {isPending ? (
-              <Loader />
-            ) : (
               <>
-                <Trash /> Yes, delete
+                <Loader2 className="size-4 animate-spin" /> Deleting
               </>
+            ) : (
+              'Delete transcription'
             )}
-          </Button>
-        </DialogFooter>
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   )

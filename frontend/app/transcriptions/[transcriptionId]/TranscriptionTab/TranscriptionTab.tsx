@@ -2,14 +2,13 @@ import { SpeakerEditor } from '@/app/transcriptions/[transcriptionId]/Transcript
 import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNamePopover'
 import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTextArea'
 import { DownloadButton } from '@/components/download-button'
-import { Button } from '@/components/ui/button'
 import CopyButton from '@/components/ui/copy-button'
+import { formatTime } from '@/components/audio/audio-player'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import { DialogueEntry, Transcription } from '@/lib/client'
 import { getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
-import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowDown, Play } from 'lucide-react'
+import { ArrowDown, PencilIcon, Play, SquarePen } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 
@@ -82,89 +81,127 @@ export function TranscriptionTab({
     new Promise((resolve) => setTimeout(resolve, 100)).then(scrollToPlaying)
 
   return (
-    <div>
-      <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(saveTranscription)}>
-          <div className="flex justify-between">
-            <SpeakerEditor
-              transcription={transcription}
-              src={hasRecordings ? recordings[0].url : undefined}
-            />
-            <CopyButton
-              textToCopy={transcriptionString}
-              posthogEvent="transcript_content_copied"
-            />
-          </div>
-          {hasRecordings && (
-            <div className="sticky top-0 mb-2 flex flex-col gap-2 rounded border bg-white p-2">
-              <audio
-                controls
-                src={recordings[0].url}
-                className="w-full"
-                ref={audioRef}
-                onSeeked={delayedScroll}
-                onTimeUpdate={(e) => {
-                  if ((e.target as HTMLAudioElement).currentTime != null) {
-                    setTime((e.target as HTMLAudioElement).currentTime)
-                  }
-                }}
-              />
-              <div className="flex justify-between">
-                <div>
-                  {playingRef.current && (
-                    <Button onClick={scrollToPlaying} variant="link">
-                      <ArrowDown /> Scroll to playing
-                    </Button>
-                  )}
-                </div>
-                <DownloadButton recordings={recordings} />
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(saveTranscription)}>
+        <div className="top-0 z-10 border-b border-(--govuk-border-colour) bg-[#8eb8dc] px-[20px] pt-[30px] pb-[10px] sm:sticky sm:mx-[-20px] sm:mt-[-30px]">
+          <div className="govuk-grid-row">
+            <div className="govuk-grid-column-two-thirds">
+              <div className="govuk-button-group govuk-!-margin-bottom-0">
+                <SpeakerEditor
+                  transcription={transcription}
+                  src={hasRecordings ? recordings[0].url : undefined}
+                />
+                <CopyButton
+                  textToCopy={transcriptionString}
+                  posthogEvent="transcript_content_copied"
+                />
+                {hasRecordings && (
+                  <DownloadButton recordings={recordings} inverse={true} />
+                )}
+                <button
+                  onClick={scrollToPlaying}
+                  className="govuk-button govuk-button--inverse"
+                >
+                  <ArrowDown className="size-4" /> Scroll to current section
+                </button>
+              </div>
+              {hasRecordings && (
+                <audio
+                  controls
+                  src={recordings[0].url}
+                  className="w-full"
+                  ref={audioRef}
+                  onSeeked={delayedScroll}
+                  onTimeUpdate={(e) => {
+                    if ((e.target as HTMLAudioElement).currentTime != null) {
+                      setTime((e.target as HTMLAudioElement).currentTime)
+                    }
+                  }}
+                />
+              )}
+            </div>
+            <div className="govuk-grid-column-one-third">
+              <div>
+                <p className="govuk-body-s govuk-!-margin-bottom-1">
+                  If you rename a speaker, you must re-generate the summary to
+                  use the new names.
+                </p>
+                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2">
+                  <PencilIcon className="size-4" /> Click a name to rename it.
+                </p>
+                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2">
+                  <SquarePen className="size-4" /> Click any text box to edit
+                  the text.
+                </p>
+                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2">
+                  <Play className="size-4" /> Click a timestamp to play from
+                  that point.
+                </p>
               </div>
             </div>
-          )}
-          <div className="flex flex-col gap-6">
-            {fields.map((entry, index, array) => {
-              const isPlaying =
-                time &&
-                time >= entry.start_time &&
-                (!array[index + 1] || time < array[index + 1].start_time)
-              return (
-                <div
-                  className={cn('flex items-start gap-2 rounded', {
-                    'bg-blue-100': isPlaying,
-                  })}
-                  key={entry.id}
-                  ref={isPlaying ? playingRef : null}
-                >
-                  {hasRecordings && (
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        if (audioRef.current) {
-                          audioRef.current.currentTime = entry.start_time
-                          if (audioRef.current.paused) {
-                            audioRef.current.play()
-                          }
-                        }
-                      }}
-                      variant="ghost"
-                      className="size-6 rounded-full bg-blue-500 text-xs text-white hover:bg-blue-800 hover:text-white"
-                      size="icon"
-                    >
-                      <Play />
-                    </Button>
-                  )}
-                  <SpeakerNamePopover
-                    entry={entry}
-                    index={index}
-                    update={update}
-                  />
-                  <TranscriptionTextArea control={control} index={index} />
-                </div>
-              )
-            })}
           </div>
-        </form>
-      </FormProvider>
-    </div>
+          <div className="govuk-grid-row">
+            {hasRecordings && (
+              <>
+                <div className="govuk-grid-column-two-thirds"></div>
+                <div className="govuk-grid-column-one-third">
+                  <div className="govuk-button-group govuk-!-margin-top-2 govuk-!-margin-bottom-0"></div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="govuk-grid-row">
+          <div className="govuk-grid-column-full">
+            <div className="flex flex-col gap-6">
+              {fields.map((entry, index, array) => {
+                const isPlaying =
+                  time &&
+                  time >= entry.start_time &&
+                  (!array[index + 1] || time < array[index + 1].start_time)
+                return (
+                  <div
+                    className={`transcription-text-area ${isPlaying ? 'transcription-text-area--playing' : ''}`}
+                    key={entry.id}
+                    ref={isPlaying ? playingRef : null}
+                  >
+                    <div className="flex justify-between">
+                      <SpeakerNamePopover
+                        entry={entry}
+                        index={index}
+                        update={update}
+                      />
+                      <div className="govuk-button-group govuk-!-margin-right-0 govuk-!-margin-bottom-0">
+                        {hasRecordings && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (audioRef.current) {
+                                audioRef.current.currentTime = entry.start_time
+                                if (audioRef.current.paused) {
+                                  audioRef.current.play()
+                                }
+                              }
+                            }}
+                            className="play-section-trigger govuk-link govuk-link--no-visited-state govuk-!-margin-top-4 govuk-!-margin-bottom-4"
+                          >
+                            <Play className="size-4" />
+                            <span className="govuk-visually-hidden">
+                              Play section from{' '}
+                            </span>
+                            {formatTime(entry.start_time)}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <TranscriptionTextArea control={control} index={index} />
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </form>
+    </FormProvider>
   )
 }

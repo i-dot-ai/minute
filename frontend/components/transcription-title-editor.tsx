@@ -1,12 +1,9 @@
-import { Button } from '@/components/ui/button'
 import { JobStatus } from '@/lib/client'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
   saveTranscriptionTranscriptionsTranscriptionIdPatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
-import { cn } from '@/lib/utils'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Edit } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -87,19 +84,26 @@ export const TranscriptionTitleEditor = ({
   }
 
   return (
-    <div className="flex items-baseline gap-2">
-      <h1 className={cn('text-3xl font-bold', { 'text-gray-400': !title })}>
-        {form.watch('title') || placeholder}
-      </h1>
-      <Button
+    <>
+      <h1 className="govuk-heading-xl">{form.watch('title') || placeholder}</h1>
+      <button
         onClick={() => {
           setEditing(true)
         }}
-        variant="ghost"
-        className="text-slate-500"
+        data-module="govuk-button"
+        className="govuk-button govuk-button--secondary"
       >
-        <Edit /> Rename
-      </Button>
-    </div>
+        Rename
+      </button>
+      <button
+        onClick={() => {
+          setEditing(true)
+        }}
+        data-module="govuk-button"
+        className="govuk-button govuk-button--warning"
+      >
+        Delete
+      </button>
+    </>
   )
 }

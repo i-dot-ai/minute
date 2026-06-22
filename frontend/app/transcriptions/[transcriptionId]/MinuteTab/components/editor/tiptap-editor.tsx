@@ -28,6 +28,7 @@ import {
   Strikethrough as StrikethroughIcon,
   List as UnorderedListIcon,
 } from './Icons'
+import { Save } from 'lucide-react'
 
 function SimpleEditor({
   initialContent,
@@ -35,12 +36,16 @@ function SimpleEditor({
   isEditing,
   currentTranscription,
   hideCitations,
+  onSave,
+  onCancel,
 }: {
   initialContent: string
   onContentChange: (newContent: string) => void
   isEditing: boolean
   currentTranscription: Transcription
   hideCitations: boolean
+  onSave?: () => void
+  onCancel?: () => void
 }) {
   const {
     citationPopover,
@@ -97,11 +102,10 @@ function SimpleEditor({
                   const match = domNode.textContent?.match(citationRegex)
                   if (match) {
                     const index = parseInt(match[1], 10)
-                    const rect = domNode.getBoundingClientRect()
                     posthog.capture('citation_clicked', {
                       citationIndex: index,
                     })
-                    handleCitationClick(index, rect)
+                    handleCitationClick(index)
                     return true
                   }
                 }
@@ -176,7 +180,7 @@ function SimpleEditor({
   }
 
   return (
-    <div className="relative rounded-md border border-gray-300">
+    <div>
       {isEditing && (
         <div className="flex items-center justify-between border-b border-gray-300 bg-gray-50 p-2">
           <div className="flex items-center">
@@ -187,7 +191,7 @@ function SimpleEditor({
                 disabled={!editorObject.can().undo()}
                 type="button"
               >
-                <RotateLeft size={20} />
+                <RotateLeft className="size-4" />
               </button>
               <button
                 className="rounded p-1 hover:bg-gray-200 disabled:opacity-50"
@@ -195,7 +199,7 @@ function SimpleEditor({
                 disabled={!editorObject.can().redo()}
                 type="button"
               >
-                <RotateRight size={20} />
+                <RotateRight className="size-4" />
               </button>
             </div>
             <div className="mr-4 flex space-x-1">
@@ -206,7 +210,7 @@ function SimpleEditor({
                 onClick={toggleBold}
                 type="button"
               >
-                <BoldIcon size={20} />
+                <BoldIcon className="size-4" />
               </button>
               <button
                 className={cn('rounded p-1 hover:bg-gray-200', {
@@ -215,7 +219,7 @@ function SimpleEditor({
                 onClick={toggleItalic}
                 type="button"
               >
-                <ItalicIcon size={20} />
+                <ItalicIcon className="size-4" />
               </button>
 
               <button
@@ -225,7 +229,7 @@ function SimpleEditor({
                 onClick={toggleStrike}
                 type="button"
               >
-                <StrikethroughIcon size={20} />
+                <StrikethroughIcon className="size-4" />
               </button>
             </div>
             <div className="mr-4 flex space-x-1">
@@ -236,7 +240,7 @@ function SimpleEditor({
                 onClick={toggleCode}
                 type="button"
               >
-                <CodeIcon size={20} />
+                <CodeIcon className="size-4" />
               </button>
             </div>
             <div className="flex space-x-1">
@@ -247,7 +251,7 @@ function SimpleEditor({
                 onClick={toggleBulletList}
                 type="button"
               >
-                <UnorderedListIcon size={20} />
+                <UnorderedListIcon className="size-4" />
               </button>
               <button
                 className={cn('rounded p-1 hover:bg-gray-200', {
@@ -256,7 +260,7 @@ function SimpleEditor({
                 onClick={toggleOrderedList}
                 type="button"
               >
-                <OrderedListIcon size={20} />
+                <OrderedListIcon className="size-4" />
               </button>
               <button
                 className={cn('rounded p-1 hover:bg-gray-200', {
@@ -270,6 +274,22 @@ function SimpleEditor({
                 H3
               </button>
             </div>
+          </div>
+          <div className="govuk-button-group govuk-!-margin-bottom-0">
+            <button
+              type="button"
+              className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+              onClick={onCancel}
+            >
+              Discard
+            </button>
+            <button
+              type="button"
+              className="govuk-button govuk-!-margin-bottom-0"
+              onClick={onSave}
+            >
+              <Save className="size-4" /> Save changes
+            </button>
           </div>
         </div>
       )}

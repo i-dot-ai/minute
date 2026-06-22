@@ -1,11 +1,14 @@
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { Transcription } from '@/lib/client'
-import { CitationPopoverState } from '@/hooks/use-citation-popover'
+'use client'
+
 import CitationPopoverContent from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/citation-popover'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { CitationPopoverState } from '@/hooks/use-citation-popover'
+import { Transcription } from '@/lib/client'
 
 interface CitationPopoverWrapperProps {
   citationPopover: CitationPopoverState | null
@@ -23,26 +26,28 @@ export function CitationPopoverWrapper({
   if (!citationPopover) return null
 
   return (
-    <Popover open={isPopoverOpen} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild>
-        <div
-          style={{
-            position: 'fixed',
-            left: citationPopover.x,
-            top: citationPopover.y,
-            width: 1,
-            height: 1,
-          }}
-        />
-      </PopoverTrigger>
-      <PopoverContent className="w-[600px]">
-        {transcription?.dialogue_entries && (
-          <CitationPopoverContent
-            dialogueEntries={transcription.dialogue_entries}
-            selectedIndex={citationPopover.index}
-          />
-        )}
-      </PopoverContent>
-    </Popover>
+    <Dialog open={isPopoverOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="flex max-h-[85vh] flex-col gap-4 sm:max-w-2xl">
+        <DialogTitle className="govuk-heading-m govuk-!-margin-bottom-0">
+          Transcript excerpt
+        </DialogTitle>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {transcription?.dialogue_entries && (
+            <CitationPopoverContent
+              dialogueEntries={transcription.dialogue_entries}
+              selectedIndex={citationPopover.index}
+            />
+          )}
+        </div>
+        <DialogClose asChild>
+          <button
+            type="button"
+            className="govuk-button govuk-button--secondary"
+          >
+            Close
+          </button>
+        </DialogClose>
+      </DialogContent>
+    </Dialog>
   )
 }

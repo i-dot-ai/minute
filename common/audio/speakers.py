@@ -45,7 +45,7 @@ def group_dialogue_entries_by_speaker(
 
 def normalize_speaker_labels(entries: list[DialogueEntry]) -> list[DialogueEntry]:
     """
-    Normalize speaker labels to sequential numbers starting from 0.
+    Normalize speaker labels to sequential numbers starting from 1.
 
     Args:
         entries: List of DialogueEntry objects
@@ -54,7 +54,7 @@ def normalize_speaker_labels(entries: list[DialogueEntry]) -> list[DialogueEntry
         List of DialogueEntry objects with normalized speaker labels
     """
     speaker_map: dict[str, str] = {}
-    current_speaker_index = 0
+    current_speaker_index = 1
 
     normalized_entries = []
     for entry in entries:
@@ -78,17 +78,17 @@ def add_speaker_labels_to_dialogue_entries(
     entries: list[DialogueEntry],
 ) -> list[DialogueEntry]:
     """
-    Add 'Unknown speaker' prefix to speaker labels.
+    Add 'Speaker' prefix to speaker labels.
 
     Args:
         entries: List of DialogueEntry objects
 
     Returns:
-        List of DialogueEntry objects with 'Unknown speaker' prefix added to speaker labels
+        List of DialogueEntry objects with 'Speaker' prefix added to speaker labels
     """
     return [
         DialogueEntry(
-            speaker=f"Unknown speaker {entry['speaker']}",
+            speaker=f"Speaker {entry['speaker']}",
             text=entry["text"],
             start_time=entry["start_time"],
             end_time=entry["end_time"],

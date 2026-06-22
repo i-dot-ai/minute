@@ -2,17 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import { Pause, Play, Square } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog'
 
 interface RecordingControlProps {
   stream: MediaStream | null
@@ -338,64 +328,63 @@ export default function RecordingControl({
       >
         <canvas ref={canvasRef} className="size-full" />
         {!isRecording && (
-          <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+          <p className="govuk-body">
             Audio visualization will appear here when recording
-          </div>
+          </p>
         )}
         {isRecording && !stream && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100/80 text-sm text-gray-500 dark:bg-gray-800/80 dark:text-gray-400">
-            Connecting to audio stream...
-          </div>
+          <p className="govuk-body">Connecting to audio stream...</p>
         )}
       </div>
 
       {isRecording && (
-        <div className="flex justify-between gap-2">
-          <Button
+        <div className="govuk-button-group flex w-full gap-2">
+          <button
             type="button"
             onClick={togglePause}
-            variant="outline"
-            className="flex-1"
+            className="govuk-button govuk-button--secondary min-w-72"
           >
             {isPaused ? (
               <>
-                <Play className="mr-2 size-4" />
-                Resume Recording
+                <Play />
+                Resume recording
               </>
             ) : (
               <>
-                <Pause className="mr-2 size-4" />
-                Pause Recording
+                <Pause />
+                Pause recording
               </>
             )}
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
             onClick={handleStopRecording}
-            variant="destructive"
-            className="flex-1"
+            className="govuk-button min-w-72"
           >
-            <Square className="mr-2 size-4" />
-            Stop Recording
-          </Button>
+            <Square />
+            End recording
+          </button>
         </div>
       )}
 
       <AlertDialog open={showStopDialog} onOpenChange={setShowStopDialog}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Stop Recording?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to stop recording? You won&apos;t be able to
-              resume recording after stopping.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmStop}>
-              Stop Recording
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          <h1 className="govuk-heading-l">End recording?</h1>
+          <p className="govuk-body">
+            You won&apos;t be able to resume recording after stopping.
+          </p>
+          <div className="govuk-button-group">
+            <button className="govuk-button" onClick={confirmStop}>
+              {/* <Square /> */}
+              End recording
+            </button>
+            <button
+              className="govuk-button govuk-button--secondary"
+              onClick={() => setShowStopDialog(false)}
+            >
+              Cancel
+            </button>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
     </div>

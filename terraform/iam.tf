@@ -10,6 +10,8 @@ data "aws_iam_policy_document" "ecs_exec_custom_policy" {
     resources = [
       "${module.app_bucket.arn}/app_data/*",
       "${module.app_bucket.arn}/app_data",
+      "${module.app_bucket.arn}/restricted/*",
+      "${module.app_bucket.arn}/restricted",
     ]
   }
 

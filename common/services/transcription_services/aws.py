@@ -37,7 +37,7 @@ class AWSTranscribeAdapter(TranscriptionAdapter):
             TranscriptionJobName=job_name,
             Media={"MediaFileUri": s3_uri},
             OutputBucketName=settings.DATA_S3_BUCKET,
-            OutputKey=f"app_data/transcribe-output/{file_name}/",
+            OutputKey=f"restricted/transcribe-output/{file_name}/",
             LanguageCode="en-GB",
             Settings={"ShowSpeakerLabels": True, "MaxSpeakerLabels": 30},
         )

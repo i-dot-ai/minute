@@ -14,6 +14,10 @@ export const SAVED_TRANSCRIPTIONS_NAV_STEP_INDEX = 6
 export const TEMPLATES_NAV_STEP_INDEX = 8
 export const SETTINGS_NAV_STEP_INDEX = 12
 
+export type OnboardingStepData = {
+  href: string
+}
+
 export const onboardingSteps: Step[] = [
   {
     target: 'body',
@@ -46,6 +50,7 @@ export const onboardingSteps: Step[] = [
     placement: 'bottom',
     blockTargetInteraction: false,
     buttons: ['back', 'close'],
+    data: { href: '/new' } satisfies OnboardingStepData,
   },
   {
     target: '[data-onboarding="new-transcription-page"]',
@@ -60,6 +65,7 @@ export const onboardingSteps: Step[] = [
     placement: 'bottom',
     blockTargetInteraction: false,
     buttons: ['back', 'close'],
+    data: { href: '/transcriptions' } satisfies OnboardingStepData,
   },
   {
     target: '[data-onboarding="saved-transcriptions-page"]',
@@ -73,6 +79,7 @@ export const onboardingSteps: Step[] = [
     placement: 'bottom',
     blockTargetInteraction: false,
     buttons: ['back', 'close'],
+    data: { href: '/templates' } satisfies OnboardingStepData,
   },
   {
     target: '[data-onboarding="templates-page"]',
@@ -98,6 +105,7 @@ export const onboardingSteps: Step[] = [
     placement: 'bottom',
     blockTargetInteraction: false,
     buttons: ['back', 'close'],
+    data: { href: '/settings' } satisfies OnboardingStepData,
   },
   {
     target: '[data-onboarding="settings-page"]',

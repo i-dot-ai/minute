@@ -1,5 +1,7 @@
 'use client'
 
+import type { OnboardingStepData } from '@/hooks/use-onboarding-tour'
+import Link from 'next/link'
 import type { TooltipRenderProps } from 'react-joyride'
 
 export function GovukJoyrideTooltip({
@@ -10,7 +12,8 @@ export function GovukJoyrideTooltip({
   step,
   tooltipProps,
 }: TooltipRenderProps) {
-  const { buttons, content, title } = step
+  const { buttons, content, locale, title } = step
+  const navHref = (step.data as OnboardingStepData | undefined)?.href
 
   return (
     <div
@@ -58,6 +61,11 @@ export function GovukJoyrideTooltip({
             className="govuk-button govuk-button--secondary"
             {...backProps}
           />
+        )}
+        {navHref && (
+          <Link href={navHref} className="govuk-button">
+            {locale.next ?? 'Next'}
+          </Link>
         )}
         {buttons.includes('primary') && (
           <button type="button" className="govuk-button" {...primaryProps} />

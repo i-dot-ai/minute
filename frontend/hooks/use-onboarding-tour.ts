@@ -9,6 +9,7 @@ export const RESTART_ONBOARDING_TOUR_EVENT = 'restart-onboarding-tour'
 export function requestOnboardingTourRestart() {
   window.dispatchEvent(new Event(RESTART_ONBOARDING_TOUR_EVENT))
 }
+export const WELCOME_STEP_INDEX = 0
 export const NEW_TRANSCRIPTION_NAV_STEP_INDEX = 4
 export const SAVED_TRANSCRIPTIONS_NAV_STEP_INDEX = 6
 export const TEMPLATES_NAV_STEP_INDEX = 8
@@ -23,6 +24,8 @@ export const onboardingSteps: Step[] = [
     target: 'body',
     placement: 'center',
     skipScroll: true,
+    buttons: ['close'],
+    data: { href: '/' } satisfies OnboardingStepData,
     content:
       'We have recently updated the styling of the app. Everything is in the same place, just with a new look. Take this tour to see the changes.',
     title: 'Welcome to Minute',
@@ -115,19 +118,17 @@ export const onboardingSteps: Step[] = [
   },
 ]
 
-type UseOnboardingTourOptions = Omit<
-  Props,
-  'steps' | 'continuous' | 'scrollToFirstStep'
->
+type UseOnboardingTourOptions = Omit<Props, 'continuous' | 'scrollToFirstStep'>
 
 export function useOnboardingTour({
   options,
   onEvent,
   run = true,
+  steps = onboardingSteps,
   ...props
 }: UseOnboardingTourOptions = {}) {
   return useJoyride({
-    steps: onboardingSteps,
+    steps,
     run,
     continuous: true,
     scrollToFirstStep: true,

@@ -9,10 +9,11 @@ import {
   SETTINGS_NAV_STEP_INDEX,
   TEMPLATES_NAV_STEP_INDEX,
   useOnboardingTour,
+  WELCOME_STEP_INDEX,
 } from '@/hooks/use-onboarding-tour'
 import { ACTIONS, EVENTS, STATUS } from 'react-joyride'
 import { usePathname, useRouter } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 const NAV_STEP_ADVANCES: Record<string, number> = {
   '/new': NEW_TRANSCRIPTION_NAV_STEP_INDEX,
@@ -39,14 +40,35 @@ export function OnboardingTour() {
   const router = useRouter()
   const [run, setRun] = useState(getInitialRun)
   const [stepIndex, setStepIndex] = useState(getInitialStepIndex)
+  const prevPathnameRef = useRef(pathname)
+  const originPathRef = useRef<string | null>(null)
+
+  const steps = useMemo(() => {
+    if (pathname !== '/') return onboardingSteps
+    return onboardingSteps.map((step, index) => {
+      if (index !== WELCOME_STEP_INDEX) return step
+      return {
+        target: step.target,
+        placement: step.placement,
+        skipScroll: step.skipScroll,
+        content: step.content,
+        title: step.title,
+      }
+    })
+  }, [pathname])
 
   const finishTour = useCallback(() => {
     localStorage.setItem(ONBOARDING_STORAGE_KEY, 'done')
     setRun(false)
-    router.push('/')
-  }, [router])
+    const origin = originPathRef.current
+    originPathRef.current = null
+    if (origin && origin !== pathname) {
+      router.push(origin)
+    }
+  }, [pathname, router])
 
   const restartTour = useCallback(() => {
+    originPathRef.current = null
     localStorage.removeItem(ONBOARDING_STORAGE_KEY)
     setStepIndex(0)
     setRun(false)
@@ -60,6 +82,15 @@ export function OnboardingTour() {
   }, [restartTour])
 
   useEffect(() => {
+    if (run && originPathRef.current === null) {
+      originPathRef.current = pathname
+    }
+    if (!run) {
+      originPathRef.current = null
+    }
+  }, [run, pathname])
+
+  useEffect(() => {
     if (!run) return
     if (stepIndex >= onboardingSteps.length) {
       finishTour()
@@ -69,15 +100,28 @@ export function OnboardingTour() {
   }, [finishTour, run, stepIndex])
 
   useEffect(() => {
+    const prevPathname = prevPathnameRef.current
+    prevPathnameRef.current = pathname
+
     const navStepIndex = NAV_STEP_ADVANCES[pathname]
     if (navStepIndex !== undefined && stepIndex === navStepIndex) {
       setStepIndex(navStepIndex + 1)
+      return
+    }
+
+    if (
+      pathname === '/' &&
+      stepIndex === WELCOME_STEP_INDEX &&
+      prevPathname !== '/'
+    ) {
+      setStepIndex(WELCOME_STEP_INDEX + 1)
     }
   }, [pathname, stepIndex])
 
   const { Tour } = useOnboardingTour({
     run,
     stepIndex,
+    steps,
     onEvent: (data) => {
       if (
         data.type === EVENTS.TOUR_END ||

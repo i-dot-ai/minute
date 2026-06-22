@@ -134,6 +134,8 @@ services:
 
   localstack: # LocalStack container
     image: localstack/localstack:latest
+    env_file:
+      - .env
     ports:
       - 4566:4566
       - 4510-4559:4510-4559
@@ -143,18 +145,11 @@ services:
       - ./localstack-setup.sh:/etc/localstack/init/ready.d/script.sh
     environment:
       - AWS_DEFAULT_REGION=eu-west-2
-      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-}
-      - TRANSCRIPTION_QUEUE_NAME=${TRANSCRIPTION_QUEUE_NAME}
-      - TRANSCRIPTION_DEADLETTER_QUEUE_NAME=${TRANSCRIPTION_DEADLETTER_QUEUE_NAME}
-      - LLM_QUEUE_NAME=${LLM_QUEUE_NAME}
-      - LLM_DEADLETTER_QUEUE_NAME=${LLM_DEADLETTER_QUEUE_NAME}
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
     healthcheck:
       test: ["CMD", "test", "-f", "/ready.txt"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
       start_period: 30s
 
 volumes:

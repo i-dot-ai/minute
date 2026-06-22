@@ -118,7 +118,12 @@ export const onboardingSteps: Step[] = [
   },
 ]
 
-type UseOnboardingTourOptions = Omit<Props, 'continuous' | 'scrollToFirstStep'>
+type UseOnboardingTourOptions = Omit<
+  Props,
+  'continuous' | 'scrollToFirstStep' | 'steps'
+> & {
+  steps?: Props['steps']
+}
 
 export function useOnboardingTour({
   options,

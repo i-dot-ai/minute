@@ -293,29 +293,33 @@ function TabRecorder({
   return (
     <div className="space-y-4">
       {recordedAudio ? (
-        <div className="govuk-!-margin-bottom-9">
-          <h2 className="govuk-heading-l">Your recording</h2>
-          <audio
-            src={URL.createObjectURL(recordedAudio)}
-            controls
-            className="w-full"
-          />
-          <div className="govuk-button-group govuk-!-margin-top-2">
-            <a
-              role="button"
-              href={URL.createObjectURL(recordedAudio)}
-              download={`audio-file.${getFileExtensionFromBlob(recordedAudio)}`}
-              className="govuk-button govuk-button--secondary"
-            >
-              Download audio
-            </a>
-            <button
-              type="button"
-              className="govuk-link link--warning"
-              onClick={() => setDiscardDialogOpen(true)}
-            >
-              Discard recording
-            </button>
+        <div className="govuk-grid-row">
+          <div className="govuk-grid-column-one-third">
+            <h2 className="govuk-heading-m">Your recording:</h2>
+          </div>
+          <div className="govuk-grid-column-two-thirds">
+            <audio
+              src={URL.createObjectURL(recordedAudio)}
+              controls
+              className="w-full"
+            />
+            <div className="govuk-button-group govuk-!-margin-top-2">
+              <a
+                role="button"
+                href={URL.createObjectURL(recordedAudio)}
+                download={`audio-file.${getFileExtensionFromBlob(recordedAudio)}`}
+                className="govuk-button govuk-button--secondary"
+              >
+                Download audio
+              </a>
+              <button
+                type="button"
+                className="govuk-link link--warning"
+                onClick={() => setDiscardDialogOpen(true)}
+              >
+                Discard recording
+              </button>
+            </div>
           </div>
         </div>
       ) : (

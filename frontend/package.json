@@ -14,7 +14,6 @@
     "public-site:build": "node scripts/build-public-site.mjs"
   },
   "dependencies": {
-    "@govuk-one-login/service-header": "^6.0.0",
     "@hey-api/client-next": "^0.5.1",
     "@i-dot-ai-npm/utilities-auth": "^1.0.0-EN-1538.1",
     "@radix-ui/react-accordion": "^1.2.11",

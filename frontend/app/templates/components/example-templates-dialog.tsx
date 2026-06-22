@@ -32,7 +32,7 @@ export function ExampleTemplatesDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild type="button">
-        <button className="govuk-link">Try an example</button>
+        <button className="govuk-button govuk-button--secondary">Try an example</button>
       </DialogTrigger>
       <DialogContent>
         <DialogTitle className="govuk-heading-l">

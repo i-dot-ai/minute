@@ -27,7 +27,7 @@ export function TranscriptionsList({
             key={transcription.id}
             className="transcriptions__list-item govuk-!-padding-top-3 govuk-!-padding-bottom-3 flex items-center justify-between"
           >
-            <div className="flex-2">
+            <div className={`${transcription.status === 'completed' ? 'flex-2' : 'flex-1'}`}>
               <h3 className="govuk-heading-s govuk-!-margin-bottom-1">
                 <Link
                   href={`/transcriptions/${transcription.id}`}

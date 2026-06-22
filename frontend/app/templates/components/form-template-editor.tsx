@@ -22,14 +22,9 @@ export const FormTemplateEditor = ({
   })
   return (
     <form
-      className="flex flex-col gap-4"
       onSubmit={form.handleSubmit(onSubmit)}
     >
       <div className="govuk-button-group">
-        <button type="submit" className="govuk-button">
-          <Save className="size-4" />
-          Save
-        </button>
         <ExampleTemplatesDialog
           examples={exampleFormTemplates}
           onSelectTemplate={(template) => form.reset(template)}
@@ -62,11 +57,17 @@ export const FormTemplateEditor = ({
         <label className="govuk-label govuk-label--m" htmlFor="name">
           Template name
         </label>
+        <div id="name-hint" className="govuk-hint">
+          A short memorable name to help you find this template later.
+        </div>
         <input
+          required
           className="govuk-input"
           id="name"
           type="text"
-          {...form.register('name')}
+          {...form.register('name', {
+            required: { value: true, message: 'Template name required' },
+          })}
         />
       </div>
       <div className="govuk-form-group">
@@ -74,12 +75,11 @@ export const FormTemplateEditor = ({
           Description
         </label>
         <div id="description-hint" className="govuk-hint">
-          A description to help identify the template.
+          A description to help identify the template, NOT a style guide or instructions for the summary.
         </div>
-        <textarea
-          className="govuk-textarea"
+        <input
+          className="govuk-input"
           id="description"
-          rows={10}
           {...form.register('description', {
             required: { value: true, message: 'Description required' },
           })}
@@ -210,6 +210,12 @@ export const FormTemplateEditor = ({
           }
         >
           <Plus className="size-4" /> Add question
+        </button>
+      </div>
+      <div className="govuk-button-group">
+        <button type="submit" className="govuk-button govuk-button--start">
+          <Save />
+          Save template
         </button>
       </div>
     </form>

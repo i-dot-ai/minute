@@ -23,9 +23,6 @@ export const DocumentTemplateEditor = ({
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
       <div className="govuk-button-group">
-        <button type="submit" className="govuk-button">
-          <Save className="size-4" /> Save
-        </button>
         <ExampleTemplatesDialog
           examples={exampleDocumentTemplates}
           onSelectTemplate={(template) => form.reset(template)}
@@ -68,10 +65,13 @@ export const DocumentTemplateEditor = ({
           A short memorable name to help you find this template later.
         </div>
         <input
+          required
           className="govuk-input"
           id="name"
           type="text"
-          {...form.register('name')}
+          {...form.register('name', {
+            required: { value: true, message: 'Template name required' },
+          })}
         />
       </div>
 
@@ -80,13 +80,12 @@ export const DocumentTemplateEditor = ({
           Description
         </label>
         <div id="description-hint" className="govuk-hint">
-          A description to help identify the template - for example, who&apos;s
-          it for or when to use it.
+          A description to help identify the template, NOT a style guide or instructions for the summary.
         </div>
-        <textarea
-          className="govuk-textarea"
+        <input
+          className="govuk-input"
           id="description"
-          rows={10}
+          type="text"
           {...form.register('description', {
             required: { value: true, message: 'Description required' },
           })}
@@ -115,6 +114,9 @@ export const DocumentTemplateEditor = ({
           )}
         />
       </div>
+      <button type="submit" className="govuk-button govuk-button--start">
+        <Save /> Save template
+      </button>
     </form>
   )
 }

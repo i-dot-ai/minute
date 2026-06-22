@@ -40,43 +40,47 @@ export const AudioUploadForm = () => {
     <>
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div
-            className={`govuk-form-group${fileError ? 'govuk-form-group--error' : ''}`}
-          >
-            <label
-              className="govuk-label govuk-fieldset__legend--l"
-              htmlFor="file-upload"
-              id="file-upload-label"
-            >
-              Select a file to upload
-            </label>
+          <div className="govuk-grid-row govuk-!-margin-bottom-6">
+            <div className="govuk-grid-column-one-third">
+              <label
+                className="govuk-label govuk-fieldset__legend--m"
+                htmlFor="file-upload"
+                id="file-upload-label"
+              >
+                Select a file to upload
+              </label>
 
-            <div id="file-upload-hint" className="govuk-hint">
-              Maximum file size: 5GB. Please ensure that all participants are
-              aware that they have been recorded.
+              <div id="file-upload-hint" className="govuk-hint">
+                Maximum file size: 5GB. Please ensure that all participants are
+                aware that they have been recorded.
+              </div>
             </div>
-            {fileError && (
-              <p id="file-upload-error" className="govuk-error-message">
-                <span className="govuk-visually-hidden">Error:</span>
-                {fileError}
-              </p>
-            )}
-            <div
-              ref={wrapperRef}
-              className="govuk-file-upload-wrapper"
-              data-module="govuk-file-upload"
-            >
-              <input
-                ref={inputRef}
-                className="govuk-file-upload"
-                id="file-upload"
-                name="file"
-                type="file"
-                accept="audio/*,video/*"
-                aria-describedby="file-upload-hint file-upload-error"
-              />
+
+            <div className="govuk-grid-column-two-thirds">
+              {fileError && (
+                <p id="file-upload-error" className="govuk-error-message">
+                  <span className="govuk-visually-hidden">Error:</span>
+                  {fileError}
+                </p>
+              )}
+              <div
+                ref={wrapperRef}
+                className="govuk-file-upload-wrapper"
+                data-module="govuk-file-upload"
+              >
+                <input
+                  ref={inputRef}
+                  className="govuk-file-upload"
+                  id="file-upload"
+                  name="file"
+                  type="file"
+                  accept="audio/*,video/*"
+                  aria-describedby="file-upload-hint file-upload-error"
+                />
+              </div>
             </div>
           </div>
+
           <StartTranscriptionSection isShowing={!!file} isPending={isPending} />
         </form>
       </FormProvider>

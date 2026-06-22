@@ -56,7 +56,6 @@ export const AudioUploadForm = () => {
               </div>
             </div>
 
-
             <div className="govuk-grid-column-two-thirds">
               {fileError && (
                 <p id="file-upload-error" className="govuk-error-message">
@@ -84,7 +83,7 @@ export const AudioUploadForm = () => {
 
           <StartTranscriptionSection isShowing={!!file} isPending={isPending} />
         </form>
-      </FormProvider >
+      </FormProvider>
     </>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { FeatureFlags } from '@/lib/feature-flags'
+import Link from 'next/link'
 import { useFeatureFlagPayload } from 'posthog-js/react'
 
 export function PosthogBanner() {
@@ -31,6 +32,11 @@ export function PosthogBanner() {
           <p className="govuk-notification-banner__heading">
             {payload.message ||
               'There is a problem with Minute. Our team is working to resolve this issue as quickly as possible. We apologise for any inconvenience'}
+            {payload.linkHref && (
+              <Link href={payload.linkHref} className="govuk-link">
+                {payload.linkText || 'Learn more'}
+              </Link>
+            )}
           </p>
         </div>
       </div>

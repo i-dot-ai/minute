@@ -20,7 +20,7 @@ export const onboardingSteps: Step[] = [
     placement: 'center',
     skipScroll: true,
     content:
-      'We have recently updated the styling of the app. Everything is the same place, just with a new look. Take this tour to see the changes.',
+      'We have recently updated the styling of the app. Everything is in the same place, just with a new look. Take this tour to see the changes.',
     title: 'Welcome to Minute',
   },
   {
@@ -42,7 +42,7 @@ export const onboardingSteps: Step[] = [
   {
     target: '[data-onboarding="new-transcription-nav"]',
     content:
-      'Click "New transcription" to open see how to start a new transcription.',
+      'Click "New transcription" to see how to start a new transcription.',
     placement: 'bottom',
     blockTargetInteraction: false,
     buttons: ['back', 'close'],
@@ -102,7 +102,7 @@ export const onboardingSteps: Step[] = [
   {
     target: '[data-onboarding="settings-page"]',
     content:
-      'You can set your data retention period here. After this period the transcriptions, minutes and audio recording will be permentantly deleted.',
+      'You can set your data retention period here. After this period the transcriptions, minutes and audio recording will be permanently deleted.',
     placement: 'right',
   },
 ]

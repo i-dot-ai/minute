@@ -33,9 +33,12 @@ export function PosthogBanner() {
             {payload.message ||
               'There is a problem with Minute. Our team is working to resolve this issue as quickly as possible. We apologise for any inconvenience'}
             {payload.linkHref && (
-              <Link href={payload.linkHref} className="govuk-link">
-                {payload.linkText || 'Learn more'}
-              </Link>
+              <>
+                {' '}
+                <Link href={payload.linkHref} className="govuk-link">
+                  {payload.linkText || 'Learn more'}
+                </Link>
+              </>
             )}
           </p>
         </div>

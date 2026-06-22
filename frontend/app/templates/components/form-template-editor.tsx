@@ -21,9 +21,7 @@ export const FormTemplateEditor = ({
     },
   })
   return (
-    <form
-      onSubmit={form.handleSubmit(onSubmit)}
-    >
+    <form onSubmit={form.handleSubmit(onSubmit)}>
       <div className="govuk-button-group">
         <ExampleTemplatesDialog
           examples={exampleFormTemplates}
@@ -75,7 +73,8 @@ export const FormTemplateEditor = ({
           Description
         </label>
         <div id="description-hint" className="govuk-hint">
-          A description to help identify the template, NOT a style guide or instructions for the summary.
+          A description to help identify the template, NOT a style guide or
+          instructions for the summary.
         </div>
         <input
           className="govuk-input"

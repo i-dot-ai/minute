@@ -93,28 +93,29 @@ export const SpeakerEditor = ({
         </button>
       </DialogTrigger>
       <DialogContent>
-        <DialogTitle className="govuk-heading-m">Edit speaker names</DialogTitle>
+        <DialogTitle className="govuk-heading-m">
+          Edit speaker names
+        </DialogTitle>
         <DialogDescription className="govuk-body">
           You can edit speaker names here or on the transcript. Click on the
           speaker&apos;s name to edit
         </DialogDescription>
-        <div className="max-h-[50vh] overflow-y-auto overflow-x-hidden">
+        <div className="max-h-[50vh] overflow-x-hidden overflow-y-auto">
           <ul>
-            {Array.from(speakers.entries()).map(([speaker, speakerEntries], index) => (
-              <li key={speaker} className="govuk-!-margin-bottom-4">
-                <SpeakerNameField
-                  label={`Speaker ${index + 1}`}
-                  inputId={`speaker-name-${index}`}
-                  value={draftNames[speaker] ?? speaker}
-                  onChange={(value) =>
-                    setDraftNames((prev) => ({ ...prev, [speaker]: value }))
-                  }
-                />
-                <ul className="govuk-button-group govuk-!-margin-top-2">
-                  {src &&
-                    speakerEntries
-                      .slice(0, 3)
-                      .map((entry) => (
+            {Array.from(speakers.entries()).map(
+              ([speaker, speakerEntries], index) => (
+                <li key={speaker} className="govuk-!-margin-bottom-4">
+                  <SpeakerNameField
+                    label={`Speaker ${index + 1}`}
+                    inputId={`speaker-name-${index}`}
+                    value={draftNames[speaker] ?? speaker}
+                    onChange={(value) =>
+                      setDraftNames((prev) => ({ ...prev, [speaker]: value }))
+                    }
+                  />
+                  <ul className="govuk-button-group govuk-!-margin-top-2">
+                    {src &&
+                      speakerEntries.slice(0, 3).map((entry) => (
                         <li key={entry.start_time}>
                           <PlayClipButton
                             src={src}
@@ -123,13 +124,18 @@ export const SpeakerEditor = ({
                           />
                         </li>
                       ))}
-                </ul>
-              </li>
-            ))}
+                  </ul>
+                </li>
+              )
+            )}
           </ul>
         </div>
         <div className="govuk-button-group govuk-!-margin-top-4">
-          <button type="button" className="govuk-button" onClick={handleSaveAll}>
+          <button
+            type="button"
+            className="govuk-button"
+            onClick={handleSaveAll}
+          >
             <Save className="size-4" /> Save all
           </button>
           <button

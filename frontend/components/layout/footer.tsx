@@ -13,7 +13,9 @@ export const Footer = () => (
             viewBox="0 0 64 60"
             height="30"
             width="32"
-            fill="currentcolor" className="govuk-footer__crown col-span-2 md:col-span-1 h-18">
+            fill="currentcolor"
+            className="govuk-footer__crown col-span-2 h-18 md:col-span-1"
+          >
             <g>
               <circle cx="20" cy="17.6" r="3.7" />
               <circle cx="10.2" cy="23.5" r="3.7" />
@@ -31,41 +33,93 @@ export const Footer = () => (
             alt="i.AI Incubator for Artificial Intelligence"
             width={120}
             height={72}
-            className="col-span-4 md:col-span-3 lg:col-span-2 h-18 w-auto"
+            className="col-span-4 h-18 w-auto md:col-span-3 lg:col-span-2"
           />
           <Image
             src="/logos/dsit-mono-dark.svg"
             alt="Department for Science, Innovation and Technology"
             width={120}
             height={72}
-            className="col-span-4 md:col-span-3 lg:col-span-2 h-18 w-auto"
+            className="col-span-4 h-18 w-auto md:col-span-3 lg:col-span-2"
           />
-          <p className="col-span-12 mt-4 md:mt-0 md:col-span-5 lg:col-span-7">
-            The incubator for AI (i.AI) sits within the Department for Science Innovation and Technology, bringing together
-            expert technical talent to pioneer transformative applications of AI for the public good.
+          <p className="col-span-12 mt-4 md:col-span-5 md:mt-0 lg:col-span-7">
+            The incubator for AI (i.AI) sits within the Department for Science
+            Innovation and Technology, bringing together expert technical talent
+            to pioneer transformative applications of AI for the public good.
           </p>
         </div>
-        <nav aria-label="Footer navigation" className="grid grid-cols-12 gap-4 mt-4">
-          <h2 className="col-span-4 md:col-span-3 row-start-1">Navigation</h2>
-          <ul className="col-span-4 md:col-span-3 row-start-2">
-            <li><Link className="govuk-link" href="/">Home</Link></li>
-            <li><Link className="govuk-link" href="/new">New transcription</Link></li>
-            <li><Link className="govuk-link" href="/transcriptions">Saved transcriptions</Link></li>
-            <li><Link className="govuk-link" href="/templates">Templates</Link></li>
-            <li><Link className="govuk-link" href="/settings">Settings</Link></li>
-          </ul>
-          <h2 className="mt-4 md:mt-0 col-span-4 md:col-span-3 row-start-1">Links</h2>
-          <ul className="col-span-4 md:col-span-3 row-start-2">
-            <li><Link className="govuk-link" href="/privacy">Privacy</Link></li>
-            <li><Link className="govuk-link" href="/support">Support</Link></li>
-          </ul>
-          <h2 className="mt-4 md:mt-0 col-span-4 md:col-span-3 lg:col-span-2 row-start-1">Connect</h2>
-          <ul className="col-span-4 md:col-span-6 row-start-2">
+        <nav
+          aria-label="Footer navigation"
+          className="mt-4 grid grid-cols-12 gap-4"
+        >
+          <h2 className="col-span-4 row-start-1 md:col-span-3">Navigation</h2>
+          <ul className="col-span-4 row-start-2 md:col-span-3">
             <li>
-              <a className="govuk-link break-words" href="mailto:minute-support@cabinetoffice.gov.uk">Email minute-support@cabinetoffice.gov.uk</a>
+              <Link className="govuk-link" href="/">
+                Home
+              </Link>
             </li>
-            <li><a className="govuk-link" href="https://www.linkedin.com/company/i-dot-ai/posts/?feedView=all">LinkedIn</a></li>
-            <li><a className="govuk-link" href="https://github.com/i-dot-ai">Github</a></li>
+            <li>
+              <Link className="govuk-link" href="/new">
+                New transcription
+              </Link>
+            </li>
+            <li>
+              <Link className="govuk-link" href="/transcriptions">
+                Saved transcriptions
+              </Link>
+            </li>
+            <li>
+              <Link className="govuk-link" href="/templates">
+                Templates
+              </Link>
+            </li>
+            <li>
+              <Link className="govuk-link" href="/settings">
+                Settings
+              </Link>
+            </li>
+          </ul>
+          <h2 className="col-span-4 row-start-1 mt-4 md:col-span-3 md:mt-0">
+            Links
+          </h2>
+          <ul className="col-span-4 row-start-2 md:col-span-3">
+            <li>
+              <Link className="govuk-link" href="/privacy">
+                Privacy
+              </Link>
+            </li>
+            <li>
+              <Link className="govuk-link" href="/support">
+                Support
+              </Link>
+            </li>
+          </ul>
+          <h2 className="col-span-4 row-start-1 mt-4 md:col-span-3 md:mt-0 lg:col-span-2">
+            Connect
+          </h2>
+          <ul className="col-span-4 row-start-2 md:col-span-6">
+            <li>
+              <a
+                className="govuk-link break-words"
+                href="mailto:minute-support@cabinetoffice.gov.uk"
+              >
+                Email minute-support@cabinetoffice.gov.uk
+              </a>
+            </li>
+            <li>
+              <a
+                className="govuk-link"
+                href="https://www.linkedin.com/company/i-dot-ai/posts/?feedView=all"
+              >
+                LinkedIn
+              </a>
+            </li>
+            <li>
+              <a className="govuk-link" href="https://github.com/i-dot-ai">
+                Github
+              </a>
+            </li>
           </ul>
         </nav>
         <div className="govuk-footer__meta">
@@ -77,23 +131,30 @@ export const Footer = () => (
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 483.2 195.7"
               height="17"
-              width="41">
+              width="41"
+            >
               <path
                 fill="currentColor"
-                d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145" />
+                d="M421.5 142.8V.1l-50.7 32.3v161.1h112.4v-50.7zm-122.3-9.6A47.12 47.12 0 0 1 221 97.8c0-26 21.1-47.1 47.1-47.1 16.7 0 31.4 8.7 39.7 21.8l42.7-27.2A97.63 97.63 0 0 0 268.1 0c-36.5 0-68.3 20.1-85.1 49.7A98 98 0 0 0 97.8 0C43.9 0 0 43.9 0 97.8s43.9 97.8 97.8 97.8c36.5 0 68.3-20.1 85.1-49.7a97.76 97.76 0 0 0 149.6 25.4l19.4 22.2h3v-87.8h-80l24.3 27.5zM97.8 145c-26 0-47.1-21.1-47.1-47.1s21.1-47.1 47.1-47.1 47.2 21 47.2 47S123.8 145 97.8 145"
+              />
             </svg>
             <span className="govuk-footer__licence-description">
               All content is available under the
               <a
                 className="govuk-footer__link"
                 href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
-                rel="license">Open Government Licence v3.0</a>, except where otherwise stated
+                rel="license"
+              >
+                Open Government Licence v3.0
+              </a>
+              , except where otherwise stated
             </span>
           </div>
           <div className="govuk-footer__meta-item">
             <a
               className="govuk-footer__link govuk-footer__copyright-logo"
-              href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/">
+              href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"
+            >
               © Crown copyright
             </a>
           </div>

@@ -106,7 +106,10 @@ export function NewMinuteDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="govuk-button govuk-button--inverse govuk-!-margin-bottom-2 govuk-!-margin-top-6" disabled={disabled}>
+        <button
+          className="govuk-button govuk-button--inverse govuk-!-margin-bottom-2 govuk-!-margin-top-6"
+          disabled={disabled}
+        >
           <Plus className="size-4" />
           Generate new summary
         </button>
@@ -126,7 +129,10 @@ export function NewMinuteDialog({
             <div>
               <div className="govuk-form-group">
                 <h3 className="govuk-label-wrapper">
-                  <label className="govuk-label govuk-label--m" htmlFor="agenda">
+                  <label
+                    className="govuk-label govuk-label--m"
+                    htmlFor="agenda"
+                  >
                     Agenda (
                     {selectedTemplate.agenda_usage == 'optional'
                       ? 'optional'
@@ -135,8 +141,8 @@ export function NewMinuteDialog({
                   </label>
                 </h3>
                 <div id="agenda-hint" className="govuk-hint">
-                  Add discussion points from the meeting that should be included in
-                  the summary.
+                  Add discussion points from the meeting that should be included
+                  in the summary.
                 </div>
                 <textarea
                   className="govuk-textarea"

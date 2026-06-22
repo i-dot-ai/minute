@@ -29,7 +29,7 @@ export const DownloadButton = ({
         download
         role="button"
         onClick={onClick(recordings[0])}
-        className={`govuk-button ${inverse ? "govuk-button--inverse" : "govuk-button--secondary"}`}
+        className={`govuk-button ${inverse ? 'govuk-button--inverse' : 'govuk-button--secondary'}`}
       >
         <Download className="size-4" /> Download
       </a>
@@ -38,7 +38,9 @@ export const DownloadButton = ({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className={`govuk-button ${inverse ? "govuk-button--inverse" : "govuk-button--secondary"}`}>
+        <button
+          className={`govuk-button ${inverse ? 'govuk-button--inverse' : 'govuk-button--secondary'}`}
+        >
           <Download className="size-4" /> Download
         </button>
       </PopoverTrigger>

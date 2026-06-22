@@ -1,12 +1,12 @@
 import Link from 'next/link'
-import { Suspense } from 'react';
-import { ServiceNavigation } from '@/components/layout/service-navigation';
+import { Suspense } from 'react'
+import { ServiceNavigation } from '@/components/layout/service-navigation'
 
 export const Header = async () => {
   return (
     <header>
       <div className="govuk-header">
-        <div className="govuk-header__container govuk-width-container flex justify-between items-center">
+        <div className="govuk-header__container govuk-width-container flex items-center justify-between">
           <div className="govuk-header__logo">
             <Link href="/" className="govuk-header__homepage-link">
               <svg
@@ -16,7 +16,10 @@ export const Header = async () => {
                 viewBox="0 0 324 60"
                 height="30"
                 width="162"
-                fill="currentcolor" className="govuk-header__logotype" aria-label="GOV.UK">
+                fill="currentcolor"
+                className="govuk-header__logotype"
+                aria-label="GOV.UK"
+              >
                 <title>GOV.UK</title>
                 <g>
                   <circle cx="20" cy="17.6" r="3.7" />
@@ -32,9 +35,7 @@ export const Header = async () => {
                 <circle className="govuk-logo-dot" cx="226" cy="36" r="7.3" />
                 <path d="M93.94 41.25c.4 1.81 1.2 3.21 2.21 4.62 1 1.4 2.21 2.41 3.61 3.21s3.21 1.2 5.22 1.2 3.61-.4 4.82-1c1.4-.6 2.41-1.4 3.21-2.41.8-1 1.4-2.01 1.61-3.01s.4-2.01.4-3.01v.14h-10.86v-7.02h20.07v24.08h-8.03v-5.56c-.6.8-1.38 1.61-2.19 2.41-.8.8-1.81 1.2-2.81 1.81-1 .4-2.21.8-3.41 1.2s-2.41.4-3.81.4a18.56 18.56 0 0 1-14.65-6.63c-1.6-2.01-3.01-4.41-3.81-7.02s-1.4-5.62-1.4-8.83.4-6.02 1.4-8.83a20.45 20.45 0 0 1 19.46-13.65c3.21 0 4.01.2 5.82.8 1.81.4 3.61 1.2 5.02 2.01 1.61.8 2.81 2.01 4.01 3.21s2.21 2.61 2.81 4.21l-7.63 4.41c-.4-1-1-1.81-1.61-2.61-.6-.8-1.4-1.4-2.21-2.01-.8-.6-1.81-1-2.81-1.4-1-.4-2.21-.4-3.61-.4-2.01 0-3.81.4-5.22 1.2-1.4.8-2.61 1.81-3.61 3.21s-1.61 2.81-2.21 4.62c-.4 1.81-.6 3.71-.6 5.42s.8 5.22.8 5.22Zm57.8-27.9c3.21 0 6.22.6 8.63 1.81 2.41 1.2 4.82 2.81 6.62 4.82S170.2 24.39 171 27s1.4 5.62 1.4 8.83-.4 6.02-1.4 8.83-2.41 5.02-4.01 7.02-4.01 3.61-6.62 4.82-5.42 1.81-8.63 1.81-6.22-.6-8.63-1.81-4.82-2.81-6.42-4.82-3.21-4.41-4.01-7.02-1.4-5.62-1.4-8.83.4-6.02 1.4-8.83 2.41-5.02 4.01-7.02 4.01-3.61 6.42-4.82 5.42-1.81 8.63-1.81Zm0 36.73c1.81 0 3.61-.4 5.02-1s2.61-1.81 3.61-3.01 1.81-2.81 2.21-4.41c.4-1.81.8-3.61.8-5.62 0-2.21-.2-4.21-.8-6.02s-1.2-3.21-2.21-4.62c-1-1.2-2.21-2.21-3.61-3.01s-3.21-1-5.02-1-3.61.4-5.02 1c-1.4.8-2.61 1.81-3.61 3.01s-1.81 2.81-2.21 4.62c-.4 1.81-.8 3.61-.8 5.62 0 2.41.2 4.21.8 6.02.4 1.81 1.2 3.21 2.21 4.41s2.21 2.21 3.61 3.01c1.4.8 3.21 1 5.02 1Zm36.32 7.96-12.24-44.15h9.83l8.43 32.77h.4l8.23-32.77h9.83L200.3 58.04h-12.24Zm74.14-7.96c2.18 0 3.51-.6 3.51-.6 1.2-.6 2.01-1 2.81-1.81s1.4-1.81 1.81-2.81a13 13 0 0 0 .8-4.01V13.9h8.63v28.15c0 2.41-.4 4.62-1.4 6.62-.8 2.01-2.21 3.61-3.61 5.02s-3.41 2.41-5.62 3.21-4.62 1.2-7.02 1.2-5.02-.4-7.02-1.2c-2.21-.8-4.01-1.81-5.62-3.21s-2.81-3.01-3.61-5.02-1.4-4.21-1.4-6.62V13.9h8.63v26.95c0 1.61.2 3.01.8 4.01.4 1.2 1.2 2.21 2.01 2.81.8.8 1.81 1.4 2.81 1.81 0 0 1.34.6 3.51.6Zm34.22-36.18v18.92l15.65-18.92h10.82l-15.03 17.32 16.03 26.83h-10.21l-11.44-20.21-5.62 6.22v13.99h-8.83V13.9" />
               </svg>
-              <span className="govuk-header__product-name">
-                Minute
-              </span>
+              <span className="govuk-header__product-name">Minute</span>
             </Link>
           </div>
           <p className="govuk-phase-banner__content">
@@ -42,7 +43,14 @@ export const Header = async () => {
               Alpha
             </strong>
             <span className="govuk-phase-banner__text text-white">
-              This is a new service. Help us improve it and <a className="govuk-link govuk-link--inverse" href="https://surveys.publishing.service.gov.uk/s/MAQMR1/">give your feedback</a>.
+              This is a new service. Help us improve it and{' '}
+              <a
+                className="govuk-link govuk-link--inverse"
+                href="https://surveys.publishing.service.gov.uk/s/MAQMR1/"
+              >
+                give your feedback
+              </a>
+              .
             </span>
           </p>
         </div>

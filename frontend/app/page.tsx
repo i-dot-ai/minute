@@ -10,27 +10,56 @@ import { Suspense } from 'react'
 export default function Home() {
   return (
     <>
-      <div className="govuk-main-wrapper" style={{ backgroundColor: '#1d70b8' }}>
+      <div
+        className="govuk-main-wrapper"
+        style={{ backgroundColor: '#1d70b8' }}
+      >
         <div className="govuk-width-container">
-          <div className="govuk-grid-row flex items-center justify-center h-full">
+          <div className="govuk-grid-row flex h-full items-center justify-center">
             <div className="govuk-grid-column-two-thirds">
-              <h1 className="govuk-heading-xl govuk-!-margin-bottom-6" style={{ color: '#ffffff' }}>
+              <h1
+                className="govuk-heading-xl govuk-!-margin-bottom-6"
+                style={{ color: '#ffffff' }}
+              >
                 Minute
               </h1>
               <p className="govuk-body-l" style={{ color: '#ffffff' }}>
-                Transcribe and summarise your meetings with AI. Suitable up to <span className="govuk-!-font-weight-bold">OFFICIAL SENSITIVE</span>.
+                Transcribe and summarise your meetings with AI. Suitable up to{' '}
+                <span className="govuk-!-font-weight-bold">
+                  OFFICIAL SENSITIVE
+                </span>
+                .
               </p>
               <div className="govuk-button-group">
-                <a href="/new" role="button" className="govuk-button govuk-button--start govuk-button--inverse">
+                <a
+                  href="/new"
+                  role="button"
+                  className="govuk-button govuk-button--start govuk-button--inverse"
+                >
                   Start a new transcription
-                  <svg className="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false">
-                    <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
+                  <svg
+                    className="govuk-button__start-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="17.5"
+                    height="19"
+                    viewBox="0 0 33 40"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M0 0h13l20 20-20 20H0l20-20z"
+                    />
                   </svg>
                 </a>
               </div>
             </div>
             <div className="govuk-grid-column-one-third">
-              <img src="/images/minute-icon-waveform.svg" alt="" className="w-full" />
+              <img
+                src="/images/minute-icon-waveform.svg"
+                alt=""
+                className="w-full"
+              />
             </div>
           </div>
         </div>
@@ -42,11 +71,18 @@ export default function Home() {
             <Suspense fallback={null}>
               <RecentOfflineRecordingsSection />
             </Suspense>
-            <h2 className="govuk-heading-l govuk-!-margin-top-6">Your recent transcriptions</h2>
+            <h2 className="govuk-heading-l govuk-!-margin-top-6">
+              Your recent transcriptions
+            </h2>
             <Suspense fallback={<div>Loading...</div>}>
               <RecentTranscriptions />
             </Suspense>
-            <Link href="/transcriptions" className="govuk-link govuk-!-font-weight-bold govuk-!-margin-bottom-6">View all transcriptions</Link>
+            <Link
+              href="/transcriptions"
+              className="govuk-link govuk-!-font-weight-bold govuk-!-margin-bottom-6"
+            >
+              View all transcriptions
+            </Link>
           </div>
         </div>
 

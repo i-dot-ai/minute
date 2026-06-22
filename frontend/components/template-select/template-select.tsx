@@ -135,7 +135,10 @@ export const UserTemplateSelect = ({
         const checked = value.id === template.id
 
         return (
-          <div key={template.id} className="govuk-radios__item upload-radio__item">
+          <div
+            key={template.id}
+            className="govuk-radios__item upload-radio__item"
+          >
             <input
               className="govuk-radios__input"
               id={template.id!}

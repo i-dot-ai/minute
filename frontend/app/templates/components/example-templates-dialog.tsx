@@ -32,9 +32,7 @@ export function ExampleTemplatesDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild type="button">
-        <button className="govuk-link">
-          Try an example
-        </button>
+        <button className="govuk-link">Try an example</button>
       </DialogTrigger>
       <DialogContent>
         <DialogTitle className="govuk-heading-l">
@@ -42,10 +40,18 @@ export function ExampleTemplatesDialog({
         </DialogTitle>
         <ul className="govuk-list">
           {examples.map((template, index) => (
-            <li key={index} className="homepage__list-item flex items-center justify-between govuk-!-padding-top-3" >
+            <li
+              key={index}
+              className="homepage__list-item govuk-!-padding-top-3 flex items-center justify-between"
+            >
               <div>
-                <button onClick={() => handleSelectExample(template)} className="govuk-link">
-                  <h2 className="govuk-heading-m govuk-!-margin-bottom-1">{template.name}</h2>
+                <button
+                  onClick={() => handleSelectExample(template)}
+                  className="govuk-link"
+                >
+                  <h2 className="govuk-heading-m govuk-!-margin-bottom-1">
+                    {template.name}
+                  </h2>
                 </button>
                 <p className="govuk-body">{template.description}</p>
               </div>

@@ -19,12 +19,7 @@ import {
   getUserTemplatesUserTemplatesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  CopyPlus,
-  FileWarning,
-  Loader2,
-  Plus,
-} from 'lucide-react'
+import { CopyPlus, FileWarning, Loader2, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
@@ -56,7 +51,9 @@ export const UserTemplatesList = () => {
     return (
       <div>
         <FileWarning />
-        <p className="govuk-body">Something went wrong fetching your templates</p>
+        <p className="govuk-body">
+          Something went wrong fetching your templates
+        </p>
       </div>
     )
   }
@@ -64,15 +61,21 @@ export const UserTemplatesList = () => {
   return (
     <>
       <div data-onboarding="document-templates">
-
-        <h2 className="govuk-heading-l govuk-!-margin-bottom-2" id="document-templates">
+        <h2
+          className="govuk-heading-l govuk-!-margin-bottom-2"
+          id="document-templates"
+        >
           Document templates
         </h2>
         <p className="govuk-body">
           Customise the structure and style of your minutes.
         </p>
         <div className="govuk-button-group">
-          <Link className="govuk-button" role="button" href="/templates/new?type=document">
+          <Link
+            className="govuk-button"
+            role="button"
+            href="/templates/new?type=document"
+          >
             <Plus className="size-4" /> Create a new document template
           </Link>
           <ExampleTemplatesDialog
@@ -82,30 +85,35 @@ export const UserTemplatesList = () => {
             examples={exampleDocumentTemplates}
           />
         </div>
-        {
-          documentTemplates.length > 0 && (
-            <>
-              <h3 className="govuk-heading-m govuk-!-margin-bottom-2">
-                Your document templates
-              </h3>
-              <ul className="govuk-list">
-                {documentTemplates.map((template) => (
-                  <TemplateListItem template={template} key={template.id} />
-                ))}
-              </ul>
-            </>
-          )
-        }
+        {documentTemplates.length > 0 && (
+          <>
+            <h3 className="govuk-heading-m govuk-!-margin-bottom-2">
+              Your document templates
+            </h3>
+            <ul className="govuk-list">
+              {documentTemplates.map((template) => (
+                <TemplateListItem template={template} key={template.id} />
+              ))}
+            </ul>
+          </>
+        )}
       </div>
       <div data-onboarding="form-templates">
-        <h2 className="govuk-heading-l govuk-!-margin-bottom-2" id="form-templates">
+        <h2
+          className="govuk-heading-l govuk-!-margin-bottom-2"
+          id="form-templates"
+        >
           Form templates
         </h2>
         <p className="govuk-body">
           For complex summarisation of meetings into many questions and answers.
         </p>
         <div className="govuk-button-group">
-          <Link href="/templates/new?type=form" className="govuk-button" role="button">
+          <Link
+            href="/templates/new?type=form"
+            className="govuk-button"
+            role="button"
+          >
             <Plus className="size-4" /> Create a new form template
           </Link>
           <ExampleTemplatesDialog
@@ -115,20 +123,18 @@ export const UserTemplatesList = () => {
             examples={exampleFormTemplates}
           />
         </div>
-        {
-          formTemplates.length > 0 && (
-            <>
-              <h3 className="govuk-heading-m govuk-!-margin-bottom-2">
-                Your form templates
-              </h3>
-              <ul className="govuk-list">
-                {formTemplates.map((template) => (
-                  <TemplateListItem template={template} key={template.id} />
-                ))}
-              </ul>
-            </>
-          )
-        }
+        {formTemplates.length > 0 && (
+          <>
+            <h3 className="govuk-heading-m govuk-!-margin-bottom-2">
+              Your form templates
+            </h3>
+            <ul className="govuk-list">
+              {formTemplates.map((template) => (
+                <TemplateListItem template={template} key={template.id} />
+              ))}
+            </ul>
+          </>
+        )}
       </div>
     </>
   )
@@ -154,10 +160,15 @@ const TemplateListItem = ({ template }: { template: TemplateResponse }) => {
     },
   })
   return (
-    <li key={template.id} className="transcriptions__list-item govuk-!-padding-top-3 govuk-!-padding-bottom-3 flex items-start justify-between">
+    <li
+      key={template.id}
+      className="transcriptions__list-item govuk-!-padding-top-3 govuk-!-padding-bottom-3 flex items-start justify-between"
+    >
       <div>
         <h4 className="govuk-heading-s govuk-!-margin-bottom-1">
-          <Link className="govuk-link" href={`/templates/${template.id}`}>{template.name}</Link>
+          <Link className="govuk-link" href={`/templates/${template.id}`}>
+            {template.name}
+          </Link>
         </h4>
         <p className="govuk-body govuk-!-margin-bottom-1">
           {template.description}
@@ -199,20 +210,19 @@ const DeleteConfirmDialog = ({
 }) => (
   <AlertDialog>
     <AlertDialogTrigger asChild>
-      <button
-        className="govuk-link link--warning"
-      >
-        Delete
-      </button>
+      <button className="govuk-link link--warning">Delete</button>
     </AlertDialogTrigger>
     <AlertDialogContent>
       <h1 className="govuk-heading-l">Delete Template</h1>
       <p className="govuk-body">
-        Are you sure you want to delete <strong>{template.name}</strong>?
-        This action cannot be undone.
+        Are you sure you want to delete <strong>{template.name}</strong>? This
+        action cannot be undone.
       </p>
       <div className="govuk-button-group">
-        <button className="govuk-button govuk-button--warning" onClick={onConfirm}>
+        <button
+          className="govuk-button govuk-button--warning"
+          onClick={onConfirm}
+        >
           Delete
         </button>
         <button className="govuk-button govuk-button--secondary">Cancel</button>

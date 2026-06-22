@@ -40,7 +40,10 @@ export function CitationPopoverWrapper({
           )}
         </div>
         <DialogClose asChild>
-          <button type="button" className="govuk-button govuk-button--secondary">
+          <button
+            type="button"
+            className="govuk-button govuk-button--secondary"
+          >
             Close
           </button>
         </DialogClose>

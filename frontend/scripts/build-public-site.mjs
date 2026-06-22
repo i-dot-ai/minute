@@ -1,4 +1,11 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -9,16 +16,39 @@ const publicSiteRoot = join(frontendRoot, 'public-site')
 const contentRoot = join(frontendRoot, 'content')
 
 const pages = [
-  { title: 'Minute', contentPath: join(publicSiteRoot, 'pages/index.html'), outputPath: 'index.html' },
-  { title: 'Privacy Notice', contentPath: join(contentRoot, 'privacy-page.html'), outputPath: 'privacy/index.html', wrap: true },
-  { title: 'Support', contentPath: join(contentRoot, 'support-page.html'), outputPath: 'support/index.html', wrap: true },
+  {
+    title: 'Minute',
+    contentPath: join(publicSiteRoot, 'pages/index.html'),
+    outputPath: 'index.html',
+  },
+  {
+    title: 'Privacy Notice',
+    contentPath: join(contentRoot, 'privacy-page.html'),
+    outputPath: 'privacy/index.html',
+    wrap: true,
+  },
+  {
+    title: 'Support',
+    contentPath: join(contentRoot, 'support-page.html'),
+    outputPath: 'support/index.html',
+    wrap: true,
+  },
 ]
 
-const headPartial = readFileSync(join(publicSiteRoot, 'partials/head.html'), 'utf8')
-const headerPartial = readFileSync(join(publicSiteRoot, 'partials/header.html'), 'utf8')
-const footerPartial = readFileSync(join(publicSiteRoot, 'partials/footer.html'), 'utf8')
+const headPartial = readFileSync(
+  join(publicSiteRoot, 'partials/head.html'),
+  'utf8'
+)
+const headerPartial = readFileSync(
+  join(publicSiteRoot, 'partials/header.html'),
+  'utf8'
+)
+const footerPartial = readFileSync(
+  join(publicSiteRoot, 'partials/footer.html'),
+  'utf8'
+)
 
-function wrapContent (html) {
+function wrapContent(html) {
   return `<div class="govuk-width-container govuk-main-wrapper">
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
@@ -28,7 +58,7 @@ function wrapContent (html) {
 </div>`
 }
 
-function renderPage (title, content) {
+function renderPage(title, content) {
   const head = headPartial.replace('{{TITLE}}', title)
 
   return `<!DOCTYPE html>
@@ -69,19 +99,41 @@ for (const page of pages) {
   writeFileSync(outputFile, html)
 }
 
-cpSync(join(publicSiteRoot, 'scripts'), join(dist, 'scripts'), { recursive: true })
+cpSync(join(publicSiteRoot, 'scripts'), join(dist, 'scripts'), {
+  recursive: true,
+})
 
 const govukDist = join(frontendRoot, 'node_modules/govuk-frontend/dist/govuk')
 const assetsDist = join(dist, 'assets')
 mkdirSync(assetsDist, { recursive: true })
-cpSync(join(govukDist, 'assets/images'), join(assetsDist, 'images'), { recursive: true })
-cpSync(join(govukDist, 'assets/fonts'), join(assetsDist, 'fonts'), { recursive: true })
-cpSync(join(govukDist, 'assets/manifest.json'), join(assetsDist, 'manifest.json'))
-cpSync(join(publicSiteRoot, 'assets/images'), join(assetsDist, 'images'), { recursive: true })
-cpSync(join(govukDist, 'govuk-frontend.min.css'), join(assetsDist, 'govuk-frontend.min.css'))
-cpSync(join(govukDist, 'govuk-frontend.min.js'), join(assetsDist, 'govuk-frontend.min.js'))
-cpSync(join(frontendRoot, 'styles/public-page.css'), join(assetsDist, 'public-page.css'))
+cpSync(join(govukDist, 'assets/images'), join(assetsDist, 'images'), {
+  recursive: true,
+})
+cpSync(join(govukDist, 'assets/fonts'), join(assetsDist, 'fonts'), {
+  recursive: true,
+})
+cpSync(
+  join(govukDist, 'assets/manifest.json'),
+  join(assetsDist, 'manifest.json')
+)
+cpSync(join(publicSiteRoot, 'assets/images'), join(assetsDist, 'images'), {
+  recursive: true,
+})
+cpSync(
+  join(govukDist, 'govuk-frontend.min.css'),
+  join(assetsDist, 'govuk-frontend.min.css')
+)
+cpSync(
+  join(govukDist, 'govuk-frontend.min.js'),
+  join(assetsDist, 'govuk-frontend.min.js')
+)
+cpSync(
+  join(frontendRoot, 'styles/public-page.css'),
+  join(assetsDist, 'public-page.css')
+)
 
-cpSync(join(frontendRoot, 'public/logos'), join(dist, 'logos'), { recursive: true })
+cpSync(join(frontendRoot, 'public/logos'), join(dist, 'logos'), {
+  recursive: true,
+})
 
 console.log(`Public site built to ${dist}`)

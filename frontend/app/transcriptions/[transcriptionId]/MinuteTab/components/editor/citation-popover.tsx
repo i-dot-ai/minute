@@ -24,8 +24,9 @@ export default function CitationPopoverContent({
         <div
           key={index}
           ref={index === selectedIndex ? selectedRef : null}
-          className={` transcription-text-area${index === selectedIndex ? ' transcription-text-area--playing' : ''
-            }`}
+          className={` transcription-text-area${
+            index === selectedIndex ? 'transcription-text-area--playing' : ''
+          }`}
         >
           <h2 className="govuk-heading-s">{entry.speaker}</h2>
           <p className="govuk-body">{entry.text}</p>

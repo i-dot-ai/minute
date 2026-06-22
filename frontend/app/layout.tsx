@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description: 'Minutes and transcriptions',
   icons: {
     icon: '/images/favicon.ico',
-  }
+  },
 }
 
 export default function RootLayout({

@@ -1,10 +1,6 @@
 'use client'
 
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { JobStatus } from '@/lib/client'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
@@ -84,7 +80,9 @@ export const RenameTranscriptionDialog = ({
             })
           })}
         >
-          <DialogTitle className="govuk-heading-l">Rename transcription</DialogTitle>
+          <DialogTitle className="govuk-heading-l">
+            Rename transcription
+          </DialogTitle>
           <div className="govuk-form-group">
             <label className="govuk-label" htmlFor="transcription-title">
               Title
@@ -98,11 +96,7 @@ export const RenameTranscriptionDialog = ({
             />
           </div>
           <div className="govuk-button-group">
-            <button
-              type="submit"
-              className="govuk-button"
-              disabled={isPending}
-            >
+            <button type="submit" className="govuk-button" disabled={isPending}>
               {isPending ? (
                 <>
                   <Loader2 className="size-4 animate-spin" /> Saving

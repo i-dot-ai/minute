@@ -37,34 +37,36 @@ export default function EditTemplatePage({
       <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
         <ol className="govuk-breadcrumbs__list">
           <li className="govuk-breadcrumbs__list-item">
-            <Link className="govuk-breadcrumbs__link" href="/">Home</Link>
+            <Link className="govuk-breadcrumbs__link" href="/">
+              Home
+            </Link>
           </li>
           <li className="govuk-breadcrumbs__list-item">
-            <Link className="govuk-breadcrumbs__link" href="/templates">Templates</Link>
+            <Link className="govuk-breadcrumbs__link" href="/templates">
+              Templates
+            </Link>
           </li>
         </ol>
       </nav>
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-two-thirds">
           <h1 className="govuk-heading-xl">Edit template</h1>
-          {
-            template ? (
-              <TemplateEditorForm
-                templateId={templateId}
-                defaultValues={{
-                  name: template.name,
-                  description: template.description,
-                  questions: template.questions,
-                  type: template.type,
-                  content: template.content,
-                }}
-              />
-            ) : (
-              <div className="flex justify-center">
-                <Loader2 className="animate-spin" />
-              </div>
-            )
-          }
+          {template ? (
+            <TemplateEditorForm
+              templateId={templateId}
+              defaultValues={{
+                name: template.name,
+                description: template.description,
+                questions: template.questions,
+                type: template.type,
+                content: template.content,
+              }}
+            />
+          ) : (
+            <div className="flex justify-center">
+              <Loader2 className="animate-spin" />
+            </div>
+          )}
         </div>
       </div>
     </div>

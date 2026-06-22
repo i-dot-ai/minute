@@ -5,20 +5,37 @@ import { usePathname } from 'next/navigation'
 export const ServiceNavigation = () => {
   const pathname = usePathname()
   return (
-    <section aria-label="Service information" className={`govuk-service-navigation ${pathname === '/' ? 'govuk-service-navigation--inverse' : ''}`} data-module="govuk-service-navigation">
+    <section
+      aria-label="Service information"
+      className={`govuk-service-navigation ${pathname === '/' ? 'govuk-service-navigation--inverse' : ''}`}
+      data-module="govuk-service-navigation"
+    >
       <div className="govuk-width-container">
         <div className="govuk-service-navigation__container">
-          <span className={`govuk-service-navigation__service-name ${pathname === '/' ? 'govuk-!-margin-right-3 govuk-service-navigation__item--active' : ''}`}>
-            <Link href="/" className={`govuk-service-navigation__link ${pathname === '/' ? 'govuk-!-padding-right-3' : ''}`}>
+          <span
+            className={`govuk-service-navigation__service-name ${pathname === '/' ? 'govuk-!-margin-right-3 govuk-service-navigation__item--active' : ''}`}
+          >
+            <Link
+              href="/"
+              className={`govuk-service-navigation__link ${pathname === '/' ? 'govuk-!-padding-right-3' : ''}`}
+            >
               Home
             </Link>
           </span>
           <nav aria-label="Menu" className="govuk-service-navigation__wrapper">
-            <button type="button" className="govuk-service-navigation__toggle govuk-js-service-navigation-toggle" aria-controls="navigation" hidden aria-hidden="true">
+            <button
+              type="button"
+              className="govuk-service-navigation__toggle govuk-js-service-navigation-toggle"
+              aria-controls="navigation"
+              hidden
+              aria-hidden="true"
+            >
               Menu
             </button>
             <ul className="govuk-service-navigation__list" id="navigation">
-              <li className={`govuk-service-navigation__item ${pathname.includes('/new') ? 'govuk-service-navigation__item--active' : ''}`}>
+              <li
+                className={`govuk-service-navigation__item ${pathname.includes('/new') ? 'govuk-service-navigation__item--active' : ''}`}
+              >
                 <Link
                   className="govuk-service-navigation__link"
                   href="/new"
@@ -27,7 +44,9 @@ export const ServiceNavigation = () => {
                   New transcription
                 </Link>
               </li>
-              <li className={`govuk-service-navigation__item ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__item--active' : ''}`}>
+              <li
+                className={`govuk-service-navigation__item ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__item--active' : ''}`}
+              >
                 <Link
                   className="govuk-service-navigation__link"
                   href="/transcriptions"
@@ -36,7 +55,9 @@ export const ServiceNavigation = () => {
                   Saved transcriptions
                 </Link>
               </li>
-              <li className={`govuk-service-navigation__item ${pathname.includes('/templates') ? 'govuk-service-navigation__item--active' : ''}`}>
+              <li
+                className={`govuk-service-navigation__item ${pathname.includes('/templates') ? 'govuk-service-navigation__item--active' : ''}`}
+              >
                 <Link
                   className="govuk-service-navigation__link"
                   href="/templates"
@@ -45,7 +66,9 @@ export const ServiceNavigation = () => {
                   Templates
                 </Link>
               </li>
-              <li className={`govuk-service-navigation__item ${pathname.includes('/settings') ? 'govuk-service-navigation__item--active' : ''}`}>
+              <li
+                className={`govuk-service-navigation__item ${pathname.includes('/settings') ? 'govuk-service-navigation__item--active' : ''}`}
+              >
                 <Link
                   className="govuk-service-navigation__link"
                   href="/settings"

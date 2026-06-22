@@ -47,8 +47,7 @@ const DialogOverlay = React.forwardRef<
   )
 })
 
-const wideModalClasses =
-  'max-h-[90vh] overflow-auto sm:max-w-4xl lg:max-w-5xl'
+const wideModalClasses = 'max-h-[90vh] overflow-auto sm:max-w-4xl lg:max-w-5xl'
 
 const DialogContent = React.forwardRef<
   HTMLDivElement,

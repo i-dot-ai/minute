@@ -34,31 +34,36 @@ export const onboardingSteps: Step[] = [
   },
   {
     target: '.govuk-service-navigation__wrapper',
-    content: 'You can also navigate across the app using the navigation bar here.',
+    content:
+      'You can also navigate across the app using the navigation bar here.',
     placement: 'bottom',
   },
   {
     target: '[data-onboarding="new-transcription-nav"]',
-    content: 'Click "New transcription" to open see how to start a new transcription.',
+    content:
+      'Click "New transcription" to open see how to start a new transcription.',
     placement: 'bottom',
     blockTargetInteraction: false,
     buttons: ['back', 'close'],
   },
   {
     target: '[data-onboarding="new-transcription-page"]',
-    content: 'You can use minute to record a virtual meeting in another tab, record audio directly from your device, or upload a file from your computer. Each step is explained when you click on through.',
+    content:
+      'You can use minute to record a virtual meeting in another tab, record audio directly from your device, or upload a file from your computer. Each step is explained when you click on through.',
     placement: 'top',
   },
   {
     target: '[data-onboarding="saved-transcriptions-nav"]',
-    content: 'Click "Saved transcriptions" to see where your transcriptions are stored.',
+    content:
+      'Click "Saved transcriptions" to see where your transcriptions are stored.',
     placement: 'bottom',
     blockTargetInteraction: false,
     buttons: ['back', 'close'],
   },
   {
     target: '[data-onboarding="saved-transcriptions-page"]',
-    content: 'All your saved transcriptions will be listed here. From this page you can view, edit, delete and generate new summaries.',
+    content:
+      'All your saved transcriptions will be listed here. From this page you can view, edit, delete and generate new summaries.',
     placement: 'right',
   },
   {
@@ -70,17 +75,20 @@ export const onboardingSteps: Step[] = [
   },
   {
     target: '[data-onboarding="templates-page"]',
-    content: 'Templates are used to customise the structure and style of your summaries. There are two types of templates:',
+    content:
+      'Templates are used to customise the structure and style of your summaries. There are two types of templates:',
     placement: 'left',
   },
   {
     target: '[data-onboarding="document-templates"]',
-    content: 'Document templates help to control the structure and style of your summaries.',
+    content:
+      'Document templates help to control the structure and style of your summaries.',
     placement: 'top',
   },
   {
     target: '[data-onboarding="form-templates"]',
-    content: 'Form templates are used by setting questions that should be answered in the summary. You can also customise the style that the answers should take.',
+    content:
+      'Form templates are used by setting questions that should be answered in the summary. You can also customise the style that the answers should take.',
     placement: 'top',
   },
   {
@@ -92,7 +100,8 @@ export const onboardingSteps: Step[] = [
   },
   {
     target: '[data-onboarding="settings-page"]',
-    content: 'You can set your data retention period here. After this period the transcriptions, minutes and audio recording will be permentantly deleted.',
+    content:
+      'You can set your data retention period here. After this period the transcriptions, minutes and audio recording will be permentantly deleted.',
     placement: 'right',
   },
 ]

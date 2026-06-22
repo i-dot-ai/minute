@@ -30,7 +30,7 @@ export const TemplateEditorToolbar = ({
   }
 
   return (
-    <Card className="rounded-none border border-2 border-(--govuk-input-border-colour) border-b-0 p-2">
+    <Card className="rounded-none border border-2 border-b-0 border-(--govuk-input-border-colour) p-2">
       <div className="flex flex-wrap gap-1">
         <Button
           type="button"

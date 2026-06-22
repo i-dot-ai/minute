@@ -295,10 +295,27 @@ function TabRecorder({
       {recordedAudio ? (
         <div className="govuk-!-margin-bottom-9">
           <h2 className="govuk-heading-l">Your recording</h2>
-          <audio src={URL.createObjectURL(recordedAudio)} controls className="w-full" />
+          <audio
+            src={URL.createObjectURL(recordedAudio)}
+            controls
+            className="w-full"
+          />
           <div className="govuk-button-group govuk-!-margin-top-2">
-            <a role="button" href={URL.createObjectURL(recordedAudio)} download={`audio-file.${getFileExtensionFromBlob(recordedAudio)}`} className="govuk-button govuk-button--secondary">Download audio</a>
-            <button type="button" className="govuk-link link--warning" onClick={() => setDiscardDialogOpen(true)}>Discard recording</button>
+            <a
+              role="button"
+              href={URL.createObjectURL(recordedAudio)}
+              download={`audio-file.${getFileExtensionFromBlob(recordedAudio)}`}
+              className="govuk-button govuk-button--secondary"
+            >
+              Download audio
+            </a>
+            <button
+              type="button"
+              className="govuk-link link--warning"
+              onClick={() => setDiscardDialogOpen(true)}
+            >
+              Discard recording
+            </button>
           </div>
         </div>
       ) : (
@@ -308,15 +325,25 @@ function TabRecorder({
               <>
                 <InstructionsTabs />
                 <p className="govuk-body">
-                  Remember to inform all participants that they are being recorded.
+                  Remember to inform all participants that they are being
+                  recorded.
                 </p>
                 <div className="govuk-form-group">
                   <h2>
-                    <label className="govuk-label govuk-label--l" htmlFor="microphone">
+                    <label
+                      className="govuk-label govuk-label--l"
+                      htmlFor="microphone"
+                    >
                       Choose microphone
                     </label>
                   </h2>
-                  <select className="govuk-select" id="microphone" name="microphone" value={selectedDeviceId} onChange={(e) => setSelectedDeviceId(e.target.value)}>
+                  <select
+                    className="govuk-select"
+                    id="microphone"
+                    name="microphone"
+                    value={selectedDeviceId}
+                    onChange={(e) => setSelectedDeviceId(e.target.value)}
+                  >
                     {audioDevices.map((device) => (
                       <option key={device.deviceId} value={device.deviceId}>
                         {device.label}
@@ -324,7 +351,11 @@ function TabRecorder({
                     ))}
                   </select>
                 </div>
-                <button type="button" onClick={startRecording} className="govuk-button govuk-button--start">
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  className="govuk-button govuk-button--start"
+                >
                   <Mic className="mr-2 size-4" />
                   Start recording
                 </button>

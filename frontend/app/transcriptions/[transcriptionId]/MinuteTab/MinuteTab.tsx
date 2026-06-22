@@ -10,7 +10,13 @@ import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTa
 import CopyButton from '@/components/ui/copy-button'
 import { MinuteListItem, Transcription } from '@/lib/client'
 import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
-import { AudioWaveform, DownloadIcon, Eye, EyeOffIcon, PencilIcon } from 'lucide-react'
+import {
+  AudioWaveform,
+  DownloadIcon,
+  Eye,
+  EyeOffIcon,
+  PencilIcon,
+} from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -46,11 +52,7 @@ export function MinuteTab({
       transcription.dialogue_entries || [],
       transcription.title || 'minutes.docx'
     )
-  }, [
-    exportState,
-    transcription.dialogue_entries,
-    transcription.title,
-  ])
+  }, [exportState, transcription.dialogue_entries, transcription.title])
 
   if (minutes.length == 0) {
     return (
@@ -67,10 +69,9 @@ export function MinuteTab({
   }
   return (
     <>
-      <div className="bg-[#8eb8dc] sm:sticky top-0 z-10 border-b border-(--govuk-border-colour) sm:mt-[-30px] sm:mx-[-20px] px-[20px] pt-[30px] pb-[10px]">
+      <div className="top-0 z-10 border-b border-(--govuk-border-colour) bg-[#8eb8dc] px-[20px] pt-[30px] pb-[10px] sm:sticky sm:mx-[-20px] sm:mt-[-30px]">
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-one-half govuk-grid-column-one-third-from-desktop">
-
             <div className="govuk-form-group govuk-!-margin-bottom-2">
               <label className="govuk-label" htmlFor="summary-history">
                 Choose a summary
@@ -84,7 +85,15 @@ export function MinuteTab({
                 value={selectedMinute}
               >
                 {minutes.map((minute, index) => {
-                  const date = new Date(minute.updated_datetime).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit', hour: 'numeric', minute: 'numeric' })
+                  const date = new Date(
+                    minute.updated_datetime
+                  ).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: '2-digit',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                  })
                   return (
                     <option value={`${index}`} key={minute.id}>
                       {minute.template_name} - {date}
@@ -101,7 +110,7 @@ export function MinuteTab({
               agenda={minutes[selectedMinute]?.agenda ?? undefined}
             />
           </div>
-        </div >
+        </div>
         {editState && (
           <>
             <div className="govuk-grid-row">
@@ -110,13 +119,35 @@ export function MinuteTab({
                   <label className="govuk-label" htmlFor="version">
                     Choose an edit version
                   </label>
-                  <select disabled={editState.isEditable} className="govuk-select w-full" id="version" name="version" onChange={(e) => editState.setVersion(Number(e.target.value))} value={editState.version}>
+                  <select
+                    disabled={editState.isEditable}
+                    className="govuk-select w-full"
+                    id="version"
+                    name="version"
+                    onChange={(e) =>
+                      editState.setVersion(Number(e.target.value))
+                    }
+                    value={editState.version}
+                  >
                     {editState.minuteVersions.map((version, index) => {
-                      const date = new Date(version.created_datetime).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit', hour: 'numeric', minute: 'numeric' })
-                      const versionNumber = editState.minuteVersions.length - index;
+                      const date = new Date(
+                        version.created_datetime
+                      ).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: '2-digit',
+                        hour: 'numeric',
+                        minute: 'numeric',
+                      })
+                      const versionNumber =
+                        editState.minuteVersions.length - index
                       return (
                         <option value={`${index}`} key={version.id}>
-                          {versionNumber} - {version.content_source === 'ai_edit' ? 'AI edited' : 'Manually edited'} - {date}
+                          {versionNumber} -{' '}
+                          {version.content_source === 'ai_edit'
+                            ? 'AI edited'
+                            : 'Manually edited'}{' '}
+                          - {date}
                         </option>
                       )
                     })}
@@ -162,8 +193,14 @@ export function MinuteTab({
                               onClick={editState.toggleHideCitations}
                               disabled={editState.isEditable}
                             >
-                              {editState.hideCitations ? <Eye className="size-4" /> : <EyeOffIcon className="size-4" />}
-                              {editState.hideCitations ? 'Show references' : 'Hide references'}
+                              {editState.hideCitations ? (
+                                <Eye className="size-4" />
+                              ) : (
+                                <EyeOffIcon className="size-4" />
+                              )}
+                              {editState.hideCitations
+                                ? 'Show references'
+                                : 'Hide references'}
                             </button>
                           )}
                         </>

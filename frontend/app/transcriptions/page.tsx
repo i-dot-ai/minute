@@ -9,15 +9,18 @@ export default function TranscriptionsPage() {
         <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
           <ol className="govuk-breadcrumbs__list">
             <li className="govuk-breadcrumbs__list-item">
-              <Link className="govuk-breadcrumbs__link" href="/">Home</Link>
+              <Link className="govuk-breadcrumbs__link" href="/">
+                Home
+              </Link>
             </li>
           </ol>
         </nav>
         <div className="govuk-grid-row">
-          <div className="govuk-grid-column-two-thirds-from-desktop" data-onboarding="saved-transcriptions-page">
-            <h1 className="govuk-heading-xl">
-              Saved transcriptions
-            </h1>
+          <div
+            className="govuk-grid-column-two-thirds-from-desktop"
+            data-onboarding="saved-transcriptions-page"
+          >
+            <h1 className="govuk-heading-xl">Saved transcriptions</h1>
             <Suspense fallback={<div>Loading...</div>}>
               <PaginatedTranscriptions />
             </Suspense>

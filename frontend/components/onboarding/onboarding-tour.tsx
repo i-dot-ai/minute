@@ -55,7 +55,8 @@ export function OnboardingTour() {
 
   useEffect(() => {
     window.addEventListener(RESTART_ONBOARDING_TOUR_EVENT, restartTour)
-    return () => window.removeEventListener(RESTART_ONBOARDING_TOUR_EVENT, restartTour)
+    return () =>
+      window.removeEventListener(RESTART_ONBOARDING_TOUR_EVENT, restartTour)
   }, [restartTour])
 
   useEffect(() => {

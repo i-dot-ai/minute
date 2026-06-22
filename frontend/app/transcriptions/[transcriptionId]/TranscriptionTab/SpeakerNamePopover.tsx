@@ -99,7 +99,11 @@ export const SpeakerNamePopover = ({
           >
             Update this occurrence
           </button>
-          <button type="button" className="govuk-button" onClick={handleUpdateAll}>
+          <button
+            type="button"
+            className="govuk-button"
+            onClick={handleUpdateAll}
+          >
             Update all occurrences
           </button>
           <button

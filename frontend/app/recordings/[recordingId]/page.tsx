@@ -35,10 +35,14 @@ export default function RecordingPage({
       <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
         <ol className="govuk-breadcrumbs__list">
           <li className="govuk-breadcrumbs__list-item">
-            <Link className="govuk-breadcrumbs__link" href="/">Home</Link>
+            <Link className="govuk-breadcrumbs__link" href="/">
+              Home
+            </Link>
           </li>
           <li className="govuk-breadcrumbs__list-item">
-            <Link className="govuk-breadcrumbs__link" href="/transcriptions">Transcriptions</Link>
+            <Link className="govuk-breadcrumbs__link" href="/transcriptions">
+              Transcriptions
+            </Link>
           </li>
         </ol>
       </nav>
@@ -52,7 +56,9 @@ export default function RecordingPage({
       {error && (
         <>
           <TriangleAlert />
-          <p className="govuk-body">Recording with id {recordingId} not found!</p>
+          <p className="govuk-body">
+            Recording with id {recordingId} not found!
+          </p>
         </>
       )}
       {recording && <RecordingUploadForm recording={recording} />}
@@ -85,10 +91,27 @@ function RecordingUploadForm({ recording }: { recording: RecordingDbItem }) {
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="govuk-!-margin-bottom-9">
           <h2 className="govuk-heading-l">Your recording</h2>
-          <audio src={URL.createObjectURL(recording.blob)} controls className="w-full" />
+          <audio
+            src={URL.createObjectURL(recording.blob)}
+            controls
+            className="w-full"
+          />
           <div className="govuk-button-group govuk-!-margin-top-2">
-            <a role="button" href={URL.createObjectURL(recording.blob)} download={`audio-file.${getFileExtensionFromBlob(recording.blob)}`} className="govuk-button govuk-button--secondary">Download audio</a>
-            <button type="button" className="govuk-link link--warning" onClick={() => setDiscardDialogOpen(true)}>Discard recording</button>
+            <a
+              role="button"
+              href={URL.createObjectURL(recording.blob)}
+              download={`audio-file.${getFileExtensionFromBlob(recording.blob)}`}
+              className="govuk-button govuk-button--secondary"
+            >
+              Download audio
+            </a>
+            <button
+              type="button"
+              className="govuk-link link--warning"
+              onClick={() => setDiscardDialogOpen(true)}
+            >
+              Discard recording
+            </button>
           </div>
         </div>
         <StartTranscriptionSection isPending={isPending} isShowing={true} />

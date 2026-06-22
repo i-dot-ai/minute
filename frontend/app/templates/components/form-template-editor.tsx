@@ -54,16 +54,20 @@ export const FormTemplateEditor = ({
       </div>
       <h2 className="govuk-heading-l">Template details</h2>
       <p className="govuk-body">
-        Add a name and description so you can find your template later. Name
-        and description are not used to generate your minute, any structure
-        and style instructions should be added to the template content
-        field.
+        Add a name and description so you can find your template later. Name and
+        description are not used to generate your minute, any structure and
+        style instructions should be added to the template content field.
       </p>
       <div className="govuk-form-group">
         <label className="govuk-label govuk-label--m" htmlFor="name">
           Template name
         </label>
-        <input className="govuk-input" id="name" type="text" {...form.register('name')} />
+        <input
+          className="govuk-input"
+          id="name"
+          type="text"
+          {...form.register('name')}
+        />
       </div>
       <div className="govuk-form-group">
         <label className="govuk-label govuk-label--m" htmlFor="description">
@@ -88,8 +92,8 @@ export const FormTemplateEditor = ({
           Style guide
         </label>
         <div id="content-hint" className="govuk-hint">
-          the &ldquo;Style guide&rdquo; to provide style
-          guidance that will apply every question.
+          the &ldquo;Style guide&rdquo; to provide style guidance that will
+          apply every question.
         </div>
         <textarea
           className="govuk-textarea"
@@ -105,16 +109,13 @@ export const FormTemplateEditor = ({
         </label>
         <div id="questions-hint" className="govuk-hint">
           Add questions that you would like to be answered based on the
-          transcript, for each question you can provide a description of how
-          to answer that question including any style guidance specific to
-          that question.
+          transcript, for each question you can provide a description of how to
+          answer that question including any style guidance specific to that
+          question.
         </div>
         <ul className="govuk-list govuk-list--spaced">
           {fieldArray.fields.map((field, index, array) => (
-            <li
-              key={field.id}
-              className="govuk-summary-card"
-            >
+            <li key={field.id} className="govuk-summary-card">
               <div>
                 <div className="govuk-summary-card__title-wrapper">
                   <h3 className="govuk-summary-card__title">
@@ -160,19 +161,37 @@ export const FormTemplateEditor = ({
                 </div>
                 <div className="govuk-summary-card__content">
                   <div className="govuk-form-group">
-                    <label className="govuk-label" htmlFor={`questions.${index}.title`}>
+                    <label
+                      className="govuk-label"
+                      htmlFor={`questions.${index}.title`}
+                    >
                       Question text
                     </label>
-                    <input className="govuk-input" id={`questions.${index}.title`} type="text" {...form.register(`questions.${index}.title`)} />
+                    <input
+                      className="govuk-input"
+                      id={`questions.${index}.title`}
+                      type="text"
+                      {...form.register(`questions.${index}.title`)}
+                    />
                   </div>
                   <div className="govuk-form-group">
-                    <label className="govuk-label" htmlFor={`questions.${index}.description`}>
+                    <label
+                      className="govuk-label"
+                      htmlFor={`questions.${index}.description`}
+                    >
                       Question description
                     </label>
                     <div id="questions-description-hint" className="govuk-hint">
-                      A description of how to answer the question, what information to include, and style guidance.
+                      A description of how to answer the question, what
+                      information to include, and style guidance.
                     </div>
-                    <textarea className="govuk-textarea" id={`questions.${index}.description`} rows={3} {...form.register(`questions.${index}.description`)} aria-describedby="questions-description-hint"></textarea>
+                    <textarea
+                      className="govuk-textarea"
+                      id={`questions.${index}.description`}
+                      rows={3}
+                      {...form.register(`questions.${index}.description`)}
+                      aria-describedby="questions-description-hint"
+                    ></textarea>
                   </div>
                 </div>
               </div>
@@ -192,7 +211,7 @@ export const FormTemplateEditor = ({
         >
           <Plus className="size-4" /> Add question
         </button>
-      </div >
-    </form >
+      </div>
+    </form>
   )
 }

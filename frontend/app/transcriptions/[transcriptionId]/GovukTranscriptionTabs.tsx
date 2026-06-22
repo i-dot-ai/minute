@@ -18,7 +18,11 @@ export function GovukTranscriptionTabs({
   useGovukModule(tabsRef, 'Tabs')
 
   return (
-    <div ref={tabsRef} className="govuk-tabs tabs--blue" data-module="govuk-tabs">
+    <div
+      ref={tabsRef}
+      className="govuk-tabs tabs--blue"
+      data-module="govuk-tabs"
+    >
       <h2 className="govuk-tabs__title">Contents</h2>
       <ul className="govuk-tabs__list">
         <li className="govuk-tabs__list-item govuk-tabs__list-item--selected">

@@ -16,13 +16,16 @@ import {
   listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  FileX2,
-  Loader2,
-  Undo,
-} from 'lucide-react'
+import { FileX2, Loader2, Undo } from 'lucide-react'
 import posthog from 'posthog-js'
-import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 type MinuteEditorForm = {
@@ -71,10 +74,10 @@ export function MinuteEditor({
     }),
     refetchInterval: (query) =>
       query.state.data &&
-        query.state.data.length > 0 &&
-        ['awaiting_start', 'in_progress'].includes(
-          query.state.data[version].status
-        )
+      query.state.data.length > 0 &&
+      ['awaiting_start', 'in_progress'].includes(
+        query.state.data[version].status
+      )
         ? 1000
         : false,
   })
@@ -183,10 +186,10 @@ export function MinuteEditor({
         minuteVersionHtml: minuteVersion.html_content || '',
         showEditActions: false,
         isEditable: false,
-        setIsEditable: () => { },
+        setIsEditable: () => {},
         hasCitations: false,
         hideCitations: false,
-        toggleHideCitations: () => { },
+        toggleHideCitations: () => {},
         onSuccess,
       })
       return
@@ -226,8 +229,7 @@ export function MinuteEditor({
     return (
       <div className="flex items-center gap-2">
         <Loader2 className="size-4 animate-spin" />
-        <p className="govuk-body govuk-!-margin-bottom-0">
-          Loading...</p>
+        <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
       </div>
     )
   }
@@ -244,11 +246,13 @@ export function MinuteEditor({
   }
   if (isGenerating) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 w-full govuk-!-padding-top-6">
-        <div className="flex justify-center w-full">
+      <div className="govuk-!-padding-top-6 flex w-full flex-col items-center justify-center gap-2">
+        <div className="flex w-full justify-center">
           <AudioWav />
         </div>
-        <p className="govuk-body govuk-!-margin-bottom-0">Minute generating...</p>
+        <p className="govuk-body govuk-!-margin-bottom-0">
+          Minute generating...
+        </p>
       </div>
     )
   }
@@ -256,7 +260,9 @@ export function MinuteEditor({
     return (
       <div className="flex items-center gap-2">
         <FileX2 className="size-4" />
-        <p className="govuk-body">There was a problem processing your request.</p>
+        <p className="govuk-body">
+          There was a problem processing your request.
+        </p>
         {true ? (
           <>
             <p>Click undo to go back to the previous version.</p>
@@ -264,7 +270,9 @@ export function MinuteEditor({
           </>
         ) : (
           <>
-            <p className="govuk-body">Generate a new minute from the panel to the left.</p>
+            <p className="govuk-body">
+              Generate a new minute from the panel to the left.
+            </p>
           </>
         )}
       </div>

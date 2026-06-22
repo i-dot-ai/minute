@@ -85,9 +85,7 @@ export const TranscriptionTitleEditor = ({
 
   return (
     <>
-      <h1 className="govuk-heading-xl">
-        {form.watch('title') || placeholder}
-      </h1>
+      <h1 className="govuk-heading-xl">{form.watch('title') || placeholder}</h1>
       <button
         onClick={() => {
           setEditing(true)
@@ -106,7 +104,6 @@ export const TranscriptionTitleEditor = ({
       >
         Delete
       </button>
-
     </>
   )
 }

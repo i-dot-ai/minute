@@ -21,7 +21,10 @@ export const AudioUploadForm = () => {
     const handler = () => {
       const selected = input.files?.[0]
       if (!selected) return
-      if (!selected.type.startsWith('audio/') && !selected.type.startsWith('video/')) {
+      if (
+        !selected.type.startsWith('audio/') &&
+        !selected.type.startsWith('video/')
+      ) {
         setFileError('The selected file must be an audio or video file')
         input.value = ''
         form.setValue('file', null)
@@ -37,13 +40,20 @@ export const AudioUploadForm = () => {
     <>
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className={`govuk-form-group${fileError ? ' govuk-form-group--error' : ''}`}>
-            <label className="govuk-label govuk-fieldset__legend--l" htmlFor="file-upload" id="file-upload-label">
+          <div
+            className={`govuk-form-group${fileError ? 'govuk-form-group--error' : ''}`}
+          >
+            <label
+              className="govuk-label govuk-fieldset__legend--l"
+              htmlFor="file-upload"
+              id="file-upload-label"
+            >
               Select a file to upload
             </label>
 
             <div id="file-upload-hint" className="govuk-hint">
-              Maximum file size: 5GB. Please ensure that all participants are aware that they have been recorded.
+              Maximum file size: 5GB. Please ensure that all participants are
+              aware that they have been recorded.
             </div>
             {fileError && (
               <p id="file-upload-error" className="govuk-error-message">

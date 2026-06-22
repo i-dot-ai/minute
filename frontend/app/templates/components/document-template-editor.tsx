@@ -56,10 +56,9 @@ export const DocumentTemplateEditor = ({
       </div>
       <h2 className="govuk-heading-l">Template details</h2>
       <p className="govuk-body">
-        Add a name and description so you can find your template later. Name
-        and description are not used to generate your minute, any structure
-        and style instructions should be added to the template content
-        field.
+        Add a name and description so you can find your template later. Name and
+        description are not used to generate your minute, any structure and
+        style instructions should be added to the template content field.
       </p>
       <div className="govuk-form-group">
         <label className="govuk-label govuk-label--m" htmlFor="name">
@@ -68,7 +67,12 @@ export const DocumentTemplateEditor = ({
         <div id="name-hint" className="govuk-hint">
           A short memorable name to help you find this template later.
         </div>
-        <input className="govuk-input" id="name" type="text" {...form.register('name')} />
+        <input
+          className="govuk-input"
+          id="name"
+          type="text"
+          {...form.register('name')}
+        />
       </div>
 
       <div className="govuk-form-group">
@@ -76,7 +80,8 @@ export const DocumentTemplateEditor = ({
           Description
         </label>
         <div id="description-hint" className="govuk-hint">
-          A description to help identify the template - for example, who&apos;s it for or when to use it.
+          A description to help identify the template - for example, who&apos;s
+          it for or when to use it.
         </div>
         <textarea
           className="govuk-textarea"
@@ -96,7 +101,8 @@ export const DocumentTemplateEditor = ({
         <div id="content-hint" className="govuk-hint">
           The template content should look how you would like the minutes to
           look. Use placeholder text to describe what you would like in each
-          section and provide style guidance, including examples if necessary. You may need to iterate on your template to get the best results.
+          section and provide style guidance, including examples if necessary.
+          You may need to iterate on your template to get the best results.
         </div>
         <Controller
           name="content"

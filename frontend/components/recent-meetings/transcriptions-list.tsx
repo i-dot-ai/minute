@@ -41,9 +41,11 @@ export function TranscriptionsList({
               </h3>
               <p className="govuk-body-s govuk-!-margin-bottom-0">{date}</p>
             </div>
-            <div className="govuk-button-group flex-1 flex justify-end">
+            <div className="govuk-button-group flex flex-1 justify-end">
               {transcription.status === 'failed' && (
-                <strong className="govuk-tag govuk-tag--red govuk-!-margin-right-2">Failed</strong>
+                <strong className="govuk-tag govuk-tag--red govuk-!-margin-right-2">
+                  Failed
+                </strong>
               )}
               {transcription.status === 'awaiting_start' && (
                 <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">
@@ -51,7 +53,9 @@ export function TranscriptionsList({
                 </strong>
               )}
               {transcription.status === 'in_progress' && (
-                <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">In progress</strong>
+                <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">
+                  In progress
+                </strong>
               )}
               <RenameTranscriptionButton
                 transcription={transcription}

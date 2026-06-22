@@ -4,26 +4,42 @@ import Link from 'next/link'
 export default function TemplatesPage() {
   return (
     <div className="govuk-width-container govuk-main-wrapper">
-
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-one-third">
-          <h2 className="govuk-caption-m govuk-!-margin-bottom-1 govuk-!-margin-top-0 govuk-!-margin-bottom-3">Contents</h2>
+          <h2 className="govuk-caption-m govuk-!-margin-bottom-1 govuk-!-margin-top-0 govuk-!-margin-bottom-3">
+            Contents
+          </h2>
           <nav>
             <ul className="govuk-list govuk-list--spaced">
               <li>
-                <Link className="govuk-link govuk-link--no-underline" href="#document-templates">Document templates</Link>
+                <Link
+                  className="govuk-link govuk-link--no-underline"
+                  href="#document-templates"
+                >
+                  Document templates
+                </Link>
               </li>
               <li>
-                <Link className="govuk-link govuk-link--no-underline" href="#form-templates">Form templates</Link>
+                <Link
+                  className="govuk-link govuk-link--no-underline"
+                  href="#form-templates"
+                >
+                  Form templates
+                </Link>
               </li>
             </ul>
           </nav>
         </div>
-        <div className="govuk-grid-column-two-thirds" data-onboarding="templates-page">
+        <div
+          className="govuk-grid-column-two-thirds"
+          data-onboarding="templates-page"
+        >
           <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
             <ol className="govuk-breadcrumbs__list">
               <li className="govuk-breadcrumbs__list-item">
-                <Link className="govuk-breadcrumbs__link" href="/">Home</Link>
+                <Link className="govuk-breadcrumbs__link" href="/">
+                  Home
+                </Link>
               </li>
             </ol>
           </nav>

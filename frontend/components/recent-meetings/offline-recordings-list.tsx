@@ -27,7 +27,11 @@ export function OfflineRecordingsList({
   )
 }
 
-const OfflineRecordingItem = ({ recording }: { recording: RecordingDbItem }) => {
+const OfflineRecordingItem = ({
+  recording,
+}: {
+  recording: RecordingDbItem
+}) => {
   const { removeRecording } = useRecordingDb()
   const [open, setOpen] = useState(false)
   const queryClient = useQueryClient()
@@ -38,7 +42,6 @@ const OfflineRecordingItem = ({ recording }: { recording: RecordingDbItem }) => 
   return (
     <li className="transcriptions__list-item govuk-!-padding-top-3 govuk-!-padding-bottom-3">
       <div className="flex justify-between">
-
         <h3 className="govuk-heading-s govuk-!-margin-bottom-1">
           {recording.updated_at.toDateString()} at{' '}
           {recording.updated_at.toLocaleTimeString()}
@@ -52,8 +55,8 @@ const OfflineRecordingItem = ({ recording }: { recording: RecordingDbItem }) => 
             Upload
             <span className="govuk-visually-hidden">
               {' '}
-              recording recorded on {recording.updated_at.toDateString()}{' '}
-              at {recording.updated_at.toLocaleTimeString()}
+              recording recorded on {recording.updated_at.toDateString()} at{' '}
+              {recording.updated_at.toLocaleTimeString()}
             </span>
           </Link>
           <a
@@ -65,8 +68,8 @@ const OfflineRecordingItem = ({ recording }: { recording: RecordingDbItem }) => 
             Save to device
             <span className="govuk-visually-hidden">
               {' '}
-              recording recorded on {recording.updated_at.toDateString()}{' '}
-              at {recording.updated_at.toLocaleTimeString()}
+              recording recorded on {recording.updated_at.toDateString()} at{' '}
+              {recording.updated_at.toLocaleTimeString()}
             </span>
           </a>
           <button
@@ -77,8 +80,8 @@ const OfflineRecordingItem = ({ recording }: { recording: RecordingDbItem }) => 
             Delete
             <span className="govuk-visually-hidden">
               {' '}
-              recording recorded on {recording.updated_at.toDateString()}{' '}
-              at {recording.updated_at.toLocaleTimeString()}
+              recording recorded on {recording.updated_at.toDateString()} at{' '}
+              {recording.updated_at.toLocaleTimeString()}
             </span>
           </button>
         </div>
@@ -97,6 +100,6 @@ const OfflineRecordingItem = ({ recording }: { recording: RecordingDbItem }) => 
           })
         }}
       />
-    </li >
+    </li>
   )
 }

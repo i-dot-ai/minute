@@ -6,11 +6,18 @@ type IconProps = {
   className?: string
 }
 
-function iconDimensions({ size = 16, className }: Pick<IconProps, 'size' | 'className'>) {
+function iconDimensions({
+  size = 16,
+  className,
+}: Pick<IconProps, 'size' | 'className'>) {
   return className ? { className } : { width: size, height: size }
 }
 
-export function Bold({ size = 16, color = 'currentColor', className }: IconProps) {
+export function Bold({
+  size = 16,
+  color = 'currentColor',
+  className,
+}: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -47,7 +54,11 @@ export function Underline({ size = 16, color = 'currentColor' }) {
   )
 }
 
-export function Italic({ size = 16, color = 'currentColor', className }: IconProps) {
+export function Italic({
+  size = 16,
+  color = 'currentColor',
+  className,
+}: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -83,7 +94,11 @@ export function Link({ size = 16, color = 'currentColor' }) {
   )
 }
 
-export function Code({ size = 16, color = 'currentColor', className }: IconProps) {
+export function Code({
+  size = 16,
+  color = 'currentColor',
+  className,
+}: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -101,7 +116,11 @@ export function Code({ size = 16, color = 'currentColor', className }: IconProps
   )
 }
 
-export function Strikethrough({ size = 16, color = 'currentColor', className }: IconProps) {
+export function Strikethrough({
+  size = 16,
+  color = 'currentColor',
+  className,
+}: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -118,7 +137,11 @@ export function Strikethrough({ size = 16, color = 'currentColor', className }: 
   )
 }
 
-export function RotateLeft({ size = 16, color = 'currentColor', className }: IconProps) {
+export function RotateLeft({
+  size = 16,
+  color = 'currentColor',
+  className,
+}: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -135,7 +158,11 @@ export function RotateLeft({ size = 16, color = 'currentColor', className }: Ico
   )
 }
 
-export function RotateRight({ size = 16, color = 'currentColor', className }: IconProps) {
+export function RotateRight({
+  size = 16,
+  color = 'currentColor',
+  className,
+}: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -171,7 +198,11 @@ export function X({ size = 16, color = 'currentColor' }) {
   )
 }
 
-export function List({ size = 16, color = 'currentColor', className }: IconProps) {
+export function List({
+  size = 16,
+  color = 'currentColor',
+  className,
+}: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -193,7 +224,11 @@ export function List({ size = 16, color = 'currentColor', className }: IconProps
   )
 }
 
-export function ListOrdered({ size = 16, color = 'currentColor', className }: IconProps) {
+export function ListOrdered({
+  size = 16,
+  color = 'currentColor',
+  className,
+}: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

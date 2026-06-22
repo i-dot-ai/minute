@@ -1,9 +1,7 @@
 'use client'
 
 import { OfflineRecordingsList } from '@/components/recent-meetings/offline-recordings-list'
-import {
-  useOfflineRecordings,
-} from '@/components/recent-meetings/use-offline-recordings'
+import { useOfflineRecordings } from '@/components/recent-meetings/use-offline-recordings'
 import { Suspense } from 'react'
 
 export function RecentOfflineRecordingsSection() {
@@ -18,7 +16,9 @@ export function RecentOfflineRecordingsSection() {
       <div className="govuk-error-summary" data-module="govuk-error-summary">
         <div role="alert">
           <h2 className="govuk-error-summary__title">
-            You have <strong>{dbRecordings.length} incomplete recordings</strong> stored only in this browser.{' '}
+            You have{' '}
+            <strong>{dbRecordings.length} incomplete recordings</strong> stored
+            only in this browser.{' '}
           </h2>
           <div className="govuk-error-summary__body">
             <p className="govuk-body">

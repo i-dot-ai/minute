@@ -83,7 +83,7 @@ export function TranscriptionTab({
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(saveTranscription)}>
-        <div className="bg-[#8eb8dc] sm:sticky top-0 z-10 border-b border-(--govuk-border-colour) sm:mt-[-30px] sm:mx-[-20px] px-[20px] pt-[30px] pb-[10px]">
+        <div className="top-0 z-10 border-b border-(--govuk-border-colour) bg-[#8eb8dc] px-[20px] pt-[30px] pb-[10px] sm:sticky sm:mx-[-20px] sm:mt-[-30px]">
           <div className="govuk-grid-row">
             <div className="govuk-grid-column-two-thirds">
               <div className="govuk-button-group govuk-!-margin-bottom-0">
@@ -95,8 +95,13 @@ export function TranscriptionTab({
                   textToCopy={transcriptionString}
                   posthogEvent="transcript_content_copied"
                 />
-                {hasRecordings && <DownloadButton recordings={recordings} inverse={true} />}
-                <button onClick={scrollToPlaying} className="govuk-button govuk-button--inverse">
+                {hasRecordings && (
+                  <DownloadButton recordings={recordings} inverse={true} />
+                )}
+                <button
+                  onClick={scrollToPlaying}
+                  className="govuk-button govuk-button--inverse"
+                >
                   <ArrowDown className="size-4" /> Scroll to current section
                 </button>
               </div>
@@ -117,21 +122,30 @@ export function TranscriptionTab({
             </div>
             <div className="govuk-grid-column-one-third">
               <div>
-                <p className="govuk-body-s govuk-!-margin-bottom-1">If you rename a speaker, you must re-generate the summary to use the new names.</p>
-                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><PencilIcon className="size-4" /> Click a name to rename it.</p>
-                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><SquarePen className="size-4" /> Click any text box to edit the text.</p>
-                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2"><Play className="size-4" /> Click a timestamp to play from that point.</p>
+                <p className="govuk-body-s govuk-!-margin-bottom-1">
+                  If you rename a speaker, you must re-generate the summary to
+                  use the new names.
+                </p>
+                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2">
+                  <PencilIcon className="size-4" /> Click a name to rename it.
+                </p>
+                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2">
+                  <SquarePen className="size-4" /> Click any text box to edit
+                  the text.
+                </p>
+                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2">
+                  <Play className="size-4" /> Click a timestamp to play from
+                  that point.
+                </p>
               </div>
             </div>
           </div>
           <div className="govuk-grid-row">
             {hasRecordings && (
               <>
-                <div className="govuk-grid-column-two-thirds">
-                </div>
+                <div className="govuk-grid-column-two-thirds"></div>
                 <div className="govuk-grid-column-one-third">
-                  <div className="govuk-button-group govuk-!-margin-top-2 govuk-!-margin-bottom-0">
-                  </div>
+                  <div className="govuk-button-group govuk-!-margin-top-2 govuk-!-margin-bottom-0"></div>
                 </div>
               </>
             )}
@@ -172,7 +186,9 @@ export function TranscriptionTab({
                             className="play-section-trigger govuk-link govuk-link--no-visited-state govuk-!-margin-top-4 govuk-!-margin-bottom-4"
                           >
                             <Play className="size-4" />
-                            <span className="govuk-visually-hidden">Play section from </span>
+                            <span className="govuk-visually-hidden">
+                              Play section from{' '}
+                            </span>
                             {formatTime(entry.start_time)}
                           </button>
                         )}
@@ -186,6 +202,6 @@ export function TranscriptionTab({
           </div>
         </div>
       </form>
-    </FormProvider >
+    </FormProvider>
   )
 }

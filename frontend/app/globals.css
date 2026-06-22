@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import "govuk-frontend/dist/govuk/govuk-frontend.min.css";
-@import "../styles/public-page.css";
+@import 'govuk-frontend/dist/govuk/govuk-frontend.min.css';
+@import '../styles/public-page.css';
 
 /* Override the margin-right: from the modal dialog */
 html body[data-scroll-locked] {
@@ -25,17 +25,17 @@ html body[data-scroll-locked] {
 }
 
 .homepage__list-item::after {
-  content: "";
+  content: '';
   border: 2px solid #1d70b8;
   border-width: 2px 2px 0 0;
-  width: .4375em;
-  height: .4375em;
+  width: 0.4375em;
+  height: 0.4375em;
   margin: auto 0;
   display: block;
   position: absolute;
   top: 0;
   bottom: 0;
-  right: .1875em;
+  right: 0.1875em;
   transform: rotate(45deg);
 }
 
@@ -81,7 +81,6 @@ html body[data-scroll-locked] {
   }
 }
 
-
 @media (width > 64rem) {
   .upload-radio__item {
     flex-basis: 33.333%;
@@ -93,10 +92,10 @@ html body[data-scroll-locked] {
 }
 
 .upload-radio__item .govuk-radios__label::before {
-  top: 14px
+  top: 14px;
 }
 
-.upload-radio__item .govuk-radios__input:checked+.govuk-radios__label:after {
+.upload-radio__item .govuk-radios__input:checked + .govuk-radios__label:after {
   top: 24px;
 }
 
@@ -152,7 +151,9 @@ html body[data-scroll-locked] {
 }
 
 /* Override service nav product name inverse to be more prominent */
-.govuk-service-navigation--inverse .govuk-service-navigation__service-name .govuk-service-navigation__link {
+.govuk-service-navigation--inverse
+  .govuk-service-navigation__service-name
+  .govuk-service-navigation__link {
   border-right: 1px solid #fff;
 }
 
@@ -362,7 +363,7 @@ html body[data-scroll-locked] {
   list-style-type: none;
 }
 
-.editor-content ul>li::before {
+.editor-content ul > li::before {
   content: '•';
 }
 
@@ -371,11 +372,11 @@ html body[data-scroll-locked] {
   counter-reset: list-counter;
 }
 
-.editor-content ol>li {
+.editor-content ol > li {
   counter-increment: list-counter;
 }
 
-.editor-content ol>li::before {
+.editor-content ol > li::before {
   content: counter(list-counter) '.';
 }
 
@@ -424,12 +425,12 @@ html body[data-scroll-locked] {
   margin-bottom: 2.33em;
 }
 
-.editor-content p+p {
+.editor-content p + p {
   margin-top: 1em;
   /* Add margin only between consecutive paragraphs */
 }
 
-.editor-content pre>code {
+.editor-content pre > code {
   background-color: #444;
   color: white;
   width: 100% !;

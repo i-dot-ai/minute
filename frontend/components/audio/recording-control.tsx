@@ -2,10 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import { Pause, Play, Square } from 'lucide-react'
-import {
-  AlertDialog,
-  AlertDialogContent,
-} from '@/components/ui/alert-dialog'
+import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog'
 
 interface RecordingControlProps {
   stream: MediaStream | null
@@ -336,14 +333,12 @@ export default function RecordingControl({
           </p>
         )}
         {isRecording && !stream && (
-          <p className="govuk-body">
-            Connecting to audio stream...
-          </p>
+          <p className="govuk-body">Connecting to audio stream...</p>
         )}
       </div>
 
       {isRecording && (
-        <div className="govuk-button-group flex gap-2 w-full">
+        <div className="govuk-button-group flex w-full gap-2">
           <button
             type="button"
             onClick={togglePause}
@@ -383,7 +378,12 @@ export default function RecordingControl({
               {/* <Square /> */}
               End recording
             </button>
-            <button className="govuk-button govuk-button--secondary" onClick={() => setShowStopDialog(false)}>Cancel</button>
+            <button
+              className="govuk-button govuk-button--secondary"
+              onClick={() => setShowStopDialog(false)}
+            >
+              Cancel
+            </button>
           </div>
         </AlertDialogContent>
       </AlertDialog>

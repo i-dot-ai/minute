@@ -21,7 +21,12 @@ export function RecentTranscriptions() {
   }
 
   if (transcriptions.length === 0) {
-    return <p className="govuk-body">No transcriptions found. Your most recent transcriptions will appear here.</p>
+    return (
+      <p className="govuk-body">
+        No transcriptions found. Your most recent transcriptions will appear
+        here.
+      </p>
+    )
   }
 
   return <TranscriptionsList transcriptions={transcriptions} />

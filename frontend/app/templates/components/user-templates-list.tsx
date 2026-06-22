@@ -167,7 +167,7 @@ const TemplateListItem = ({ template }: { template: TemplateResponse }) => {
       <div>
         <h4 className="govuk-heading-s govuk-!-margin-bottom-1">
           <Link className="govuk-link" href={`/templates/${template.id}`}>
-            {template.name}
+            {template.name || 'Untitled template'}
           </Link>
         </h4>
         <p className="govuk-body govuk-!-margin-bottom-1">

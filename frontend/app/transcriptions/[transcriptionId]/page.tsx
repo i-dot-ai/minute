@@ -12,6 +12,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { AudioWav } from '@/components/icons/AudioWav'
+import Link from 'next/link'
 
 export default function TranscriptionPage({
   params: { transcriptionId },
@@ -24,7 +25,7 @@ export default function TranscriptionPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-      ['awaiting_start', 'in_progress'].includes(query.state.data.status)
+        ['awaiting_start', 'in_progress'].includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -105,26 +106,37 @@ export default function TranscriptionPage({
 
   if (transcription.status == 'failed') {
     return (
-      <div className="govuk-grid-row govuk-!-margin-bottom-2">
-        <div className="govuk-grid-column-three-quarters">
-          <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">
-            {getTranscriptionDisplayTitle(
-              transcription.title,
-              transcription.status
-            )}
-          </h1>
-          <p className="govuk-body">{date}</p>
-          <p className="govuk-body">
-            The transcription failed to process. Please try again.
-          </p>
-        </div>
-        <div className="govuk-grid-column-one-quarter">
-          <div className="govuk-button-group transcription-page__actions float-right">
-            <RenameTranscriptionButton transcription={transcription} />
-            <DeleteTranscriptionButton transcription={transcription} />
+      <>
+        <div className="govuk-grid-row govuk-!-margin-bottom-2">
+          <div className="govuk-grid-column-three-quarters">
+            <h1 className="govuk-heading-xl govuk-!-margin-bottom-2">
+              {getTranscriptionDisplayTitle(
+                transcription.title,
+                transcription.status
+              )}
+            </h1>
+            <p className="govuk-body">{date}</p>
+            <p className="govuk-body">
+              The transcription failed to process. Please try again.
+            </p>
+            <p className="govuk-inset-text">
+              You can either <Link href="/new" className="govuk-link">start a new transcription</Link> or download the audio file below and  <Link href="/new/upload" className="govuk-link">upload it</Link>.
+            </p>
+          </div>
+          <div className="govuk-grid-column-one-quarter">
+            <div className="govuk-button-group transcription-page__actions float-right">
+              <RenameTranscriptionButton transcription={transcription} />
+              <DeleteTranscriptionButton transcription={transcription} />
+            </div>
           </div>
         </div>
-      </div>
+        <div className="govuk-grid-row govuk-!-margin-bottom-2">
+          <div className="govuk-grid-column-two-thirds">
+            <h2 className="govuk-heading-m">Audio:</h2>
+            <AudioPlayer transcriptionId={transcription.id} />
+          </div>
+        </div>
+      </>
     )
   }
   return (

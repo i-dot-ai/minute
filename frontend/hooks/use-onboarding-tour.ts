@@ -19,8 +19,8 @@ export const onboardingSteps: Step[] = [
     target: 'body',
     placement: 'center',
     skipScroll: true,
-    content: 'Welcome to Minute. This tour will show you around.',
-    title: 'Welcome',
+    content: 'We have recently updated the styling of the app. Everything is the same place, just with a new look. Take this tour to see the changes.',
+    title: 'Welcome to Minute',
   },
   {
     target: '.govuk-button--start',

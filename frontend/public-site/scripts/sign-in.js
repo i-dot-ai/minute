@@ -4,23 +4,14 @@
  * @param {string} hostname
  * @returns {string}
  */
-const getSignInHref = (hostname) => {
-  if (hostname === 'localhost') return 'http://localhost:3000/'
-
-  if (!hostname.endsWith('.i.ai.gov.uk')) {
-    return 'https://minute.ai.cabinetoffice.gov.uk/'
+export const getSignInHref = (hostname) => {
+  if (hostname === 'localhost') return 'http://localhost:8081/'
+  const PUBLIC_HOSTNAME_END = '.ai.gov.uk'
+  const INTERNAL_HOSTNAME_END = '.i.ai.gov.uk'
+  if (hostname.endsWith(PUBLIC_HOSTNAME_END)) {
+    return `https://${hostname.replace(PUBLIC_HOSTNAME_END, INTERNAL_HOSTNAME_END)}/`
   }
-
-  const prefix = hostname.slice(0, -'.i.ai.gov.uk'.length)
-  if (prefix === 'minute') {
-    return 'https://minute.ai.cabinetoffice.gov.uk/'
-  }
-  if (prefix.startsWith('minute.')) {
-    const env = prefix.slice('minute.'.length)
-    return `https://minute-${env}.ai.cabinetoffice.gov.uk/`
-  }
-
-  return 'https://minute.ai.cabinetoffice.gov.uk/'
+  return 'https://minute.i.ai.gov.uk/'
 }
 
 const initSignInLinks = () => {

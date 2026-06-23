@@ -66,6 +66,11 @@ export default function Home() {
       </div>
       <div className="govuk-width-container govuk-main-wrapper">
         <div className="govuk-grid-row">
+          <div className="govuk-grid-column-full">
+            <RestartTourButton />
+          </div>
+        </div>
+        <div className="govuk-grid-row">
           <div className="govuk-grid-column-full govuk-grid-column-two-thirds-from-desktop">
             <PosthogBanner />
             <Suspense fallback={null}>
@@ -84,10 +89,6 @@ export default function Home() {
               View all transcriptions
             </Link>
           </div>
-        </div>
-
-        <div className="govuk-!-margin-top-9">
-          <RestartTourButton />
         </div>
       </div>
     </>

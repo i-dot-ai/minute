@@ -75,7 +75,7 @@ export default function Home() {
 
             <PosthogBanner />
             <Suspense fallback={null}>
-              {/* <RecentOfflineRecordingsSection /> */}
+              <RecentOfflineRecordingsSection />
             </Suspense>
             <h2 className="govuk-heading-l govuk-!-margin-top-6">
               Your recent transcriptions

@@ -72,7 +72,6 @@ export default function Home() {
         </div>
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-full govuk-grid-column-two-thirds-from-desktop">
-
             <PosthogBanner />
             <Suspense fallback={null}>
               <RecentOfflineRecordingsSection />

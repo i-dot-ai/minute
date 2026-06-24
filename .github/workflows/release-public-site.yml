@@ -1,0 +1,57 @@
+name: release-public-site
+run-name: Release Public Website - ${{ inputs.env }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        type: choice
+        description: "Environment to deploy to"
+        required: true
+        options:
+          - dev
+          - preprod
+          - prod
+
+permissions:
+  contents: read
+  id-token: write
+  checks: write
+
+jobs:
+  release-dev-manual:
+    if: github.event_name == 'workflow_dispatch' && inputs.env == 'dev'
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-and-deploy-static-site.yml@main
+    with:
+      ENVIRONMENT: dev
+      COMMIT_HASH: ${{ github.sha }}
+      SITE_URL: https://minute.dev.ai.gov.uk
+      BUILD_DIRECTORY: frontend/dist
+      INSTALL_COMMAND: cd frontend && npm ci
+      BUILD_COMMAND: cd frontend && npm run public-site:build
+    secrets: inherit
+
+  release-preprod-manual:
+    if: github.event_name == 'workflow_dispatch' && inputs.env == 'preprod'
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-and-deploy-static-site.yml@main
+    with:
+      ENVIRONMENT: preprod
+      COMMIT_HASH: ${{ github.sha }}
+      SITE_URL: https://minute.preprod.ai.gov.uk
+      BUILD_DIRECTORY: frontend/dist
+      INSTALL_COMMAND: cd frontend && npm ci
+      BUILD_COMMAND: cd frontend && npm run public-site:build
+    secrets: inherit
+
+  # Prod only releaseable from main branch - job skipped otherwise.
+  release-prod-manual:
+    if: github.event_name == 'workflow_dispatch' && inputs.env == 'prod' && github.ref_name == 'main'
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-and-deploy-static-site.yml@main
+    with:
+      ENVIRONMENT: prod
+      COMMIT_HASH: ${{ github.sha }}
+      SITE_URL: https://minute.ai.gov.uk
+      BUILD_DIRECTORY: frontend/dist
+      INSTALL_COMMAND: cd frontend && npm ci
+      BUILD_COMMAND: cd frontend && npm run public-site:build
+    secrets: inherit

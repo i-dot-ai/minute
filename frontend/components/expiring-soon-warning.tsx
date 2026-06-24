@@ -37,7 +37,7 @@ const ExpiringSoonWarning = () => {
           href={`/transcriptions?page=${lastPage}`}
           className="govuk-link govuk-link--no-visited-state"
         >
-          View the oldest transcriptions
+          View your oldest transcriptions
         </Link>
       </strong>
     </div>

@@ -22,7 +22,11 @@ function Unauthorised(): React.JSX.Element {
             .
           </p>
           <div className="govuk-button-group">
-            <a href="https://minute.ai.gov.uk/" role="button" className="govuk-button">
+            <a
+              href="https://minute.ai.gov.uk/"
+              role="button"
+              className="govuk-button"
+            >
               Go to the home page
             </a>
           </div>

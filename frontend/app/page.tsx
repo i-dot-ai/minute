@@ -7,8 +7,10 @@ import { RecentOfflineRecordingsSection } from '@/components/recent-meetings/rec
 import { RecentTranscriptions } from '@/components/recent-meetings/recent-transcriptions'
 import { Suspense } from 'react'
 import ExpiringSoonWarning from '@/components/expiring-soon-warning'
+import UrlMigrationBanner from '@/components/url-migration-banner'
 
 export default function Home() {
+  const isOldUrl = window.location.hostname.includes('.cabinetoffice.')
   return (
     <>
       <div
@@ -73,7 +75,7 @@ export default function Home() {
         </div>
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-full govuk-grid-column-two-thirds-from-desktop">
-            <PosthogBanner />
+            {isOldUrl ? <UrlMigrationBanner /> : <PosthogBanner />}
             <Suspense fallback={null}>
               <RecentOfflineRecordingsSection />
             </Suspense>

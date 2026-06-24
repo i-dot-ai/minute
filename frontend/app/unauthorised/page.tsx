@@ -1,25 +1,24 @@
 'use client'
+import { useIsOldUrl } from '@/hooks/use-is-old-url'
 import React from 'react'
 
 function Unauthorised(): React.JSX.Element {
-  const isOldUrl = window.location.hostname.includes('.cabinetoffice.')
+  const isOldUrl = useIsOldUrl()
   return (
     <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-two-thirds">
           <h1 className="govuk-heading-xl">Unauthorised Access</h1>
-          {
-            isOldUrl && (
-              <div className="govuk-inset-text">
-                You are trying to access an old version of Minute which has outdated
-                access controls. Please try the new address at{' '}
-                <a href="https://minute.ai.gov.uk/" className="govuk-link">
-                  minute.ai.gov.uk
-                </a>
-                .
-              </div>
-            )
-          }
+          {isOldUrl && (
+            <div className="govuk-inset-text">
+              You are trying to access an old version of Minute which has
+              outdated access controls. Please try the new address at{' '}
+              <a href="https://minute.ai.gov.uk/" className="govuk-link">
+                minute.ai.gov.uk
+              </a>
+              .
+            </div>
+          )}
           <p className="govuk-body">
             Sorry, you don&apos;t have permission to access this page.
           </p>

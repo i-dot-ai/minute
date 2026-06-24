@@ -73,8 +73,11 @@ function renderPage(title, content) {
       ${content}
     </main>
     ${footerPartial}
-    <script src="/assets/govuk-frontend.min.js"></script>
-    <script src="/scripts/sign-in.js"></script>
+    <script type="module">
+      import { initAll } from '/assets/govuk-frontend.min.js'
+      initAll()
+    </script>
+    <script type="module" src="/scripts/sign-in.js"></script>
   </body>
 </html>
 `

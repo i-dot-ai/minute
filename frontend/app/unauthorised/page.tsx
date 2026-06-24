@@ -1,3 +1,4 @@
+'use client'
 import React from 'react'
 
 function Unauthorised(): React.JSX.Element {
@@ -20,6 +21,11 @@ function Unauthorised(): React.JSX.Element {
             </a>
             .
           </p>
+          <div className="govuk-button-group">
+            <a href="https://minute.ai.gov.uk/" role="button" className="govuk-button">
+              Go to the home page
+            </a>
+          </div>
         </div>
       </div>
     </div>

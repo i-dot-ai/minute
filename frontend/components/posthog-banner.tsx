@@ -6,16 +6,10 @@ import { useFeatureFlagPayload } from 'posthog-js/react'
 
 export function PosthogBanner() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let payload: any = useFeatureFlagPayload(FeatureFlags.ShowIssueBanner)
+  const payload: any = useFeatureFlagPayload(FeatureFlags.ShowIssueBanner)
 
   if (!payload) {
-    payload = {
-      title: 'Important',
-      message:
-        'There is a problem with Minute. Our team is working to resolve this issue as quickly as possible. We apologise for any inconvenience',
-      linkHref: 'https://minute.ai.gov.uk/',
-      linkText: 'Learn more',
-    }
+    return null
   }
 
   return (

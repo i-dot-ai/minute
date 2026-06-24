@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
+import ExpiringSoonWarning from '../expiring-soon-warning'
 
 const PAGE_SIZE = 10
 
@@ -48,6 +49,9 @@ export const PaginatedTranscriptions = () => {
 
   return (
     <div>
+      <Suspense fallback={null}>
+        <ExpiringSoonWarning />
+      </Suspense>
       {user && user.data_retention_days && (
         <p className="govuk-body">
           Your data retention period is set to {user.data_retention_days} day

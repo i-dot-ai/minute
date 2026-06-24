@@ -6,6 +6,7 @@ import { PosthogBanner } from '@/components/posthog-banner'
 import { RecentOfflineRecordingsSection } from '@/components/recent-meetings/recent-offline-recordings-section'
 import { RecentTranscriptions } from '@/components/recent-meetings/recent-transcriptions'
 import { Suspense } from 'react'
+import ExpiringSoonWarning from '@/components/expiring-soon-warning'
 
 export default function Home() {
   return (
@@ -79,6 +80,9 @@ export default function Home() {
             <h2 className="govuk-heading-l govuk-!-margin-top-6">
               Your recent transcriptions
             </h2>
+            <Suspense fallback={null}>
+              <ExpiringSoonWarning />
+            </Suspense>
             <Suspense fallback={<div>Loading...</div>}>
               <RecentTranscriptions />
             </Suspense>

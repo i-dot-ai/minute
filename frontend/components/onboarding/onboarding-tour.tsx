@@ -22,6 +22,8 @@ const NAV_STEP_ADVANCES: Record<string, number> = {
   '/settings': SETTINGS_NAV_STEP_INDEX,
 }
 
+const UNAUTHORISED_PATH = '/unauthorised'
+
 function getInitialRun() {
   if (typeof window === 'undefined') return false
   return localStorage.getItem(ONBOARDING_STORAGE_KEY) !== 'done'
@@ -42,6 +44,7 @@ export function OnboardingTour() {
   const [stepIndex, setStepIndex] = useState(getInitialStepIndex)
   const prevPathnameRef = useRef(pathname)
   const originPathRef = useRef<string | null>(null)
+  const tourActive = run && pathname !== UNAUTHORISED_PATH
 
   const steps = useMemo(() => {
     if (pathname !== '/') return onboardingSteps
@@ -82,7 +85,11 @@ export function OnboardingTour() {
   }, [restartTour])
 
   useEffect(() => {
-    if (run && originPathRef.current === null) {
+    if (
+      run &&
+      originPathRef.current === null &&
+      pathname !== UNAUTHORISED_PATH
+    ) {
       originPathRef.current = pathname
     }
     if (!run) {
@@ -91,13 +98,23 @@ export function OnboardingTour() {
   }, [run, pathname])
 
   useEffect(() => {
-    if (!run) return
+    if (pathname !== UNAUTHORISED_PATH) return
+
+    setStepIndex(0)
+
+    if (localStorage.getItem(ONBOARDING_STORAGE_KEY) !== 'done') {
+      localStorage.removeItem(ONBOARDING_STORAGE_KEY)
+    }
+  }, [pathname])
+
+  useEffect(() => {
+    if (!run || pathname === UNAUTHORISED_PATH) return
     if (stepIndex >= onboardingSteps.length) {
       finishTour()
       return
     }
     localStorage.setItem(ONBOARDING_STORAGE_KEY, String(stepIndex))
-  }, [finishTour, run, stepIndex])
+  }, [finishTour, run, stepIndex, pathname])
 
   useEffect(() => {
     const prevPathname = prevPathnameRef.current
@@ -112,14 +129,15 @@ export function OnboardingTour() {
     if (
       pathname === '/' &&
       stepIndex === WELCOME_STEP_INDEX &&
-      prevPathname !== '/'
+      prevPathname !== '/' &&
+      prevPathname !== UNAUTHORISED_PATH
     ) {
       setStepIndex(WELCOME_STEP_INDEX + 1)
     }
   }, [pathname, stepIndex])
 
   const { Tour } = useOnboardingTour({
-    run,
+    run: tourActive,
     stepIndex,
     steps,
     onEvent: (data) => {

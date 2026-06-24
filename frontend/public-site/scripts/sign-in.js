@@ -5,7 +5,7 @@
  * @returns {string}
  */
 export const getSignInHref = (hostname) => {
-  if (hostname === 'localhost') return 'http://localhost:8081/'
+  if (hostname === 'localhost') return 'http://localhost:3000/'
   const PUBLIC_HOSTNAME_END = '.ai.gov.uk'
   const INTERNAL_HOSTNAME_END = '.i.ai.gov.uk'
   if (hostname.endsWith(PUBLIC_HOSTNAME_END)) {

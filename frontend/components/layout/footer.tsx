@@ -104,7 +104,7 @@ export const Footer = () => (
                 className="govuk-link break-words"
                 href="mailto:minute-support@cabinetoffice.gov.uk"
               >
-                Email minute-supportinetoffice.gov.uk
+                Email minute-support@cabinetoffice.gov.uk
               </a>
             </li>
             <li>

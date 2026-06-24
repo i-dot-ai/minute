@@ -168,9 +168,5 @@ export function OnboardingTour() {
     },
   })
 
-  if (pathname === UNAUTHORISED_PATH) {
-    return null
-  }
-
   return Tour
 }

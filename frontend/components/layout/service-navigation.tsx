@@ -4,6 +4,9 @@ import { usePathname } from 'next/navigation'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
+  if (pathname === '/unauthorised') {
+    return null
+  }
   return (
     <section
       aria-label="Service information"

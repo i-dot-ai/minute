@@ -69,7 +69,7 @@ export function MinuteTab({
   }
   return (
     <>
-      <div className="top-0 z-10 border-b border-(--govuk-border-colour) bg-[#8eb8dc] px-[20px] pt-[30px] pb-[10px] sm:sticky sm:mx-[-20px] sm:mt-[-30px]">
+      <div className="border-b border-(--govuk-border-colour) bg-[#8eb8dc] px-[20px] pt-[30px] pb-[10px] sm:mx-[-20px] sm:mt-[-30px]">
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-one-half govuk-grid-column-one-third-from-desktop">
             <div className="govuk-form-group govuk-!-margin-bottom-2">

@@ -55,7 +55,7 @@ export const DownloadButton = ({
               download
               className="govuk-button govuk-button--secondary"
             >
-              <Download /> Download {recording.extension} File
+              <Download /> Download {recording.extension} file
             </a>
           </button>
         ))}

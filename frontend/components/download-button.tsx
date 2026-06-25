@@ -1,5 +1,4 @@
 'use client'
-import { Button } from '@/components/ui/button'
 import {
   Popover,
   PopoverContent,
@@ -46,10 +45,7 @@ export const DownloadButton = ({
       </PopoverTrigger>
       <PopoverContent>
         {recordings.map((recording) => (
-          <button
-            key={recording.id}
-            onClick={onClick(recording)}
-          >
+          <button key={recording.id} onClick={onClick(recording)}>
             <a
               href={recording.url}
               download

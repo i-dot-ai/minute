@@ -14,7 +14,7 @@ module "load_balancer" {
 module "waf" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   #source                      = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/waf" # For testing local changes
-  source      = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/waf?ref=v7.3.1-waf"
+  source      = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/waf?ref=v8.0.0-waf"
   name        = local.name
   host        = local.host
   env         = var.env
@@ -24,6 +24,8 @@ module "waf" {
     header_name  = "x-custom-edge-router"
     secret_value = data.aws_ssm_parameter.edge_secret[0].value
   } : null
+
+  custom_block_page_path = "${path.module}/waf_block_page/index.html"
 }
 
 resource "aws_route53_record" "type_a_record" {

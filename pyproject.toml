@@ -100,7 +100,7 @@ select = [
     "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "SLOT",
     "TCH", "TD", "TID", "UP", "YTT"
 ]
-exclude = ["out/*"]
+exclude = ["out/*", "alembic/versions/*"]
 ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318","ISC001"]
 
 [tool.ruff.lint.isort]

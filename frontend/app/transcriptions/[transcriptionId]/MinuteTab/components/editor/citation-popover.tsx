@@ -24,7 +24,7 @@ export default function CitationPopoverContent({
         <div
           key={index}
           ref={index === selectedIndex ? selectedRef : null}
-          className={` transcription-text-area${
+          className={`transcription-text-area ${
             index === selectedIndex ? 'transcription-text-area--playing' : ''
           }`}
         >

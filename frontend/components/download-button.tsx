@@ -1,5 +1,4 @@
 'use client'
-import { Button } from '@/components/ui/button'
 import {
   Popover,
   PopoverContent,
@@ -31,7 +30,7 @@ export const DownloadButton = ({
         onClick={onClick(recordings[0])}
         className={`govuk-button ${inverse ? 'govuk-button--inverse' : 'govuk-button--secondary'}`}
       >
-        <Download className="size-4" /> Download
+        <Download className="size-4" /> Download audio
       </a>
     )
   }
@@ -41,25 +40,20 @@ export const DownloadButton = ({
         <button
           className={`govuk-button ${inverse ? 'govuk-button--inverse' : 'govuk-button--secondary'}`}
         >
-          <Download className="size-4" /> Download
+          <Download className="size-4" /> Download audio
         </button>
       </PopoverTrigger>
       <PopoverContent>
         {recordings.map((recording) => (
-          <Button
-            asChild
-            variant="link"
-            key={recording.id}
-            onClick={onClick(recording)}
-          >
+          <button key={recording.id} onClick={onClick(recording)}>
             <a
               href={recording.url}
               download
-              className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+              className="govuk-button govuk-button--secondary"
             >
-              <Download /> Download {recording.extension} File
+              <Download /> Download {recording.extension} file
             </a>
-          </Button>
+          </button>
         ))}
       </PopoverContent>
     </Popover>

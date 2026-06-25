@@ -43,8 +43,9 @@ Brewfile.lock.json
 *.html
 !frontend/content/*.html
 !frontend/public-site/**/*.html
-*_files/
+!terraform/waf_block_page/index.html
 
+*_files/
 # Docker cache
 .build-cache
 
@@ -111,3 +112,6 @@ config/google-credentials.json
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+certs/
+.tmp/

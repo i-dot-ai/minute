@@ -6,13 +6,15 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 export function useTranscriptions({
   page,
   pageSize,
+  expiring,
 }: {
   page: number
   pageSize: number
+  expiring?: boolean
 }) {
   return useQuery({
     ...listTranscriptionsTranscriptionsGetOptions({
-      query: { page, page_size: pageSize },
+      query: { page, page_size: pageSize, expiring },
     }),
     refetchInterval: (query) =>
       !!query.state.data &&

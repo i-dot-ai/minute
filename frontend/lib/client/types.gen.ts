@@ -76,6 +76,10 @@ export type TranscriptionMetadata = {
    */
   text: string
   status: JobStatus
+  /**
+   * Expiring
+   */
+  expiring: boolean
 }
 
 /**
@@ -696,9 +700,9 @@ export type ListTranscriptionsTranscriptionsGetData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path?: never
   query?: {
@@ -712,6 +716,10 @@ export type ListTranscriptionsTranscriptionsGetData = {
      * Number of items per page
      */
     page_size?: number
+    /**
+     * Expiring
+     */
+    expiring?: boolean
   }
   url: '/transcriptions'
 }
@@ -740,9 +748,9 @@ export type CreateTranscriptionTranscriptionsPostData = {
   body: TranscriptionCreateRequest
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path?: never
   query?: never
@@ -773,9 +781,9 @@ export type CreateRecordingRecordingsPostData = {
   body: RecordingCreateRequest
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path?: never
   query?: never
@@ -806,9 +814,9 @@ export type DeleteTranscriptionTranscriptionsTranscriptionIdDeleteData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -844,9 +852,9 @@ export type GetTranscriptionTranscriptionsTranscriptionIdGetData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -882,9 +890,9 @@ export type SaveTranscriptionTranscriptionsTranscriptionIdPatchData = {
   body: TranscriptionPatchRequest
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -921,9 +929,9 @@ export type GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordings
     body?: never
     headers?: {
       /**
-       * X-Amzn-Oidc-Accesstoken
+       * X-Amzn-Oidc-Data
        */
-      'x-amzn-oidc-accesstoken'?: string | null
+      'x-amzn-oidc-data'?: string | null
     }
     path: {
       /**
@@ -962,9 +970,9 @@ export type GetUserUsersMeGetData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path?: never
   query?: never
@@ -995,9 +1003,9 @@ export type UpdateDataRetentionUsersDataRetentionPatchData = {
   body: DataRetentionUpdateResponse
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path?: never
   query?: never
@@ -1029,9 +1037,9 @@ export type ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetDat
     body?: never
     headers?: {
       /**
-       * X-Amzn-Oidc-Accesstoken
+       * X-Amzn-Oidc-Data
        */
-      'x-amzn-oidc-accesstoken'?: string | null
+      'x-amzn-oidc-data'?: string | null
     }
     path: {
       /**
@@ -1070,9 +1078,9 @@ export type CreateMinuteTranscriptionTranscriptionIdMinutesPostData = {
   body: MinutesCreateRequest
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -1105,9 +1113,9 @@ export type GetMinuteMinutesMinutesIdGetData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -1143,9 +1151,9 @@ export type ListMinuteVersionsMinutesMinuteIdVersionsGetData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -1182,9 +1190,9 @@ export type CreateMinuteVersionMinutesMinuteIdVersionsPostData = {
   body: MinuteVersionCreateRequest
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -1220,9 +1228,9 @@ export type DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -1255,9 +1263,9 @@ export type GetMinuteVersionMinuteVersionsMinuteVersionIdGetData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -1293,9 +1301,9 @@ export type GetTemplatesTemplatesGetData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path?: never
   query?: never
@@ -1327,9 +1335,9 @@ export type GetUserTemplatesUserTemplatesGetData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path?: never
   query?: never
@@ -1361,9 +1369,9 @@ export type CreateUserTemplateUserTemplatesPostData = {
   body: CreateUserTemplateRequest
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path?: never
   query?: never
@@ -1391,9 +1399,9 @@ export type DeleteUserTemplateUserTemplatesTemplateIdDeleteData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -1426,9 +1434,9 @@ export type GetUserTemplateUserTemplatesTemplateIdGetData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -1464,9 +1472,9 @@ export type EditUserTemplateUserTemplatesTemplateIdPatchData = {
   body: PatchUserTemplateRequest
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -1499,9 +1507,9 @@ export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -1535,9 +1543,9 @@ export type DeleteChatsTranscriptionsTranscriptionIdChatDeleteData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -1573,9 +1581,9 @@ export type ListChatTranscriptionsTranscriptionIdChatGetData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -1611,9 +1619,9 @@ export type CreateChatTranscriptionsTranscriptionIdChatPostData = {
   body: ChatCreateRequest
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -1649,9 +1657,9 @@ export type DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**
@@ -1691,9 +1699,9 @@ export type GetChatTranscriptionsTranscriptionIdChatChatIdGetData = {
   body?: never
   headers?: {
     /**
-     * X-Amzn-Oidc-Accesstoken
+     * X-Amzn-Oidc-Data
      */
-    'x-amzn-oidc-accesstoken'?: string | null
+    'x-amzn-oidc-data'?: string | null
   }
   path: {
     /**

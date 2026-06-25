@@ -1,29 +1,16 @@
 'use client'
 
 import { useTranscriptions } from '@/components/recent-meetings/use-transcriptions'
-import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
-import { isExpiringTomorrow } from '@/utils/transcript-expiry'
-import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 
 const ExpiringSoonWarning = () => {
-  const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
-  const { data: firstPage } = useTranscriptions({ page: 1, pageSize: 1 })
-  const lastPage = firstPage?.total_pages ?? 1
-  const { data: oldest } = useTranscriptions({
-    page: lastPage,
+  const { data: expiringTranscriptions } = useTranscriptions({
+    page: 1,
     pageSize: 1,
+    expiring: true,
   })
-  const transcriptions = oldest?.items ?? []
 
-  if (!transcriptions.length) return null
-  const oldestTranscription = transcriptions[0]
-  const isExpiringSoon = isExpiringTomorrow(
-    oldestTranscription.created_datetime,
-    user?.data_retention_days
-  )
-
-  if (!isExpiringSoon) return null
+  if (!expiringTranscriptions?.total_count) return null
 
   return (
     <div className="govuk-warning-text">
@@ -32,12 +19,14 @@ const ExpiringSoonWarning = () => {
       </span>
       <strong className="govuk-warning-text__text">
         <span className="govuk-visually-hidden">Warning</span>
-        You have transcriptions that will expire in 1 day.{' '}
+        You have {expiringTranscriptions.total_count} transcription
+        {expiringTranscriptions.total_count > 1 ? 's' : ''} that will be deleted
+        tonight.
         <Link
-          href={`/transcriptions?page=${lastPage}`}
+          href={`/transcriptions?expiring=true`}
           className="govuk-link govuk-link--no-visited-state"
         >
-          View your oldest transcriptions
+          View your expiring transcriptions
         </Link>
       </strong>
     </div>

@@ -18,11 +18,12 @@ export const PaginatedTranscriptions = () => {
   const searchParams = useSearchParams()
   const router = useRouter()
   const currentPage = Number(searchParams.get('page')) || 1
+  const expiring = searchParams.get('expiring') === 'true'
   const {
     data: paginatedResponse,
     isLoading,
     error,
-  } = useTranscriptions({ page: currentPage, pageSize: PAGE_SIZE })
+  } = useTranscriptions({ page: currentPage, pageSize: PAGE_SIZE, expiring })
 
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
     router.replace(pathname + `?page=${paginatedResponse.total_pages}`)

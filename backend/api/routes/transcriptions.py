@@ -1,6 +1,7 @@
 import logging
 import math
 import uuid
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query
@@ -44,26 +45,50 @@ transcription_queue_service = get_queue_service(
 logger = logging.getLogger(__name__)
 
 
+def _next_cleanup_cutoff(retention_days: int) -> datetime:
+    """Records created before this instant get deleted at the next cleanup run (23:00 UTC daily)."""
+    now = datetime.now(UTC)
+    next_run = now.replace(hour=23, minute=0, second=0, microsecond=0)
+    if next_run <= now:
+        next_run += timedelta(days=1)
+    return next_run - timedelta(days=retention_days)
+
+
 @transcriptions_router.get("/transcriptions", response_model=PaginatedTranscriptionsResponse)
 async def list_transcriptions(
     session: SQLSessionDep,
     current_user: UserDep,
     page: int = Query(1, ge=1, description="Page number (starts from 1)"),
     page_size: int = Query(20, ge=1, le=100, description="Number of items per page"),
+    expiring: bool = Query(False),
 ) -> PaginatedTranscriptionsResponse:
     """Get paginated metadata for transcriptions for the current user."""
-    count_statement = select(func.count(col(Transcription.id))).where(Transcription.user_id == current_user.id)
-    count_result = await session.exec(count_statement)
-    total_count = count_result.one()
 
     offset = (page - 1) * page_size
+
+    expiry_cutoff = (
+        _next_cleanup_cutoff(current_user.data_retention_days) if current_user.data_retention_days is not None else None
+    )
+
+    # Retention disabled but caller wants only-expiring -> nothing qualifies.
+    if expiring and expiry_cutoff is None:
+        return PaginatedTranscriptionsResponse(items=[], total_count=0, page=page, page_size=page_size, total_pages=1)
+
+    filters = [Transcription.user_id == current_user.id]
+    if expiring:  # expiry_cutoff is not None here
+        filters.append(Transcription.created_datetime < expiry_cutoff)
+
+    count_statement = select(func.count(col(Transcription.id))).where(*filters)
     statement = (
         select(Transcription)
-        .where(Transcription.user_id == current_user.id)
+        .where(*filters)
         .order_by(col(Transcription.created_datetime).desc())
         .offset(offset)
         .limit(page_size)
     )
+
+    count_result = await session.exec(count_statement)
+    total_count = count_result.first() or 0
     result = await session.exec(statement)
     transcriptions = result.all()
 
@@ -74,6 +99,7 @@ async def list_transcriptions(
             title=t.title,
             text=t.dialogue_entries[0]["text"][:100] if t.dialogue_entries else "",
             status=t.status,
+            expiring=expiry_cutoff is not None and t.created_datetime < expiry_cutoff,
         )
         for t in transcriptions
     ]

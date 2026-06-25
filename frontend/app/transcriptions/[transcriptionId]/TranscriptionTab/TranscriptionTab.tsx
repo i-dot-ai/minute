@@ -83,7 +83,7 @@ export function TranscriptionTab({
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(saveTranscription)}>
-        <div className="top-0 z-10 border-b border-(--govuk-border-colour) bg-[#8eb8dc] px-[20px] pt-[30px] pb-[10px] sm:sticky sm:mx-[-20px] sm:mt-[-30px]">
+        <div className="bg-[#8eb8dc] px-[20px] pt-[30px] pb-[10px] sm:mx-[-20px] sm:mt-[-30px]">
           <div className="govuk-grid-row">
             <div className="govuk-grid-column-two-thirds">
               <div className="govuk-button-group govuk-!-margin-bottom-0">
@@ -98,14 +98,34 @@ export function TranscriptionTab({
                 {hasRecordings && (
                   <DownloadButton recordings={recordings} inverse={true} />
                 )}
-                <button
-                  onClick={scrollToPlaying}
-                  className="govuk-button govuk-button--inverse"
-                >
-                  <ArrowDown className="size-4" /> Scroll to current section
-                </button>
               </div>
-              {hasRecordings && (
+              <p className="govuk-body-s govuk-!-margin-bottom-1">
+                If you rename a speaker, you must re-generate the summary to use
+                the new names.
+              </p>
+            </div>
+            <div className="govuk-grid-column-one-third">
+              <div>
+                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2">
+                  <PencilIcon className="inline-block size-4" /> Click a name to
+                  rename it.
+                </p>
+                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2">
+                  <SquarePen className="inline-block size-4" /> Click any text
+                  box to edit the text.
+                </p>
+                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2">
+                  <Play className="inline-block size-4" /> Click a timestamp to
+                  play from that point.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        {hasRecordings && (
+          <div className="sticky top-0 z-10 border-b border-(--govuk-border-colour) bg-[#8eb8dc] px-[20px] py-[10px] sm:mx-[-20px]">
+            <div className="govuk-grid-row">
+              <div className="govuk-grid-column-two-thirds">
                 <audio
                   controls
                   src={recordings[0].url}
@@ -118,39 +138,21 @@ export function TranscriptionTab({
                     }
                   }}
                 />
-              )}
-            </div>
-            <div className="govuk-grid-column-one-third">
-              <div>
-                <p className="govuk-body-s govuk-!-margin-bottom-1">
-                  If you rename a speaker, you must re-generate the summary to
-                  use the new names.
-                </p>
-                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2">
-                  <PencilIcon className="size-4" /> Click a name to rename it.
-                </p>
-                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2">
-                  <SquarePen className="size-4" /> Click any text box to edit
-                  the text.
-                </p>
-                <p className="govuk-body-s govuk-!-margin-bottom-1 flex gap-2">
-                  <Play className="size-4" /> Click a timestamp to play from
-                  that point.
-                </p>
+              </div>
+              <div className="govuk-grid-column-one-third">
+                <div className="govuk-button-group govuk-!-margin-top-1 govuk-!-margin-bottom-0">
+                  <button
+                    type="button"
+                    onClick={scrollToPlaying}
+                    className="govuk-button govuk-button--inverse"
+                  >
+                    <ArrowDown className="size-4" /> Scroll to current section
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-          <div className="govuk-grid-row">
-            {hasRecordings && (
-              <>
-                <div className="govuk-grid-column-two-thirds"></div>
-                <div className="govuk-grid-column-one-third">
-                  <div className="govuk-button-group govuk-!-margin-top-2 govuk-!-margin-bottom-0"></div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+        )}
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-full">
             <div className="flex flex-col gap-6">

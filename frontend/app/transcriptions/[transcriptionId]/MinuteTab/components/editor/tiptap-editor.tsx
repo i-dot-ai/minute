@@ -182,7 +182,7 @@ function SimpleEditor({
   return (
     <div>
       {isEditing && (
-        <div className="flex items-center justify-between border-b border-gray-300 bg-gray-50 p-2">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-300 bg-gray-50 p-2">
           <div className="flex items-center">
             <div className="mr-4 flex space-x-1">
               <button

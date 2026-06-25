@@ -140,7 +140,7 @@ export function TranscriptionTab({
                 />
               </div>
               <div className="govuk-grid-column-one-third">
-                <div className="govuk-button-group govuk-!-margin-top-2 govuk-!-margin-bottom-0">
+                <div className="govuk-button-group govuk-!-margin-top-1 govuk-!-margin-bottom-0">
                   <button
                     type="button"
                     onClick={scrollToPlaying}

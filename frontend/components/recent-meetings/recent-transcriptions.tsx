@@ -29,5 +29,7 @@ export function RecentTranscriptions() {
     )
   }
 
-  return <TranscriptionsList transcriptions={transcriptions} />
+  return (
+    <TranscriptionsList transcriptions={transcriptions} headingLevel="h3" />
+  )
 }

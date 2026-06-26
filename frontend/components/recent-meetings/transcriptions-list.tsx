@@ -6,9 +6,12 @@ import Link from 'next/link'
 
 export function TranscriptionsList({
   transcriptions,
+  headingLevel = 'h2',
 }: {
   transcriptions: TranscriptionMetadata[]
+  headingLevel?: 'h2' | 'h3'
 }) {
+  const ItemHeading = headingLevel
   return (
     <ul className="govuk-list">
       {transcriptions.map((transcription) => {
@@ -30,7 +33,7 @@ export function TranscriptionsList({
             <div
               className={`${transcription.status === 'completed' ? 'flex-2' : 'flex-1'}`}
             >
-              <h3 className="govuk-heading-s govuk-!-margin-bottom-1">
+              <ItemHeading className="govuk-heading-s govuk-!-margin-bottom-1">
                 <Link
                   href={`/transcriptions/${transcription.id}`}
                   className="govuk-link govuk-link--no-visited-state"
@@ -40,7 +43,7 @@ export function TranscriptionsList({
                     transcription.status
                   )}
                 </Link>
-              </h3>
+              </ItemHeading>
               <p className="govuk-body-s govuk-!-margin-bottom-0">{date}</p>
             </div>
             <div

@@ -21,7 +21,7 @@ const ExpiringSoonWarning = () => {
         <span className="govuk-visually-hidden">Warning</span>
         You have {expiringTranscriptions.total_count} transcription
         {expiringTranscriptions.total_count > 1 ? 's' : ''} that will be deleted
-        tonight.
+        tonight.{' '}
         <Link
           href={`/transcriptions?expiring=true`}
           className="govuk-link govuk-link--no-visited-state"

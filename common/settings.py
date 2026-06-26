@@ -80,10 +80,10 @@ class Settings(BaseSettings):
     GOOGLE_CLOUD_PROJECT: str | None = Field(description="Google Cloud project ID", default=None)
     GOOGLE_CLOUD_LOCATION: str | None = Field(description="Google Cloud region/location", default=None)
 
-    # if using LOCALSTACK for development (recommended)
-    USE_LOCALSTACK: bool = Field(description="Use LocalStack for local AWS services emulation in dev", default=True)
-    LOCALSTACK_URL: str = Field(
-        description="LocalStack service URL for local AWS services emulation", default="http://localhost:4566"
+    # if using MiniStack for development (recommended)
+    USE_MINISTACK: bool = Field(description="Use MiniStack for local AWS services emulation in dev", default=True)
+    MINISTACK_URL: str = Field(
+        description="MiniStack service URL for local AWS services emulation", default="http://localhost:4566"
     )
 
     TRANSCRIPTION_SERVICES: list[str] = Field(

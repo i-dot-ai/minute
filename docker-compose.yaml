@@ -9,13 +9,13 @@ services:
       - .env
     environment:
       - POSTGRES_HOST=db
-      - LOCALSTACK_URL=http://localstack:4566
+      - MINISTACK_URL=http://ministack:4566
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
     depends_on:
       db:
         condition: service_healthy
-      localstack:
+      ministack:
         condition: service_healthy
     volumes:
       - type: bind
@@ -52,21 +52,21 @@ services:
     ports:
       - "8265:8265"
     volumes:
-      - /tmp:/tmp
+      - ${WORKER_TMP:-./.worker-tmp}:/tmp
       - type: bind
         source: ./.data
         target: /static
     environment:
       - POSTGRES_HOST=db
       - RAY_DASHBOARD_HOST=0.0.0.0
-      - LOCALSTACK_URL=http://localstack:4566
+      - MINISTACK_URL=http://ministack:4566
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
     stop_grace_period: 10s
     depends_on:
       db:
         condition: service_healthy
-      localstack:
+      ministack:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "poetry run python worker/healthcheck.py"]
@@ -132,17 +132,16 @@ services:
       retries: 24
       start_period: 30s
 
-  localstack: # LocalStack container
-    image: localstack/localstack:latest
+  ministack: # MiniStack container (LocalStack-compatible AWS emulator)
+    image: ministackorg/ministack:latest
     env_file:
       - .env
     ports:
       - 4566:4566
-      - 4510-4559:4510-4559
     volumes:
       # Here you mount your setup file so it will be executed
       # when the container starts
-      - ./localstack-setup.sh:/etc/localstack/init/ready.d/script.sh
+      - ./ministack-setup.sh:/etc/localstack/init/ready.d/script.sh
     environment:
       - AWS_DEFAULT_REGION=eu-west-2
     healthcheck:

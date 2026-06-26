@@ -2,21 +2,16 @@ import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-t
 import { RenameTranscriptionButton } from '@/components/recent-meetings/rename-transcription-button'
 import { getTranscriptionDisplayTitle } from '@/components/recent-meetings/rename-transcription-dialog'
 import { TranscriptionMetadata } from '@/lib/client'
-import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
-import { isExpiringTomorrow } from '@/utils/transcript-expiry'
-import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 
 export function TranscriptionsList({
   transcriptions,
+  headingLevel = 'h2',
 }: {
   transcriptions: TranscriptionMetadata[]
+  headingLevel?: 'h2' | 'h3'
 }) {
-  const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
-  const isExpiringSoon = isExpiringTomorrow(
-    transcriptions[0].created_datetime,
-    user?.data_retention_days
-  )
+  const ItemHeading = headingLevel
   return (
     <ul className="govuk-list">
       {transcriptions.map((transcription) => {
@@ -38,7 +33,7 @@ export function TranscriptionsList({
             <div
               className={`${transcription.status === 'completed' ? 'flex-2' : 'flex-1'}`}
             >
-              <h3 className="govuk-heading-s govuk-!-margin-bottom-1">
+              <ItemHeading className="govuk-heading-s govuk-!-margin-bottom-1">
                 <Link
                   href={`/transcriptions/${transcription.id}`}
                   className="govuk-link govuk-link--no-visited-state"
@@ -48,13 +43,13 @@ export function TranscriptionsList({
                     transcription.status
                   )}
                 </Link>
-              </h3>
+              </ItemHeading>
               <p className="govuk-body-s govuk-!-margin-bottom-0">{date}</p>
             </div>
             <div
-              className={`govuk-button-group flex flex-1 justify-end ${isExpiringSoon ? 'flex-2' : ''}`}
+              className={`govuk-button-group flex flex-1 justify-end ${transcription.expiring ? 'flex-2' : ''}`}
             >
-              {isExpiringSoon && (
+              {transcription.expiring && (
                 <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-right-2">
                   Expiring soon
                 </strong>

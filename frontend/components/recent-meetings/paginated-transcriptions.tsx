@@ -8,7 +8,6 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
-import ExpiringSoonWarning from '../expiring-soon-warning'
 
 const PAGE_SIZE = 10
 
@@ -18,11 +17,12 @@ export const PaginatedTranscriptions = () => {
   const searchParams = useSearchParams()
   const router = useRouter()
   const currentPage = Number(searchParams.get('page')) || 1
+  const expiring = searchParams.get('expiring') === 'true'
   const {
     data: paginatedResponse,
     isLoading,
     error,
-  } = useTranscriptions({ page: currentPage, pageSize: PAGE_SIZE })
+  } = useTranscriptions({ page: currentPage, pageSize: PAGE_SIZE, expiring })
 
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
     router.replace(pathname + `?page=${paginatedResponse.total_pages}`)
@@ -46,12 +46,17 @@ export const PaginatedTranscriptions = () => {
     }
     return pages
   }
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value
+    if (value === 'all') {
+      router.replace(pathname)
+    } else {
+      router.replace(pathname + `?expiring=true`)
+    }
+  }
 
   return (
     <div>
-      <Suspense fallback={null}>
-        <ExpiringSoonWarning />
-      </Suspense>
       {user && user.data_retention_days && (
         <p className="govuk-body">
           Your data retention period is set to {user.data_retention_days} day
@@ -65,7 +70,29 @@ export const PaginatedTranscriptions = () => {
       <Suspense fallback={null}>
         <RecentOfflineRecordingsSection />
       </Suspense>
-      <h2 className="govuk-heading-m">{totalCount} saved transcriptions</h2>
+      <div className="govuk-!-margin-bottom-6 flex items-end justify-between">
+        <div className="govuk-form-group govuk-!-margin-bottom-0">
+          <label className="govuk-label" htmlFor="filter">
+            Filter by
+          </label>
+          <select
+            className="govuk-select"
+            id="filter"
+            name="filter"
+            onChange={handleFilterChange}
+          >
+            <option value="all" selected={!expiring}>
+              All
+            </option>
+            <option value="expiring" selected={expiring}>
+              Expiring soon
+            </option>
+          </select>
+        </div>
+        <p className="govuk-body govuk-!-margin-bottom-0">
+          Total: {totalCount}
+        </p>
+      </div>
       {isLoading ? (
         <p className="govuk-body">Loading transcriptions...</p>
       ) : error ? (

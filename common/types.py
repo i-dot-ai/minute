@@ -15,6 +15,7 @@ class TranscriptionMetadata(BaseModel):
     title: str | None = None
     text: str
     status: JobStatus
+    expiring: bool
 
 
 class PaginatedTranscriptionsResponse(BaseModel):

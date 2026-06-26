@@ -9,6 +9,7 @@ import { RecordingDbProvider } from '@/providers/transcription-db-provider'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
+import Link from 'next/link'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -34,9 +35,18 @@ export default function RootLayout({
           <PosthogProvider>
             <LockNavigationProvider>
               <RecordingDbProvider>
+                <Link
+                  href="#main-content"
+                  className="govuk-skip-link"
+                  data-module="govuk-skip-link"
+                >
+                  Skip to main content
+                </Link>
                 <Header />
                 <OnboardingTour />
-                <main id="main-content">{children}</main>
+                <main id="main-content" tabIndex={-1}>
+                  {children}
+                </main>
                 <Footer />
                 <Toaster />
               </RecordingDbProvider>

@@ -27,7 +27,15 @@ import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import { AudioDevice, MicrophonePermission } from './microphone-permission'
 import { getFileExtensionFromBlob } from '@/lib/getFileExtension'
 
-export function MicRecorderForm() {
+export function MicRecorderForm({
+  initialDeviceId,
+  initialDevices,
+  onDiscard,
+}: {
+  initialDeviceId?: string
+  initialDevices?: AudioDevice[]
+  onDiscard?: () => void
+} = {}) {
   const { isPending, onSubmit, form } = useStartTranscription()
   const watchBlob = form.watch('file')
   return (
@@ -40,6 +48,9 @@ export function MicRecorderForm() {
             <MicRecorderComponent
               recordedAudio={value}
               setRecordedAudio={onChange}
+              initialDeviceId={initialDeviceId}
+              initialDevices={initialDevices}
+              onDiscard={onDiscard}
             />
           )}
         />
@@ -55,15 +66,24 @@ export function MicRecorderForm() {
 function MicRecorderComponent({
   recordedAudio,
   setRecordedAudio,
+  initialDeviceId,
+  initialDevices,
+  onDiscard,
 }: {
   recordedAudio: Blob | null
   setRecordedAudio: (blob: Blob | null) => void
+  initialDeviceId?: string
+  initialDevices?: AudioDevice[]
+  onDiscard?: () => void
 }) {
+  // When a device is handed in pre-resolved (from the home page), permission is
+  // already granted upstream — so skip the cold flow and start recording immediately.
+  const autoStart = !!(initialDeviceId && initialDevices?.length)
   const { releaseWakeLock, requestWakeLock } = useWakeLock()
   const [error, setError] = useState<string | null>(null)
-  const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const [permissionGranted, setPermissionGranted] = useState<boolean>(false)
+  const [audioDevices, setAudioDevices] = useState<AudioDevice[]>(initialDevices ?? [])
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(initialDeviceId ?? '')
+  const [permissionGranted, setPermissionGranted] = useState<boolean>(!!(initialDeviceId && initialDevices?.length))
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [showStopDialog, setShowStopDialog] = useState(false)
   const form = useFormContext<TranscriptionForm>()
@@ -71,6 +91,8 @@ function MicRecorderComponent({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
   const mediaChunksRef = useRef<Blob[]>([])
+  // Set when discarding mid-recording so onstop drops the audio instead of saving it.
+  const discardingRef = useRef(false)
   const [isRecording, setIsRecording] = useState(false)
 
   const stopAllTracks = useCallback(() => {
@@ -126,6 +148,17 @@ function MicRecorderComponent({
       }
 
       mediaRecorder.onstop = async () => {
+        if (discardingRef.current) {
+          discardingRef.current = false
+          setRecordedAudio(null)
+          const recordingId = form.getValues('recordingId')
+          if (recordingId) {
+            await removeRecording(recordingId)
+          }
+          stopAllTracks()
+          onDiscard?.()
+          return
+        }
         if (mediaChunksRef.current.length > 0) {
           const audioBlob = new Blob(mediaChunksRef.current, {
             type: 'audio/webm',
@@ -155,6 +188,8 @@ function MicRecorderComponent({
   }, [
     addRecording,
     form,
+    onDiscard,
+    removeRecording,
     requestWakeLock,
     selectedDeviceId,
     setRecordedAudio,
@@ -185,6 +220,14 @@ function MicRecorderComponent({
       stopRecording()
     }
   }, [stopRecording])
+
+  const hasAutoStarted = useRef(false)
+  useEffect(() => {
+    if (autoStart && !hasAutoStarted.current) {
+      hasAutoStarted.current = true
+      startRecording()
+    }
+  }, [autoStart, startRecording])
 
   const handlePauseStateChange = useCallback((paused: boolean) => {
     if (!mediaRecorderRef.current) {
@@ -258,6 +301,13 @@ function MicRecorderComponent({
       )}
       {!recordedAudio && (
         <>
+          <h2 className="govuk-heading-m flex items-center gap-2">
+            <span className="relative inline-flex size-3 mr-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" />
+              <span className="relative inline-flex size-3 rounded-full bg-red-600" />
+            </span>
+            Recording
+          </h2>
           <div className="govuk-inset-text">
             This will record the audio from your device&apos;s microphone. That
             means only in-person meetings or calls that are played out loud will
@@ -265,49 +315,6 @@ function MicRecorderComponent({
             the audio recorder. If not, refresh the page and make sure
             you&apos;ve allowed microphone access in your browser.
           </div>
-          {!isRecording && (
-            <div>
-              <div>
-                <p className="govuk-body">
-                  Remember to inform all participants that they are being
-                  recorded.
-                </p>
-                <div className="govuk-form-group">
-                  <label
-                    className="govuk-label govuk-label--l"
-                    htmlFor="microphone"
-                  >
-                    Choose microphone
-                  </label>
-                  <select
-                    className="govuk-select"
-                    id="microphone"
-                    name="microphone"
-                    value={selectedDeviceId}
-                    onChange={(e) => setSelectedDeviceId(e.target.value)}
-                  >
-                    {audioDevices.map((device) => (
-                      <option key={device.deviceId} value={device.deviceId}>
-                        {device.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <button
-                  type="button"
-                  onClick={startRecording}
-                  id="start-recording"
-                  className="govuk-button govuk-button--start"
-                >
-                  <Mic />
-                  Start recording
-                </button>
-              </div>
-            </div>
-          )}
         </>
       )}
       {isRecording && (
@@ -317,6 +324,7 @@ function MicRecorderComponent({
             isRecording={isRecording}
             onStopRecording={stopRecording}
             onPauseStateChange={handlePauseStateChange}
+            onDiscard={() => setIsDialogOpen(true)}
           />
         </div>
       )}
@@ -349,12 +357,19 @@ function MicRecorderComponent({
         open={isDialogOpen}
         setOpen={setIsDialogOpen}
         onClickConfirm={() => {
-          setRecordedAudio(null)
           setIsDialogOpen(false)
+          // Mid-recording: stop first; onstop handles cleanup once the recorder flushes.
+          if (isRecording && mediaRecorderRef.current) {
+            discardingRef.current = true
+            stopRecording()
+            return
+          }
+          setRecordedAudio(null)
           const recordingId = form.getValues('recordingId')
           if (recordingId) {
             removeRecording(recordingId)
           }
+          onDiscard?.()
         }}
       />
     </div>

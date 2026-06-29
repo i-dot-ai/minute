@@ -1,7 +1,7 @@
 const UrlMigrationBanner = () => {
   return (
     <div
-      className="govuk-notification-banner"
+      className="govuk-notification-banner m-4"
       role="region"
       aria-labelledby="govuk-notification-banner-title"
       data-module="govuk-notification-banner"

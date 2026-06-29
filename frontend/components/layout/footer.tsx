@@ -5,7 +5,7 @@ export const Footer = () => (
   <footer>
     <div className="govuk-footer">
       <div className="govuk-width-container">
-        <div className="grid grid-cols-12 gap-4">
+        {/* <div className="grid grid-cols-12 gap-4">
           <svg
             focusable="false"
             role="presentation"
@@ -47,8 +47,8 @@ export const Footer = () => (
             Innovation and Technology, bringing together expert technical talent
             to pioneer transformative applications of AI for the public good.
           </p>
-        </div>
-        <nav
+        </div> */}
+        {/* <nav
           aria-label="Footer navigation"
           className="mt-4 grid grid-cols-12 gap-4"
         >
@@ -121,7 +121,7 @@ export const Footer = () => (
               </a>
             </li>
           </ul>
-        </nav>
+        </nav> */}
         <div className="govuk-footer__meta">
           <div className="govuk-footer__meta-item govuk-footer__meta-item--grow">
             <svg

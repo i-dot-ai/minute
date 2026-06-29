@@ -12,6 +12,7 @@ import { Toaster } from 'sonner'
 import Link from 'next/link'
 import './globals.css'
 import ServiceNavigation from '@/components/layout/service-navigation'
+import UrlMigrationBanner from '@/components/url-migration-banner'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -44,13 +45,13 @@ export default function RootLayout({
                   Skip to main content
                 </Link>
                 <OnboardingTour />
-                <div className="flex">
-                  <ServiceNavigation />
-                  <main id="main-content" className="flex-1" tabIndex={-1}>
+                <ServiceNavigation />
+                <div className="ml-38 min-h-screen">
+                  <main id="main-content" tabIndex={-1}>
                     {children}
                   </main>
+                  {/* <Footer /> */}
                 </div>
-                <Footer />
                 <Toaster />
               </RecordingDbProvider>
             </LockNavigationProvider>

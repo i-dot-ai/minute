@@ -13,6 +13,7 @@ interface RecordingControlProps {
     isPaused?: boolean
   }
   onPauseStateChange?: (isPaused: boolean) => void
+  onDiscard?: () => void
 }
 
 export default function RecordingControl({
@@ -21,6 +22,7 @@ export default function RecordingControl({
   onStopRecording,
   recorderControls,
   onPauseStateChange,
+  onDiscard,
 }: RecordingControlProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -342,7 +344,7 @@ export default function RecordingControl({
           <button
             type="button"
             onClick={togglePause}
-            className="govuk-button govuk-button--secondary min-w-72"
+            className="govuk-button govuk-button--secondary min-w-53"
           >
             {isPaused ? (
               <>
@@ -359,11 +361,20 @@ export default function RecordingControl({
           <button
             type="button"
             onClick={handleStopRecording}
-            className="govuk-button min-w-72"
+            className="govuk-button"
           >
             <Square />
             End recording
           </button>
+          {onDiscard && (
+            <button
+              type="button"
+              className="govuk-link link--warning ml-auto"
+              onClick={onDiscard}
+            >
+              Discard recording
+            </button>
+          )}
         </div>
       )}
 

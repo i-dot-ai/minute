@@ -11,12 +11,12 @@ export const ServiceNavigation = () => {
   return (
     <section
       aria-label="Service information"
-      className="bg-(--govuk-surface-background-colour)"
+      className="bg-(--govuk-surface-background-colour) fixed top-0 left-0 bottom-0"
     >
       <nav aria-label="Menu">
-        <ul className="flex flex-col w-38" id="navigation">
+        <ul className="flex flex-col w-40" id="navigation">
           <li
-            className={`govuk-service-navigation__service-name w-full ${pathname === '/' ? 'bg-[#d2e2f1] font-bold text-black' : ''}`}
+            className={`govuk-service-navigation__service-name w-full ${pathname === '/' || pathname.includes('/new') ? 'bg-[#d2e2f1] font-bold text-black' : ''}`}
           >
             <Link
               href="/"

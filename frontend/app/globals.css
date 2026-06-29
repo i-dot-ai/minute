@@ -95,7 +95,7 @@ html body[data-scroll-locked] {
   top: 14px;
 }
 
-.upload-radio__item .govuk-radios__input:checked + .govuk-radios__label:after {
+.upload-radio__item .govuk-radios__input:checked+.govuk-radios__label:after {
   top: 24px;
 }
 
@@ -148,13 +148,6 @@ html body[data-scroll-locked] {
   outline: 3px solid;
   outline-color: var(--govuk-focus-colour, #fd0);
   outline-offset: 0;
-}
-
-/* Override service nav product name inverse to be more prominent */
-.govuk-service-navigation--inverse
-  .govuk-service-navigation__service-name
-  .govuk-service-navigation__link {
-  border-right: 1px solid #fff;
 }
 
 @media (min-width: 640px) {
@@ -363,7 +356,7 @@ html body[data-scroll-locked] {
   list-style-type: none;
 }
 
-.editor-content ul > li::before {
+.editor-content ul>li::before {
   content: '•';
 }
 
@@ -372,11 +365,11 @@ html body[data-scroll-locked] {
   counter-reset: list-counter;
 }
 
-.editor-content ol > li {
+.editor-content ol>li {
   counter-increment: list-counter;
 }
 
-.editor-content ol > li::before {
+.editor-content ol>li::before {
   content: counter(list-counter) '.';
 }
 
@@ -425,12 +418,12 @@ html body[data-scroll-locked] {
   margin-bottom: 2.33em;
 }
 
-.editor-content p + p {
+.editor-content p+p {
   margin-top: 1em;
   /* Add margin only between consecutive paragraphs */
 }
 
-.editor-content pre > code {
+.editor-content pre>code {
   background-color: #444;
   color: white;
   width: 100% !;

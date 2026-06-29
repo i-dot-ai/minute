@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { List, LayoutPanelTop, AudioLines } from 'lucide-react'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
@@ -10,81 +11,48 @@ export const ServiceNavigation = () => {
   return (
     <section
       aria-label="Service information"
-      className={`govuk-service-navigation ${pathname === '/' ? 'govuk-service-navigation--inverse' : ''}`}
-      data-module="govuk-service-navigation"
+      className="bg-(--govuk-surface-background-colour)"
     >
-      <div className="govuk-width-container">
-        <div className="govuk-service-navigation__container">
-          <span
-            className={`govuk-service-navigation__service-name ${pathname === '/' ? 'govuk-!-margin-right-3 govuk-service-navigation__item--active' : ''}`}
+      <nav aria-label="Menu">
+        <ul className="flex flex-col w-38" id="navigation">
+          <li
+            className={`govuk-service-navigation__service-name w-full ${pathname === '/' ? 'bg-[#d2e2f1] font-bold text-black' : ''}`}
           >
             <Link
               href="/"
-              className={`govuk-service-navigation__link ${pathname === '/' ? 'govuk-!-padding-right-3' : ''}`}
+              className="ml-4 govuk-service-navigation__link flex items-center gap-2"
             >
-              Home
+              <AudioLines className="w-4 h-4" />
+              Minute
             </Link>
-          </span>
-          <nav aria-label="Menu" className="govuk-service-navigation__wrapper">
-            <button
-              type="button"
-              className="govuk-service-navigation__toggle govuk-js-service-navigation-toggle"
-              aria-controls="navigation"
-              hidden
-              aria-hidden="true"
+          </li>
+          <li
+            className={`govuk-service-navigation__item w-full ${pathname.includes('/transcriptions') ? 'bg-[#d2e2f1] font-bold text-black' : ''}`}
+          >
+            <Link
+              className="ml-4 govuk-service-navigation__link flex items-center gap-2"
+              href="/transcriptions"
+              data-onboarding="saved-transcriptions-nav"
             >
-              Menu
-            </button>
-            <ul className="govuk-service-navigation__list" id="navigation">
-              <li
-                className={`govuk-service-navigation__item ${pathname.includes('/new') ? 'govuk-service-navigation__item--active' : ''}`}
-              >
-                <Link
-                  className="govuk-service-navigation__link"
-                  href="/new"
-                  data-onboarding="new-transcription-nav"
-                >
-                  New transcription
-                </Link>
-              </li>
-              <li
-                className={`govuk-service-navigation__item ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__item--active' : ''}`}
-              >
-                <Link
-                  className="govuk-service-navigation__link"
-                  href="/transcriptions"
-                  data-onboarding="saved-transcriptions-nav"
-                >
-                  Saved transcriptions
-                </Link>
-              </li>
-              <li
-                className={`govuk-service-navigation__item ${pathname.includes('/templates') ? 'govuk-service-navigation__item--active' : ''}`}
-              >
-                <Link
-                  className="govuk-service-navigation__link"
-                  href="/templates"
-                  data-onboarding="templates-nav"
-                >
-                  Templates
-                </Link>
-              </li>
-              <li
-                className={`govuk-service-navigation__item ${pathname.includes('/settings') ? 'govuk-service-navigation__item--active' : ''}`}
-              >
-                <Link
-                  className="govuk-service-navigation__link"
-                  href="/settings"
-                  data-onboarding="settings-nav"
-                >
-                  Settings
-                </Link>
-              </li>
-            </ul>
-          </nav>
-        </div>
-      </div>
-    </section>
+              <List className="w-4 h-4" />
+              Transcriptions
+            </Link>
+          </li>
+          <li
+            className={`govuk-service-navigation__item w-full ${pathname.includes('/templates') ? 'bg-[#d2e2f1] font-bold text-black' : ''}`}
+          >
+            <Link
+              className="ml-4 govuk-service-navigation__link flex items-center gap-2"
+              href="/templates"
+              data-onboarding="templates-nav"
+            >
+              <LayoutPanelTop className="w-4 h-4" />
+              Templates
+            </Link>
+          </li>
+        </ul>
+      </nav>
+    </section >
   )
 }
 

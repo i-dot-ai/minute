@@ -11,6 +11,7 @@ import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
 import Link from 'next/link'
 import './globals.css'
+import ServiceNavigation from '@/components/layout/service-navigation'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -42,11 +43,13 @@ export default function RootLayout({
                 >
                   Skip to main content
                 </Link>
-                <Header />
                 <OnboardingTour />
-                <main id="main-content" tabIndex={-1}>
-                  {children}
-                </main>
+                <div className="flex">
+                  <ServiceNavigation />
+                  <main id="main-content" className="flex-1" tabIndex={-1}>
+                    {children}
+                  </main>
+                </div>
                 <Footer />
                 <Toaster />
               </RecordingDbProvider>

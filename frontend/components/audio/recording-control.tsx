@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Pause, Play, Square } from 'lucide-react'
 import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog'
+import RecordingTimer from './recording-timer'
 
 interface RecordingControlProps {
   stream: MediaStream | null
@@ -324,6 +325,11 @@ export default function RecordingControl({
 
   return (
     <div className="space-y-4">
+      {isRecording && (
+        <div className="flex justify-end">
+          <RecordingTimer isRecording={isRecording} isPaused={isPaused} />
+        </div>
+      )}
       <div
         ref={containerRef}
         className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"

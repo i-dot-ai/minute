@@ -82,7 +82,7 @@ export default function Home() {
           <div className="govuk-grid-row">
             <div className="govuk-grid-column-full">
               <div className="govuk-form-group">
-                <fieldset className="govuk-fieldset h-55" aria-describedby="recordMeeting-hint">
+                <fieldset className="govuk-fieldset h-55 govuk-!-margin-top-9" aria-describedby="recordMeeting-hint">
                   <div className="govuk-radios govuk-radios--inline flex" data-module="govuk-radios">
                     <div className="govuk-radios__item new-recording__radio-item flex-1">
                       <input className="govuk-radios__input" id="in-person" name="recordMeeting" type="radio" value="in-person" checked={mode === 'in-person'} onChange={() => setMode('in-person')} />
@@ -122,9 +122,10 @@ export default function Home() {
                     </div>
                   </div>
                 </fieldset>
+                <p className="govuk-body">
+                  Please ensure that all participants are aware that they have been recorded. Suitable up to <strong>OFFICIAL SENSITIVE</strong>.</p>
                 {mode === 'upload-file' ? <AudioUploadForm /> : (
                   <>
-                    <p className="govuk-body">Remember to tell all participants they're being recorded.</p>
                     <div className="govuk-form-group">
                       <label
                         className="govuk-label govuk-label--m"
@@ -174,8 +175,6 @@ export default function Home() {
             </div>
           </div>
         )}
-        <p className="govuk-body">Suitable up to <strong>OFFICIAL SENSITIVE</strong>.</p>
-
       </div >
     </>
   )

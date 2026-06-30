@@ -115,3 +115,10 @@ config/google-credentials.json
 
 certs/
 .tmp/
+
+# Worker scratch dir (host bind for container /tmp, see docker-compose.yaml)
+.worker-tmp/
+
+# Local-only Compose overrides (never committed)
+docker-compose.override.yaml
+docker-compose.override.yml

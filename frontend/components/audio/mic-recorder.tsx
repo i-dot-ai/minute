@@ -81,9 +81,15 @@ function MicRecorderComponent({
   const autoStart = !!(initialDeviceId && initialDevices?.length)
   const { releaseWakeLock, requestWakeLock } = useWakeLock()
   const [error, setError] = useState<string | null>(null)
-  const [audioDevices, setAudioDevices] = useState<AudioDevice[]>(initialDevices ?? [])
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(initialDeviceId ?? '')
-  const [permissionGranted, setPermissionGranted] = useState<boolean>(!!(initialDeviceId && initialDevices?.length))
+  const [audioDevices, setAudioDevices] = useState<AudioDevice[]>(
+    initialDevices ?? []
+  )
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(
+    initialDeviceId ?? ''
+  )
+  const [permissionGranted, setPermissionGranted] = useState<boolean>(
+    !!(initialDeviceId && initialDevices?.length)
+  )
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [showStopDialog, setShowStopDialog] = useState(false)
   const form = useFormContext<TranscriptionForm>()
@@ -302,8 +308,8 @@ function MicRecorderComponent({
       {!recordedAudio && (
         <>
           <h2 className="govuk-heading-m flex items-center gap-2">
-            <span className="relative inline-flex size-3 mr-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" />
+            <span className="relative mr-2 inline-flex size-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
               <span className="relative inline-flex size-3 rounded-full bg-red-600" />
             </span>
             Recording

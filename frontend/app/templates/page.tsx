@@ -5,9 +5,9 @@ export default function TemplatesPage() {
   return (
     <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
-        <div className="govuk-grid-column-one-third">
+        <div className="govuk-grid-column-one-quarter">
           <h2 className="govuk-caption-m govuk-!-margin-bottom-1 govuk-!-margin-top-0 govuk-!-margin-bottom-3">
-            Contents
+            Templates
           </h2>
           <nav>
             <ul className="govuk-list govuk-list--spaced">
@@ -31,18 +31,9 @@ export default function TemplatesPage() {
           </nav>
         </div>
         <div
-          className="govuk-grid-column-two-thirds"
+          className="govuk-grid-column-three-quarters"
           data-onboarding="templates-page"
         >
-          <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
-            <ol className="govuk-breadcrumbs__list">
-              <li className="govuk-breadcrumbs__list-item">
-                <Link className="govuk-breadcrumbs__link" href="/">
-                  Home
-                </Link>
-              </li>
-            </ol>
-          </nav>
           <h1 className="govuk-heading-xl">Your templates</h1>
           <p className="govuk-body-l">
             Use templates to customise the structure and style of your minutes.

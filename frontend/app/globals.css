@@ -101,12 +101,16 @@ html body[data-scroll-locked] {
   left: 12px;
 }
 
-.upload-radio__item .govuk-radios__input:checked+.govuk-radios__label:after,
-.new-recording__radio-item .govuk-radios__input:checked+.govuk-radios__label:after {
+.upload-radio__item .govuk-radios__input:checked + .govuk-radios__label:after,
+.new-recording__radio-item
+  .govuk-radios__input:checked
+  + .govuk-radios__label:after {
   top: 24px;
 }
 
-.new-recording__radio-item .govuk-radios__input:checked+.govuk-radios__label:after {
+.new-recording__radio-item
+  .govuk-radios__input:checked
+  + .govuk-radios__label:after {
   left: 22px;
 }
 
@@ -171,7 +175,6 @@ html body[data-scroll-locked] {
   min-height: 12em;
 }
 
-
 .new-recording__radio-item:has(.govuk-radios__input:checked) {
   border: 2px solid var(--govuk-brand-colour);
   background-color: #f4f8fb;
@@ -179,6 +182,19 @@ html body[data-scroll-locked] {
 
 .new-recording__radio-item .govuk-radios__label {
   margin-left: 15px;
+}
+
+/* service navigation move focus state to be focus-visible */
+.govuk-service-navigation__link:focus {
+  background: none;
+  box-shadow: none;
+}
+
+.govuk-service-navigation__link:focus-visible {
+  background-color: var(--govuk-focus-colour, #fd0);
+  box-shadow:
+    0 -2px var(--govuk-focus-colour, #fd0),
+    0 4px var(--govuk-focus-text-colour, #0b0c0c);
 }
 
 @plugin "@tailwindcss/typography";
@@ -377,7 +393,7 @@ html body[data-scroll-locked] {
   list-style-type: none;
 }
 
-.editor-content ul>li::before {
+.editor-content ul > li::before {
   content: '•';
 }
 
@@ -386,11 +402,11 @@ html body[data-scroll-locked] {
   counter-reset: list-counter;
 }
 
-.editor-content ol>li {
+.editor-content ol > li {
   counter-increment: list-counter;
 }
 
-.editor-content ol>li::before {
+.editor-content ol > li::before {
   content: counter(list-counter) '.';
 }
 
@@ -439,12 +455,12 @@ html body[data-scroll-locked] {
   margin-bottom: 2.33em;
 }
 
-.editor-content p+p {
+.editor-content p + p {
   margin-top: 1em;
   /* Add margin only between consecutive paragraphs */
 }
 
-.editor-content pre>code {
+.editor-content pre > code {
   background-color: #444;
   color: white;
   width: 100% !;

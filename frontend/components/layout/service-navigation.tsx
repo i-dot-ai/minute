@@ -11,18 +11,23 @@ export const ServiceNavigation = () => {
   return (
     <section
       aria-label="Service information"
-      className="bg-(--govuk-surface-background-colour) fixed top-0 left-0 bottom-0"
+      className="fixed top-0 bottom-0 left-0 bg-(--govuk-surface-background-colour)"
     >
-      <nav aria-label="Menu" className="flex flex-col justify-between h-full">
-        <ul className="flex flex-col w-40" id="navigation">
+      <nav aria-label="Menu" className="flex h-full flex-col justify-between">
+        <ul className="flex w-40 flex-col" id="navigation">
           <li
             className={`govuk-service-navigation__service-name w-full ${pathname === '/' || pathname.includes('/new') ? 'bg-[#d2e2f1] font-bold' : ''}`}
           >
             <Link
               href="/"
-              className="ml-4 govuk-service-navigation__link flex items-center gap-2"
+              aria-current={
+                pathname === '/' || pathname.includes('/new')
+                  ? 'page'
+                  : undefined
+              }
+              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname === '/' || pathname.includes('/new') ? 'govuk-service-navigation__link--active' : ''}`}
             >
-              <AudioLines className="w-4 h-4" />
+              <AudioLines className="h-4 w-4" />
               Minute
             </Link>
           </li>
@@ -30,11 +35,14 @@ export const ServiceNavigation = () => {
             className={`govuk-service-navigation__item w-full ${pathname.includes('/transcriptions') ? 'bg-[#d2e2f1] font-bold' : ''}`}
           >
             <Link
-              className="ml-4 govuk-service-navigation__link flex items-center gap-2"
+              aria-current={
+                pathname.includes('/transcriptions') ? 'page' : undefined
+              }
+              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__link--active' : ''}`}
               href="/transcriptions"
               data-onboarding="saved-transcriptions-nav"
             >
-              <List className="w-4 h-4" />
+              <List className="h-4 w-4" />
               Transcriptions
             </Link>
           </li>
@@ -42,29 +50,44 @@ export const ServiceNavigation = () => {
             className={`govuk-service-navigation__item w-full ${pathname.includes('/templates') ? 'bg-[#d2e2f1] font-bold' : ''}`}
           >
             <Link
-              className="ml-4 govuk-service-navigation__link flex items-center gap-2"
+              aria-current={
+                pathname.includes('/templates') ? 'page' : undefined
+              }
+              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname.includes('/templates') ? 'govuk-service-navigation__link--active' : ''}`}
               href="/templates"
               data-onboarding="templates-nav"
             >
-              <LayoutPanelTop className="w-4 h-4" />
+              <LayoutPanelTop className="h-4 w-4" />
               Templates
             </Link>
           </li>
         </ul>
-        <ul className="flex flex-col w-40 border-t border-(--govuk-border-colour)">
-          <li className={`w-full ${pathname.includes('/privacy') ? 'bg-[#d2e2f1] font-bold' : ''}`}>
-            <Link className="ml-4 govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link flex items-center gap-2" href="/privacy">
+        <ul className="flex w-40 flex-col border-t border-(--govuk-border-colour)">
+          <li
+            className={`w-full ${pathname.includes('/privacy') ? 'bg-[#d2e2f1] font-bold' : ''}`}
+          >
+            <Link
+              aria-current={pathname.includes('/privacy') ? 'page' : undefined}
+              className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ${pathname.includes('/privacy') ? 'govuk-service-navigation__link--active' : ''} ml-4 flex items-center gap-2"
+              href="/privacy"
+            >
               Privacy
             </Link>
           </li>
-          <li className={`w-full ${pathname.includes('/support') ? 'bg-[#d2e2f1] font-bold' : ''}`}>
-            <Link className="ml-4  govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link flex items-center gap-2" href="/support">
+          <li
+            className={`w-full ${pathname.includes('/support') ? 'bg-[#d2e2f1] font-bold' : ''}`}
+          >
+            <Link
+              aria-current={pathname.includes('/support') ? 'page' : undefined}
+              className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ${pathname.includes('/support') ? 'govuk-service-navigation__link--active' : ''} ml-4 flex items-center gap-2"
+              href="/support"
+            >
               Support
             </Link>
           </li>
         </ul>
       </nav>
-    </section >
+    </section>
   )
 }
 

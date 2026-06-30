@@ -13,10 +13,10 @@ export const ServiceNavigation = () => {
       aria-label="Service information"
       className="bg-(--govuk-surface-background-colour) fixed top-0 left-0 bottom-0"
     >
-      <nav aria-label="Menu">
+      <nav aria-label="Menu" className="flex flex-col justify-between h-full">
         <ul className="flex flex-col w-40" id="navigation">
           <li
-            className={`govuk-service-navigation__service-name w-full ${pathname === '/' || pathname.includes('/new') ? 'bg-[#d2e2f1] font-bold text-black' : ''}`}
+            className={`govuk-service-navigation__service-name w-full ${pathname === '/' || pathname.includes('/new') ? 'bg-[#d2e2f1] font-bold' : ''}`}
           >
             <Link
               href="/"
@@ -27,7 +27,7 @@ export const ServiceNavigation = () => {
             </Link>
           </li>
           <li
-            className={`govuk-service-navigation__item w-full ${pathname.includes('/transcriptions') ? 'bg-[#d2e2f1] font-bold text-black' : ''}`}
+            className={`govuk-service-navigation__item w-full ${pathname.includes('/transcriptions') ? 'bg-[#d2e2f1] font-bold' : ''}`}
           >
             <Link
               className="ml-4 govuk-service-navigation__link flex items-center gap-2"
@@ -39,7 +39,7 @@ export const ServiceNavigation = () => {
             </Link>
           </li>
           <li
-            className={`govuk-service-navigation__item w-full ${pathname.includes('/templates') ? 'bg-[#d2e2f1] font-bold text-black' : ''}`}
+            className={`govuk-service-navigation__item w-full ${pathname.includes('/templates') ? 'bg-[#d2e2f1] font-bold' : ''}`}
           >
             <Link
               className="ml-4 govuk-service-navigation__link flex items-center gap-2"
@@ -48,6 +48,18 @@ export const ServiceNavigation = () => {
             >
               <LayoutPanelTop className="w-4 h-4" />
               Templates
+            </Link>
+          </li>
+        </ul>
+        <ul className="flex flex-col w-40 border-t border-(--govuk-border-colour)">
+          <li className={`w-full ${pathname.includes('/privacy') ? 'bg-[#d2e2f1] font-bold' : ''}`}>
+            <Link className="ml-4 govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link flex items-center gap-2" href="/privacy">
+              Privacy
+            </Link>
+          </li>
+          <li className={`w-full ${pathname.includes('/support') ? 'bg-[#d2e2f1] font-bold' : ''}`}>
+            <Link className="ml-4  govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link flex items-center gap-2" href="/support">
+              Support
             </Link>
           </li>
         </ul>

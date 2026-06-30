@@ -1,0 +1,56 @@
+2026-06-29 08:16:55,200	INFO agent.py:151 -- Dashboard agent grpc address: 172.19.0.4:58550
+2026-06-29 08:16:55,208	INFO utils.py:307 -- Get all modules by type: DashboardAgentModule
+2026-06-29 08:16:55,404	INFO utils.py:340 -- Available modules: [<class 'ray.dashboard.modules.aggregator.aggregator_agent.AggregatorAgent'>, <class 'ray.dashboard.modules.event.event_agent.EventAgent'>, <class 'ray.dashboard.modules.job.job_agent.JobAgent'>, <class 'ray.dashboard.modules.log.log_agent.LogAgent'>, <class 'ray.dashboard.modules.log.log_agent.LogAgentV1Grpc'>, <class 'ray.dashboard.modules.reporter.healthz_agent.HealthzAgent'>, <class 'ray.dashboard.modules.reporter.reporter_agent.ReporterAgent'>]
+2026-06-29 08:16:55,404	INFO agent.py:170 -- Loading DashboardAgentModule: <class 'ray.dashboard.modules.aggregator.aggregator_agent.AggregatorAgent'>
+2026-06-29 08:16:55,404	WARNING __init__.py:864 -- Overriding of current MeterProvider is not allowed
+2026-06-29 08:16:55,405	INFO aggregator_agent.py:140 -- Event HTTP target is not enabled or publishing events to external HTTP service is disabled. Skipping sending events to external HTTP service. events_export_addr: 
+2026-06-29 08:16:55,405	WARNING __init__.py:864 -- Overriding of current MeterProvider is not allowed
+2026-06-29 08:16:55,405	INFO agent.py:170 -- Loading DashboardAgentModule: <class 'ray.dashboard.modules.event.event_agent.EventAgent'>
+2026-06-29 08:16:55,405	INFO event_agent.py:48 -- Event agent cache buffer size: 10240
+2026-06-29 08:16:55,405	INFO agent.py:170 -- Loading DashboardAgentModule: <class 'ray.dashboard.modules.job.job_agent.JobAgent'>
+2026-06-29 08:16:55,406	INFO agent.py:170 -- Loading DashboardAgentModule: <class 'ray.dashboard.modules.log.log_agent.LogAgent'>
+2026-06-29 08:16:55,406	INFO agent.py:170 -- Loading DashboardAgentModule: <class 'ray.dashboard.modules.log.log_agent.LogAgentV1Grpc'>
+2026-06-29 08:16:55,406	INFO agent.py:170 -- Loading DashboardAgentModule: <class 'ray.dashboard.modules.reporter.healthz_agent.HealthzAgent'>
+2026-06-29 08:16:55,406	INFO agent.py:170 -- Loading DashboardAgentModule: <class 'ray.dashboard.modules.reporter.reporter_agent.ReporterAgent'>
+2026-06-29 08:16:55,407	WARNING __init__.py:864 -- Overriding of current MeterProvider is not allowed
+2026-06-29 08:16:55,408	WARNING gpu_profile_manager.py:78 -- [GpuProfilingManager] No GPUs found on this node, GPU profiling will not be setup.
+2026-06-29 08:16:55,408	WARNING gpu_profile_manager.py:82 -- [GpuProfilingManager] `dynolog` is not installed, GPU profiling will not be available.
+2026-06-29 08:16:55,409	WARNING gpu_profile_manager.py:125 -- [GpuProfilingManager] GPU profiling is disabled, skipping daemon setup.
+2026-06-29 08:16:55,410	INFO agent.py:175 -- Loaded 7 modules.
+2026-06-29 08:16:55,412	INFO http_server_agent.py:123 -- Dashboard agent http address: 172.19.0.4:52365
+2026-06-29 08:16:55,413	INFO http_server_agent.py:131 -- <ResourceRoute [POST] <PlainResource  /api/job_agent/jobs/> -> <function JobAgent.submit_job at 0xffff001db060>
+2026-06-29 08:16:55,413	INFO http_server_agent.py:131 -- <ResourceRoute [OPTIONS] <PlainResource  /api/job_agent/jobs/> -> <bound method _PreflightHandler._preflight_handler of <aiohttp_cors.cors_config._CorsConfigImpl object at 0xffff00186300>>
+2026-06-29 08:16:55,413	INFO http_server_agent.py:131 -- <ResourceRoute [POST] <DynamicResource  /api/job_agent/jobs/{job_or_submission_id}/stop> -> <function JobAgent.stop_job at 0xffff001db2e0>
+2026-06-29 08:16:55,413	INFO http_server_agent.py:131 -- <ResourceRoute [OPTIONS] <DynamicResource  /api/job_agent/jobs/{job_or_submission_id}/stop> -> <bound method _PreflightHandler._preflight_handler of <aiohttp_cors.cors_config._CorsConfigImpl object at 0xffff00186300>>
+2026-06-29 08:16:55,413	INFO http_server_agent.py:131 -- <ResourceRoute [DELETE] <DynamicResource  /api/job_agent/jobs/{job_or_submission_id}> -> <function JobAgent.delete_job at 0xffff001db560>
+2026-06-29 08:16:55,413	INFO http_server_agent.py:131 -- <ResourceRoute [OPTIONS] <DynamicResource  /api/job_agent/jobs/{job_or_submission_id}> -> <bound method _PreflightHandler._preflight_handler of <aiohttp_cors.cors_config._CorsConfigImpl object at 0xffff00186300>>
+2026-06-29 08:16:55,413	INFO http_server_agent.py:131 -- <ResourceRoute [GET] <DynamicResource  /api/job_agent/jobs/{job_or_submission_id}/logs> -> <function JobAgent.get_job_logs at 0xffff001db740>
+2026-06-29 08:16:55,413	INFO http_server_agent.py:131 -- <ResourceRoute [OPTIONS] <DynamicResource  /api/job_agent/jobs/{job_or_submission_id}/logs> -> <bound method _PreflightHandler._preflight_handler of <aiohttp_cors.cors_config._CorsConfigImpl object at 0xffff00186300>>
+2026-06-29 08:16:55,413	INFO http_server_agent.py:131 -- <ResourceRoute [GET] <DynamicResource  /api/job_agent/jobs/{job_or_submission_id}/logs/tail> -> <function JobAgent.tail_job_logs at 0xffff001db920>
+2026-06-29 08:16:55,414	INFO http_server_agent.py:131 -- <ResourceRoute [OPTIONS] <DynamicResource  /api/job_agent/jobs/{job_or_submission_id}/logs/tail> -> <bound method _PreflightHandler._preflight_handler of <aiohttp_cors.cors_config._CorsConfigImpl object at 0xffff00186300>>
+2026-06-29 08:16:55,414	INFO http_server_agent.py:131 -- <ResourceRoute [GET] <PlainResource  /api/local_raylet_healthz> -> <function HealthzAgent.health_check at 0xffff000ca3e0>
+2026-06-29 08:16:55,414	INFO http_server_agent.py:131 -- <ResourceRoute [OPTIONS] <PlainResource  /api/local_raylet_healthz> -> <bound method _PreflightHandler._preflight_handler of <aiohttp_cors.cors_config._CorsConfigImpl object at 0xffff00186300>>
+2026-06-29 08:16:55,414	INFO http_server_agent.py:131 -- <ResourceRoute [GET] <PlainResource  /api/healthz> -> <function HealthzAgent.unified_health at 0xffff000ca660>
+2026-06-29 08:16:55,414	INFO http_server_agent.py:131 -- <ResourceRoute [OPTIONS] <PlainResource  /api/healthz> -> <bound method _PreflightHandler._preflight_handler of <aiohttp_cors.cors_config._CorsConfigImpl object at 0xffff00186300>>
+2026-06-29 08:16:55,414	INFO http_server_agent.py:131 -- <ResourceRoute [GET] <StaticResource  /logs -> PosixPath('/tmp/ray/session_2026-06-29_08-16-50_417928_1/logs')> -> <bound method StaticResource._handle of <StaticResource  /logs -> PosixPath('/tmp/ray/session_2026-06-29_08-16-50_417928_1/logs')>>
+2026-06-29 08:16:55,414	INFO http_server_agent.py:131 -- <ResourceRoute [OPTIONS] <StaticResource  /logs -> PosixPath('/tmp/ray/session_2026-06-29_08-16-50_417928_1/logs')> -> <bound method _PreflightHandler._preflight_handler of <aiohttp_cors.cors_config._CorsConfigImpl object at 0xffff00186300>>
+2026-06-29 08:16:55,414	INFO http_server_agent.py:132 -- Registered 16 routes.
+2026-06-29 08:16:55,415	INFO process_watcher.py:45 -- raylet pid is 550
+2026-06-29 08:16:55,415	INFO process_watcher.py:65 -- check_parent_via_pipe
+2026-06-29 08:16:55,416	INFO event_utils.py:130 -- Monitor events logs modified after 1782719215.2812974 on /tmp/ray/session_2026-06-29_08-16-50_417928_1/logs/events, the source types are all.
+2026-06-29 12:37:07,410	ERROR reporter_agent.py:907 -- Failed to get worker pids from raylet
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/ray/dashboard/modules/reporter/reporter_agent.py", line 905, in _async_get_worker_pids_from_raylet
+    return await self._raylet_client.async_get_worker_pids()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "python/ray/includes/raylet_client.pxi", line 20, in ray._raylet.convert_optional_vector_int32
+  File "python/ray/includes/common.pxi", line 136, in ray._raylet.check_status_timeout_as_rpc_error
+ray.exceptions.RpcError: RPC error: Deadline Exceeded
+2026-06-29 13:12:07,458	ERROR reporter_agent.py:907 -- Failed to get worker pids from raylet
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/ray/dashboard/modules/reporter/reporter_agent.py", line 905, in _async_get_worker_pids_from_raylet
+    return await self._raylet_client.async_get_worker_pids()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "python/ray/includes/raylet_client.pxi", line 20, in ray._raylet.convert_optional_vector_int32
+  File "python/ray/includes/common.pxi", line 136, in ray._raylet.check_status_timeout_as_rpc_error
+ray.exceptions.RpcError: RPC error: Deadline Exceeded

@@ -42,6 +42,7 @@ export function OnboardingTour() {
   const router = useRouter()
   const [run, setRun] = useState(getInitialRun)
   const [stepIndex, setStepIndex] = useState(getInitialStepIndex)
+  const [targetMissing, setTargetMissing] = useState(false)
   const prevPathnameRef = useRef(pathname)
   const originPathRef = useRef<string | null>(null)
   const tourActive = run && pathname !== UNAUTHORISED_PATH
@@ -77,6 +78,30 @@ export function OnboardingTour() {
     setRun(false)
     queueMicrotask(() => setRun(true))
   }, [])
+
+  // When the tour is resumed on a page that doesn't contain the current
+  // step's target (e.g. the page is reloaded with a mid-tour step index in
+  // local storage), react-joyride renders its grey overlay but never renders
+  // the tooltip - leaving the user with a grey screen and no close button.
+  // Detect that case so we can let them click the overlay to close the tour.
+  useEffect(() => {
+    setTargetMissing(false)
+
+    if (!tourActive) return
+
+    const currentStep = steps[stepIndex]
+    const target = currentStep?.target
+    if (typeof target !== 'string') return
+
+    // Give react-joyride's own target polling (targetWaitTimeout) a chance to
+    // find the element first, so we don't fire during normal navigation when
+    // the target appears a moment after the route changes.
+    const timeout = setTimeout(() => {
+      setTargetMissing(!document.querySelector(target))
+    }, 1200)
+
+    return () => clearTimeout(timeout)
+  }, [tourActive, steps, stepIndex, pathname])
 
   useEffect(() => {
     window.addEventListener(RESTART_ONBOARDING_TOUR_EVENT, restartTour)
@@ -168,5 +193,26 @@ export function OnboardingTour() {
     },
   })
 
-  return Tour
+  return (
+    <>
+      {Tour}
+      {tourActive && targetMissing && (
+        <div
+          role="button"
+          aria-label="Close tour"
+          tabIndex={0}
+          onClick={finishTour}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') finishTour()
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 10000,
+            cursor: 'pointer',
+          }}
+        />
+      )}
+    </>
+  )
 }

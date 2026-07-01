@@ -10,9 +10,11 @@ import { useState } from 'react'
 export function RenameTranscriptionButton({
   transcription,
   className,
+  title,
 }: {
   transcription: RenameTranscription
   className?: string
+  title?: string
 }) {
   const [open, setOpen] = useState(false)
 
@@ -21,10 +23,11 @@ export function RenameTranscriptionButton({
       <button
         type="button"
         data-module="govuk-button"
-        className={className ?? 'govuk-button govuk-button--secondary'}
+        className={className ?? 'govuk-link text-(--govuk-link-colour) govuk-!-margin-bottom-0 hover:cursor-pointer'}
         onClick={() => setOpen(true)}
       >
-        <PencilIcon className="size-4" /> Rename
+        <PencilIcon className="size-4" />
+        <span className="govuk-visually-hidden">Rename {title}</span>
       </button>
       <RenameTranscriptionDialog
         open={open}

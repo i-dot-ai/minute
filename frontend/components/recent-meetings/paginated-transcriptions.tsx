@@ -1,23 +1,24 @@
 'use client'
 
+import { DeleteTranscriptionsDialog } from '@/components/recent-meetings/delete-transcriptions-dialog'
 import { RecentOfflineRecordingsSection } from '@/components/recent-meetings/recent-offline-recordings-section'
 import { TranscriptionsList } from '@/components/recent-meetings/transcriptions-list'
 import { useTranscriptions } from '@/components/recent-meetings/use-transcriptions'
-import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
-import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 
 const PAGE_SIZE = 10
 
 export const PaginatedTranscriptions = () => {
-  const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const router = useRouter()
   const currentPage = Number(searchParams.get('page')) || 1
   const expiring = searchParams.get('expiring') === 'true'
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const selectAllRef = useRef<HTMLInputElement>(null)
   const {
     data: paginatedResponse,
     isLoading,
@@ -30,6 +31,45 @@ export const PaginatedTranscriptions = () => {
   const transcriptions = paginatedResponse?.items || []
   const totalPages = paginatedResponse?.total_pages || 1
   const totalCount = paginatedResponse?.total_count || 0
+  const pageIds = transcriptions.map((t) => t.id)
+  const allOnPageSelected =
+    pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id))
+  const someOnPageSelected = pageIds.some((id) => selectedIds.has(id))
+
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [currentPage, expiring])
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate =
+        someOnPageSelected && !allOnPageSelected
+    }
+  }, [someOnPageSelected, allOnPageSelected])
+
+  const toggleOne = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) {
+        next.add(id)
+      } else {
+        next.delete(id)
+      }
+      return next
+    })
+  }
+
+  const toggleAllOnPage = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (allOnPageSelected) {
+        pageIds.forEach((id) => next.delete(id))
+      } else {
+        pageIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }
 
   const getPageNumbers = () => {
     const pages = []
@@ -55,23 +95,13 @@ export const PaginatedTranscriptions = () => {
     }
   }
 
+  const selectedCount = selectedIds.size
+
   return (
     <div>
-      {user && user.data_retention_days && (
-        <p className="govuk-body">
-          Your data retention period is set to {user.data_retention_days} day
-          {user.data_retention_days > 1 ? 's' : ''}. Change this in{' '}
-          <Link href="/settings" className="govuk-link">
-            settings
-          </Link>
-          .
-        </p>
-      )}
-      <Suspense fallback={null}>
-        <RecentOfflineRecordingsSection />
-      </Suspense>
-      <div className="govuk-!-margin-bottom-6 flex items-end justify-between">
-        <div className="govuk-form-group govuk-!-margin-bottom-0">
+      <div className="flex items-center justify-between">
+        <input type="text" className="govuk-input govuk-!-width-one-half" placeholder="Search transcriptions" />
+        <div className="govuk-form-group">
           <label className="govuk-label" htmlFor="filter">
             Filter by
           </label>
@@ -89,6 +119,50 @@ export const PaginatedTranscriptions = () => {
             </option>
           </select>
         </div>
+      </div>
+      <Suspense fallback={null}>
+        <RecentOfflineRecordingsSection />
+      </Suspense>
+      <div className="govuk-!-margin-bottom-3 govuk-!-padding-bottom-2 flex items-center justify-between border-b border-(--govuk-border-colour)">
+        <div className="flex items-center gap-4">
+          <div
+            className="govuk-checkboxes govuk-checkboxes--small relative flex"
+            data-module="govuk-checkboxes"
+          >
+            <input
+              ref={selectAllRef}
+              className="govuk-checkboxes__input"
+              id="select-all"
+              name="select-all"
+              type="checkbox"
+              checked={allOnPageSelected}
+              onChange={toggleAllOnPage}
+              disabled={transcriptions.length === 0}
+            />
+            <label
+              className="govuk-label govuk-checkboxes__label ml-3 whitespace-nowrap"
+              htmlFor="select-all"
+            >
+              Select all
+            </label>
+          </div>
+          {selectedCount > 0 && (
+            <div className="govuk-button-group govuk-!-margin-bottom-0">
+              <button
+                type="button"
+                className="govuk-link link--warning govuk-!-margin-0"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                Delete {selectedCount} selected
+              </button>
+            </div>
+          )}
+          <span className="govuk-visually-hidden" aria-live="polite">
+            {selectedCount > 0
+              ? `${selectedCount} transcriptions selected`
+              : ''}
+          </span>
+        </div>
         <p className="govuk-body govuk-!-margin-bottom-0">
           Total: {totalCount}
         </p>
@@ -101,7 +175,12 @@ export const PaginatedTranscriptions = () => {
         <p className="govuk-body">No transcriptions found</p>
       ) : (
         <>
-          <TranscriptionsList transcriptions={transcriptions} />
+          <TranscriptionsList
+            transcriptions={transcriptions}
+            selectable
+            selectedIds={selectedIds}
+            onToggle={toggleOne}
+          />
           {totalPages > 1 && (
             <nav
               className="govuk-pagination flex justify-center"
@@ -109,9 +188,9 @@ export const PaginatedTranscriptions = () => {
             >
               {currentPage > 1 && (
                 <div className="govuk-pagination__prev">
-                  <a
+                  <Link
                     className="govuk-link govuk-pagination__link"
-                    href={`${pathname}?page=${currentPage - 1}`}
+                    href={`${pathname}?page=${currentPage - 1}${expiring ? '&expiring=true' : ''}`}
                     rel="prev"
                   >
                     <svg
@@ -129,27 +208,27 @@ export const PaginatedTranscriptions = () => {
                       Previous
                       <span className="govuk-visually-hidden"> page</span>
                     </span>
-                  </a>
+                  </Link>
                 </div>
               )}
               <ul className="govuk-pagination__list">
                 {getPageNumbers().map((page) => (
                   <li key={page} className="govuk-pagination__item">
-                    <a
+                    <Link
                       className="govuk-link govuk-pagination__link"
-                      href={`${pathname}?page=${page}`}
+                      href={`${pathname}?page=${page}${expiring ? '&expiring=true' : ''}`}
                       aria-label={`Page ${page}`}
                     >
                       {page}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
               {currentPage < totalPages && (
                 <div className="govuk-pagination__next">
-                  <a
+                  <Link
                     className="govuk-link govuk-pagination__link"
-                    href={`${pathname}?page=${currentPage + 1}`}
+                    href={`${pathname}?page=${currentPage + 1}${expiring ? '&expiring=true' : ''}`}
                     rel="next"
                   >
                     <span className="govuk-pagination__link-title">
@@ -167,13 +246,19 @@ export const PaginatedTranscriptions = () => {
                     >
                       <path d="m8.107-0.0078125-1.4136 1.414 4.2926 4.293h-12.986v2h12.896l-4.1855 3.9766 1.377 1.4492 6.7441-6.4062-6.7246-6.7266z"></path>
                     </svg>
-                  </a>
+                  </Link>
                 </div>
               )}
             </nav>
           )}
         </>
       )}
+      <DeleteTranscriptionsDialog
+        open={deleteDialogOpen}
+        setOpen={setDeleteDialogOpen}
+        transcriptionIds={[...selectedIds]}
+        onDeleted={() => setSelectedIds(new Set())}
+      />
     </div>
   )
 }

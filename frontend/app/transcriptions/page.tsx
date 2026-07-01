@@ -1,3 +1,4 @@
+import { DataRetentionSelect } from '@/components/recent-meetings/data-retention-select'
 import { PaginatedTranscriptions } from '@/components/recent-meetings/paginated-transcriptions'
 import { Suspense } from 'react'
 
@@ -10,7 +11,10 @@ export default function TranscriptionsPage() {
             className="govuk-grid-column-full"
             data-onboarding="saved-transcriptions-page"
           >
-            <h1 className="govuk-heading-xl">Saved transcriptions</h1>
+            <div className="flex items-center justify-between">
+              <h1 className="govuk-heading-xl">Transcriptions</h1>
+              <DataRetentionSelect />
+            </div>
             <Suspense fallback={<div>Loading...</div>}>
               <PaginatedTranscriptions />
             </Suspense>

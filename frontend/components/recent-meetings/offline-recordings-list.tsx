@@ -9,6 +9,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import posthog from 'posthog-js'
 import { useMemo, useState } from 'react'
+import { DownloadIcon, TrashIcon, UploadIcon } from 'lucide-react'
 
 export function OfflineRecordingsList({
   recordings,
@@ -40,53 +41,37 @@ const OfflineRecordingItem = ({
     [recording.blob]
   )
   return (
-    <li className="transcriptions__list-item govuk-!-padding-top-3 govuk-!-padding-bottom-3">
-      <div className="flex justify-between">
-        <h3 className="govuk-heading-s govuk-!-margin-bottom-1">
-          {recording.updated_at.toDateString()} at{' '}
-          {recording.updated_at.toLocaleTimeString()}
-        </h3>
-        <div className="govuk-button-group">
-          <Link
-            href={`/recordings/${recording.recording_id}`}
-            className="govuk-button govuk-button--secondary"
-            role="button"
-          >
-            Upload
-            <span className="govuk-visually-hidden">
-              {' '}
-              recording recorded on {recording.updated_at.toDateString()} at{' '}
-              {recording.updated_at.toLocaleTimeString()}
-            </span>
-          </Link>
-          <a
-            href={url}
-            download={`audio-recording-${recording.updated_at.toISOString()}.webm`}
-            className="govuk-button govuk-button--secondary"
-            role="button"
-          >
-            Save to device
-            <span className="govuk-visually-hidden">
-              {' '}
-              recording recorded on {recording.updated_at.toDateString()} at{' '}
-              {recording.updated_at.toLocaleTimeString()}
-            </span>
-          </a>
-          <button
-            type="button"
-            className="govuk-link text-red-700"
-            onClick={() => setOpen(true)}
-          >
-            Delete
-            <span className="govuk-visually-hidden">
-              {' '}
-              recording recorded on {recording.updated_at.toDateString()} at{' '}
-              {recording.updated_at.toLocaleTimeString()}
-            </span>
-          </button>
-        </div>
+    <li className="border-t border-(--govuk-border-colour)">
+      <div className="flex items-center justify-between hover:bg-[#f4f8fb]">
+        <audio src={url} controls className="govuk-!-margin-right-2 govuk-!-margin-top-1" />
+        <Link
+          href={`/recordings/${recording.recording_id}`}
+          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline flex-1 flex"
+          role="button"
+        >
+          <h3 className="govuk-body-s govuk-!-margin-bottom-0 flex-1">
+            {recording.updated_at.toLocaleTimeString('en-GB', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </h3>
+        </Link>
+        <button
+          type="button"
+          className="govuk-link link--warning flex items-center gap-2 hover:cursor-pointer"
+          onClick={() => setOpen(true)}
+        >
+          <TrashIcon className="size-4" />
+          Delete
+          <span className="govuk-visually-hidden">
+            {' '}
+            recording recorded on {recording.updated_at.toDateString()} at{' '}
+            {recording.updated_at.toLocaleTimeString()}
+          </span>
+        </button>
       </div>
-      <audio src={url} controls className="w-full" />
       <DiscardConfirmDialog
         open={open}
         setOpen={setOpen}

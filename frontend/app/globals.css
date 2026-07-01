@@ -20,10 +20,6 @@ html body[data-scroll-locked] {
   border-top: 1px solid #b1b4b6;
 }
 
-.transcriptions__list-item {
-  border-top: 1px solid #b1b4b6;
-}
-
 .homepage__list-item::after {
   content: '';
   border: 2px solid #1d70b8;
@@ -101,16 +97,12 @@ html body[data-scroll-locked] {
   left: 12px;
 }
 
-.upload-radio__item .govuk-radios__input:checked + .govuk-radios__label:after,
-.new-recording__radio-item
-  .govuk-radios__input:checked
-  + .govuk-radios__label:after {
+.upload-radio__item .govuk-radios__input:checked+.govuk-radios__label:after,
+.new-recording__radio-item .govuk-radios__input:checked+.govuk-radios__label:after {
   top: 24px;
 }
 
-.new-recording__radio-item
-  .govuk-radios__input:checked
-  + .govuk-radios__label:after {
+.new-recording__radio-item .govuk-radios__input:checked+.govuk-radios__label:after {
   left: 22px;
 }
 
@@ -393,7 +385,7 @@ html body[data-scroll-locked] {
   list-style-type: none;
 }
 
-.editor-content ul > li::before {
+.editor-content ul>li::before {
   content: '•';
 }
 
@@ -402,11 +394,11 @@ html body[data-scroll-locked] {
   counter-reset: list-counter;
 }
 
-.editor-content ol > li {
+.editor-content ol>li {
   counter-increment: list-counter;
 }
 
-.editor-content ol > li::before {
+.editor-content ol>li::before {
   content: counter(list-counter) '.';
 }
 
@@ -455,12 +447,12 @@ html body[data-scroll-locked] {
   margin-bottom: 2.33em;
 }
 
-.editor-content p + p {
+.editor-content p+p {
   margin-top: 1em;
   /* Add margin only between consecutive paragraphs */
 }
 
-.editor-content pre > code {
+.editor-content pre>code {
   background-color: #444;
   color: white;
   width: 100% !;

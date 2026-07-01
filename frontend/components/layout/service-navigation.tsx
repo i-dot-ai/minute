@@ -25,7 +25,7 @@ export const ServiceNavigation = () => {
                   ? 'page'
                   : undefined
               }
-              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname === '/' || pathname.includes('/new') ? 'govuk-service-navigation__link--active' : ''}`}
+              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname === '/' || pathname.includes('/new') ? '!text-black' : ''}`}
             >
               <AudioLines className="h-4 w-4" />
               Minute
@@ -38,7 +38,7 @@ export const ServiceNavigation = () => {
               aria-current={
                 pathname.includes('/transcriptions') ? 'page' : undefined
               }
-              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__link--active' : ''}`}
+              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname.includes('/transcriptions') ? '!text-black' : ''}`}
               href="/transcriptions"
               data-onboarding="saved-transcriptions-nav"
             >
@@ -53,7 +53,7 @@ export const ServiceNavigation = () => {
               aria-current={
                 pathname.includes('/templates') ? 'page' : undefined
               }
-              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname.includes('/templates') ? 'govuk-service-navigation__link--active' : ''}`}
+              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname.includes('/templates') ? '!text-black' : ''}`}
               href="/templates"
               data-onboarding="templates-nav"
             >
@@ -68,7 +68,7 @@ export const ServiceNavigation = () => {
           >
             <Link
               aria-current={pathname.includes('/privacy') ? 'page' : undefined}
-              className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ${pathname.includes('/privacy') ? 'govuk-service-navigation__link--active' : ''} ml-4 flex items-center gap-2"
+              className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ${pathname.includes('/privacy') ? '!text-black' : ''} ml-4 flex items-center gap-2"
               href="/privacy"
             >
               Privacy
@@ -79,7 +79,7 @@ export const ServiceNavigation = () => {
           >
             <Link
               aria-current={pathname.includes('/support') ? 'page' : undefined}
-              className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ${pathname.includes('/support') ? 'govuk-service-navigation__link--active' : ''} ml-4 flex items-center gap-2"
+              className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ${pathname.includes('/support') ? '!text-black' : ''} ml-4 flex items-center gap-2"
               href="/support"
             >
               Support

@@ -86,6 +86,11 @@ export default function Home() {
         {!started ? (
           <div className="govuk-grid-row">
             <div className="govuk-grid-column-full">
+              <p className="govuk-body">
+                Please ensure that all participants are aware that they have
+                been recorded. Suitable up to{' '}
+                <strong>OFFICIAL SENSITIVE</strong>.
+              </p>
               <div className="govuk-form-group">
                 <fieldset
                   className="govuk-fieldset govuk-!-margin-top-9 h-55"
@@ -161,18 +166,13 @@ export default function Home() {
                     </div>
                   </div>
                 </fieldset>
-                <p className="govuk-body">
-                  Please ensure that all participants are aware that they have
-                  been recorded. Suitable up to{' '}
-                  <strong>OFFICIAL SENSITIVE</strong>.
-                </p>
                 {mode === 'upload-file' ? (
                   <AudioUploadForm />
                 ) : (
                   <>
                     <div className="govuk-form-group">
                       <label
-                        className="govuk-label govuk-label--m"
+                        className="govuk-label"
                         htmlFor="microphone"
                       >
                         Choose microphone

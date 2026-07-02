@@ -30,19 +30,19 @@ export const DiscardConfirmDialog = ({
             the recording permanently.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="govuk-button-group sm:justify-start">
-          <button
-            type="button"
-            onClick={onClickConfirm}
-            className="govuk-button govuk-button--warning"
-          >
-            Discard recording
-          </button>
+        <AlertDialogFooter className="govuk-button-group sm:justify-end">
           <AlertDialogCancel asChild>
-            <button type="button" className="govuk-button govuk-button--secondary">
+            <button type="button" className="govuk-link text-(--govuk-link-colour)">
               Cancel
             </button>
           </AlertDialogCancel>
+          <button
+            type="button"
+            onClick={onClickConfirm}
+            className="govuk-link link--warning"
+          >
+            Discard recording
+          </button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

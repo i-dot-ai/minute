@@ -18,7 +18,7 @@ export const ServiceNavigation = () => {
           <li
             className={`govuk-service-navigation__item w-full ${pathname === '/' || pathname.includes('/new') ? 'bg-[#d2e2f1] font-bold' : ''}`}
           >
-            <Link
+            <a
               href="/"
               aria-current={
                 pathname === '/' || pathname.includes('/new')
@@ -29,7 +29,7 @@ export const ServiceNavigation = () => {
             >
               <AudioLines className="h-4 w-4" />
               Record
-            </Link>
+            </a>
           </li>
           <li
             className={`govuk-service-navigation__item w-full ${pathname.includes('/transcriptions') ? 'bg-[#d2e2f1] font-bold' : ''}`}

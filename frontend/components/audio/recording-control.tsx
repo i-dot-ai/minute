@@ -416,7 +416,7 @@ export default function RecordingControl({
           <DialogFooter className="govuk-button-group ml-auto sm:justify-end">
             <button
               type="button"
-              className="govuk-button govuk-button--secondary"
+              className="govuk-link text-(--govuk-link-colour)"
               onClick={() => setShowStopDialog(false)}
             >
               Cancel

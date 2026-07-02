@@ -84,11 +84,11 @@ export const DeleteTranscriptionDialog = ({
             minute: '2-digit',
           })}
         </p>
-        <AlertDialogFooter className="govuk-button-group sm:justify-start">
+        <AlertDialogFooter className="govuk-button-group sm:justify-end">
           <AlertDialogCancel asChild>
             <button
               type="button"
-              className="govuk-button govuk-button--secondary"
+              className="govuk-link text-(--govuk-link-colour)"
               disabled={isPending}
             >
               Cancel
@@ -96,7 +96,7 @@ export const DeleteTranscriptionDialog = ({
           </AlertDialogCancel>
           <button
             type="button"
-            className="govuk-button govuk-button--warning"
+            className="govuk-link link--warning"
             disabled={isPending}
             onClick={() =>
               deleteTranscription({

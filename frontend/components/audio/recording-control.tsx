@@ -23,6 +23,7 @@ interface RecordingControlProps {
   }
   onPauseStateChange?: (isPaused: boolean) => void
   onDiscard?: () => void
+  onGenerate?: () => void
 }
 
 export default function RecordingControl({
@@ -32,6 +33,7 @@ export default function RecordingControl({
   recorderControls,
   onPauseStateChange,
   onDiscard,
+  onGenerate,
 }: RecordingControlProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -327,6 +329,7 @@ export default function RecordingControl({
   }
 
   const confirmStop = () => {
+    onGenerate?.()
     onStopRecording()
     setShowStopDialog(false)
   }
@@ -369,12 +372,12 @@ export default function RecordingControl({
           >
             {isPaused ? (
               <>
-                <Play />
+                <Play className="size-4" />
                 Resume
               </>
             ) : (
               <>
-                <Pause />
+                <Pause className="size-4" />
                 Pause
               </>
             )}

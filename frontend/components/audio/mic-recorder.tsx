@@ -1,44 +1,43 @@
 'use client'
 
-import { Mic } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import RecordingControl from './recording-control'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
-import { StartTranscriptionSection as StartTranscriptionSection2 } from '@/components/audio/start-transcription-section-2'
-import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
 import { TranscriptionForm } from '@/components/audio/types'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
-import { AudioDevice, MicrophonePermission } from './microphone-permission'
-import { getFileExtensionFromBlob } from '@/lib/getFileExtension'
+import { AudioDevice } from './microphone-permission'
 
 export function MicRecorderForm({
   initialDeviceId,
   initialDevices,
   onDiscard,
+  onStarted,
 }: {
   initialDeviceId?: string
   initialDevices?: AudioDevice[]
   onDiscard?: () => void
+  onStarted?: (transcriptionId: string) => void
 } = {}) {
-  const { isPending, onSubmit, form } = useStartTranscription()
+  const { isError, onSubmit, form } = useStartTranscription(undefined, onStarted)
   const watchBlob = form.watch('file')
+  // Set when the user chooses "Generate summary" in the stop dialog. Stopping the
+  // recorder is async, so we wait for the audio blob to land before submitting.
+  const [generateRequested, setGenerateRequested] = useState(false)
+
+  useEffect(() => {
+    if (generateRequested && watchBlob) {
+      setGenerateRequested(false)
+      form.handleSubmit(onSubmit)()
+    }
+  }, [generateRequested, watchBlob, form, onSubmit])
+
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -52,13 +51,24 @@ export function MicRecorderForm({
               initialDeviceId={initialDeviceId}
               initialDevices={initialDevices}
               onDiscard={onDiscard}
+              onGenerate={() => setGenerateRequested(true)}
             />
           )}
         />
-        <StartTranscriptionSection
-          isShowing={!!watchBlob}
-          isPending={isPending}
-        />
+        {isError && (
+          <div className="govuk-!-margin-top-4">
+            <p className="govuk-body">
+              Something went wrong starting your summary. Please try again.
+            </p>
+            <button
+              type="button"
+              onClick={onDiscard}
+              className="govuk-button"
+            >
+              Start again
+            </button>
+          </div>
+        )}
       </form>
     </FormProvider>
   )
@@ -70,29 +80,22 @@ function MicRecorderComponent({
   initialDeviceId,
   initialDevices,
   onDiscard,
+  onGenerate,
 }: {
   recordedAudio: Blob | null
   setRecordedAudio: (blob: Blob | null) => void
   initialDeviceId?: string
   initialDevices?: AudioDevice[]
   onDiscard?: () => void
+  onGenerate?: () => void
 }) {
   // When a device is handed in pre-resolved (from the home page), permission is
   // already granted upstream — so skip the cold flow and start recording immediately.
   const autoStart = !!(initialDeviceId && initialDevices?.length)
   const { releaseWakeLock, requestWakeLock } = useWakeLock()
   const [error, setError] = useState<string | null>(null)
-  const [audioDevices, setAudioDevices] = useState<AudioDevice[]>(
-    initialDevices ?? []
-  )
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(
-    initialDeviceId ?? ''
-  )
-  const [permissionGranted, setPermissionGranted] = useState<boolean>(
-    !!(initialDeviceId && initialDevices?.length)
-  )
+  const selectedDeviceId = initialDeviceId ?? ''
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [showStopDialog, setShowStopDialog] = useState(false)
   const form = useFormContext<TranscriptionForm>()
   const { removeRecording, addRecording, updateRecording } = useRecordingDb()
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -247,65 +250,10 @@ function MicRecorderComponent({
     }
   }, [])
 
-  const handlePermissionGranted = (devices: AudioDevice[]) => {
-    setAudioDevices(devices)
-    setSelectedDeviceId(devices[0].deviceId)
-    setPermissionGranted(true)
-    setError(null)
-  }
-
   useTabCloseWarning(!!recordedAudio || isRecording)
 
-  if (!permissionGranted || !audioDevices.length) {
-    return (
-      <div className="space-y-4">
-        <MicrophonePermission
-          onPermissionGranted={handlePermissionGranted}
-          onError={setError}
-        />
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-      </div>
-    )
-  }
   return (
     <div>
-      {recordedAudio && (
-        <>
-          <div className="govuk-grid-row">
-            <div className="govuk-grid-column-one-third">
-              <h2 className="govuk-heading-m">Your recording:</h2>
-            </div>
-            <div className="govuk-grid-column-two-thirds">
-              <audio
-                src={URL.createObjectURL(recordedAudio)}
-                controls
-                className="w-full"
-              />
-              <div className="govuk-button-group govuk-!-margin-top-2">
-                <a
-                  role="button"
-                  href={URL.createObjectURL(recordedAudio)}
-                  download={`audio-file.${getFileExtensionFromBlob(recordedAudio)}`}
-                  className="govuk-button govuk-button--secondary"
-                >
-                  Download audio
-                </a>
-                <button
-                  type="button"
-                  className="govuk-link link--warning"
-                  onClick={() => setIsDialogOpen(true)}
-                >
-                  Discard recording
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
       {isRecording && (
         <>
           <div>
@@ -315,9 +263,9 @@ function MicRecorderComponent({
               onStopRecording={stopRecording}
               onPauseStateChange={handlePauseStateChange}
               onDiscard={() => setIsDialogOpen(true)}
+              onGenerate={onGenerate}
             />
           </div>
-          <StartTranscriptionSection2 fullWidth={false} />
         </>
       )}
 
@@ -326,26 +274,6 @@ function MicRecorderComponent({
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-
-      <AlertDialog open={showStopDialog} onOpenChange={setShowStopDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="govuk-heading-l">
-              Stop Recording?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to stop recording? You won&apos;t be able to
-              resume recording after stopping.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={stopRecording}>
-              Stop Recording
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <DiscardConfirmDialog
         open={isDialogOpen}

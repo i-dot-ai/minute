@@ -1,9 +1,17 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import { Pause, Play, Square } from 'lucide-react'
-import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog'
+import { Pause, Play, Save } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import RecordingTimer from './recording-timer'
+import { StartTranscriptionSection } from './start-transcription-section-2'
 
 interface RecordingControlProps {
   stream: MediaStream | null
@@ -326,7 +334,14 @@ export default function RecordingControl({
   return (
     <div className="space-y-4">
       {isRecording && (
-        <div className="flex justify-end">
+        <div className="flex justify-between">
+          <h2 className="govuk-heading-m flex items-center gap-2">
+            <span className="relative mr-2 inline-flex size-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+              <span className="relative inline-flex size-3 rounded-full bg-red-600" />
+            </span>
+            Recording
+          </h2>
           <RecordingTimer isRecording={isRecording} isPaused={isPaused} />
         </div>
       )}
@@ -350,17 +365,17 @@ export default function RecordingControl({
           <button
             type="button"
             onClick={togglePause}
-            className="govuk-button govuk-button--secondary min-w-53"
+            className="govuk-button govuk-button--secondary min-w-32"
           >
             {isPaused ? (
               <>
                 <Play />
-                Resume recording
+                Resume
               </>
             ) : (
               <>
                 <Pause />
-                Pause recording
+                Pause
               </>
             )}
           </button>
@@ -369,8 +384,8 @@ export default function RecordingControl({
             onClick={handleStopRecording}
             className="govuk-button"
           >
-            <Square />
-            End recording
+            <Save className="size-4" />
+            Save and generate summary
           </button>
           {onDiscard && (
             <button
@@ -384,26 +399,38 @@ export default function RecordingControl({
         </div>
       )}
 
-      <AlertDialog open={showStopDialog} onOpenChange={setShowStopDialog}>
-        <AlertDialogContent>
-          <h1 className="govuk-heading-l">End recording?</h1>
-          <p className="govuk-body">
-            You won&apos;t be able to resume recording after stopping.
-          </p>
-          <div className="govuk-button-group">
-            <button className="govuk-button" onClick={confirmStop}>
-              {/* <Square /> */}
-              End recording
-            </button>
+      <Dialog open={showStopDialog} onOpenChange={setShowStopDialog}>
+        <DialogContent wideModal showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle className="govuk-heading-l">
+              Stop recording and generate summary?
+            </DialogTitle>
+            <DialogDescription className="govuk-body">
+              You won&apos;t be able to resume recording after stopping.
+            </DialogDescription>
+          </DialogHeader>
+          <StartTranscriptionSection />
+          <DialogFooter className="govuk-button-group ml-auto sm:justify-end">
             <button
+              type="button"
               className="govuk-button govuk-button--secondary"
               onClick={() => setShowStopDialog(false)}
             >
               Cancel
             </button>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
+            <button
+              type="button"
+              className="govuk-button govuk-button--start"
+              onClick={confirmStop}
+            >
+              Generate summary
+              <svg className="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
+              </svg>
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -9,7 +9,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { PencilIcon } from 'lucide-react'
 import posthog from 'posthog-js'
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 export type RenameTranscription = {
@@ -30,7 +30,7 @@ export function getTranscriptionDisplayTitle(
   )
 }
 
-function useRenameTranscription(transcription: RenameTranscription) {
+export function useRenameTranscription(transcription: RenameTranscription) {
   const queryClient = useQueryClient()
 
   const { mutate: saveTranscription, isPending } = useMutation({
@@ -66,31 +66,42 @@ function useRenameTranscription(transcription: RenameTranscription) {
   return { save, isPending }
 }
 
-export type RenameTranscriptionParts = {
-  button: ReactNode
-  title: ReactNode
-  form: ReactNode
-  editing: boolean
+export function RenameButton({
+  displayTitle,
+  disabled,
+  onClick,
+}: {
+  displayTitle: string
+  disabled?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      data-module="govuk-button"
+      className="govuk-link shrink-0 text-(--govuk-link-colour) govuk-!-margin-bottom-0 hover:cursor-pointer"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={`Rename ${displayTitle}`}
+    >
+      <PencilIcon className="size-4" aria-hidden="true" />
+      <span className="govuk-visually-hidden">Rename {displayTitle}</span>
+    </button>
+  )
 }
 
-export function RenameTranscriptionInline({
+export function RenameTitleInput({
   transcription,
-  headingLevel = 'h2',
-  headingClassName = 'govuk-body govuk-!-margin-bottom-0',
-  children,
+  isPending,
+  onSubmit,
+  onCancel,
 }: {
   transcription: RenameTranscription
-  headingLevel?: 'h1' | 'h2' | 'h3'
-  headingClassName?: string
-  children?: (parts: RenameTranscriptionParts) => ReactNode
+  isPending: boolean
+  onSubmit: (title: string) => void
+  onCancel: () => void
 }) {
-  const [editing, setEditing] = useState(false)
   const skipBlurSaveRef = useRef(false)
-  const { save, isPending } = useRenameTranscription(transcription)
-  const displayTitle = getTranscriptionDisplayTitle(
-    transcription.title,
-    transcription.status
-  )
   const inputId = `transcription-title-${transcription.id}`
   const hintId = `${inputId}-hint`
   const statusId = `${inputId}-status`
@@ -99,52 +110,29 @@ export function RenameTranscriptionInline({
     defaultValues: { title: transcription.title ?? '' },
   })
 
-  const cancel = useCallback(() => {
-    form.reset({ title: transcription.title ?? '' })
-    setEditing(false)
-  }, [form, transcription.title])
-
-  const onSubmit = useCallback(
+  const handleSubmit = useCallback(
     ({ title }: { title: string }) => {
       skipBlurSaveRef.current = true
-      save(title)
-      setEditing(false)
+      onSubmit(title)
     },
-    [save]
+    [onSubmit]
   )
+
+  const cancel = useCallback(() => {
+    skipBlurSaveRef.current = true
+    form.reset({ title: transcription.title ?? '' })
+    onCancel()
+  }, [form, onCancel, transcription.title])
 
   useEffect(() => {
-    if (editing) {
-      skipBlurSaveRef.current = false
-      form.reset({ title: transcription.title ?? '' })
-      form.setFocus('title', { shouldSelect: true })
-    }
-  }, [editing, form, transcription.title])
+    skipBlurSaveRef.current = false
+    form.reset({ title: transcription.title ?? '' })
+    form.setFocus('title', { shouldSelect: true })
+  }, [form, transcription.title])
 
-  const Heading = headingLevel
-
-  const button = (
-    <button
-      type="button"
-      data-module="govuk-button"
-      className="govuk-link shrink-0 text-(--govuk-link-colour) govuk-!-margin-bottom-0 hover:cursor-pointer"
-      onClick={() => setEditing(true)}
-      aria-label={`Rename ${displayTitle}`}
-    >
-      <PencilIcon className="size-4" aria-hidden="true" />
-      <span className="govuk-visually-hidden">Rename {displayTitle}</span>
-    </button>
-  )
-
-  const title = (
-    <Heading className={`${headingClassName} min-w-0 truncate`}>
-      {displayTitle}
-    </Heading>
-  )
-
-  const formElement = (
+  return (
     <form
-      onSubmit={form.handleSubmit(onSubmit)}
+      onSubmit={form.handleSubmit(handleSubmit)}
       className="govuk-form-group govuk-!-margin-bottom-0 min-w-0 flex-1"
       aria-busy={isPending}
     >
@@ -161,11 +149,10 @@ export function RenameTranscriptionInline({
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             e.preventDefault()
-            form.handleSubmit(onSubmit)()
+            form.handleSubmit(handleSubmit)()
           }
           if (e.key === 'Escape') {
             e.preventDefault()
-            skipBlurSaveRef.current = true
             cancel()
           }
         }}
@@ -175,7 +162,7 @@ export function RenameTranscriptionInline({
               skipBlurSaveRef.current = false
               return
             }
-            form.handleSubmit(onSubmit)()
+            form.handleSubmit(handleSubmit)()
           },
         })}
       />
@@ -187,26 +174,54 @@ export function RenameTranscriptionInline({
       </span>
     </form>
   )
+}
 
-  const parts: RenameTranscriptionParts = {
-    button,
-    title,
-    form: formElement,
-    editing,
-  }
+export function RenameTranscriptionInline({
+  transcription,
+  headingLevel = 'h2',
+  headingClassName = 'govuk-body govuk-!-margin-bottom-0',
+}: {
+  transcription: RenameTranscription
+  headingLevel?: 'h1' | 'h2' | 'h3'
+  headingClassName?: string
+}) {
+  const [editing, setEditing] = useState(false)
+  const { save, isPending } = useRenameTranscription(transcription)
+  const displayTitle = getTranscriptionDisplayTitle(
+    transcription.title,
+    transcription.status
+  )
 
-  if (children) {
-    return children(parts)
-  }
+  const Heading = headingLevel
+
+  const handleSubmit = useCallback(
+    (title: string) => {
+      save(title)
+      setEditing(false)
+    },
+    [save]
+  )
 
   if (editing) {
-    return formElement
+    return (
+      <RenameTitleInput
+        transcription={transcription}
+        isPending={isPending}
+        onSubmit={handleSubmit}
+        onCancel={() => setEditing(false)}
+      />
+    )
   }
 
   return (
     <div className="flex min-w-0 flex-1 items-center gap-3">
-      {button}
-      {title}
+      <RenameButton
+        displayTitle={displayTitle}
+        onClick={() => setEditing(true)}
+      />
+      <Heading className={`${headingClassName} min-w-0 truncate`}>
+        {displayTitle}
+      </Heading>
     </div>
   )
 }

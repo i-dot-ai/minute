@@ -124,7 +124,7 @@ export const PaginatedTranscriptions = () => {
         <RecentOfflineRecordingsSection />
       </Suspense>
       <div className="govuk-!-margin-bottom-3 govuk-!-padding-bottom-2 flex items-center justify-between border-b border-(--govuk-border-colour)">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <div
             className="govuk-checkboxes govuk-checkboxes--small relative flex"
             data-module="govuk-checkboxes"
@@ -157,12 +157,12 @@ export const PaginatedTranscriptions = () => {
               </button>
             </div>
           )}
-          <span className="govuk-visually-hidden" aria-live="polite">
-            {selectedCount > 0
-              ? `${selectedCount} transcriptions selected`
-              : ''}
-          </span>
         </div>
+        <span className="govuk-visually-hidden" aria-live="polite">
+          {selectedCount > 0
+            ? `${selectedCount} transcriptions selected`
+            : ''}
+        </span>
         <p className="govuk-body govuk-!-margin-bottom-0">
           Total: {totalCount}
         </p>

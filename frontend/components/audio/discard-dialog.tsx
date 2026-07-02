@@ -1,10 +1,14 @@
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Dispatch, SetStateAction } from 'react'
+
 export const DiscardConfirmDialog = ({
   open,
   setOpen,
@@ -15,16 +19,18 @@ export const DiscardConfirmDialog = ({
   onClickConfirm: () => void
 }) => {
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent>
-        <DialogTitle className="govuk-heading-l">
-          Are you sure you want to discard your recording?
-        </DialogTitle>
-        <DialogDescription className="govuk-body">
-          Your recording has not been uploaded yet. Discarding it will delete
-          the recording permanently.
-        </DialogDescription>
-        <div className="govuk-button-group">
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="govuk-heading-l">
+            Are you sure you want to discard your recording?
+          </AlertDialogTitle>
+          <AlertDialogDescription className="govuk-body">
+            Your recording has not been uploaded yet. Discarding it will delete
+            the recording permanently.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="govuk-button-group sm:justify-start">
           <button
             type="button"
             onClick={onClickConfirm}
@@ -32,15 +38,13 @@ export const DiscardConfirmDialog = ({
           >
             Discard recording
           </button>
-          <button
-            type="button"
-            className="govuk-button govuk-button--secondary"
-            onClick={() => setOpen(false)}
-          >
-            Cancel
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          <AlertDialogCancel asChild>
+            <button type="button" className="govuk-button govuk-button--secondary">
+              Cancel
+            </button>
+          </AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

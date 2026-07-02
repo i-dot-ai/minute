@@ -4,6 +4,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { XIcon } from 'lucide-react'
 import * as React from 'react'
 
+import { handleModalOpenAutoFocus } from '@/components/ui/modal-focus'
 import { cn } from '@/lib/utils'
 
 function Dialog({
@@ -56,7 +57,14 @@ const DialogContent = React.forwardRef<
     wideModal?: boolean
   }
 >(function DialogContent(
-  { className, children, showCloseButton = true, wideModal = false, ...props },
+  {
+    className,
+    children,
+    showCloseButton = true,
+    wideModal = false,
+    onOpenAutoFocus,
+    ...props
+  },
   ref
 ) {
   return (
@@ -69,6 +77,9 @@ const DialogContent = React.forwardRef<
           wideModal && wideModalClasses,
           className
         )}
+        onOpenAutoFocus={(event) =>
+          handleModalOpenAutoFocus(event, onOpenAutoFocus)
+        }
         {...props}
         ref={ref}
       >
@@ -117,7 +128,8 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('text-lg leading-none font-semibold', className)}
+      tabIndex={-1}
+      className={cn('text-lg leading-none font-semibold outline-none', className)}
       {...props}
     />
   )

@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
+import { StartTranscriptionSection as StartTranscriptionSection2 } from '@/components/audio/start-transcription-section-2'
 import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
 import { TranscriptionForm } from '@/components/audio/types'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
@@ -305,34 +306,19 @@ function MicRecorderComponent({
           </div>
         </>
       )}
-      {!recordedAudio && (
-        <>
-          <h2 className="govuk-heading-m flex items-center gap-2">
-            <span className="relative mr-2 inline-flex size-3">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-              <span className="relative inline-flex size-3 rounded-full bg-red-600" />
-            </span>
-            Recording
-          </h2>
-          <div className="govuk-inset-text">
-            This will record the audio from your device&apos;s microphone. That
-            means only in-person meetings or calls that are played out loud will
-            be picked up. Make sure you check there are sound waves appearing in
-            the audio recorder. If not, refresh the page and make sure
-            you&apos;ve allowed microphone access in your browser.
-          </div>
-        </>
-      )}
       {isRecording && (
-        <div>
-          <RecordingControl
-            stream={mediaRecorderRef.current?.stream || null}
-            isRecording={isRecording}
-            onStopRecording={stopRecording}
-            onPauseStateChange={handlePauseStateChange}
-            onDiscard={() => setIsDialogOpen(true)}
-          />
-        </div>
+        <>
+          <div>
+            <RecordingControl
+              stream={mediaRecorderRef.current?.stream || null}
+              isRecording={isRecording}
+              onStopRecording={stopRecording}
+              onPauseStateChange={handlePauseStateChange}
+              onDiscard={() => setIsDialogOpen(true)}
+            />
+          </div>
+          <StartTranscriptionSection2 fullWidth={false} />
+        </>
       )}
 
       {error && (
@@ -344,7 +330,9 @@ function MicRecorderComponent({
       <AlertDialog open={showStopDialog} onOpenChange={setShowStopDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Stop Recording?</AlertDialogTitle>
+            <AlertDialogTitle className="govuk-heading-l">
+              Stop Recording?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to stop recording? You won&apos;t be able to
               resume recording after stopping.

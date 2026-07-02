@@ -33,10 +33,10 @@ export const NavButton = ({
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
+            <AlertDialogTitle className="govuk-heading-l">
               Are you sure you want to leave the page?
             </AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="govuk-body">
               {typeof lockNavigation == 'string'
                 ? lockNavigation
                 : `You have a recording that has not been uploaded, are you sure you

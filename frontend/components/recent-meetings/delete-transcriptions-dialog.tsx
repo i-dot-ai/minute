@@ -1,11 +1,14 @@
 'use client'
 
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { listTranscriptionsTranscriptionsGetQueryKey } from '@/lib/client/@tanstack/react-query.gen'
 import { deleteTranscriptionTranscriptionsTranscriptionIdDelete } from '@/lib/client/sdk.gen'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -47,25 +50,28 @@ export const DeleteTranscriptionsDialog = ({
   })
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent>
-        <DialogTitle className="govuk-heading-l">
-          Are you sure you want to delete {count}{' '}
-          {count === 1 ? 'transcription' : 'transcriptions'}?
-        </DialogTitle>
-        <DialogDescription className="govuk-body">
-          This will permanently delete the selected transcriptions and cannot be
-          undone.
-        </DialogDescription>
-        <div className="govuk-button-group">
-          <button
-            type="button"
-            className="govuk-link text-(--govuk-link-colour)"
-            disabled={isPending}
-            onClick={() => setOpen(false)}
-          >
-            Cancel
-          </button>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="govuk-heading-l">
+            Are you sure you want to delete {count}{' '}
+            {count === 1 ? 'transcription' : 'transcriptions'}?
+          </AlertDialogTitle>
+          <AlertDialogDescription className="govuk-body">
+            This will permanently delete the selected transcriptions and cannot
+            be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="govuk-button-group sm:justify-start">
+          <AlertDialogCancel asChild>
+            <button
+              type="button"
+              className="govuk-link text-(--govuk-link-colour)"
+              disabled={isPending}
+            >
+              Cancel
+            </button>
+          </AlertDialogCancel>
           <button
             type="button"
             className="govuk-link link--warning"
@@ -80,8 +86,8 @@ export const DeleteTranscriptionsDialog = ({
               `Delete ${count} selected`
             )}
           </button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

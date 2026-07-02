@@ -73,24 +73,13 @@ export default function Home() {
         {isOldUrl ? <UrlMigrationBanner /> : <PosthogBanner />}
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-full">
-            <legend className="govuk-fieldset__legend govuk-fieldset__legend--l">
-              <h1 className="govuk-fieldset__heading">Record a meeting</h1>
-            </legend>
-            {!started && (
-              <div id="recordMeeting-hint" className="govuk-hint">
-                Choose how to capture this meeting
-              </div>
-            )}
-          </div>
-        </div>
-        {!started ? (
-          <div className="govuk-grid-row">
-            <div className="govuk-grid-column-full">
-              <p className="govuk-body">
-                Please ensure that all participants are aware that they have
-                been recorded. Suitable up to{' '}
-                <strong>OFFICIAL SENSITIVE</strong>.
-              </p>
+            <h1 className="govuk-heading-l">Record a meeting</h1>
+            <p className="govuk-hint">
+              Please ensure that all participants are aware that they have
+              been recorded. Suitable up to{' '}
+              <strong>OFFICIAL SENSITIVE</strong>.
+            </p>
+            {!started ? (
               <div className="govuk-form-group">
                 <fieldset
                   className="govuk-fieldset govuk-!-margin-top-9 h-55"
@@ -221,23 +210,21 @@ export default function Home() {
                   </svg>
                 </button>
               </div>
-            </div>
+            ) : (
+              <>
+                {mode === 'in-person' && (
+                  <MicRecorderForm
+                    initialDevices={devices}
+                    initialDeviceId={selectedDeviceId}
+                    onDiscard={() => setStarted(false)}
+                  />
+                )}
+                {mode === 'virtual-meeting' && <TabRecorderForm />}
+                {mode === 'upload-file' && <AudioUploadForm />}
+              </>
+            )}
           </div>
-        ) : (
-          <div className="govuk-grid-row">
-            <div className="govuk-grid-column-full">
-              {mode === 'in-person' && (
-                <MicRecorderForm
-                  initialDevices={devices}
-                  initialDeviceId={selectedDeviceId}
-                  onDiscard={() => setStarted(false)}
-                />
-              )}
-              {mode === 'virtual-meeting' && <TabRecorderForm />}
-              {mode === 'upload-file' && <AudioUploadForm />}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </>
   )

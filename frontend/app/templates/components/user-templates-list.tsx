@@ -7,7 +7,13 @@ import {
 } from '@/app/templates/data/example-templates'
 import {
   AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 
@@ -213,20 +219,27 @@ const DeleteConfirmDialog = ({
       <button className="govuk-link link--warning">Delete</button>
     </AlertDialogTrigger>
     <AlertDialogContent>
-      <h1 className="govuk-heading-l">Delete Template</h1>
-      <p className="govuk-body">
-        Are you sure you want to delete <strong>{template.name}</strong>? This
-        action cannot be undone.
-      </p>
-      <div className="govuk-button-group">
-        <button
-          className="govuk-button govuk-button--warning"
-          onClick={onConfirm}
-        >
-          Delete
-        </button>
-        <button className="govuk-button govuk-button--secondary">Cancel</button>
-      </div>
+      <AlertDialogHeader>
+        <AlertDialogTitle className="govuk-heading-l">
+          Delete Template
+        </AlertDialogTitle>
+        <AlertDialogDescription className="govuk-body">
+          Are you sure you want to delete <strong>{template.name}</strong>? This
+          action cannot be undone.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter className="govuk-button-group sm:justify-start">
+        <AlertDialogAction asChild onClick={onConfirm}>
+          <button type="button" className="govuk-button govuk-button--warning">
+            Delete
+          </button>
+        </AlertDialogAction>
+        <AlertDialogCancel asChild>
+          <button type="button" className="govuk-button govuk-button--secondary">
+            Cancel
+          </button>
+        </AlertDialogCancel>
+      </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>
 )

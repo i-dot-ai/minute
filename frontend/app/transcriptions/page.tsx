@@ -12,7 +12,7 @@ export default function TranscriptionsPage() {
             data-onboarding="saved-transcriptions-page"
           >
             <div className="flex items-center justify-between">
-              <h1 className="govuk-heading-xl">Transcriptions</h1>
+              <h1 className="govuk-heading-xl" id="transcriptions-list-heading">Transcriptions</h1>
               <DataRetentionSelect />
             </div>
             <Suspense fallback={<div>Loading...</div>}>

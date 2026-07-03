@@ -103,7 +103,6 @@ export const OfflineRecordingRow = ({
             className="govuk-link link--warning flex items-center gap-2 hover:cursor-pointer"
             onClick={() => setDeleteOpen(true)}
           >
-            <TrashIcon className="size-4" />
             Delete
             <span className="govuk-visually-hidden">{label}</span>
           </button>

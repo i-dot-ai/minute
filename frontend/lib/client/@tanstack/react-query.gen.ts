@@ -11,6 +11,7 @@ import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGet,
   getUserUsersMeGet,
   updateDataRetentionUsersDataRetentionPatch,
+  updateDefaultTemplateUsersDefaultTemplatePatch,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGet,
   createMinuteTranscriptionTranscriptionIdMinutesPost,
   getMinuteMinutesMinutesIdGet,
@@ -59,6 +60,9 @@ import type {
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchError,
   UpdateDataRetentionUsersDataRetentionPatchResponse,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchData,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchError,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchResponse,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetData,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostData,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostError,
@@ -515,6 +519,38 @@ export const updateDataRetentionUsersDataRetentionPatchMutation = (
   > = {
     mutationFn: async (localOptions) => {
       const { data } = await updateDataRetentionUsersDataRetentionPatch({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
+
+/**
+ * Update Default Template
+ * Set the current user's default template.
+ *
+ * Exactly one of template_id (a custom template owned by the user) or template_name (a
+ * system template) may be provided. Providing neither clears the default. Setting a new
+ * default overwrites the previous one, so there is only ever one default per user.
+ */
+export const updateDefaultTemplateUsersDefaultTemplatePatchMutation = (
+  options?: Partial<Options<UpdateDefaultTemplateUsersDefaultTemplatePatchData>>
+): UseMutationOptions<
+  UpdateDefaultTemplateUsersDefaultTemplatePatchResponse,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchError,
+  Options<UpdateDefaultTemplateUsersDefaultTemplatePatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateDefaultTemplateUsersDefaultTemplatePatchResponse,
+    UpdateDefaultTemplateUsersDefaultTemplatePatchError,
+    Options<UpdateDefaultTemplateUsersDefaultTemplatePatchData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await updateDefaultTemplateUsersDefaultTemplatePatch({
         ...options,
         ...localOptions,
         throwOnError: true,

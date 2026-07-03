@@ -138,11 +138,15 @@ export const TemplatesTable = () => {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <input
-          type="text"
-          className="govuk-input govuk-!-width-one-half"
-          placeholder="Search templates"
-        />
+        <div className="govuk-form-group govuk-!-width-one-half">
+          <label className="govuk-label" htmlFor="search-templates">Search templates</label>
+          <input
+            id="search-templates"
+            name="search-templates"
+            type="text"
+            className="govuk-input"
+          />
+        </div>
         <div className="govuk-form-group">
           <label className="govuk-label" htmlFor="filter">
             Filter by

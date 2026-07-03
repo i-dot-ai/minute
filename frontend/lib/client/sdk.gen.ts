@@ -33,6 +33,9 @@ import type {
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchResponses,
   UpdateDataRetentionUsersDataRetentionPatchErrors,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchData,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchResponses,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchErrors,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetData,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetResponses,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetErrors,
@@ -299,6 +302,36 @@ export const updateDataRetentionUsersDataRetentionPatch = <
     ThrowOnError
   >({
     url: '/users/data-retention',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+}
+
+/**
+ * Update Default Template
+ * Set the current user's default template.
+ *
+ * Exactly one of template_id (a custom template owned by the user) or template_name (a
+ * system template) may be provided. Providing neither clears the default. Setting a new
+ * default overwrites the previous one, so there is only ever one default per user.
+ */
+export const updateDefaultTemplateUsersDefaultTemplatePatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateDefaultTemplateUsersDefaultTemplatePatchData,
+    ThrowOnError
+  >
+) => {
+  return (options.client ?? _heyApiClient).patch<
+    UpdateDefaultTemplateUsersDefaultTemplatePatchResponses,
+    UpdateDefaultTemplateUsersDefaultTemplatePatchErrors,
+    ThrowOnError
+  >({
+    url: '/users/default-template',
     ...options,
     headers: {
       'Content-Type': 'application/json',

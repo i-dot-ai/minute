@@ -90,10 +90,17 @@ class GetUserResponse(BaseModel):
     updated_datetime: datetime
     email: str
     data_retention_days: int | None
+    default_template_id: uuid.UUID | None = None
+    default_template_name: str | None = None
 
 
 class DataRetentionUpdateResponse(BaseModel):
     data_retention_days: int | None
+
+
+class SetDefaultTemplateRequest(BaseModel):
+    template_id: uuid.UUID | None = None
+    template_name: str | None = None
 
 
 class TranscriptionGetResponse(BaseModel):
@@ -225,6 +232,7 @@ class TemplateMetadata(BaseModel):
     description: str
     category: str
     agenda_usage: AgendaUsage
+    is_default: bool = False
 
 
 class CreateQuestion(BaseModel):
@@ -252,6 +260,7 @@ class TemplateResponse(BaseModel):
     description: str
     type: TemplateType
     questions: list[Question] | None
+    is_default: bool = False
 
 
 class CreateUserTemplateRequest(BaseModel):

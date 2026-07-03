@@ -230,6 +230,10 @@ export type TemplateResponse = {
    * Questions
    */
   questions: Array<Question> | null
+  /**
+   * Is Default
+   */
+  is_default?: boolean
 }
 
 /**
@@ -271,6 +275,10 @@ export type TemplateMetadata = {
    */
   category: string
   agenda_usage: AgendaUsage
+  /**
+   * Is Default
+   */
+  is_default?: boolean
 }
 
 /**
@@ -294,6 +302,20 @@ export type SingleRecording = {
    * Extension
    */
   extension: string
+}
+
+/**
+ * SetDefaultTemplateRequest
+ */
+export type SetDefaultTemplateRequest = {
+  /**
+   * Template Id
+   */
+  template_id?: string | null
+  /**
+   * Template Name
+   */
+  template_name?: string | null
 }
 
 /**
@@ -609,6 +631,14 @@ export type GetUserResponse = {
    * Data Retention Days
    */
   data_retention_days: number | null
+  /**
+   * Default Template Id
+   */
+  default_template_id?: string | null
+  /**
+   * Default Template Name
+   */
+  default_template_name?: string | null
 }
 
 /**
@@ -724,7 +754,7 @@ export type ListTranscriptionsTranscriptionsGetData = {
     /**
      * Filter By
      */
-    filter_by?: TranscriptionListFilter
+    filter_by?: TranscriptionListFilter | null
   }
   url: '/transcriptions'
 }
@@ -1036,6 +1066,39 @@ export type UpdateDataRetentionUsersDataRetentionPatchResponses = {
 
 export type UpdateDataRetentionUsersDataRetentionPatchResponse =
   UpdateDataRetentionUsersDataRetentionPatchResponses[keyof UpdateDataRetentionUsersDataRetentionPatchResponses]
+
+export type UpdateDefaultTemplateUsersDefaultTemplatePatchData = {
+  body: SetDefaultTemplateRequest
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query?: never
+  url: '/users/default-template'
+}
+
+export type UpdateDefaultTemplateUsersDefaultTemplatePatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type UpdateDefaultTemplateUsersDefaultTemplatePatchError =
+  UpdateDefaultTemplateUsersDefaultTemplatePatchErrors[keyof UpdateDefaultTemplateUsersDefaultTemplatePatchErrors]
+
+export type UpdateDefaultTemplateUsersDefaultTemplatePatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: GetUserResponse
+}
+
+export type UpdateDefaultTemplateUsersDefaultTemplatePatchResponse =
+  UpdateDefaultTemplateUsersDefaultTemplatePatchResponses[keyof UpdateDefaultTemplateUsersDefaultTemplatePatchResponses]
 
 export type ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetData =
   {

@@ -121,6 +121,13 @@ class User(BaseTableMixin, table=True):
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     email: str = Field(index=True)
     data_retention_days: int | None = Field(default=30, sa_column_kwargs={"server_default": "30"})
+    # The user's chosen default template. At most one is ever set: a custom template
+    # (default_template_id) or a system template keyed by name (default_template_name).
+    # Both null means no explicit default (falls back to the implicit General template).
+    default_template_id: UUID | None = Field(
+        default=None, foreign_key="user_template.id", ondelete="SET NULL"
+    )
+    default_template_name: str | None = Field(default=None)
     transcriptions: list["Transcription"] = Relationship(back_populates="user")
 
 

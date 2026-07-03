@@ -107,12 +107,8 @@ export function TemplateTableRow({
         </Link>
       </td>
       <td className="govuk-!-padding-0">
-        {template.isDefault ? (
+        {template.isDefault && (
           <strong className="govuk-tag govuk-!-margin-right-2">System</strong>
-        ) : (
-          <strong className="govuk-tag govuk-tag--green govuk-!-margin-right-2">
-            Custom
-          </strong>
         )}
       </td>
       <td className="govuk-!-padding-0">

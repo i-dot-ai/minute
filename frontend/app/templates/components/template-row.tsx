@@ -98,7 +98,7 @@ export function TemplateTableRow({
       <td className="govuk-!-padding-0 flex-1">
         <Link
           href={`/templates/${template.id}`}
-          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative flex flex-1 flex-col items-baseline gap-1 py-1 !text-(--govuk-text-colour) lg:flex-row lg:gap-2 lg:py-0"
+          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative flex flex-1 flex-col items-center gap-1 py-1 !text-(--govuk-text-colour) lg:flex-row lg:gap-2"
         >
           <span className="font-bold lg:min-w-60">{name}</span>{' '}
           <span className="govuk-body-s govuk-!-margin-0">

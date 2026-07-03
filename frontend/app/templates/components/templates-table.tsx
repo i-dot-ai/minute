@@ -11,9 +11,23 @@ import {
   getUserTemplatesUserTemplatesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
+import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+const PAGE_SIZE = 10
+
+function buildQueryString(page?: number): string {
+  if (!page || page <= 1) return ''
+  return `?page=${page}`
+}
+
 export const TemplatesTable = () => {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const currentPage = Number(searchParams.get('page')) || 1
+
   const {
     data: defaultTemplates = [],
     isLoading: defaultsLoading,
@@ -47,25 +61,39 @@ export const TemplatesTable = () => {
     [userTemplates, defaultTemplates]
   )
 
-  const rowKeys = rows.map(templateRowKey)
-  const allSelected =
-    rowKeys.length > 0 && rowKeys.every((key) => selectedIds.has(key))
-  const someSelected = rowKeys.some((key) => selectedIds.has(key))
+  const totalCount = rows.length
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1
+  const pageRows = rows.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  )
+  const pageKeys = pageRows.map(templateRowKey)
+  const allOnPageSelected =
+    pageKeys.length > 0 && pageKeys.every((key) => selectedIds.has(key))
+  const someOnPageSelected = pageKeys.some((key) => selectedIds.has(key))
 
   const deletableIds = rows
     .filter((row) => !row.isDefault && selectedIds.has(templateRowKey(row)))
     .map((row) => row.id!)
   const deleteCount = deletableIds.length
-  const totalCount = rows.length
 
   const isLoading = defaultsLoading || userLoading
   const isError = defaultsError || userError
 
+  if (!isLoading && currentPage > totalPages) {
+    router.replace(pathname + buildQueryString(totalPages))
+  }
+
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [currentPage])
+
   useEffect(() => {
     if (selectAllRef.current) {
-      selectAllRef.current.indeterminate = someSelected && !allSelected
+      selectAllRef.current.indeterminate =
+        someOnPageSelected && !allOnPageSelected
     }
-  }, [someSelected, allSelected])
+  }, [someOnPageSelected, allOnPageSelected])
 
   const toggleOne = (key: string, checked: boolean) => {
     setSelectedIds((prev) => {
@@ -79,16 +107,32 @@ export const TemplatesTable = () => {
     })
   }
 
-  const toggleAll = () => {
+  const toggleAllOnPage = () => {
     setSelectedIds((prev) => {
       const next = new Set(prev)
-      if (allSelected) {
-        rowKeys.forEach((key) => next.delete(key))
+      if (allOnPageSelected) {
+        pageKeys.forEach((key) => next.delete(key))
       } else {
-        rowKeys.forEach((key) => next.add(key))
+        pageKeys.forEach((key) => next.add(key))
       }
       return next
     })
+  }
+
+  const getPageNumbers = () => {
+    const pages = []
+    const maxPagesToShow = 5
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2))
+    const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
+
+    if (endPage - startPage + 1 < maxPagesToShow) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1)
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i)
+    }
+    return pages
   }
 
   return (
@@ -120,9 +164,9 @@ export const TemplatesTable = () => {
               id="select-all-templates"
               name="select-all-templates"
               type="checkbox"
-              checked={allSelected}
-              onChange={toggleAll}
-              disabled={rows.length === 0}
+              checked={allOnPageSelected}
+              onChange={toggleAllOnPage}
+              disabled={pageRows.length === 0}
             />
             <label
               className="govuk-label govuk-checkboxes__label ml-3 whitespace-nowrap"
@@ -157,11 +201,83 @@ export const TemplatesTable = () => {
       ) : rows.length === 0 ? (
         <p className="govuk-body">No templates found</p>
       ) : (
-        <TemplatesList
-          templates={rows}
-          selectedIds={selectedIds}
-          onToggle={toggleOne}
-        />
+        <>
+          <TemplatesList
+            templates={pageRows}
+            selectedIds={selectedIds}
+            onToggle={toggleOne}
+          />
+          {totalPages > 1 && (
+            <nav
+              className="govuk-pagination flex justify-center"
+              aria-label="Pagination"
+            >
+              {currentPage > 1 && (
+                <div className="govuk-pagination__prev">
+                  <Link
+                    className="govuk-link govuk-pagination__link"
+                    href={pathname + buildQueryString(currentPage - 1)}
+                    rel="prev"
+                  >
+                    <svg
+                      className="govuk-pagination__icon govuk-pagination__icon--prev"
+                      xmlns="http://www.w3.org/2000/svg"
+                      height="13"
+                      width="15"
+                      aria-hidden="true"
+                      focusable="false"
+                      viewBox="0 0 15 13"
+                    >
+                      <path d="m6.5938-0.0078125-6.7266 6.7266 6.7441 6.4062 1.377-1.449-4.1856-3.9768h12.896v-2h-12.984l4.2931-4.293-1.414-1.414z"></path>
+                    </svg>
+                    <span className="govuk-pagination__link-title">
+                      Previous
+                      <span className="govuk-visually-hidden"> page</span>
+                    </span>
+                  </Link>
+                </div>
+              )}
+              <ul className="govuk-pagination__list">
+                {getPageNumbers().map((page) => (
+                  <li key={page} className="govuk-pagination__item">
+                    <Link
+                      className="govuk-link govuk-pagination__link"
+                      href={pathname + buildQueryString(page)}
+                      aria-label={`Page ${page}`}
+                    >
+                      {page}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {currentPage < totalPages && (
+                <div className="govuk-pagination__next">
+                  <Link
+                    className="govuk-link govuk-pagination__link"
+                    href={pathname + buildQueryString(currentPage + 1)}
+                    rel="next"
+                  >
+                    <span className="govuk-pagination__link-title">
+                      Next
+                      <span className="govuk-visually-hidden"> page</span>
+                    </span>
+                    <svg
+                      className="govuk-pagination__icon govuk-pagination__icon--next"
+                      xmlns="http://www.w3.org/2000/svg"
+                      height="13"
+                      width="15"
+                      aria-hidden="true"
+                      focusable="false"
+                      viewBox="0 0 15 13"
+                    >
+                      <path d="m8.107-0.0078125-1.4136 1.414 4.2926 4.293h-12.986v2h12.896l-4.1855 3.9766 1.377 1.4492 6.7441-6.4062-6.7246-6.7266z"></path>
+                    </svg>
+                  </Link>
+                </div>
+              )}
+            </nav>
+          )}
+        </>
       )}
       <DeleteTemplatesDialog
         open={deleteDialogOpen}

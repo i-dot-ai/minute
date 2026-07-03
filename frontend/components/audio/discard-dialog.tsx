@@ -13,21 +13,26 @@ export const DiscardConfirmDialog = ({
   open,
   setOpen,
   onClickConfirm,
+  title = 'Are you sure you want to discard your recording?',
+  description = 'Your recording has not been uploaded yet. Discarding it will delete the recording permanently.',
+  confirmLabel = 'Discard recording',
 }: {
   open: boolean
   setOpen: Dispatch<SetStateAction<boolean>>
   onClickConfirm: () => void
+  title?: string
+  description?: string
+  confirmLabel?: string
 }) => {
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="govuk-heading-l">
-            Are you sure you want to discard your recording?
+            {title}
           </AlertDialogTitle>
           <AlertDialogDescription className="govuk-body">
-            Your recording has not been uploaded yet. Discarding it will delete
-            the recording permanently.
+            {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="govuk-button-group sm:justify-end">
@@ -41,7 +46,7 @@ export const DiscardConfirmDialog = ({
             onClick={onClickConfirm}
             className="govuk-link link--warning"
           >
-            Discard recording
+            {confirmLabel}
           </button>
         </AlertDialogFooter>
       </AlertDialogContent>

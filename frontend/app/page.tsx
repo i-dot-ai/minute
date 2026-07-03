@@ -10,12 +10,7 @@ import { Mic, Video, Upload } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
-type RecordingMode = 'in-person' | 'virtual-meeting'
-
-const buttonLabels: Record<RecordingMode, string> = {
-  'in-person': 'Start recording',
-  'virtual-meeting': 'Start recording'
-}
+type RecordingMode = 'in-person' | 'virtual-meeting' | 'upload-file'
 
 export default function Home() {
   const isOldUrl = useIsOldUrl()
@@ -208,7 +203,7 @@ export default function Home() {
                     data-module="govuk-button"
                     onClick={handleStart}
                   >
-                    {buttonLabels[mode]}
+                    Start recording
                     <svg
                       className="govuk-button__start-icon"
                       xmlns="http://www.w3.org/2000/svg"

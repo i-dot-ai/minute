@@ -17,9 +17,45 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 const PAGE_SIZE = 10
 
-function buildQueryString(page?: number): string {
-  if (!page || page <= 1) return ''
-  return `?page=${page}`
+type TemplateFilter = 'all' | 'system' | 'custom' | 'summary' | 'q-and-a'
+
+function parseFilterBy(searchParams: URLSearchParams): TemplateFilter {
+  const filterBy = searchParams.get('filterBy')
+  if (
+    filterBy === 'system' ||
+    filterBy === 'custom' ||
+    filterBy === 'summary' ||
+    filterBy === 'q-and-a'
+  ) {
+    return filterBy
+  }
+  return 'all'
+}
+
+function buildQueryString(
+  page?: number,
+  filterBy: TemplateFilter = 'all'
+): string {
+  const params = new URLSearchParams()
+  if (page && page > 1) params.set('page', String(page))
+  if (filterBy !== 'all') params.set('filterBy', filterBy)
+  const qs = params.toString()
+  return qs ? `?${qs}` : ''
+}
+
+function matchesFilter(row: TemplateRowData, filterBy: TemplateFilter): boolean {
+  switch (filterBy) {
+    case 'system':
+      return row.isSystem
+    case 'custom':
+      return !row.isSystem
+    case 'summary':
+      return row.format === 'document'
+    case 'q-and-a':
+      return row.format === 'form'
+    default:
+      return true
+  }
 }
 
 export const TemplatesTable = () => {
@@ -27,6 +63,7 @@ export const TemplatesTable = () => {
   const searchParams = useSearchParams()
   const router = useRouter()
   const currentPage = Number(searchParams.get('page')) || 1
+  const filterBy = parseFilterBy(searchParams)
 
   const {
     data: defaultTemplates = [],
@@ -49,21 +86,28 @@ export const TemplatesTable = () => {
         id: t.id,
         name: t.name,
         description: t.description,
-        isDefault: false,
+        isSystem: false,
+        format: t.type,
       })),
       ...defaultTemplates.map((t) => ({
         id: null,
         name: t.name,
         description: t.description,
-        isDefault: true,
+        isSystem: true,
+        format: 'document' as const,
       })),
     ],
     [userTemplates, defaultTemplates]
   )
 
-  const totalCount = rows.length
+  const filteredRows = useMemo(
+    () => rows.filter((row) => matchesFilter(row, filterBy)),
+    [rows, filterBy]
+  )
+
+  const totalCount = filteredRows.length
   const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1
-  const pageRows = rows.slice(
+  const pageRows = filteredRows.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   )
@@ -72,8 +116,8 @@ export const TemplatesTable = () => {
     pageKeys.length > 0 && pageKeys.every((key) => selectedIds.has(key))
   const someOnPageSelected = pageKeys.some((key) => selectedIds.has(key))
 
-  const deletableIds = rows
-    .filter((row) => !row.isDefault && selectedIds.has(templateRowKey(row)))
+  const deletableIds = filteredRows
+    .filter((row) => !row.isSystem && selectedIds.has(templateRowKey(row)))
     .map((row) => row.id!)
   const deleteCount = deletableIds.length
 
@@ -81,12 +125,12 @@ export const TemplatesTable = () => {
   const isError = defaultsError || userError
 
   if (!isLoading && currentPage > totalPages) {
-    router.replace(pathname + buildQueryString(totalPages))
+    router.replace(pathname + buildQueryString(totalPages, filterBy))
   }
 
   useEffect(() => {
     setSelectedIds(new Set())
-  }, [currentPage])
+  }, [currentPage, filterBy])
 
   useEffect(() => {
     if (selectAllRef.current) {
@@ -135,6 +179,11 @@ export const TemplatesTable = () => {
     return pages
   }
 
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value as TemplateFilter
+    router.replace(pathname + buildQueryString(undefined, value))
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -151,8 +200,18 @@ export const TemplatesTable = () => {
           <label className="govuk-label" htmlFor="filter">
             Filter by
           </label>
-          <select className="govuk-select" id="filter" name="filter">
-            <option value="">All</option>
+          <select
+            className="govuk-select"
+            id="filter"
+            name="filter"
+            value={filterBy}
+            onChange={handleFilterChange}
+          >
+            <option value="all">All</option>
+            <option value="system">System</option>
+            <option value="custom">Custom</option>
+            <option value="summary">Summary</option>
+            <option value="q-and-a">Q &amp; A</option>
           </select>
         </div>
       </div>
@@ -202,7 +261,7 @@ export const TemplatesTable = () => {
         <p className="govuk-body">Loading templates...</p>
       ) : isError ? (
         <p className="govuk-body">Error loading templates</p>
-      ) : rows.length === 0 ? (
+      ) : filteredRows.length === 0 ? (
         <p className="govuk-body">No templates found</p>
       ) : (
         <>
@@ -220,7 +279,7 @@ export const TemplatesTable = () => {
                 <div className="govuk-pagination__prev">
                   <Link
                     className="govuk-link govuk-pagination__link"
-                    href={pathname + buildQueryString(currentPage - 1)}
+                    href={pathname + buildQueryString(currentPage - 1, filterBy)}
                     rel="prev"
                   >
                     <svg
@@ -246,7 +305,7 @@ export const TemplatesTable = () => {
                   <li key={page} className="govuk-pagination__item">
                     <Link
                       className="govuk-link govuk-pagination__link"
-                      href={pathname + buildQueryString(page)}
+                      href={pathname + buildQueryString(page, filterBy)}
                       aria-label={`Page ${page}`}
                     >
                       {page}
@@ -258,7 +317,7 @@ export const TemplatesTable = () => {
                 <div className="govuk-pagination__next">
                   <Link
                     className="govuk-link govuk-pagination__link"
-                    href={pathname + buildQueryString(currentPage + 1)}
+                    href={pathname + buildQueryString(currentPage + 1, filterBy)}
                     rel="next"
                   >
                     <span className="govuk-pagination__link-title">

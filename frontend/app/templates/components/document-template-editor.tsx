@@ -22,7 +22,7 @@ export const DocumentTemplateEditor = ({
   const form = useFormContext<TemplateData>()
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
-      <div className="govuk-button-group">
+      {/* <div className="govuk-button-group">
         <ExampleTemplatesDialog
           examples={exampleDocumentTemplates}
           onSelectTemplate={(template) => form.reset(template)}
@@ -50,13 +50,7 @@ export const DocumentTemplateEditor = ({
               : null}
           </p>
         </div>
-      </div>
-      <h2 className="govuk-heading-l">Template details</h2>
-      <p className="govuk-body">
-        Add a name and description so you can find your template later. Name and
-        description are not used to generate your minute, any structure and
-        style instructions should be added to the template content field.
-      </p>
+      </div> */}
       <div className="govuk-form-group">
         <label className="govuk-label govuk-label--m" htmlFor="name">
           Template name
@@ -94,7 +88,7 @@ export const DocumentTemplateEditor = ({
       </div>
       <div className="govuk-form-group">
         <h2>
-          <label className="govuk-label govuk-label--l" htmlFor="content">
+          <label className="govuk-label govuk-label--m" htmlFor="content">
             Template content
           </label>
         </h2>

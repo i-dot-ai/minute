@@ -25,7 +25,8 @@ export type TemplateRowData = {
   id: string | null
   name: string
   description: string
-  isDefault: boolean
+  isSystem: boolean
+  format: 'document' | 'form'
 }
 
 export const templateRowKey = (template: TemplateRowData) =>
@@ -107,9 +108,12 @@ export function TemplateTableRow({
         </Link>
       </td>
       <td className="govuk-!-padding-0">
-        {template.isDefault && (
+        {template.isSystem && (
           <strong className="govuk-tag govuk-!-margin-right-2">System</strong>
         )}
+        <strong className="govuk-tag govuk-tag--green govuk-!-margin-right-2">
+          {template.format === 'document' ? 'Summary' : 'Q & A'}
+        </strong>
       </td>
       <td className="govuk-!-padding-0">
         <div className="govuk-button-group govuk-!-margin-bottom-0 flex items-center justify-end">
@@ -123,7 +127,7 @@ export function TemplateTableRow({
           </button>
           <DeleteConfirmDialog
             name={name}
-            disabled={template.isDefault}
+            disabled={template.isSystem}
             onConfirm={() =>
               deleteMutation.mutate({ path: { template_id: template.id! } })
             }

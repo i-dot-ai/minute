@@ -29,16 +29,16 @@ function NewTemplateContent() {
     defaultValues: foundExample
       ? foundExample
       : {
-          name: '',
-          description: '',
-          content: '',
-          questions: [],
-          type:
-            templateTypeParam &&
+        name: '',
+        description: '',
+        content: '',
+        questions: [],
+        type:
+          templateTypeParam &&
             ['document', 'form'].includes(templateTypeParam)
-              ? (templateTypeParam as TemplateType)
-              : undefined,
-        },
+            ? (templateTypeParam as TemplateType)
+            : undefined,
+      },
   })
   const navigation = useRouter()
   const { mutateAsync: saveTemplate } = useMutation({
@@ -68,13 +68,8 @@ function NewTemplateContent() {
         <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
           <ol className="govuk-breadcrumbs__list">
             <li className="govuk-breadcrumbs__list-item">
-              <Link className="govuk-breadcrumbs__link" href="/">
-                Home
-              </Link>
-            </li>
-            <li className="govuk-breadcrumbs__list-item">
               <Link className="govuk-breadcrumbs__link" href="/templates">
-                Templates
+                Back
               </Link>
             </li>
           </ol>

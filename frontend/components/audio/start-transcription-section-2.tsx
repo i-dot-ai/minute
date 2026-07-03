@@ -87,7 +87,11 @@ function getSelectedOptionValue(
   return `default:${template.name}`
 }
 
-export const StartTranscriptionSection = ({ fullWidth = true }: { fullWidth?: boolean }) => {
+export const StartTranscriptionSection = ({
+  fullWidth = true,
+}: {
+  fullWidth?: boolean
+}) => {
   const form = useFormContext<TranscriptionForm>()
   const detailsRef = useRef<HTMLDetailsElement>(null)
   const selectedTemplate = form.watch('template')
@@ -153,7 +157,7 @@ export const StartTranscriptionSection = ({ fullWidth = true }: { fullWidth?: bo
   )
 
   return (
-    <div className="border-t border-(--govuk-border-colour) govuk-!-padding-top-6 items-start">
+    <div className="govuk-!-padding-top-6 items-start border-t border-(--govuk-border-colour)">
       <div className="govuk-form-group flex items-center gap-2">
         <label className="govuk-label" htmlFor="template">
           Summarise using:
@@ -193,7 +197,10 @@ export const StartTranscriptionSection = ({ fullWidth = true }: { fullWidth?: bo
             )
           </label>
           <textarea
-            className={cn("govuk-textarea", fullWidth ? '' : 'govuk-!-width-three-quarters')}
+            className={cn(
+              'govuk-textarea',
+              fullWidth ? '' : 'govuk-!-width-three-quarters'
+            )}
             placeholder="Add discussion points from the meeting that should be included in the summary."
             id="agenda"
             rows={4}
@@ -202,9 +209,8 @@ export const StartTranscriptionSection = ({ fullWidth = true }: { fullWidth?: bo
               required: resolvedTemplate.agenda_usage == 'required',
             })}
           />
-        </div >
-      )
-      }
-    </div >
+        </div>
+      )}
+    </div>
   )
 }

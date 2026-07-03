@@ -16,7 +16,7 @@ export const ServiceNavigation = () => {
       <nav aria-label="Menu" className="flex h-full flex-col justify-between">
         <ul className="flex w-40 flex-col" id="navigation">
           <li
-            className={`!border-l-4 !border-transparent govuk-service-navigation__item w-full ${pathname === '/' || pathname.includes('/new') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
+            className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname === '/' || pathname.includes('/new') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
             <Link
               href="/"
@@ -32,7 +32,7 @@ export const ServiceNavigation = () => {
             </Link>
           </li>
           <li
-            className={`!border-l-4 !border-transparent govuk-service-navigation__item w-full ${pathname.includes('/transcriptions') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
+            className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname.includes('/transcriptions') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
             <Link
               aria-current={
@@ -47,7 +47,7 @@ export const ServiceNavigation = () => {
             </Link>
           </li>
           <li
-            className={`!border-l-4 !border-transparent govuk-service-navigation__item w-full ${pathname.includes('/templates') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1]  font-bold' : ''}`}
+            className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname.includes('/templates') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
             <Link
               aria-current={
@@ -64,22 +64,22 @@ export const ServiceNavigation = () => {
         </ul>
         <ul className="flex w-40 flex-col border-t border-(--govuk-border-colour)">
           <li
-            className={`!border-l-4 w-full ${pathname.includes('/privacy') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
+            className={`w-full !border-l-4 ${pathname.includes('/privacy') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
             <Link
               aria-current={pathname.includes('/privacy') ? 'page' : undefined}
-              className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link !text-[#484949] ml-4 flex items-center gap-2"
+              className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ml-4 flex items-center gap-2 !text-[#484949]"
               href="/privacy"
             >
               Privacy
             </Link>
           </li>
           <li
-            className={`!border-l-4 w-full ${pathname.includes('/support') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
+            className={`w-full !border-l-4 ${pathname.includes('/support') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
             <Link
               aria-current={pathname.includes('/support') ? 'page' : undefined}
-              className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link !text-[#484949] ml-4 flex items-center gap-2"
+              className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ml-4 flex items-center gap-2 !text-[#484949]"
               href="/support"
             >
               Support
@@ -87,7 +87,7 @@ export const ServiceNavigation = () => {
           </li>
         </ul>
       </nav>
-    </section >
+    </section>
   )
 }
 

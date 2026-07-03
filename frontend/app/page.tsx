@@ -145,7 +145,8 @@ export default function Home() {
                       <Video className="mb-2 size-7" />
                       <h2 className="govuk-heading-m">Virtual meeting</h2>
                       <p className="govuk-body">
-                        Join your call silently — not visible to other attendees.
+                        Join your call silently — not visible to other
+                        attendees.
                       </p>
                     </label>
                   </div>
@@ -194,7 +195,9 @@ export default function Home() {
                           </option>
                         ))
                       ) : (
-                        <option value="">Requesting microphone access...</option>
+                        <option value="">
+                          Requesting microphone access...
+                        </option>
                       )}
                     </select>
                   </div>
@@ -213,7 +216,10 @@ export default function Home() {
                       role="presentation"
                       focusable="false"
                     >
-                      <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
+                      <path
+                        fill="currentColor"
+                        d="M0 0h13l20 20-20 20H0l20-20z"
+                      />
                     </svg>
                   </button>
                 </>

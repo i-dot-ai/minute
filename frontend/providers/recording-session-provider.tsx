@@ -17,9 +17,15 @@ type RecordingSessionValue = {
   reset: () => void
 }
 
-const RecordingSessionContext = createContext<RecordingSessionValue | null>(null)
+const RecordingSessionContext = createContext<RecordingSessionValue | null>(
+  null
+)
 
-export function RecordingSessionProvider({ children }: { children: ReactNode }) {
+export function RecordingSessionProvider({
+  children,
+}: {
+  children: ReactNode
+}) {
   const [mode, setMode] = useState<RecordingMode | null>(null)
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null)
   const [devices, setDevices] = useState<AudioDevice[]>([])

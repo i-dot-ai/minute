@@ -44,9 +44,11 @@ export default function RecordStatusPage({
   const transcriptionDone = transcriptionStatus === 'completed'
 
   const { data: minutes = [] } = useQuery({
-    ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions({
-      path: { transcription_id: id },
-    }),
+    ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(
+      {
+        path: { transcription_id: id },
+      }
+    ),
   })
   const minuteId = minutes[0]?.id
 
@@ -100,19 +102,13 @@ export default function RecordStatusPage({
 
               <div className="govuk-button-group">
                 {transcriptionDone && (
-                  <Link
-                    href={`/transcriptions/${id}`}
-                    className="govuk-button"
-                  >
+                  <Link href={`/transcriptions/${id}`} className="govuk-button">
                     View summary
                   </Link>
                 )}
                 {(transcriptionStatus === 'failed' ||
                   summaryStatus === 'failed') && (
-                  <Link
-                    href={`/transcriptions/${id}`}
-                    className="govuk-button"
-                  >
+                  <Link href={`/transcriptions/${id}`} className="govuk-button">
                     View details
                   </Link>
                 )}

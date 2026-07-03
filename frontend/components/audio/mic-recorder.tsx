@@ -25,7 +25,10 @@ export function MicRecorderForm({
   onDiscard?: () => void
   onStarted?: (transcriptionId: string) => void
 } = {}) {
-  const { isError, onSubmit, form } = useStartTranscription(undefined, onStarted)
+  const { isError, onSubmit, form } = useStartTranscription(
+    undefined,
+    onStarted
+  )
   const watchBlob = form.watch('file')
   // Set when the user chooses "Generate summary" in the stop dialog. Stopping the
   // recorder is async, so we wait for the audio blob to land before submitting.
@@ -60,11 +63,7 @@ export function MicRecorderForm({
             <p className="govuk-body">
               Something went wrong starting your summary. Please try again.
             </p>
-            <button
-              type="button"
-              onClick={onDiscard}
-              className="govuk-button"
-            >
+            <button type="button" onClick={onDiscard} className="govuk-button">
               Start again
             </button>
           </div>

@@ -47,7 +47,7 @@ export const OfflineRecordingRow = ({
     minute: '2-digit',
   })
   return (
-    <tr className="govuk-table__row relative flex gap-4 items-center border-b border-(--govuk-border-colour) govuk-!-padding-top-1 govuk-!-padding-bottom-1">
+    <tr className="govuk-table__row govuk-!-padding-top-1 govuk-!-padding-bottom-1 relative flex items-center gap-4 border-b border-(--govuk-border-colour)">
       <td className="govuk-!-padding-0">
         <div
           className="govuk-checkboxes govuk-checkboxes--small flex"
@@ -75,11 +75,11 @@ export const OfflineRecordingRow = ({
       <td className="govuk-!-padding-0">
         <audio src={url} controls />
       </td>
-      <td className="govuk-!-padding-0 flex-1 min-w-26">
+      <td className="govuk-!-padding-0 min-w-26 flex-1">
         <span className="govuk-body-s govuk-!-margin-0">{label}</span>
       </td>
       <td className="govuk-!-padding-0">
-        <div className="flex justify-end items-center gap-4">
+        <div className="flex items-center justify-end gap-4">
           <button
             type="button"
             className="govuk-button govuk-!-margin-0 flex items-center gap-2 hover:cursor-pointer"

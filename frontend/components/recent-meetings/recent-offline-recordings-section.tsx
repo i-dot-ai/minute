@@ -91,7 +91,10 @@ export function RecentOfflineRecordingsSection() {
   return (
     <div className="govuk-error-summary" data-module="govuk-error-summary">
       <div role="alert">
-        <h2 className="govuk-error-summary__title" id="recent-offline-recordings-section-title">
+        <h2
+          className="govuk-error-summary__title"
+          id="recent-offline-recordings-section-title"
+        >
           You have <strong>{dbRecordings.length} incomplete recordings</strong>{' '}
           stored only in this browser.{' '}
         </h2>
@@ -190,9 +193,7 @@ export function RecentOfflineRecordingsSection() {
           selectedCount === 1 ? 'This recording has' : 'These recordings have'
         } not been uploaded yet. Discarding ${
           selectedCount === 1 ? 'it' : 'them'
-        } will delete ${
-          selectedCount === 1 ? 'it' : 'them'
-        } permanently.`}
+        } will delete ${selectedCount === 1 ? 'it' : 'them'} permanently.`}
         confirmLabel={`Discard ${selectedCount} recording${
           selectedCount === 1 ? '' : 's'
         }`}

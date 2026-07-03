@@ -26,12 +26,15 @@ function TranscriptionTableRow({
     transcription.title,
     transcription.status
   )
-  const date = new Date(transcription.created_datetime).toLocaleString('en-GB', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  const date = new Date(transcription.created_datetime).toLocaleString(
+    'en-GB',
+    {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }
+  )
 
   const handleSubmit = useCallback(
     (title: string) => {
@@ -42,7 +45,7 @@ function TranscriptionTableRow({
   )
 
   return (
-    <tr className="govuk-table__row relative flex gap-4 items-center border-b border-(--govuk-border-colour) hover:bg-[#f4f8fb]">
+    <tr className="govuk-table__row relative flex items-center gap-4 border-b border-(--govuk-border-colour) hover:bg-[#f4f8fb]">
       <td className="govuk-!-padding-0">
         <div
           className="govuk-checkboxes govuk-checkboxes--small flex"
@@ -138,7 +141,10 @@ export function TranscriptionsList({
   onToggle?: (id: string, checked: boolean) => void
 }) {
   return (
-    <table className="govuk-table" aria-labelledby="transcriptions-list-heading">
+    <table
+      className="govuk-table"
+      aria-labelledby="transcriptions-list-heading"
+    >
       <thead className="govuk-table__head govuk-visually-hidden">
         <tr className="govuk-table__row">
           <th scope="col" className="govuk-table__header">

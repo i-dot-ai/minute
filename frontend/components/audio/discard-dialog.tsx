@@ -37,7 +37,10 @@ export const DiscardConfirmDialog = ({
         </AlertDialogHeader>
         <AlertDialogFooter className="govuk-button-group sm:justify-end">
           <AlertDialogCancel asChild>
-            <button type="button" className="govuk-link text-(--govuk-link-colour)">
+            <button
+              type="button"
+              className="govuk-link text-(--govuk-link-colour)"
+            >
               Cancel
             </button>
           </AlertDialogCancel>

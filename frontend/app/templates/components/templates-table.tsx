@@ -146,7 +146,9 @@ export const TemplatesTable = () => {
         <span className="govuk-visually-hidden" aria-live="polite">
           {deleteCount > 0 ? `${deleteCount} templates selected` : ''}
         </span>
-        <p className="govuk-body govuk-!-margin-bottom-0">Total: {totalCount}</p>
+        <p className="govuk-body govuk-!-margin-bottom-0">
+          Total: {totalCount}
+        </p>
       </div>
       {isLoading ? (
         <p className="govuk-body">Loading templates...</p>

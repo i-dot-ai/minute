@@ -73,7 +73,7 @@ export function TemplateTableRow({
   }
 
   return (
-    <tr className="govuk-table__row relative flex gap-4 items-center border-b border-(--govuk-border-colour) hover:bg-[#f4f8fb]">
+    <tr className="govuk-table__row relative flex items-center gap-4 border-b border-(--govuk-border-colour) hover:bg-[#f4f8fb]">
       <td className="govuk-!-padding-0">
         <div
           className="govuk-checkboxes govuk-checkboxes--small flex"
@@ -87,7 +87,10 @@ export function TemplateTableRow({
             checked={selectedIds?.has(rowKey) ?? false}
             onChange={(e) => onToggle?.(rowKey, e.target.checked)}
           />
-          <label className="govuk-label govuk-checkboxes__label" htmlFor={inputId}>
+          <label
+            className="govuk-label govuk-checkboxes__label"
+            htmlFor={inputId}
+          >
             <span className="govuk-visually-hidden">Select {name}</span>
           </label>
         </div>
@@ -95,16 +98,17 @@ export function TemplateTableRow({
       <td className="govuk-!-padding-0 flex-1">
         <Link
           href={`/templates/${template.id}`}
-          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative flex flex-col lg:flex-row flex-1 items-baseline gap-1 lg:gap-2 !text-(--govuk-text-colour) py-1 lg:py-0"
+          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative flex flex-1 flex-col items-baseline gap-1 py-1 !text-(--govuk-text-colour) lg:flex-row lg:gap-2 lg:py-0"
         >
-          <span className="font-bold lg:min-w-60">{name}</span>{' '}<span className="govuk-body-s govuk-!-margin-0">{template.description}</span>
+          <span className="font-bold lg:min-w-60">{name}</span>{' '}
+          <span className="govuk-body-s govuk-!-margin-0">
+            {template.description}
+          </span>
         </Link>
       </td>
       <td className="govuk-!-padding-0">
         {template.isDefault ? (
-          <strong className="govuk-tag govuk-!-margin-right-2">
-            System
-          </strong>
+          <strong className="govuk-tag govuk-!-margin-right-2">System</strong>
         ) : (
           <strong className="govuk-tag govuk-tag--green govuk-!-margin-right-2">
             Custom
@@ -112,7 +116,7 @@ export function TemplateTableRow({
         )}
       </td>
       <td className="govuk-!-padding-0">
-        <div className="govuk-button-group govuk-!-margin-bottom-0 flex justify-end items-center">
+        <div className="govuk-button-group govuk-!-margin-bottom-0 flex items-center justify-end">
           <button
             type="button"
             className="govuk-link govuk-link--no-visited-state flex items-center gap-2 hover:cursor-pointer"
@@ -145,7 +149,10 @@ const DeleteConfirmDialog = ({
 }) => (
   <AlertDialog>
     <AlertDialogTrigger asChild>
-      <button className={`govuk-link link--warning flex items-center gap-2 hover:cursor-pointer ${disabled ? '!text-gray-500 opacity-50 !cursor-not-allowed' : ''}`} disabled={disabled}>
+      <button
+        className={`govuk-link link--warning flex items-center gap-2 hover:cursor-pointer ${disabled ? '!cursor-not-allowed !text-gray-500 opacity-50' : ''}`}
+        disabled={disabled}
+      >
         <TrashIcon className="size-4" />
         <span className="govuk-visually-hidden">Delete {name}</span>
       </button>
@@ -167,7 +174,10 @@ const DeleteConfirmDialog = ({
           </button>
         </AlertDialogAction>
         <AlertDialogCancel asChild>
-          <button type="button" className="govuk-button govuk-button--secondary">
+          <button
+            type="button"
+            className="govuk-button govuk-button--secondary"
+          >
             Cancel
           </button>
         </AlertDialogCancel>

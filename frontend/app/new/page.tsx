@@ -11,8 +11,7 @@ export default function RecordPage() {
   const { mode, screenStream, devices, selectedDeviceId, reset } =
     useRecordingSession()
 
-  const missingSession =
-    !mode || (mode === 'virtual-meeting' && !screenStream)
+  const missingSession = !mode || (mode === 'virtual-meeting' && !screenStream)
 
   useEffect(() => {
     if (missingSession) router.replace('/')

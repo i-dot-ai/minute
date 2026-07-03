@@ -100,7 +100,11 @@ export const PaginatedTranscriptions = () => {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <input type="text" className="govuk-input govuk-!-width-one-half" placeholder="Search transcriptions" />
+        <input
+          type="text"
+          className="govuk-input govuk-!-width-one-half"
+          placeholder="Search transcriptions"
+        />
         <div className="govuk-form-group">
           <label className="govuk-label" htmlFor="filter">
             Filter by
@@ -159,9 +163,7 @@ export const PaginatedTranscriptions = () => {
           )}
         </div>
         <span className="govuk-visually-hidden" aria-live="polite">
-          {selectedCount > 0
-            ? `${selectedCount} transcriptions selected`
-            : ''}
+          {selectedCount > 0 ? `${selectedCount} transcriptions selected` : ''}
         </span>
         <p className="govuk-body govuk-!-margin-bottom-0">
           Total: {totalCount}

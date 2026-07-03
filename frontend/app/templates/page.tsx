@@ -16,7 +16,11 @@ export default function TemplatesPage() {
               Templates
             </h1>
             <div className="govuk-button-group">
-              <Link className="govuk-button" role="button" href="/templates/new">
+              <Link
+                className="govuk-button"
+                role="button"
+                href="/templates/new"
+              >
                 <Plus className="size-4" /> Generate new template
               </Link>
             </div>

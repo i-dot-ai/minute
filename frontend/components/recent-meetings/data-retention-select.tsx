@@ -3,6 +3,7 @@
 import {
   getUserUsersMeGetOptions,
   getUserUsersMeGetQueryKey,
+  listTranscriptionsTranscriptionsGetQueryKey,
   updateDataRetentionUsersDataRetentionPatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -14,6 +15,9 @@ export const DataRetentionSelect = () => {
     ...updateDataRetentionUsersDataRetentionPatchMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: getUserUsersMeGetQueryKey() })
+      queryClient.invalidateQueries({
+        queryKey: listTranscriptionsTranscriptionsGetQueryKey(),
+      })
     },
   })
 

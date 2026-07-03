@@ -4,6 +4,7 @@ import { GetUserResponse } from '@/lib/client'
 import {
   getUserUsersMeGetOptions,
   getUserUsersMeGetQueryKey,
+  listTranscriptionsTranscriptionsGetQueryKey,
   updateDataRetentionUsersDataRetentionPatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -83,6 +84,9 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
           onSuccess() {
             queryClient.invalidateQueries({
               queryKey: getUserUsersMeGetQueryKey(),
+            })
+            queryClient.invalidateQueries({
+              queryKey: listTranscriptionsTranscriptionsGetQueryKey(),
             })
             if (savedTimeoutRef.current) {
               clearTimeout(savedTimeoutRef.current)

@@ -82,7 +82,7 @@ export const OfflineRecordingRow = ({
         <div className="flex justify-end items-center gap-4">
           <button
             type="button"
-            className="govuk-link govuk-link--no-visited-state text-(--govuk-link-colour) flex items-center gap-2 hover:cursor-pointer"
+            className="govuk-button govuk-!-margin-0 flex items-center gap-2 hover:cursor-pointer"
             onClick={() => setUploadOpen(true)}
           >
             <UploadIcon className="size-4" />
@@ -92,7 +92,7 @@ export const OfflineRecordingRow = ({
           <a
             href={url}
             download={`audio-file.${getFileExtensionFromBlob(recording.blob)}`}
-            className="govuk-link govuk-link--no-visited-state flex items-center gap-2 hover:cursor-pointer"
+            className="govuk-button govuk-button--secondary govuk-!-margin-0 flex items-center gap-2 hover:cursor-pointer"
           >
             <DownloadIcon className="size-4" />
             Download

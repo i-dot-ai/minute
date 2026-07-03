@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { List, LayoutPanelTop, AudioLines } from 'lucide-react'
+import { List, LayoutPanelTop, AudioLines, Plus } from 'lucide-react'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
@@ -18,7 +18,7 @@ export const ServiceNavigation = () => {
           <li
             className={`!border-l-4 !border-transparent govuk-service-navigation__item w-full ${pathname === '/' || pathname.includes('/new') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
-            <a
+            <Link
               href="/"
               aria-current={
                 pathname === '/' || pathname.includes('/new')
@@ -27,9 +27,9 @@ export const ServiceNavigation = () => {
               }
               className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname === '/' || pathname.includes('/new') ? '!text-(--govuk-text-colour)' : ''}`}
             >
-              <AudioLines className="h-4 w-4" />
-              Minute
-            </a>
+              <Plus className="size-4" />
+              New meeting
+            </Link>
           </li>
           <li
             className={`!border-l-4 !border-transparent govuk-service-navigation__item w-full ${pathname.includes('/transcriptions') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
@@ -42,7 +42,7 @@ export const ServiceNavigation = () => {
               href="/transcriptions"
               data-onboarding="saved-transcriptions-nav"
             >
-              <List className="h-4 w-4" />
+              <List className="size-4" />
               Transcriptions
             </Link>
           </li>
@@ -57,7 +57,7 @@ export const ServiceNavigation = () => {
               href="/templates"
               data-onboarding="templates-nav"
             >
-              <LayoutPanelTop className="h-4 w-4" />
+              <LayoutPanelTop className="size-4" />
               Templates
             </Link>
           </li>

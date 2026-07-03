@@ -6,23 +6,22 @@
 /* OVERRIDE GOVUK STYLES */
 
 .govuk-button {
-  background-color: var(--govuk-brand-colour) !important;
+  background-color: var(--govuk-brand-colour);
+  box-shadow: none;
 }
 
-.govuk-button:hover,
-.govuk-button:focus-visible {
-  background-color: #16548a !important;
-  color: #fff !important;
+.govuk-button:hover {
+  background-color: #16548a;
+  color: #fff;
 }
 
 .govuk-button--secondary {
-  background-color: #d2e2f1 !important;
+  background-color: #d2e2f1;
 }
 
-.govuk-button--secondary:hover,
-.govuk-button--secondary:focus-visible {
-  background-color: #9db9d2 !important;
-  color: #0b0c0c !important;
+.govuk-button--secondary:hover {
+  background-color: #9db9d2;
+  color: #0b0c0c;
 }
 
 /* Override the margin-right: from the modal dialog */

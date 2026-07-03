@@ -6,6 +6,7 @@ import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { TanstackQueryProvider } from '@/providers/TanstackQueryProvider'
 import PosthogProvider from '@/providers/posthog'
 import { RecordingDbProvider } from '@/providers/transcription-db-provider'
+import { RecordingSessionProvider } from '@/providers/recording-session-provider'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
@@ -46,12 +47,14 @@ export default function RootLayout({
                 </Link>
                 <OnboardingTour />
                 <ServiceNavigation />
-                <div className="ml-38 min-h-screen">
-                  <main id="main-content" tabIndex={-1}>
-                    {children}
-                  </main>
-                  {/* <Footer /> */}
-                </div>
+                <RecordingSessionProvider>
+                  <div className="ml-38 min-h-screen">
+                    <main id="main-content" tabIndex={-1}>
+                      {children}
+                    </main>
+                    {/* <Footer /> */}
+                  </div>
+                </RecordingSessionProvider>
                 <Toaster />
               </RecordingDbProvider>
             </LockNavigationProvider>

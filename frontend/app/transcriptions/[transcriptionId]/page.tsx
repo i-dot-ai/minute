@@ -119,7 +119,7 @@ export default function TranscriptionPage({
             </p>
             <p className="govuk-inset-text">
               You can either{' '}
-              <Link href="/new" className="govuk-link">
+              <Link href="/" className="govuk-link">
                 start a new transcription
               </Link>{' '}
               or download the audio file below and{' '}

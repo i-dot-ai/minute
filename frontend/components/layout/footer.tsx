@@ -60,7 +60,7 @@ export const Footer = () => (
               </Link>
             </li>
             <li>
-              <Link className="govuk-link" href="/new">
+              <Link className="govuk-link" href="/">
                 New transcription
               </Link>
             </li>

@@ -16,7 +16,7 @@ export const ServiceNavigation = () => {
       <nav aria-label="Menu" className="flex h-full flex-col justify-between">
         <ul className="flex w-40 flex-col" id="navigation">
           <li
-            className={`govuk-service-navigation__item w-full ${pathname === '/' || pathname.includes('/new') ? 'bg-[#d2e2f1] font-bold' : ''}`}
+            className={`govuk-service-navigation__service-name w-full bg-(--govuk-brand-colour) ${pathname === '/' || pathname.includes('/new') ? 'font-bold' : '!font-normal'}`}
           >
             <a
               href="/"
@@ -25,10 +25,10 @@ export const ServiceNavigation = () => {
                   ? 'page'
                   : undefined
               }
-              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname === '/' || pathname.includes('/new') ? '!text-black' : ''}`}
+              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 !text-white ${pathname === '/' || pathname.includes('/new') ? '!underline' : ''}`}
             >
               <AudioLines className="h-4 w-4" />
-              Record
+              Minute
             </a>
           </li>
           <li

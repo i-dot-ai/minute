@@ -10,12 +10,11 @@ import { Mic, Video, Upload } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
-type RecordingMode = 'in-person' | 'virtual-meeting' | 'upload-file'
+type RecordingMode = 'in-person' | 'virtual-meeting'
 
 const buttonLabels: Record<RecordingMode, string> = {
   'in-person': 'Start recording',
-  'virtual-meeting': 'Start recording',
-  'upload-file': 'Upload a file',
+  'virtual-meeting': 'Start recording'
 }
 
 export default function Home() {
@@ -181,47 +180,49 @@ export default function Home() {
               {mode === 'upload-file' ? (
                 <AudioUploadForm />
               ) : (
-                <div className="govuk-form-group">
-                  <label className="govuk-label" htmlFor="microphone">
-                    Choose microphone
-                  </label>
-                  <select
-                    className="govuk-select"
-                    id="microphone"
-                    name="microphone"
-                    value={selectedDeviceId}
-                    onChange={(e) => setSelectedDeviceId(e.target.value)}
+                <>
+                  <div className="govuk-form-group">
+                    <label className="govuk-label" htmlFor="microphone">
+                      Choose microphone
+                    </label>
+                    <select
+                      className="govuk-select"
+                      id="microphone"
+                      name="microphone"
+                      value={selectedDeviceId}
+                      onChange={(e) => setSelectedDeviceId(e.target.value)}
+                    >
+                      {devices.length > 0 ? (
+                        devices.map((d) => (
+                          <option key={d.deviceId} value={d.deviceId}>
+                            {d.label}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="">Requesting microphone access...</option>
+                      )}
+                    </select>
+                  </div>
+                  <button
+                    className="govuk-button govuk-button--start govuk-!-margin-top-6"
+                    data-module="govuk-button"
+                    onClick={handleStart}
                   >
-                    {devices.length > 0 ? (
-                      devices.map((d) => (
-                        <option key={d.deviceId} value={d.deviceId}>
-                          {d.label}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="">Requesting microphone access...</option>
-                    )}
-                  </select>
-                </div>
+                    {buttonLabels[mode]}
+                    <svg
+                      className="govuk-button__start-icon"
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="17.5"
+                      height="19"
+                      viewBox="0 0 33 40"
+                      role="presentation"
+                      focusable="false"
+                    >
+                      <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
+                    </svg>
+                  </button>
+                </>
               )}
-              <button
-                className="govuk-button govuk-button--start govuk-!-margin-top-6"
-                data-module="govuk-button"
-                onClick={handleStart}
-              >
-                {buttonLabels[mode]}
-                <svg
-                  className="govuk-button__start-icon"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="17.5"
-                  height="19"
-                  viewBox="0 0 33 40"
-                  role="presentation"
-                  focusable="false"
-                >
-                  <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
-                </svg>
-              </button>
             </div>
           )}
         </div>

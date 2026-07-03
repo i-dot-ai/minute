@@ -2,16 +2,8 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import { Pause, Play, Save } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import RecordingTimer from './recording-timer'
-import { StartTranscriptionSection } from './start-transcription-section-2'
+import { GenerateSummaryDialog } from './generate-summary-dialog'
 
 interface RecordingControlProps {
   stream: MediaStream | null
@@ -402,38 +394,13 @@ export default function RecordingControl({
         </div>
       )}
 
-      <Dialog open={showStopDialog} onOpenChange={setShowStopDialog}>
-        <DialogContent wideModal showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle className="govuk-heading-l">
-              Stop recording and generate summary?
-            </DialogTitle>
-            <DialogDescription className="govuk-body">
-              You won&apos;t be able to resume recording after stopping.
-            </DialogDescription>
-          </DialogHeader>
-          <StartTranscriptionSection />
-          <DialogFooter className="govuk-button-group ml-auto sm:justify-end">
-            <button
-              type="button"
-              className="govuk-link text-(--govuk-link-colour)"
-              onClick={() => setShowStopDialog(false)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="govuk-button govuk-button--start"
-              onClick={confirmStop}
-            >
-              Generate summary
-              <svg className="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false">
-                <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
-              </svg>
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GenerateSummaryDialog
+        open={showStopDialog}
+        onOpenChange={setShowStopDialog}
+        title="Stop recording and generate summary?"
+        description="You won't be able to resume recording after stopping."
+        onConfirm={confirmStop}
+      />
     </div>
   )
 }

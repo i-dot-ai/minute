@@ -7,6 +7,11 @@ from pydantic import BaseModel, Field
 from common.database.postgres_models import ContentSource, DialogueEntry, HallucinationType, JobStatus, TemplateType
 
 
+class TranscriptionListFilter(StrEnum):
+    EXPIRING_SOON = "expiring-soon"
+    FAILED = "failed"
+
+
 class TranscriptionMetadata(BaseModel):
     """Pydantic model for transcription metadata."""
 

@@ -4,18 +4,39 @@ import { DeleteTranscriptionsDialog } from '@/components/recent-meetings/delete-
 import { RecentOfflineRecordingsSection } from '@/components/recent-meetings/recent-offline-recordings-section'
 import { TranscriptionsList } from '@/components/recent-meetings/transcriptions-list'
 import { useTranscriptions } from '@/components/recent-meetings/use-transcriptions'
+import { TranscriptionListFilter } from '@/lib/client'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useRef, useState } from 'react'
 
 const PAGE_SIZE = 10
 
+type TranscriptionFilter = 'all' | TranscriptionListFilter
+
+function parseFilterBy(searchParams: URLSearchParams): TranscriptionFilter {
+  const filterBy = searchParams.get('filterBy')
+  if (filterBy === 'expiring-soon' || filterBy === 'failed') return filterBy
+  if (searchParams.get('expiring') === 'true') return 'expiring-soon'
+  return 'all'
+}
+
+function buildQueryString(
+  page?: number,
+  filterBy: TranscriptionFilter = 'all'
+): string {
+  const params = new URLSearchParams()
+  if (page && page > 1) params.set('page', String(page))
+  if (filterBy !== 'all') params.set('filterBy', filterBy)
+  const qs = params.toString()
+  return qs ? `?${qs}` : ''
+}
+
 export const PaginatedTranscriptions = () => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const router = useRouter()
   const currentPage = Number(searchParams.get('page')) || 1
-  const expiring = searchParams.get('expiring') === 'true'
+  const filterBy = parseFilterBy(searchParams)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const selectAllRef = useRef<HTMLInputElement>(null)
@@ -23,10 +44,16 @@ export const PaginatedTranscriptions = () => {
     data: paginatedResponse,
     isLoading,
     error,
-  } = useTranscriptions({ page: currentPage, pageSize: PAGE_SIZE, expiring })
+  } = useTranscriptions({
+    page: currentPage,
+    pageSize: PAGE_SIZE,
+    filterBy: filterBy === 'all' ? undefined : filterBy,
+  })
 
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
-    router.replace(pathname + `?page=${paginatedResponse.total_pages}`)
+    router.replace(
+      pathname + buildQueryString(paginatedResponse.total_pages, filterBy)
+    )
   }
   const transcriptions = paginatedResponse?.items || []
   const totalPages = paginatedResponse?.total_pages || 1
@@ -38,7 +65,7 @@ export const PaginatedTranscriptions = () => {
 
   useEffect(() => {
     setSelectedIds(new Set())
-  }, [currentPage, expiring])
+  }, [currentPage, filterBy])
 
   useEffect(() => {
     if (selectAllRef.current) {
@@ -86,13 +113,10 @@ export const PaginatedTranscriptions = () => {
     }
     return pages
   }
+
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value
-    if (value === 'all') {
-      router.replace(pathname)
-    } else {
-      router.replace(pathname + `?expiring=true`)
-    }
+    const value = e.target.value as TranscriptionFilter
+    router.replace(pathname + buildQueryString(undefined, value))
   }
 
   const selectedCount = selectedIds.size
@@ -100,11 +124,17 @@ export const PaginatedTranscriptions = () => {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <input
-          type="text"
-          className="govuk-input govuk-!-width-one-half"
-          placeholder="Search transcriptions"
-        />
+        <div className="govuk-form-group govuk-!-width-one-half">
+          <label className="govuk-label" htmlFor="search-transcriptions">
+            Search transcriptions
+          </label>
+          <input
+            id="search-transcriptions"
+            name="search-transcriptions"
+            type="text"
+            className="govuk-input"
+          />
+        </div>
         <div className="govuk-form-group">
           <label className="govuk-label" htmlFor="filter">
             Filter by
@@ -113,14 +143,12 @@ export const PaginatedTranscriptions = () => {
             className="govuk-select"
             id="filter"
             name="filter"
+            value={filterBy}
             onChange={handleFilterChange}
           >
-            <option value="all" selected={!expiring}>
-              All
-            </option>
-            <option value="expiring" selected={expiring}>
-              Expiring soon
-            </option>
+            <option value="all">All</option>
+            <option value="expiring-soon">Expiring soon</option>
+            <option value="failed">Failed</option>
           </select>
         </div>
       </div>
@@ -192,7 +220,9 @@ export const PaginatedTranscriptions = () => {
                 <div className="govuk-pagination__prev">
                   <Link
                     className="govuk-link govuk-pagination__link"
-                    href={`${pathname}?page=${currentPage - 1}${expiring ? '&expiring=true' : ''}`}
+                    href={
+                      pathname + buildQueryString(currentPage - 1, filterBy)
+                    }
                     rel="prev"
                   >
                     <svg
@@ -218,7 +248,7 @@ export const PaginatedTranscriptions = () => {
                   <li key={page} className="govuk-pagination__item">
                     <Link
                       className="govuk-link govuk-pagination__link"
-                      href={`${pathname}?page=${page}${expiring ? '&expiring=true' : ''}`}
+                      href={pathname + buildQueryString(page, filterBy)}
                       aria-label={`Page ${page}`}
                     >
                       {page}
@@ -230,7 +260,9 @@ export const PaginatedTranscriptions = () => {
                 <div className="govuk-pagination__next">
                   <Link
                     className="govuk-link govuk-pagination__link"
-                    href={`${pathname}?page=${currentPage + 1}${expiring ? '&expiring=true' : ''}`}
+                    href={
+                      pathname + buildQueryString(currentPage + 1, filterBy)
+                    }
                     rel="next"
                   >
                     <span className="govuk-pagination__link-title">

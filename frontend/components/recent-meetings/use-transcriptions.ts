@@ -1,20 +1,21 @@
 'use client'
 
+import { TranscriptionListFilter } from '@/lib/client'
 import { listTranscriptionsTranscriptionsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 export function useTranscriptions({
   page,
   pageSize,
-  expiring,
+  filterBy,
 }: {
   page: number
   pageSize: number
-  expiring?: boolean
+  filterBy?: TranscriptionListFilter
 }) {
   return useQuery({
     ...listTranscriptionsTranscriptionsGetOptions({
-      query: { page, page_size: pageSize, expiring },
+      query: { page, page_size: pageSize, filter_by: filterBy },
     }),
     refetchInterval: (query) =>
       !!query.state.data &&

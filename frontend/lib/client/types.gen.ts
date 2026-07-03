@@ -92,6 +92,11 @@ export type JobStatus =
   | 'failed'
 
 /**
+ * TranscriptionListFilter
+ */
+export type TranscriptionListFilter = 'expiring-soon' | 'failed'
+
+/**
  * TranscriptionGetResponse
  */
 export type TranscriptionGetResponse = {
@@ -717,9 +722,9 @@ export type ListTranscriptionsTranscriptionsGetData = {
      */
     page_size?: number
     /**
-     * Expiring
+     * Filter By
      */
-    expiring?: boolean
+    filter_by?: TranscriptionListFilter
   }
   url: '/transcriptions'
 }

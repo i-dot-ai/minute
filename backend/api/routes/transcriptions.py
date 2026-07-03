@@ -10,6 +10,7 @@ from sqlmodel import col, func, select
 from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.get_file_s3_key import get_file_s3_key
 from common.database.postgres_models import (
+    JobStatus,
     Minute,
     MinuteVersion,
     Recording,
@@ -27,6 +28,7 @@ from common.types import (
     TranscriptionCreateRequest,
     TranscriptionCreateResponse,
     TranscriptionGetResponse,
+    TranscriptionListFilter,
     TranscriptionMetadata,
     TranscriptionPatchRequest,
     WorkerMessage,
@@ -60,7 +62,7 @@ async def list_transcriptions(
     current_user: UserDep,
     page: int = Query(1, ge=1, description="Page number (starts from 1)"),
     page_size: int = Query(20, ge=1, le=100, description="Number of items per page"),
-    expiring: bool = Query(False),
+    filter_by: TranscriptionListFilter | None = Query(None),
 ) -> PaginatedTranscriptionsResponse:
     """Get paginated metadata for transcriptions for the current user."""
 
@@ -71,12 +73,14 @@ async def list_transcriptions(
     )
 
     # Retention disabled but caller wants only-expiring -> nothing qualifies.
-    if expiring and expiry_cutoff is None:
+    if filter_by == TranscriptionListFilter.EXPIRING_SOON and expiry_cutoff is None:
         return PaginatedTranscriptionsResponse(items=[], total_count=0, page=page, page_size=page_size, total_pages=1)
 
     filters = [Transcription.user_id == current_user.id]
-    if expiring:  # expiry_cutoff is not None here
+    if filter_by == TranscriptionListFilter.EXPIRING_SOON:  # expiry_cutoff is not None here
         filters.append(Transcription.created_datetime < expiry_cutoff)
+    elif filter_by == TranscriptionListFilter.FAILED:
+        filters.append(Transcription.status == JobStatus.FAILED)
 
     count_statement = select(func.count(col(Transcription.id))).where(*filters)
     statement = (

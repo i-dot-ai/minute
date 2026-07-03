@@ -12,12 +12,15 @@ export default function TemplatesPage() {
             className="govuk-grid-column-full"
             data-onboarding="templates-page"
           >
-            <h1 className="govuk-heading-xl" id="templates-list-heading">
+            <h1 className="govuk-heading-xl govuk-!-margin-bottom-2" id="templates-list-heading">
               Templates
             </h1>
+            <p className="govuk-body govuk-!-margin-bottom-8">
+              Use templates to customise the structure and style of your minutes.
+            </p>
             <div className="govuk-button-group">
               <Link
-                className="govuk-button"
+                className="govuk-button govuk-!-margin-0"
                 role="button"
                 href="/templates/new"
               >

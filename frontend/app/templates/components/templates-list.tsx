@@ -23,13 +23,13 @@ export function TemplatesList({
             Select
           </th>
           <th scope="col" className="govuk-table__header">
+            Actions
+          </th>
+          <th scope="col" className="govuk-table__header">
             Name
           </th>
           <th scope="col" className="govuk-table__header">
             Status
-          </th>
-          <th scope="col" className="govuk-table__header">
-            Actions
           </th>
         </tr>
       </thead>

@@ -24,7 +24,7 @@ export default function TemplatesPage() {
             </p>
             <div className="govuk-button-group">
               <Link
-                className="govuk-button govuk-button--secondary"
+                className="govuk-button"
                 role="button"
                 href="/templates/create"
               >
@@ -32,11 +32,11 @@ export default function TemplatesPage() {
                 Create new template
               </Link>
             </div>
-            <Suspense fallback={<div>Loading...</div>}>
-              <TemplatesTable />
-            </Suspense>
           </div>
         </div>
+        <Suspense fallback={<div>Loading...</div>}>
+          <TemplatesTable />
+        </Suspense>
       </div>
     </div>
   )

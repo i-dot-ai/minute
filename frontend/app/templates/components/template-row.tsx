@@ -89,6 +89,18 @@ export function TemplateTableRow({
           </label>
         </div>
       </td>
+      <td className="govuk-!-padding-0">
+        <div className="govuk-button-group govuk-!-margin-bottom-0 flex items-center justify-end govuk-!-margin-right-1">
+          <button
+            type="button"
+            className="govuk-link govuk-link--no-visited-state text-(--govuk-link-colour) flex items-center gap-2 hover:cursor-pointer govuk-!-margin-0"
+            onClick={handleDuplicate}
+          >
+            <CopyPlus className="size-4" />
+            <span className="govuk-visually-hidden">Duplicate {name}</span>
+          </button>
+        </div>
+      </td>
       <td className="govuk-!-padding-0 flex-1">
         <Link
           href={`/templates/${template.id}`}
@@ -114,25 +126,6 @@ export function TemplateTableRow({
         <strong className="govuk-tag govuk-tag--green govuk-!-margin-right-2">
           {template.format === 'document' ? 'Summary' : 'Q & A'}
         </strong>
-      </td>
-      <td className="govuk-!-padding-0">
-        <div className="govuk-button-group govuk-!-margin-bottom-0 flex items-center justify-end">
-          <button
-            type="button"
-            className="govuk-link govuk-link--no-visited-state flex items-center gap-2 hover:cursor-pointer"
-            onClick={handleDuplicate}
-          >
-            <CopyPlus className="size-4" />
-            <span className="govuk-visually-hidden">Duplicate {name}</span>
-          </button>
-          <DeleteConfirmDialog
-            name={name}
-            disabled={template.isSystem}
-            onConfirm={() =>
-              deleteMutation.mutate({ path: { template_id: template.id! } })
-            }
-          />
-        </div>
       </td>
     </tr>
   )

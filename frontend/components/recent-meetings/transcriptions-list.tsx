@@ -119,12 +119,6 @@ function TranscriptionTableRow({
       <td className="govuk-!-padding-0 min-w-26">
         <span className="govuk-body-s govuk-!-margin-0">{date}</span>
       </td>
-      <td className="govuk-!-padding-0">
-        <DeleteTranscriptionButton
-          transcription={transcription}
-          title={displayTitle}
-        />
-      </td>
     </tr>
   )
 }
@@ -161,9 +155,6 @@ export function TranscriptionsList({
           </th>
           <th scope="col" className="govuk-table__header">
             Date
-          </th>
-          <th scope="col" className="govuk-table__header">
-            Delete
           </th>
         </tr>
       </thead>

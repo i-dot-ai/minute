@@ -30,17 +30,21 @@ function NewTemplateContent() {
   ].find((v) => v.name == templateExampleParam)
   const form = useForm<TemplateData>({
     defaultValues: foundExample
-      ? foundExample
+      ? {
+        ...foundExample,
+        styleGuide: foundExample.type === 'form' ? foundExample.content : '',
+      }
       : {
-          name: '',
-          description: '',
-          content: '',
-          questions: [],
-          type:
-            newTemplateType && ['document', 'form'].includes(newTemplateType)
-              ? (newTemplateType as TemplateType)
-              : undefined,
-        },
+        name: '',
+        description: '',
+        content: '',
+        styleGuide: '',
+        questions: [],
+        type:
+          newTemplateType && ['document', 'form'].includes(newTemplateType)
+            ? (newTemplateType as TemplateType)
+            : undefined,
+      },
   })
   const navigation = useRouter()
   const { mutateAsync: saveTemplate } = useMutation({
@@ -52,9 +56,11 @@ function NewTemplateContent() {
     },
   })
   const onSubmit = async (data: TemplateData) => {
+    const { styleGuide, ...rest } = data
     await saveTemplate({
       body: {
-        ...data,
+        ...rest,
+        content: data.type === 'form' ? (styleGuide ?? '') : rest.content,
         questions:
           data.type === 'form' && data.questions
             ? data.questions.map((q, i) => ({ ...q, position: i }))
@@ -125,8 +131,8 @@ function NewTemplateContent() {
                 <div id="description-hint" className="govuk-hint">
                   What type of meeting is this template used for?
                 </div>
-                <input
-                  className="govuk-input govuk-!-width-one-half"
+                <textarea
+                  className="govuk-textarea govuk-!-width-one-half"
                   id="description"
                   {...form.register('description', {
                     required: { value: true, message: 'Description required' },
@@ -151,7 +157,10 @@ function NewTemplateContent() {
                         type="radio"
                         value="document"
                         checked={newTemplateType === 'document'}
-                        onChange={() => setNewTemplateType('document')}
+                        onChange={() => {
+                          setNewTemplateType('document')
+                          form.setValue('type', 'document')
+                        }}
                         aria-describedby="template-type-document-hint"
                       />
                       <label
@@ -172,7 +181,10 @@ function NewTemplateContent() {
                         type="radio"
                         value="form"
                         checked={newTemplateType === 'form'}
-                        onChange={() => setNewTemplateType('form')}
+                        onChange={() => {
+                          setNewTemplateType('form')
+                          form.setValue('type', 'form')
+                        }}
                         aria-describedby="template-type-form-hint"
                       />
                       <label

@@ -14,6 +14,7 @@ import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { useDefaultTemplate } from '@/hooks/useDefaultTemplate'
 import { Template } from '@/types/templates'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
@@ -26,6 +27,14 @@ type CreateMinuteForm = {
   agenda?: string
 }
 
+const GENERAL_TEMPLATE: Template = {
+  name: 'General',
+  description:
+    'Standard meeting summary with key points, decisions, and action items',
+  agenda_usage: 'optional',
+  id: null,
+}
+
 export function NewMinuteDialog({
   transcriptionId,
   agenda,
@@ -36,32 +45,21 @@ export function NewMinuteDialog({
   disabled?: boolean
 }) {
   const [open, setOpen] = useState(false)
+  const defaultTemplate = useDefaultTemplate()
   const form = useForm<CreateMinuteForm>({
     defaultValues: {
-      template: {
-        name: 'General',
-        description:
-          'Standard meeting summary with key points, decisions, and action items',
-        agenda_usage: 'optional',
-        id: null,
-      },
+      template: GENERAL_TEMPLATE,
       agenda,
     },
   })
   useEffect(() => {
     if (open) {
       form.reset({
-        template: {
-          name: 'General',
-          description:
-            'Standard meeting summary with key points, decisions, and action items',
-          agenda_usage: 'optional',
-          id: null,
-        },
+        template: defaultTemplate ?? GENERAL_TEMPLATE,
         agenda,
       })
     }
-  }, [agenda, form, open])
+  }, [agenda, form, open, defaultTemplate])
   const queryClient = useQueryClient()
 
   const selectedTemplate = form.watch('template')

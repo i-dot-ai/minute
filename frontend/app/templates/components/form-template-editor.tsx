@@ -1,7 +1,7 @@
 'use client'
 
 import { TemplateData } from '@/types/templates'
-import { ArrowDown, ArrowUp, Plus, Save } from 'lucide-react'
+import { ArrowDown, ArrowUp, Plus } from 'lucide-react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
 
 export const FormTemplateEditor = () => {
@@ -17,19 +17,19 @@ export const FormTemplateEditor = () => {
   return (
     <>
       <div className="govuk-form-group">
-        <label className="govuk-label govuk-label--s" htmlFor="content">
+        <label className="govuk-label govuk-label--s" htmlFor="styleGuide">
           Style guide
         </label>
-        <div id="content-hint" className="govuk-hint">
+        <div id="styleGuide-hint" className="govuk-hint">
           the &ldquo;Style guide&rdquo; to provide style guidance that will
           apply every question.
         </div>
         <textarea
           className="govuk-textarea"
-          id="content"
+          id="styleGuide"
           rows={10}
-          {...form.register('content')}
-          aria-describedby="content-hint"
+          {...form.register('styleGuide')}
+          aria-describedby="styleGuide-hint"
         />
       </div>
       <div className="govuk-form-group">

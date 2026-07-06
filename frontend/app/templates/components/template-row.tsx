@@ -16,18 +16,11 @@ import {
   duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation,
   getUserTemplatesUserTemplatesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { TemplateRowData } from '@/types/templates'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { CopyPlus, TrashIcon } from 'lucide-react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
-
-export type TemplateRowData = {
-  id: string | null
-  name: string
-  description: string
-  isSystem: boolean
-  format: 'document' | 'form'
-}
 
 export const templateRowKey = (template: TemplateRowData) =>
   template.id ?? `default:${template.name}`
@@ -108,8 +101,15 @@ export function TemplateTableRow({
         </Link>
       </td>
       <td className="govuk-!-padding-0">
+        {
+          template.is_default && (
+            <strong className="govuk-tag govuk-tag--blue govuk-!-margin-right-2">
+              Default
+            </strong>
+          )
+        }
         {template.isSystem && (
-          <strong className="govuk-tag govuk-!-margin-right-2">System</strong>
+          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">System</strong>
         )}
         <strong className="govuk-tag govuk-tag--green govuk-!-margin-right-2">
           {template.format === 'document' ? 'Summary' : 'Q & A'}

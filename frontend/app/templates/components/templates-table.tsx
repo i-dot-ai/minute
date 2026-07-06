@@ -1,11 +1,9 @@
 'use client'
 
 import { DeleteTemplatesDialog } from '@/app/templates/components/delete-templates-dialog'
-import {
-  TemplateRowData,
-  templateRowKey,
-} from '@/app/templates/components/template-row'
+import { templateRowKey } from '@/app/templates/components/template-row'
 import { TemplatesList } from '@/app/templates/components/templates-list'
+import { TemplateRowData } from '@/types/templates'
 import {
   getTemplatesTemplatesGetOptions,
   getUserTemplatesUserTemplatesGetOptions,
@@ -91,6 +89,7 @@ export const TemplatesTable = () => {
         description: t.description,
         isSystem: false,
         format: t.type,
+        is_default: t.is_default ?? false,
       })),
       ...defaultTemplates.map((t) => ({
         id: null,
@@ -98,6 +97,7 @@ export const TemplatesTable = () => {
         description: t.description,
         isSystem: true,
         format: 'document' as const,
+        is_default: t.is_default ?? false,
       })),
     ],
     [userTemplates, defaultTemplates]

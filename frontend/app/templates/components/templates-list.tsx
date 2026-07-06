@@ -1,10 +1,10 @@
 'use client'
 
 import {
-  TemplateRowData,
   TemplateTableRow,
   templateRowKey,
 } from '@/app/templates/components/template-row'
+import { TemplateRowData } from '@/types/templates'
 
 export function TemplatesList({
   templates,

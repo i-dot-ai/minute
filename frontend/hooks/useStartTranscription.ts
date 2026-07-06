@@ -8,8 +8,9 @@ import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useDefaultTemplate } from '@/hooks/useDefaultTemplate'
 
 export const useStartTranscription = (
   defaultValues?: Partial<TranscriptionForm>,
@@ -114,6 +115,14 @@ export const useStartTranscription = (
       ...defaultValues,
     },
   })
+
+  const defaultTemplate = useDefaultTemplate()
+  useEffect(() => {
+    if (defaultTemplate && !form.formState.dirtyFields.template) {
+      form.setValue('template', defaultTemplate)
+    }
+  }, [defaultTemplate, form])
+
   return {
     isPending: isSubmitting,
     isError,

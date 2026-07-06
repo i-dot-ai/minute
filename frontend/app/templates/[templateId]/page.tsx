@@ -2,10 +2,14 @@
 
 import { DocumentTemplateEditor } from '@/app/templates/components/document-template-editor'
 import { FormTemplateEditor } from '@/app/templates/components/form-template-editor'
+import { TemplateNameDescriptionEditor } from '@/app/templates/components/template-name-description-editor'
 import {
   editUserTemplateUserTemplatesTemplateIdPatchMutation,
   getUserTemplateUserTemplatesTemplateIdGetOptions,
   getUserTemplateUserTemplatesTemplateIdGetQueryKey,
+  getUserTemplatesUserTemplatesGetQueryKey,
+  getUserUsersMeGetQueryKey,
+  updateDefaultTemplateUsersDefaultTemplatePatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { TemplateData } from '@/types/templates'
 import {
@@ -14,10 +18,10 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Pencil, Save, Star, StarOff } from 'lucide-react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
@@ -32,34 +36,127 @@ export default function EditTemplatePage({
     }),
     placeholderData: keepPreviousData,
   })
+  const [isEditing, setIsEditing] = useState(false)
+  const queryClient = useQueryClient()
+  const { mutate: setDefault, isPending: isSettingDefault } = useMutation({
+    ...updateDefaultTemplateUsersDefaultTemplatePatchMutation(),
+    onSuccess: () => {
+      toast.success(
+        template?.is_default
+          ? 'Removed default template'
+          : 'Set as default template'
+      )
+      queryClient.invalidateQueries({
+        queryKey: getUserTemplateUserTemplatesTemplateIdGetQueryKey({
+          path: { template_id: templateId },
+        }),
+      })
+      queryClient.invalidateQueries({
+        queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
+      })
+      queryClient.invalidateQueries({
+        queryKey: getUserUsersMeGetQueryKey(),
+      })
+    },
+  })
   return (
     <div className="govuk-width-container govuk-main-wrapper">
       <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
         <ol className="govuk-breadcrumbs__list">
           <li className="govuk-breadcrumbs__list-item">
-            <Link className="govuk-breadcrumbs__link" href="/">
-              Home
-            </Link>
-          </li>
-          <li className="govuk-breadcrumbs__list-item">
             <Link className="govuk-breadcrumbs__link" href="/templates">
-              Templates
+              Back
             </Link>
           </li>
         </ol>
       </nav>
+      {isEditing && template ? (
+        <div className="govuk-grid-row border-b border-(--govuk-border-colour) govuk-!-margin-bottom-6">
+          <TemplateNameDescriptionEditor
+            templateId={templateId}
+            type={template.type}
+            defaultValues={{
+              name: template.name,
+              description: template.description,
+            }}
+            onDone={() => setIsEditing(false)}
+          />
+        </div>
+      ) : (
+        <>
+          <div className="govuk-grid-row">
+            <div className="govuk-grid-column-two-thirds">
+              <h1 className="govuk-heading-xl">{template?.name}</h1>
+              <ul className="govuk-list flex gap-2">
+                {
+                  template?.is_default && (
+                    <li>
+                      <span className="govuk-tag govuk-tag--blue govuk-!-margin-bottom-3">
+                        Default
+                      </span>
+                    </li>
+                  )
+                }
+                <li>
+                  <span className="govuk-tag govuk-tag--green govuk-!-margin-bottom-3">
+                    {template?.type === 'document' ? 'Summary' : 'Q&A'}
+                  </span>
+                </li>
+              </ul>
+            </div>
+            <div className="govuk-grid-column-one-third">
+              <div className="govuk-button-group float-right">
+                <button
+                  className="govuk-button"
+                  disabled={isSettingDefault}
+                  onClick={() =>
+                    setDefault({
+                      body: template?.is_default
+                        ? {}
+                        : { template_id: templateId },
+                    })
+                  }
+                >
+                  {
+                    template?.is_default ? (
+                      <>
+                        <StarOff className="size-4" />
+                        Remove default
+                      </>
+                    ) : (
+                      <>
+                        <Star className="size-4" />
+                        Set as default
+                      </>
+                    )}
+                </button>
+                <button
+                  className="govuk-button govuk-button--secondary"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Pencil className="size-4" /> Rename
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="govuk-grid-row border-b border-(--govuk-border-colour) govuk-!-margin-bottom-6">
+            <div className="govuk-grid-column-full">
+              <p className="govuk-body-l">{template?.description}</p>
+            </div>
+          </div>
+        </>
+      )}
       <div className="govuk-grid-row">
-        <div className="govuk-grid-column-two-thirds">
-          <h1 className="govuk-heading-xl">Edit template</h1>
+        <div className="govuk-grid-column-full">
           {template ? (
             <TemplateEditorForm
               templateId={templateId}
               defaultValues={{
-                name: template.name,
-                description: template.description,
                 questions: template.questions,
                 type: template.type,
                 content: template.content,
+                styleGuide:
+                  template.type === 'form' ? template.content : '',
               }}
             />
           ) : (
@@ -77,7 +174,7 @@ const TemplateEditorForm = ({
   defaultValues,
   templateId,
 }: {
-  defaultValues: TemplateData
+  defaultValues: Omit<TemplateData, 'name' | 'description'>
   templateId: string
 }) => {
   const form = useForm<TemplateData>({ defaultValues })
@@ -101,39 +198,34 @@ const TemplateEditorForm = ({
       posthog.capture('template_edited')
     },
   })
-  if (defaultValues.type === 'document') {
-    return (
-      <FormProvider {...form}>
-        <DocumentTemplateEditor
-          onSubmit={(data) =>
-            mutate({
-              path: { template_id: templateId },
-              body: { ...data, questions: null },
-            })
-          }
-        />
-      </FormProvider>
-    )
+
+  const onSubmit = (data: TemplateData) => {
+    const { styleGuide, ...rest } = data
+    mutate({
+      path: { template_id: templateId },
+      body: {
+        ...rest,
+        content: data.type === 'form' ? (styleGuide ?? '') : rest.content,
+        questions:
+          data.type === 'form' && data.questions
+            ? data.questions.map((q, i) => ({ ...q, position: i }))
+            : null,
+      },
+    })
   }
-  if (defaultValues.type === 'form') {
-    return (
-      <FormProvider {...form}>
-        <FormTemplateEditor
-          onSubmit={(data) =>
-            mutate({
-              path: { template_id: templateId },
-              body: {
-                ...data,
-                questions:
-                  data.questions?.map((q, i) => ({
-                    ...q,
-                    position: i,
-                  })) || null,
-              },
-            })
-          }
-        />
-      </FormProvider>
-    )
-  }
+
+  return (
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        {defaultValues.type === 'document' && <DocumentTemplateEditor />}
+        {defaultValues.type === 'form' && <FormTemplateEditor />}
+        <div className="govuk-button-group">
+          <button type="submit" className="govuk-button govuk-button--start">
+            <Save />
+            Save template
+          </button>
+        </div>
+      </form>
+    </FormProvider>
+  )
 }

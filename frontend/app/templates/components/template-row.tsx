@@ -90,10 +90,10 @@ export function TemplateTableRow({
         </div>
       </td>
       <td className="govuk-!-padding-0">
-        <div className="govuk-button-group govuk-!-margin-bottom-0 flex items-center justify-end govuk-!-margin-right-1">
+        <div className="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-right-1 flex items-center justify-end">
           <button
             type="button"
-            className="govuk-link govuk-link--no-visited-state text-(--govuk-link-colour) flex items-center gap-2 hover:cursor-pointer govuk-!-margin-0"
+            className="govuk-link govuk-link--no-visited-state govuk-!-margin-0 flex items-center gap-2 text-(--govuk-link-colour) hover:cursor-pointer"
             onClick={handleDuplicate}
           >
             <CopyPlus className="size-4" />
@@ -113,15 +113,15 @@ export function TemplateTableRow({
         </Link>
       </td>
       <td className="govuk-!-padding-0">
-        {
-          template.is_default && (
-            <strong className="govuk-tag govuk-tag--blue govuk-!-margin-right-2">
-              Default
-            </strong>
-          )
-        }
+        {template.is_default && (
+          <strong className="govuk-tag govuk-tag--blue govuk-!-margin-right-2">
+            Default
+          </strong>
+        )}
         {template.isSystem && (
-          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">System</strong>
+          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">
+            System
+          </strong>
         )}
         <strong className="govuk-tag govuk-tag--green govuk-!-margin-right-2">
           {template.format === 'document' ? 'Summary' : 'Q & A'}

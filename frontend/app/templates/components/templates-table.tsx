@@ -139,8 +139,7 @@ export const TemplatesTable = () => {
 
   if (!isLoading && currentPage > totalPages) {
     router.replace(
-      pathname +
-      buildQueryString({ page: totalPages, typeFilter, hideSystem })
+      pathname + buildQueryString({ page: totalPages, typeFilter, hideSystem })
     )
   }
 

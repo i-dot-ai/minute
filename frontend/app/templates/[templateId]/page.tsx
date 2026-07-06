@@ -71,7 +71,7 @@ export default function EditTemplatePage({
         </ol>
       </nav>
       {isEditing && template ? (
-        <div className="govuk-grid-row border-b border-(--govuk-border-colour) govuk-!-margin-bottom-6">
+        <div className="govuk-grid-row govuk-!-margin-bottom-6 border-b border-(--govuk-border-colour)">
           <TemplateNameDescriptionEditor
             templateId={templateId}
             type={template.type}
@@ -88,15 +88,13 @@ export default function EditTemplatePage({
             <div className="govuk-grid-column-two-thirds">
               <h1 className="govuk-heading-xl">{template?.name}</h1>
               <ul className="govuk-list flex gap-2">
-                {
-                  template?.is_default && (
-                    <li>
-                      <span className="govuk-tag govuk-tag--blue govuk-!-margin-bottom-3">
-                        Default
-                      </span>
-                    </li>
-                  )
-                }
+                {template?.is_default && (
+                  <li>
+                    <span className="govuk-tag govuk-tag--blue govuk-!-margin-bottom-3">
+                      Default
+                    </span>
+                  </li>
+                )}
                 <li>
                   <span className="govuk-tag govuk-tag--green govuk-!-margin-bottom-3">
                     {template?.type === 'document' ? 'Summary' : 'Q&A'}
@@ -117,18 +115,17 @@ export default function EditTemplatePage({
                     })
                   }
                 >
-                  {
-                    template?.is_default ? (
-                      <>
-                        <StarOff className="size-4" />
-                        Remove default
-                      </>
-                    ) : (
-                      <>
-                        <Star className="size-4" />
-                        Set as default
-                      </>
-                    )}
+                  {template?.is_default ? (
+                    <>
+                      <StarOff className="size-4" />
+                      Remove default
+                    </>
+                  ) : (
+                    <>
+                      <Star className="size-4" />
+                      Set as default
+                    </>
+                  )}
                 </button>
                 <button
                   className="govuk-button govuk-button--secondary"
@@ -139,7 +136,7 @@ export default function EditTemplatePage({
               </div>
             </div>
           </div>
-          <div className="govuk-grid-row border-b border-(--govuk-border-colour) govuk-!-margin-bottom-6">
+          <div className="govuk-grid-row govuk-!-margin-bottom-6 border-b border-(--govuk-border-colour)">
             <div className="govuk-grid-column-full">
               <p className="govuk-body-l">{template?.description}</p>
             </div>
@@ -155,8 +152,7 @@ export default function EditTemplatePage({
                 questions: template.questions,
                 type: template.type,
                 content: template.content,
-                styleGuide:
-                  template.type === 'form' ? template.content : '',
+                styleGuide: template.type === 'form' ? template.content : '',
               }}
             />
           ) : (

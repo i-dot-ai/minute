@@ -31,20 +31,20 @@ function NewTemplateContent() {
   const form = useForm<TemplateData>({
     defaultValues: foundExample
       ? {
-        ...foundExample,
-        styleGuide: foundExample.type === 'form' ? foundExample.content : '',
-      }
+          ...foundExample,
+          styleGuide: foundExample.type === 'form' ? foundExample.content : '',
+        }
       : {
-        name: '',
-        description: '',
-        content: '',
-        styleGuide: '',
-        questions: [],
-        type:
-          newTemplateType && ['document', 'form'].includes(newTemplateType)
-            ? (newTemplateType as TemplateType)
-            : undefined,
-      },
+          name: '',
+          description: '',
+          content: '',
+          styleGuide: '',
+          questions: [],
+          type:
+            newTemplateType && ['document', 'form'].includes(newTemplateType)
+              ? (newTemplateType as TemplateType)
+              : undefined,
+        },
   })
   const navigation = useRouter()
   const { mutateAsync: saveTemplate } = useMutation({

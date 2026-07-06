@@ -1,5 +1,6 @@
-import { NewTemplateDialog } from '@/app/templates/components/new-template-dialog'
 import { TemplatesTable } from '@/app/templates/components/templates-table'
+import { Plus } from 'lucide-react'
+import Link from 'next/link'
 import { Suspense } from 'react'
 
 export default function TemplatesPage() {
@@ -18,7 +19,14 @@ export default function TemplatesPage() {
               Use templates to customise the structure and style of your minutes.
             </p>
             <div className="govuk-button-group">
-              <NewTemplateDialog />
+              <Link
+                className="govuk-button govuk-button--secondary"
+                role="button"
+                href="/templates/create"
+              >
+                <Plus className="size-4" />
+                Create new template
+              </Link>
             </div>
             <Suspense fallback={<div>Loading...</div>}>
               <TemplatesTable />

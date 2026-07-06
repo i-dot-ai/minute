@@ -1,16 +1,10 @@
 'use client'
 
-import { ExampleTemplatesDialog } from '@/app/templates/components/example-templates-dialog'
-import { exampleFormTemplates } from '@/app/templates/data/example-templates'
 import { TemplateData } from '@/types/templates'
 import { ArrowDown, ArrowUp, Plus, Save } from 'lucide-react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
 
-export const FormTemplateEditor = ({
-  onSubmit,
-}: {
-  onSubmit: (data: TemplateData) => void
-}) => {
+export const FormTemplateEditor = () => {
   const form = useFormContext<TemplateData>()
   const fieldArray = useFieldArray({
     control: form.control,
@@ -21,73 +15,9 @@ export const FormTemplateEditor = ({
     },
   })
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)}>
-      <div className="govuk-button-group">
-        <ExampleTemplatesDialog
-          examples={exampleFormTemplates}
-          onSelectTemplate={(template) => form.reset(template)}
-        />
-      </div>
-      <div className="text-red-600">
-        <p className="govuk-body">
-          {form.formState.errors.questions?.root?.message
-            ? form.formState.errors.questions?.root?.message
-            : null}
-        </p>
-        <p className="govuk-body">
-          {form.formState.errors.name?.message
-            ? form.formState.errors.name?.message
-            : null}
-        </p>
-        <p className="govuk-body">
-          {form.formState.errors.description?.message
-            ? form.formState.errors.description?.message
-            : null}
-        </p>
-      </div>
-      <h2 className="govuk-heading-l">Template details</h2>
-      <p className="govuk-body">
-        Add a name and description so you can find your template later. Name and
-        description are not used to generate your minute, any structure and
-        style instructions should be added to the template content field.
-      </p>
+    <>
       <div className="govuk-form-group">
-        <label className="govuk-label govuk-label--m" htmlFor="name">
-          Template name
-        </label>
-        <div id="name-hint" className="govuk-hint">
-          A short memorable name to help you find this template later.
-        </div>
-        <input
-          required
-          className="govuk-input"
-          id="name"
-          type="text"
-          {...form.register('name', {
-            required: { value: true, message: 'Template name required' },
-          })}
-        />
-      </div>
-      <div className="govuk-form-group">
-        <label className="govuk-label govuk-label--m" htmlFor="description">
-          Description
-        </label>
-        <div id="description-hint" className="govuk-hint">
-          A description to help identify the template, NOT a style guide or
-          instructions for the summary.
-        </div>
-        <input
-          className="govuk-input"
-          id="description"
-          {...form.register('description', {
-            required: { value: true, message: 'Description required' },
-          })}
-          aria-describedby="description-hint"
-        />
-      </div>
-      <h2 className="govuk-heading-l">Template content</h2>
-      <div className="govuk-form-group">
-        <label className="govuk-label govuk-label--m" htmlFor="content">
+        <label className="govuk-label govuk-label--s" htmlFor="content">
           Style guide
         </label>
         <div id="content-hint" className="govuk-hint">
@@ -103,7 +33,7 @@ export const FormTemplateEditor = ({
         />
       </div>
       <div className="govuk-form-group">
-        <label className="govuk-label govuk-label--m" htmlFor="questions">
+        <label className="govuk-label govuk-label--s" htmlFor="questions">
           Questions
         </label>
         <div id="questions-hint" className="govuk-hint">
@@ -211,12 +141,6 @@ export const FormTemplateEditor = ({
           <Plus className="size-4" /> Add question
         </button>
       </div>
-      <div className="govuk-button-group">
-        <button type="submit" className="govuk-button govuk-button--start">
-          <Save />
-          Save template
-        </button>
-      </div>
-    </form>
+    </>
   )
 }

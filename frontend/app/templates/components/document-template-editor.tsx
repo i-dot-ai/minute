@@ -21,10 +21,10 @@ export const DocumentTemplateEditor = () => {
         </label>
       </h2>
       <div id="content-hint" className="govuk-hint">
-        The template content should look how you would like the minutes to
-        look. Use placeholder text to describe what you would like in each
-        section and provide style guidance, including examples if necessary.
-        You may need to iterate on your template to get the best results.
+        The template content should look how you would like the minutes to look.
+        Use placeholder text to describe what you would like in each section and
+        provide style guidance, including examples if necessary. You may need to
+        iterate on your template to get the best results.
       </div>
       <Controller
         name="content"

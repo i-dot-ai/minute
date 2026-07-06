@@ -43,7 +43,10 @@ function buildQueryString(
   return qs ? `?${qs}` : ''
 }
 
-function matchesFilter(row: TemplateRowData, filterBy: TemplateFilter): boolean {
+function matchesFilter(
+  row: TemplateRowData,
+  filterBy: TemplateFilter
+): boolean {
   switch (filterBy) {
     case 'system':
       return row.isSystem
@@ -188,7 +191,9 @@ export const TemplatesTable = () => {
     <div>
       <div className="flex items-center justify-between">
         <div className="govuk-form-group govuk-!-width-one-half">
-          <label className="govuk-label" htmlFor="search-templates">Search templates</label>
+          <label className="govuk-label" htmlFor="search-templates">
+            Search templates
+          </label>
           <input
             id="search-templates"
             name="search-templates"
@@ -279,7 +284,9 @@ export const TemplatesTable = () => {
                 <div className="govuk-pagination__prev">
                   <Link
                     className="govuk-link govuk-pagination__link"
-                    href={pathname + buildQueryString(currentPage - 1, filterBy)}
+                    href={
+                      pathname + buildQueryString(currentPage - 1, filterBy)
+                    }
                     rel="prev"
                   >
                     <svg
@@ -317,7 +324,9 @@ export const TemplatesTable = () => {
                 <div className="govuk-pagination__next">
                   <Link
                     className="govuk-link govuk-pagination__link"
-                    href={pathname + buildQueryString(currentPage + 1, filterBy)}
+                    href={
+                      pathname + buildQueryString(currentPage + 1, filterBy)
+                    }
                     rel="next"
                   >
                     <span className="govuk-pagination__link-title">

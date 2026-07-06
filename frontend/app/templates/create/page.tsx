@@ -21,7 +21,8 @@ import { toast } from 'sonner'
 
 function NewTemplateContent() {
   const searchParams = useSearchParams()
-  const [newTemplateType, setNewTemplateType] = useState<TemplateType>('document')
+  const [newTemplateType, setNewTemplateType] =
+    useState<TemplateType>('document')
   const templateExampleParam = searchParams.get('example')
   const foundExample = [
     ...exampleDocumentTemplates,
@@ -31,16 +32,15 @@ function NewTemplateContent() {
     defaultValues: foundExample
       ? foundExample
       : {
-        name: '',
-        description: '',
-        content: '',
-        questions: [],
-        type:
-          newTemplateType &&
-            ['document', 'form'].includes(newTemplateType)
-            ? (newTemplateType as TemplateType)
-            : undefined,
-      },
+          name: '',
+          description: '',
+          content: '',
+          questions: [],
+          type:
+            newTemplateType && ['document', 'form'].includes(newTemplateType)
+              ? (newTemplateType as TemplateType)
+              : undefined,
+        },
   })
   const navigation = useRouter()
   const { mutateAsync: saveTemplate } = useMutation({
@@ -111,7 +111,10 @@ function NewTemplateContent() {
                   id="name"
                   type="text"
                   {...form.register('name', {
-                    required: { value: true, message: 'Template name required' },
+                    required: {
+                      value: true,
+                      message: 'Template name required',
+                    },
                   })}
                 />
               </div>
@@ -134,11 +137,12 @@ function NewTemplateContent() {
               <div className="govuk-form-group">
                 <fieldset className="govuk-fieldset">
                   <legend className="govuk-fieldset__legend">
-                    <h2 className="govuk-fieldset__heading">
-                      Template type
-                    </h2>
+                    <h2 className="govuk-fieldset__heading">Template type</h2>
                   </legend>
-                  <div className="govuk-radios flex gap-4" data-module="govuk-radios">
+                  <div
+                    className="govuk-radios flex gap-4"
+                    data-module="govuk-radios"
+                  >
                     <div className="govuk-radios__item new-recording__radio-item flex-1">
                       <input
                         className="govuk-radios__input"
@@ -154,12 +158,8 @@ function NewTemplateContent() {
                         className="govuk-label govuk-radios__label"
                         htmlFor="template-type-document"
                       >
-                        <h3 className="govuk-body">
-                          Summary template
-                        </h3>
-                        <p
-                          className="govuk-body"
-                        >
+                        <h3 className="govuk-body">Summary template</h3>
+                        <p className="govuk-body">
                           Provides a summary of the meeting.
                         </p>
                       </label>
@@ -179,12 +179,8 @@ function NewTemplateContent() {
                         className="govuk-label govuk-radios__label"
                         htmlFor="template-type-form"
                       >
-                        <h3 className="govuk-body">
-                          Q&A template
-                        </h3>
-                        <p
-                          className="govuk-body"
-                        >
+                        <h3 className="govuk-body">Q&A template</h3>
+                        <p className="govuk-body">
                           Answers a list of questions from the meeting.
                         </p>
                       </label>
@@ -196,14 +192,13 @@ function NewTemplateContent() {
           </div>
           <div className="govuk-grid-row">
             <div className="govuk-grid-column-full">
-              {newTemplateType === 'document' && (
-                <DocumentTemplateEditor />
-              )}
-              {newTemplateType === 'form' && (
-                <FormTemplateEditor />
-              )}
+              {newTemplateType === 'document' && <DocumentTemplateEditor />}
+              {newTemplateType === 'form' && <FormTemplateEditor />}
               <div className="govuk-button-group">
-                <button type="submit" className="govuk-button govuk-button--start">
+                <button
+                  type="submit"
+                  className="govuk-button govuk-button--start"
+                >
                   <Save />
                   Save template
                 </button>
@@ -211,8 +206,8 @@ function NewTemplateContent() {
             </div>
           </div>
         </form>
-      </div >
-    </FormProvider >
+      </div>
+    </FormProvider>
   )
 }
 

@@ -44,85 +44,90 @@ export const FormTemplateEditor = () => {
         </div>
         <ul className="govuk-list govuk-list--spaced">
           {fieldArray.fields.map((field, index, array) => (
-            <li key={field.id} className="govuk-summary-card">
-              <div>
-                <div className="govuk-summary-card__title-wrapper">
-                  <h3 className="govuk-summary-card__title">
-                    Question {index + 1}
-                  </h3>
-                  <ul className="govuk-summary-card__actions">
-                    <li className="govuk-summary-card__action">
-                      <button
-                        type="button"
-                        disabled={index === 0}
-                        className="govuk-button govuk-button--secondary govuk-!-margin-0"
-                        onClick={() => {
-                          fieldArray.swap(index, index - 1)
-                        }}
-                      >
-                        <ArrowUp className="size-4" /> Move up
-                      </button>
-                    </li>
-                    <li className="govuk-summary-card__action">
-                      <button
-                        type="button"
-                        className="govuk-button govuk-button--secondary govuk-!-margin-0"
-                        disabled={index === array.length - 1}
-                        onClick={() => {
-                          fieldArray.swap(index + 1, index)
-                        }}
-                      >
-                        <ArrowDown className="size-4" /> Move down
-                      </button>
-                    </li>
-                    <li className="govuk-summary-card__action">
-                      <button
-                        type="button"
-                        className="govuk-link link--warning align-sub"
-                        onClick={() => {
-                          fieldArray.remove(index)
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </li>
-                  </ul>
+            <li
+              key={field.id}
+              className="govuk-!-padding-4 govuk-!-margin-top-6 border-l-4 border-(--govuk-brand-colour) bg-[#f4f8fb]"
+            >
+              <div className="govuk-!-margin-bottom-4 flex items-center gap-2">
+                <div className="govuk-form-group flex-1">
+                  <label
+                    className="govuk-label"
+                    htmlFor={`questions.${index}.title`}
+                  >
+                    Question text
+                  </label>
+                  <input
+                    className="govuk-input bg-white"
+                    id={`questions.${index}.title`}
+                    type="text"
+                    {...form.register(`questions.${index}.title`)}
+                  />
                 </div>
-                <div className="govuk-summary-card__content">
-                  <div className="govuk-form-group">
-                    <label
-                      className="govuk-label"
-                      htmlFor={`questions.${index}.title`}
+                <ul className="govuk-summary-card__actions flex-1">
+                  <li className="govuk-summary-card__action">
+                    <button
+                      type="button"
+                      disabled={index === 0}
+                      className="govuk-button govuk-!-margin-0"
+                      onClick={() => {
+                        fieldArray.swap(index, index - 1)
+                      }}
                     >
-                      Question text
-                    </label>
-                    <input
-                      className="govuk-input"
-                      id={`questions.${index}.title`}
-                      type="text"
-                      {...form.register(`questions.${index}.title`)}
-                    />
-                  </div>
-                  <div className="govuk-form-group">
-                    <label
-                      className="govuk-label"
-                      htmlFor={`questions.${index}.description`}
+                      <ArrowUp className="size-4" />{' '}
+                      <span className="govuk-visually-hidden">
+                        Move up question {index + 1}
+                      </span>
+                    </button>
+                  </li>
+                  <li className="govuk-summary-card__action">
+                    <button
+                      type="button"
+                      className="govuk-button govuk-!-margin-0"
+                      disabled={index === array.length - 1}
+                      onClick={() => {
+                        fieldArray.swap(index + 1, index)
+                      }}
                     >
-                      Question description
-                    </label>
-                    <div id="questions-description-hint" className="govuk-hint">
-                      A description of how to answer the question, what
-                      information to include, and style guidance.
-                    </div>
-                    <textarea
-                      className="govuk-textarea"
-                      id={`questions.${index}.description`}
-                      rows={3}
-                      {...form.register(`questions.${index}.description`)}
-                      aria-describedby="questions-description-hint"
-                    ></textarea>
-                  </div>
+                      <ArrowDown className="size-4" />{' '}
+                      <span className="govuk-visually-hidden">
+                        Move down question {index + 1}
+                      </span>
+                    </button>
+                  </li>
+                  <li className="govuk-summary-card__action">
+                    <button
+                      type="button"
+                      className="govuk-link link--warning align-sub"
+                      onClick={() => {
+                        fieldArray.remove(index)
+                      }}
+                    >
+                      Delete{' '}
+                      <span className="govuk-visually-hidden">
+                        question {index + 1}
+                      </span>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              <div className="govuk-form-group">
+                <label
+                  className="govuk-label"
+                  htmlFor={`questions.${index}.description`}
+                >
+                  Question description
+                </label>
+                <div id="questions-description-hint" className="govuk-hint">
+                  A description of how to answer the question, what information
+                  to include, and style guidance.
                 </div>
+                <textarea
+                  className="govuk-textarea govuk-!-margin-bottom-0 bg-white"
+                  id={`questions.${index}.description`}
+                  rows={3}
+                  {...form.register(`questions.${index}.description`)}
+                  aria-describedby="questions-description-hint"
+                ></textarea>
               </div>
             </li>
           ))}

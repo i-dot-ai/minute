@@ -11,7 +11,7 @@ export const ServiceNavigation = () => {
   return (
     <section
       aria-label="Service information"
-      className="fixed top-0 bottom-0 left-0 bg-(--govuk-surface-background-colour)"
+      className="sticky top-0 h-screen w-40 shrink-0 bg-(--govuk-surface-background-colour)"
     >
       <nav aria-label="Menu" className="flex h-full flex-col justify-between">
         <ul className="flex w-40 flex-col" id="navigation">

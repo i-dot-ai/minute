@@ -46,13 +46,15 @@ export default function RootLayout({
                   Skip to main content
                 </Link>
                 <OnboardingTour />
-                <ServiceNavigation />
                 <RecordingSessionProvider>
-                  <div className="ml-38 min-h-screen">
-                    <main id="main-content" tabIndex={-1}>
-                      {children}
-                    </main>
-                    {/* <Footer /> */}
+                  <div className="flex">
+                    <ServiceNavigation />
+                    <div className="min-h-screen flex-1">
+                      <main id="main-content" tabIndex={-1}>
+                        {children}
+                      </main>
+                      {/* <Footer /> */}
+                    </div>
                   </div>
                 </RecordingSessionProvider>
                 <Toaster />

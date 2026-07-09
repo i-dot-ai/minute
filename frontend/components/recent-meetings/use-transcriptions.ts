@@ -8,14 +8,16 @@ export function useTranscriptions({
   page,
   pageSize,
   filterBy,
+  search,
 }: {
   page: number
   pageSize: number
   filterBy?: TranscriptionListFilter
+  search?: string
 }) {
   return useQuery({
     ...listTranscriptionsTranscriptionsGetOptions({
-      query: { page, page_size: pageSize, filter_by: filterBy },
+      query: { page, page_size: pageSize, filter_by: filterBy, search },
     }),
     refetchInterval: (query) =>
       !!query.state.data &&

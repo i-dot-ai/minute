@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query
-from sqlmodel import col, func, select
+from sqlmodel import col, func, or_, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.get_file_s3_key import get_file_s3_key
@@ -63,6 +63,7 @@ async def list_transcriptions(
     page: int = Query(1, ge=1, description="Page number (starts from 1)"),
     page_size: int = Query(20, ge=1, le=100, description="Number of items per page"),
     filter_by: TranscriptionListFilter | None = Query(None),
+    search: str | None = Query(None, max_length=100, description="Match against transcription title"),
 ) -> PaginatedTranscriptionsResponse:
     """Get paginated metadata for transcriptions for the current user."""
 
@@ -81,6 +82,17 @@ async def list_transcriptions(
         filters.append(Transcription.created_datetime < expiry_cutoff)
     elif filter_by == TranscriptionListFilter.FAILED:
         filters.append(Transcription.status == JobStatus.FAILED)
+
+    search_term = search.strip() if search else None
+    if search_term:
+        escaped = search_term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        filters.append(
+            or_(
+                col(Transcription.title).ilike(f"%{escaped}%"),
+                # pg_trgm similarity gives typo tolerance, e.g. "budjet" still matches "Budget review"
+                func.similarity(col(Transcription.title), search_term) >= 0.3,
+            )
+        )
 
     count_statement = select(func.count(col(Transcription.id))).where(*filters)
     statement = (

@@ -22,11 +22,13 @@ function parseFilterBy(searchParams: URLSearchParams): TranscriptionFilter {
 
 function buildQueryString(
   page?: number,
-  filterBy: TranscriptionFilter = 'all'
+  filterBy: TranscriptionFilter = 'all',
+  search = ''
 ): string {
   const params = new URLSearchParams()
   if (page && page > 1) params.set('page', String(page))
   if (filterBy !== 'all') params.set('filterBy', filterBy)
+  if (search) params.set('q', search)
   const qs = params.toString()
   return qs ? `?${qs}` : ''
 }
@@ -37,6 +39,8 @@ export const PaginatedTranscriptions = () => {
   const router = useRouter()
   const currentPage = Number(searchParams.get('page')) || 1
   const filterBy = parseFilterBy(searchParams)
+  const search = searchParams.get('q') ?? ''
+  const [searchInput, setSearchInput] = useState(search)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const selectAllRef = useRef<HTMLInputElement>(null)
@@ -48,11 +52,13 @@ export const PaginatedTranscriptions = () => {
     page: currentPage,
     pageSize: PAGE_SIZE,
     filterBy: filterBy === 'all' ? undefined : filterBy,
+    search: search || undefined,
   })
 
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
     router.replace(
-      pathname + buildQueryString(paginatedResponse.total_pages, filterBy)
+      pathname +
+      buildQueryString(paginatedResponse.total_pages, filterBy, search)
     )
   }
   const transcriptions = paginatedResponse?.items || []
@@ -65,7 +71,17 @@ export const PaginatedTranscriptions = () => {
 
   useEffect(() => {
     setSelectedIds(new Set())
-  }, [currentPage, filterBy])
+  }, [currentPage, filterBy, search])
+
+  useEffect(() => {
+    if (searchInput.trim() === search) return
+    const timer = setTimeout(() => {
+      router.replace(
+        pathname + buildQueryString(undefined, filterBy, searchInput.trim())
+      )
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchInput, search, filterBy, pathname, router])
 
   useEffect(() => {
     if (selectAllRef.current) {
@@ -116,7 +132,14 @@ export const PaginatedTranscriptions = () => {
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value as TranscriptionFilter
-    router.replace(pathname + buildQueryString(undefined, value))
+    router.replace(pathname + buildQueryString(undefined, value, search))
+  }
+
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    router.replace(
+      pathname + buildQueryString(undefined, filterBy, searchInput.trim())
+    )
   }
 
   const selectedCount = selectedIds.size
@@ -124,17 +147,23 @@ export const PaginatedTranscriptions = () => {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <div className="govuk-form-group govuk-!-width-one-half">
+        <form
+          role="search"
+          className="govuk-form-group govuk-!-width-one-half"
+          onSubmit={handleSearchSubmit}
+        >
           <label className="govuk-label" htmlFor="search-transcriptions">
-            Search transcriptions
+            Search transcriptions by title
           </label>
           <input
             id="search-transcriptions"
             name="search-transcriptions"
-            type="text"
+            type="search"
             className="govuk-input"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
-        </div>
+        </form>
         <div className="govuk-form-group">
           <label className="govuk-label" htmlFor="filter">
             Filter by
@@ -221,7 +250,8 @@ export const PaginatedTranscriptions = () => {
                   <Link
                     className="govuk-link govuk-pagination__link"
                     href={
-                      pathname + buildQueryString(currentPage - 1, filterBy)
+                      pathname +
+                      buildQueryString(currentPage - 1, filterBy, search)
                     }
                     rel="prev"
                   >
@@ -248,7 +278,7 @@ export const PaginatedTranscriptions = () => {
                   <li key={page} className="govuk-pagination__item">
                     <Link
                       className="govuk-link govuk-pagination__link"
-                      href={pathname + buildQueryString(page, filterBy)}
+                      href={pathname + buildQueryString(page, filterBy, search)}
                       aria-label={`Page ${page}`}
                     >
                       {page}
@@ -261,7 +291,8 @@ export const PaginatedTranscriptions = () => {
                   <Link
                     className="govuk-link govuk-pagination__link"
                     href={
-                      pathname + buildQueryString(currentPage + 1, filterBy)
+                      pathname +
+                      buildQueryString(currentPage + 1, filterBy, search)
                     }
                     rel="next"
                   >

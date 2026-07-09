@@ -755,6 +755,11 @@ export type ListTranscriptionsTranscriptionsGetData = {
      * Filter By
      */
     filter_by?: TranscriptionListFilter | null
+    /**
+     * Search
+     * Match against transcription title
+     */
+    search?: string | null
   }
   url: '/transcriptions'
 }

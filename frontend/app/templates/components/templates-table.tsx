@@ -9,6 +9,7 @@ import {
   getUserTemplatesUserTemplatesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
+import Fuse from 'fuse.js'
 import { Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -86,6 +87,7 @@ export const TemplatesTable = () => {
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [search, setSearch] = useState('')
   const selectAllRef = useRef<HTMLInputElement>(null)
 
   const rows: TemplateRowData[] = useMemo(
@@ -110,10 +112,25 @@ export const TemplatesTable = () => {
     [userTemplates, defaultTemplates]
   )
 
-  const filteredRows = useMemo(
-    () => rows.filter((row) => matchesFilters(row, typeFilter, hideSystem)),
-    [rows, typeFilter, hideSystem]
+  const fuse = useMemo(
+    () =>
+      new Fuse(rows, {
+        keys: ['name', 'description'],
+        threshold: 0.4,
+        ignoreLocation: true,
+      }),
+    [rows]
   )
+
+  const filteredRows = useMemo(() => {
+    const query = search.trim()
+    const searchedRows = query
+      ? fuse.search(query).map((result) => result.item)
+      : rows
+    return searchedRows.filter((row) =>
+      matchesFilters(row, typeFilter, hideSystem)
+    )
+  }, [rows, fuse, search, typeFilter, hideSystem])
 
   const totalCount = filteredRows.length
   const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1
@@ -150,7 +167,7 @@ export const TemplatesTable = () => {
 
   useEffect(() => {
     setSelectedIds(new Set())
-  }, [currentPage, typeFilter, hideSystem])
+  }, [currentPage, typeFilter, hideSystem, search])
 
   useEffect(() => {
     if (selectAllRef.current) {
@@ -223,8 +240,10 @@ export const TemplatesTable = () => {
             <input
               id="search-templates"
               name="search-templates"
-              type="text"
+              type="search"
               className="govuk-input"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
         </div>

@@ -373,6 +373,18 @@ html body[data-scroll-locked] {
       transform-origin: 50% 50%;
     }
   }
+
+  --animate-indeterminate: indeterminate 1.5s infinite ease-in-out;
+
+  @keyframes indeterminate {
+    0% {
+      transform: translateX(-100%);
+    }
+
+    100% {
+      transform: translateX(350%);
+    }
+  }
 }
 
 .editor-content [contenteditable]:focus {

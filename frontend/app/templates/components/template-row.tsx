@@ -48,7 +48,7 @@ export function TemplateTableRow({
     <tr className="govuk-table__row relative border-b border-(--govuk-border-colour) hover:bg-[#f4f8fb]">
       <td>
         {!template.isSystem && (
-          <div className="flex items-center govuk-!-margin-right-2">
+          <div className="govuk-!-margin-right-2 flex items-center">
             <div
               className="govuk-checkboxes govuk-checkboxes--small flex"
               data-module="govuk-checkboxes"
@@ -99,7 +99,7 @@ export function TemplateTableRow({
         </Link>
       </td>
       <td>
-        <div className="flex items-center justify-end govuk-!-padding-top-2 govuk-!-padding-bottom-2">
+        <div className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 flex items-center justify-end">
           {template.is_default && (
             <strong className="govuk-tag govuk-tag--blue govuk-!-margin-left-2">
               Default

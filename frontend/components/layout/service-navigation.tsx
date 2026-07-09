@@ -1,7 +1,7 @@
 'use client'
-import Link from 'next/link'
+import { GuardedLink } from '@/components/navigation/guarded-link'
 import { usePathname } from 'next/navigation'
-import { List, LayoutPanelTop, AudioLines, Plus } from 'lucide-react'
+import { List, LayoutPanelTop, Plus } from 'lucide-react'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
@@ -18,7 +18,7 @@ export const ServiceNavigation = () => {
           <li
             className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname === '/' || pathname.includes('/new') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
-            <Link
+            <GuardedLink
               href="/"
               aria-current={
                 pathname === '/' || pathname.includes('/new')
@@ -29,12 +29,12 @@ export const ServiceNavigation = () => {
             >
               <Plus className="size-4" />
               New meeting
-            </Link>
+            </GuardedLink>
           </li>
           <li
             className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname.includes('/transcriptions') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
-            <Link
+            <GuardedLink
               aria-current={
                 pathname.includes('/transcriptions') ? 'page' : undefined
               }
@@ -44,12 +44,12 @@ export const ServiceNavigation = () => {
             >
               <List className="size-4" />
               Transcriptions
-            </Link>
+            </GuardedLink>
           </li>
           <li
             className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname.includes('/templates') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
-            <Link
+            <GuardedLink
               aria-current={
                 pathname.includes('/templates') ? 'page' : undefined
               }
@@ -59,31 +59,31 @@ export const ServiceNavigation = () => {
             >
               <LayoutPanelTop className="size-4" />
               Templates
-            </Link>
+            </GuardedLink>
           </li>
         </ul>
         <ul className="flex w-40 flex-col border-t border-(--govuk-border-colour)">
           <li
             className={`w-full !border-l-4 ${pathname.includes('/privacy') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
-            <Link
+            <GuardedLink
               aria-current={pathname.includes('/privacy') ? 'page' : undefined}
               className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ml-4 flex items-center gap-2 !text-[#484949]"
               href="/privacy"
             >
               Privacy
-            </Link>
+            </GuardedLink>
           </li>
           <li
             className={`w-full !border-l-4 ${pathname.includes('/support') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
-            <Link
+            <GuardedLink
               aria-current={pathname.includes('/support') ? 'page' : undefined}
               className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ml-4 flex items-center gap-2 !text-[#484949]"
               href="/support"
             >
               Support
-            </Link>
+            </GuardedLink>
           </li>
         </ul>
       </nav>

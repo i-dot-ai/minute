@@ -48,7 +48,11 @@ export const DeleteConfirmDialog = ({
             Cancel
           </button>
         </AlertDialogCancel>
-        <button type="button" onClick={onConfirm} className="govuk-link link--warning">
+        <button
+          type="button"
+          onClick={onConfirm}
+          className="govuk-link link--warning"
+        >
           Delete template
         </button>
       </AlertDialogFooter>

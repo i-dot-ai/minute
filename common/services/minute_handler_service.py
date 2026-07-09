@@ -120,6 +120,7 @@ class MinuteHandlerService:
         except Exception as e:
             raise MinuteGenerationFailedError from e
         try:
+            cls.update_minute_version(minute_version.id, status=JobStatus.IN_PROGRESS)
             meeting_type = cls.predict_meeting(minute_version.minute.transcription.dialogue_entries)
             logger.info("%s: Predicted minute version %s", minute_version.minute_id, meeting_type)
             html_content, hallucinations = await cls.generate_minutes(meeting_type, minute_version.minute)
@@ -149,6 +150,7 @@ class MinuteHandlerService:
             raise MinuteGenerationFailedError(msg)
 
         try:
+            cls.update_minute_version(target_minute_version.id, status=JobStatus.IN_PROGRESS)
             edited_string, hallucinations = await cls.edit_minutes_with_ai(
                 minutes=source_minute_version.html_content,
                 edit_instructions=target_minute_version.ai_edit_instructions,

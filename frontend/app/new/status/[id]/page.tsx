@@ -109,6 +109,13 @@ export default function RecordStatusPage({
         </div>
       </div>
       <div className="govuk-grid-row">
+        <div className="govuk-grid-column-full">
+          <p className="govuk-body">
+            You can leave this page and view the transcription and summary when it is ready.
+          </p>
+        </div>
+      </div>
+      <div className="govuk-grid-row">
         {isLoading ? (
           <div className="flex items-center gap-2">
             <Loader2 className="animate-spin" />

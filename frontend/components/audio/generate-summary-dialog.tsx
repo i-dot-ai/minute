@@ -29,7 +29,7 @@ export const GenerateSummaryDialog = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent wideModal showCloseButton={false}>
+      <DialogContent showCloseButton={false}>
         <DialogHeader>
           <DialogTitle className="govuk-heading-l">{title}</DialogTitle>
           {description && (

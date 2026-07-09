@@ -250,7 +250,7 @@ export const TemplatesTable = () => {
           <div className="govuk-form-group">
             <button
               type="button"
-              className="govuk-button govuk-button--secondary govuk-!-margin-0"
+              className="govuk-button govuk-button--secondary govuk-!-margin-0 whitespace-nowrap"
               onClick={toggleHideSystem}
             >
               {hideSystem ? (

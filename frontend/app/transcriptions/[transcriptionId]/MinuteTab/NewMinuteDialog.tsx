@@ -112,7 +112,7 @@ export function NewMinuteDialog({
           Generate new summary
         </button>
       </DialogTrigger>
-      <DialogContent wideModal>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className="govuk-heading-l">
             Generate a new summary

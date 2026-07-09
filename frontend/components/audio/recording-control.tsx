@@ -36,6 +36,23 @@ export default function RecordingControl({
   const [showStopDialog, setShowStopDialog] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [mediaTracks, setMediaTracks] = useState<MediaStreamTrack[]>([])
+  const [announcement, setAnnouncement] = useState('')
+  // Silence detection: flagged after a sustained quiet spell so natural speech
+  // pauses don't trigger it. Mirrored in a ref for the rAF draw loop.
+  const [audioSilent, setAudioSilent] = useState(false)
+  const audioSilentRef = useRef(false)
+  const silenceStartRef = useRef<number | null>(null)
+  const recordingHeadingRef = useRef<HTMLHeadingElement>(null)
+
+  // The start button unmounts when the recorder UI replaces it, which would
+  // drop keyboard/screen-reader focus to <body>. Land it on the heading instead.
+  useEffect(() => {
+    if (isRecording) {
+      setAnnouncement('Recording started')
+      const id = setTimeout(() => recordingHeadingRef.current?.focus(), 0)
+      return () => clearTimeout(id)
+    }
+  }, [isRecording])
 
   // Initialize media tracks from the stream if available
   useEffect(() => {
@@ -53,6 +70,9 @@ export default function RecordingControl({
   }, [recorderControls?.isPaused])
 
   useEffect(() => {
+    // Restart silence tracking whenever the stream or pause state changes.
+    silenceStartRef.current = null
+
     // Check if we have a valid stream with audio tracks
     const isValidStream =
       stream && stream.active && stream.getAudioTracks().length > 0
@@ -171,6 +191,23 @@ export default function RecordingControl({
         // Calculate average frequency
         const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length
         const hasAudioData = average > 5
+
+        if (hasAudioData) {
+          silenceStartRef.current = null
+          if (audioSilentRef.current) {
+            audioSilentRef.current = false
+            setAudioSilent(false)
+          }
+        } else if (!isPaused) {
+          silenceStartRef.current ??= Date.now()
+          if (
+            Date.now() - silenceStartRef.current > 3000 &&
+            !audioSilentRef.current
+          ) {
+            audioSilentRef.current = true
+            setAudioSilent(true)
+          }
+        }
 
         if (!hasAudioData || isPaused) {
           // Draw a pulsing placeholder
@@ -301,6 +338,7 @@ export default function RecordingControl({
   }, [stream, isRecording, isPaused])
 
   const togglePause = () => {
+    setAnnouncement(isPaused ? 'Recording resumed' : 'Recording paused')
     if (recorderControls?.togglePauseResume) {
       recorderControls.togglePauseResume()
     } else if (stream && mediaTracks.length > 0) {
@@ -328,11 +366,23 @@ export default function RecordingControl({
 
   return (
     <div className="space-y-4">
+      <p className="govuk-visually-hidden" role="status">
+        {announcement}
+      </p>
+      <p className="govuk-visually-hidden" role="status">
+        {isRecording && !isPaused && audioSilent
+          ? 'No audio detected from your microphone'
+          : ''}
+      </p>
       {isRecording && (
         <div className="flex justify-between">
-          <h2 className="govuk-heading-m flex items-center gap-2">
-            <span className="relative mr-2 inline-flex size-3">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+          <h2
+            ref={recordingHeadingRef}
+            tabIndex={-1}
+            className="govuk-heading-m flex items-center gap-2"
+          >
+            <span aria-hidden="true" className="relative mr-2 inline-flex size-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75 motion-reduce:animate-none" />
               <span className="relative inline-flex size-3 rounded-full bg-red-600" />
             </span>
             Recording
@@ -344,7 +394,7 @@ export default function RecordingControl({
         ref={containerRef}
         className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
       >
-        <canvas ref={canvasRef} className="size-full" />
+        <canvas ref={canvasRef} aria-hidden="true" className="size-full" />
         {!isRecording && (
           <p className="govuk-body">
             Audio visualization will appear here when recording

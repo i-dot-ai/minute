@@ -77,6 +77,7 @@ export default function RecordingTimer({
   return (
     <span
       role="timer"
+      aria-label={`Elapsed recording time ${formatElapsed(elapsedMs)}`}
       className="govuk-body govuk-!-font-weight-bold tabular-nums"
     >
       {formatElapsed(elapsedMs)}

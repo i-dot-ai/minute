@@ -93,6 +93,7 @@ export default function AudioPlayerComponent({
             type="button"
             onClick={togglePlayPause}
             size="icon"
+            aria-label={isPlaying ? 'Pause' : 'Play'}
             className="active:yellow-400 rounded-full bg-blue-500 text-white hover:bg-blue-500"
           >
             {isPlaying ? <Pause /> : <Play />}
@@ -113,6 +114,8 @@ export default function AudioPlayerComponent({
             value={time}
             onChange={handleSeek}
             disabled={!duration}
+            aria-label="Seek"
+            aria-valuetext={`${formatTime(time)} of ${duration ? formatTime(duration) : 'unknown duration'}`}
             className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700"
             style={{
               backgroundSize: `${(time / (duration || 1)) * 100}% 100%`,

@@ -222,16 +222,27 @@ export const PaginatedTranscriptions = () => {
         <span className="govuk-visually-hidden" aria-live="polite">
           {selectedCount > 0 ? `${selectedCount} transcriptions selected` : ''}
         </span>
-        <p className="govuk-body govuk-!-margin-bottom-0">
+        <p className="govuk-body govuk-!-margin-bottom-0" role="status">
           Total: {totalCount}
+          {search && (
+            <span className="govuk-visually-hidden">
+              {` results for “${search}”`}
+            </span>
+          )}
         </p>
       </div>
       {isLoading ? (
-        <p className="govuk-body">Loading transcriptions...</p>
+        <p className="govuk-body" role="status">
+          Loading transcriptions...
+        </p>
       ) : error ? (
-        <p className="govuk-body">Error loading transcriptions</p>
+        <p className="govuk-body" role="status">
+          Error loading transcriptions
+        </p>
       ) : transcriptions.length === 0 ? (
-        <p className="govuk-body">No transcriptions found</p>
+        <p className="govuk-body" role="status">
+          No transcriptions found
+        </p>
       ) : (
         <>
           <TranscriptionsList

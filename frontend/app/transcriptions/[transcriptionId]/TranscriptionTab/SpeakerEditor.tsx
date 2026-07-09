@@ -237,7 +237,9 @@ const PlayClipButton = ({
       }}
     >
       {isPlaying ? <Pause /> : <Play />}
-      <span className="govuk-visually-hidden">Play clip</span>
+      <span className="govuk-visually-hidden">
+        {isPlaying ? 'Pause clip' : 'Play clip'}
+      </span>
       {formatTime(startTime)}
     </button>
   )

@@ -233,7 +233,11 @@ export const TemplatesTable = () => {
     <>
       <div className="govuk-grid-row flex items-end">
         <div className="govuk-grid-column-one-half">
-          <div className="govuk-form-group">
+          <form
+            role="search"
+            className="govuk-form-group"
+            onSubmit={(e) => e.preventDefault()}
+          >
             <label className="govuk-label" htmlFor="search-templates">
               Search templates
             </label>
@@ -245,7 +249,7 @@ export const TemplatesTable = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-          </div>
+          </form>
         </div>
         <div className="govuk-grid-column-one-quarter">
           <div className="govuk-form-group">
@@ -270,6 +274,7 @@ export const TemplatesTable = () => {
             <button
               type="button"
               className="govuk-button govuk-button--secondary govuk-!-margin-0 whitespace-nowrap"
+              aria-pressed={hideSystem}
               onClick={toggleHideSystem}
             >
               {hideSystem ? (
@@ -328,8 +333,13 @@ export const TemplatesTable = () => {
             <span className="govuk-visually-hidden" aria-live="polite">
               {deleteCount > 0 ? `${deleteCount} templates selected` : ''}
             </span>
-            <p className="govuk-body govuk-!-margin-bottom-0">
+            <p className="govuk-body govuk-!-margin-bottom-0" role="status">
               Total: {totalCount}
+              {search.trim() && (
+                <span className="govuk-visually-hidden">
+                  {` results for “${search.trim()}”`}
+                </span>
+              )}
             </p>
           </div>
           {isLoading ? (
@@ -337,7 +347,9 @@ export const TemplatesTable = () => {
           ) : isError ? (
             <p className="govuk-body">Error loading templates</p>
           ) : filteredRows.length === 0 ? (
-            <p className="govuk-body">No templates found</p>
+            <p className="govuk-body" role="status">
+              No templates found
+            </p>
           ) : (
             <>
               <TemplatesList

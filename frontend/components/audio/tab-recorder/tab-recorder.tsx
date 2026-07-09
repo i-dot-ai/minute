@@ -12,6 +12,7 @@ import { useWakeLock } from '@/hooks/use-wake-lock'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
+import { RecordingFinishedState } from '@/components/audio/recording-finished-state'
 
 export const TabRecorderForm = ({
   initialDeviceId,
@@ -26,7 +27,7 @@ export const TabRecorderForm = ({
   onDiscard?: () => void
   onStarted?: (transcriptionId: string) => void
 } = {}) => {
-  const { isError, onSubmit, form } = useStartTranscription(
+  const { isPending, isError, onSubmit, form } = useStartTranscription(
     undefined,
     onStarted
   )
@@ -34,6 +35,7 @@ export const TabRecorderForm = ({
   // Set when the user chooses "Generate summary" in the stop dialog. Stopping the
   // recorder is async, so we wait for the audio blob to land before submitting.
   const [generateRequested, setGenerateRequested] = useState(false)
+  const isFinishing = generateRequested || isPending
 
   useEffect(() => {
     if (generateRequested && watchBlob) {
@@ -45,6 +47,7 @@ export const TabRecorderForm = ({
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
+        {isFinishing && <RecordingFinishedState isUploading={isPending} />}
         <Controller
           control={form.control}
           name="file"

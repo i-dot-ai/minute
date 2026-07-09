@@ -13,6 +13,7 @@ import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import { AudioDevice } from './microphone-permission'
+import { RecordingFinishedState } from './recording-finished-state'
 
 export function MicRecorderForm({
   initialDeviceId,
@@ -25,7 +26,7 @@ export function MicRecorderForm({
   onDiscard?: () => void
   onStarted?: (transcriptionId: string) => void
 } = {}) {
-  const { isError, onSubmit, form } = useStartTranscription(
+  const { isPending, isError, onSubmit, form } = useStartTranscription(
     undefined,
     onStarted
   )
@@ -33,6 +34,7 @@ export function MicRecorderForm({
   // Set when the user chooses "Generate summary" in the stop dialog. Stopping the
   // recorder is async, so we wait for the audio blob to land before submitting.
   const [generateRequested, setGenerateRequested] = useState(false)
+  const isFinishing = generateRequested || isPending
 
   useEffect(() => {
     if (generateRequested && watchBlob) {
@@ -44,6 +46,7 @@ export function MicRecorderForm({
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
+        {isFinishing && <RecordingFinishedState isUploading={isPending} />}
         <Controller
           name="file"
           control={form.control}

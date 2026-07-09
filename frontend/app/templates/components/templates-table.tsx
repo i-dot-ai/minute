@@ -57,9 +57,9 @@ function matchesFilters(
   }
   switch (typeFilter) {
     case 'summary':
-      return row.format === 'document'
+      return row.format === 'document' && !row.isSystem
     case 'q-and-a':
-      return row.format === 'form'
+      return row.format === 'form' && !row.isSystem
     default:
       return true
   }
@@ -121,10 +121,15 @@ export const TemplatesTable = () => {
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   )
-  const pageKeys = pageRows.map(templateRowKey)
+  const selectablePageKeys = pageRows
+    .filter((row) => !row.isSystem)
+    .map(templateRowKey)
   const allOnPageSelected =
-    pageKeys.length > 0 && pageKeys.every((key) => selectedIds.has(key))
-  const someOnPageSelected = pageKeys.some((key) => selectedIds.has(key))
+    selectablePageKeys.length > 0 &&
+    selectablePageKeys.every((key) => selectedIds.has(key))
+  const someOnPageSelected = selectablePageKeys.some((key) =>
+    selectedIds.has(key)
+  )
 
   const deletableIds = filteredRows
     .filter((row) => !row.isSystem && selectedIds.has(templateRowKey(row)))
@@ -170,9 +175,9 @@ export const TemplatesTable = () => {
     setSelectedIds((prev) => {
       const next = new Set(prev)
       if (allOnPageSelected) {
-        pageKeys.forEach((key) => next.delete(key))
+        selectablePageKeys.forEach((key) => next.delete(key))
       } else {
-        pageKeys.forEach((key) => next.add(key))
+        selectablePageKeys.forEach((key) => next.add(key))
       }
       return next
     })
@@ -262,27 +267,28 @@ export const TemplatesTable = () => {
         <div className="govuk-grid-column-full">
           <div className="govuk-!-margin-bottom-3 govuk-!-padding-bottom-2 flex items-center justify-between border-b border-(--govuk-border-colour)">
             <div className="flex items-center gap-2">
-              <div
-                className="govuk-checkboxes govuk-checkboxes--small relative flex"
-                data-module="govuk-checkboxes"
-              >
-                <input
-                  ref={selectAllRef}
-                  className="govuk-checkboxes__input"
-                  id="select-all-templates"
-                  name="select-all-templates"
-                  type="checkbox"
-                  checked={allOnPageSelected}
-                  onChange={toggleAllOnPage}
-                  disabled={pageRows.length === 0}
-                />
-                <label
-                  className="govuk-label govuk-checkboxes__label ml-3 whitespace-nowrap"
-                  htmlFor="select-all-templates"
+              {selectablePageKeys.length > 0 && (
+                <div
+                  className="govuk-checkboxes govuk-checkboxes--small relative flex"
+                  data-module="govuk-checkboxes"
                 >
-                  Select all
-                </label>
-              </div>
+                  <input
+                    ref={selectAllRef}
+                    className="govuk-checkboxes__input"
+                    id="select-all-templates"
+                    name="select-all-templates"
+                    type="checkbox"
+                    checked={allOnPageSelected}
+                    onChange={toggleAllOnPage}
+                  />
+                  <label
+                    className="govuk-label govuk-checkboxes__label ml-3 whitespace-nowrap"
+                    htmlFor="select-all-templates"
+                  >
+                    Select all
+                  </label>
+                </div>
+              )}
               {hasSystemSelected && (
                 <p className="govuk-body govuk-!-margin-0 text-red-600">
                   (Cannot delete system templates)

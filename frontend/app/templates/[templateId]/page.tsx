@@ -4,6 +4,7 @@ import { DocumentTemplateEditor } from '@/app/templates/components/document-temp
 import { FormTemplateEditor } from '@/app/templates/components/form-template-editor'
 import { TemplateNameDescriptionEditor } from '@/app/templates/components/template-name-description-editor'
 import {
+  deleteUserTemplateUserTemplatesTemplateIdDeleteMutation,
   editUserTemplateUserTemplatesTemplateIdPatchMutation,
   getUserTemplateUserTemplatesTemplateIdGetOptions,
   getUserTemplateUserTemplatesTemplateIdGetQueryKey,
@@ -20,10 +21,12 @@ import {
 } from '@tanstack/react-query'
 import { Loader2, Pencil, Save, Star, StarOff } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import { DeleteConfirmDialog } from '../components/delete-single-template-dialog'
 
 export default function EditTemplatePage({
   params: { templateId },
@@ -37,7 +40,19 @@ export default function EditTemplatePage({
     placeholderData: keepPreviousData,
   })
   const [isEditing, setIsEditing] = useState(false)
+  const router = useRouter()
   const queryClient = useQueryClient()
+  const { mutate: deleteTemplate, isPending: isDeleting } = useMutation({
+    ...deleteUserTemplateUserTemplatesTemplateIdDeleteMutation(),
+    onSuccess: () => {
+      toast.success('Template deleted')
+      queryClient.invalidateQueries({
+        queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
+      })
+      posthog.capture('template_deleted')
+      router.push('/templates')
+    },
+  })
   const { mutate: setDefault, isPending: isSettingDefault } = useMutation({
     ...updateDefaultTemplateUsersDefaultTemplatePatchMutation(),
     onSuccess: () => {
@@ -85,7 +100,7 @@ export default function EditTemplatePage({
       ) : (
         <>
           <div className="govuk-grid-row">
-            <div className="govuk-grid-column-two-thirds">
+            <div className="govuk-grid-column-one-half">
               <h1 className="govuk-heading-xl">{template?.name}</h1>
               <ul className="govuk-list flex gap-2">
                 {template?.is_default && (
@@ -102,7 +117,7 @@ export default function EditTemplatePage({
                 </li>
               </ul>
             </div>
-            <div className="govuk-grid-column-one-third">
+            <div className="govuk-grid-column-one-half">
               <div className="govuk-button-group float-right">
                 <button
                   className="govuk-button"
@@ -133,6 +148,13 @@ export default function EditTemplatePage({
                 >
                   <Pencil className="size-4" /> Rename
                 </button>
+                <DeleteConfirmDialog
+                  name={template?.name ?? ''}
+                  disabled={isDeleting}
+                  onConfirm={() =>
+                    deleteTemplate({ path: { template_id: templateId } })
+                  }
+                />
               </div>
             </div>
           </div>

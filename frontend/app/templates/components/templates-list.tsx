@@ -20,16 +20,13 @@ export function TemplatesList({
       <thead className="govuk-table__head govuk-visually-hidden">
         <tr className="govuk-table__row">
           <th scope="col" className="govuk-table__header">
-            Select
-          </th>
-          <th scope="col" className="govuk-table__header">
             Actions
           </th>
           <th scope="col" className="govuk-table__header">
             Name
           </th>
           <th scope="col" className="govuk-table__header">
-            Status
+            Template type
           </th>
         </tr>
       </thead>

@@ -35,7 +35,7 @@ export default function RecordStatusPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-      GENERATING_STATUSES.includes(query.state.data.status)
+        GENERATING_STATUSES.includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -59,7 +59,7 @@ export default function RecordStatusPage({
     enabled: !!minuteId && transcriptionDone,
     refetchInterval: (query) =>
       query.state.data?.[0]?.status &&
-      GENERATING_STATUSES.includes(query.state.data[0].status)
+        GENERATING_STATUSES.includes(query.state.data[0].status)
         ? 2000
         : false,
   })
@@ -80,7 +80,7 @@ export default function RecordStatusPage({
     <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
-          <h1 className="govuk-heading-l">Record a meeting</h1>
+          <h1 className="govuk-heading-l">New meeting</h1>
           {isLoading ? (
             <div className="flex items-center gap-2">
               <Loader2 className="animate-spin" />
@@ -108,10 +108,10 @@ export default function RecordStatusPage({
                 )}
                 {(transcriptionStatus === 'failed' ||
                   summaryStatus === 'failed') && (
-                  <Link href={`/transcriptions/${id}`} className="govuk-button">
-                    View details
-                  </Link>
-                )}
+                    <Link href={`/transcriptions/${id}`} className="govuk-button">
+                      View details
+                    </Link>
+                  )}
                 <Link href="/" className="govuk-button govuk-button--secondary">
                   Record another meeting
                 </Link>

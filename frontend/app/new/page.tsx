@@ -29,7 +29,7 @@ export default function RecordPage() {
     <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
-          <h1 className="govuk-heading-l">Record a meeting</h1>
+          <h1 className="govuk-heading-l">New meeting</h1>
           <p className="govuk-hint">
             Please ensure that all participants are aware that they have been
             recorded. Suitable up to <strong>OFFICIAL SENSITIVE</strong>.

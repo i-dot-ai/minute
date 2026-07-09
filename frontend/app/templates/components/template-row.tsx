@@ -1,24 +1,12 @@
 'use client'
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import {
-  deleteUserTemplateUserTemplatesTemplateIdDeleteMutation,
   duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation,
   getUserTemplatesUserTemplatesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { TemplateRowData } from '@/types/templates'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { CopyPlus, TrashIcon } from 'lucide-react'
+import { CopyPlus } from 'lucide-react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
 
@@ -49,16 +37,6 @@ export function TemplateTableRow({
     },
   })
 
-  const deleteMutation = useMutation({
-    ...deleteUserTemplateUserTemplatesTemplateIdDeleteMutation(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
-      })
-      posthog.capture('template_deleted')
-    },
-  })
-
   const handleDuplicate = () => {
     // Default templates have no id yet; duplication will be wired to a backend
     // endpoint later.
@@ -67,43 +45,51 @@ export function TemplateTableRow({
   }
 
   return (
-    <tr className="govuk-table__row relative flex items-center gap-4 border-b border-(--govuk-border-colour) hover:bg-[#f4f8fb]">
-      <td className="govuk-!-padding-0">
-        <div
-          className="govuk-checkboxes govuk-checkboxes--small flex"
-          data-module="govuk-checkboxes"
-        >
-          <input
-            className="govuk-checkboxes__input"
-            id={inputId}
-            name="template"
-            type="checkbox"
-            checked={selectedIds?.has(rowKey) ?? false}
-            onChange={(e) => onToggle?.(rowKey, e.target.checked)}
-          />
-          <label
-            className="govuk-label govuk-checkboxes__label"
-            htmlFor={inputId}
-          >
-            <span className="govuk-visually-hidden">Select {name}</span>
-          </label>
-        </div>
+    <tr className="govuk-table__row relative border-b border-(--govuk-border-colour) hover:bg-[#f4f8fb]">
+      <td>
+        {!template.isSystem && (
+          <div className="flex items-center govuk-!-margin-right-2">
+            <div
+              className="govuk-checkboxes govuk-checkboxes--small flex"
+              data-module="govuk-checkboxes"
+            >
+              <input
+                className="govuk-checkboxes__input"
+                id={inputId}
+                name="template"
+                disabled={template.isSystem}
+                type="checkbox"
+                checked={selectedIds?.has(rowKey) ?? false}
+                onChange={(e) => onToggle?.(rowKey, e.target.checked)}
+              />
+              <label
+                className="govuk-label govuk-checkboxes__label"
+                htmlFor={inputId}
+              >
+                <span className="govuk-visually-hidden">Select {name}</span>
+              </label>
+            </div>
+            <div className="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-right-1 flex items-center justify-end">
+              <button
+                type="button"
+                className="govuk-link govuk-link--no-visited-state govuk-!-margin-0 flex items-center gap-2 !text-[#cecece] hover:cursor-not-allowed"
+                onClick={handleDuplicate}
+                disabled={template.isSystem}
+              >
+                <CopyPlus className="size-4" />
+                <span className="govuk-visually-hidden">Duplicate {name}</span>
+              </button>
+            </div>
+          </div>
+        )}
       </td>
-      <td className="govuk-!-padding-0">
-        <div className="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-right-1 flex items-center justify-end">
-          <button
-            type="button"
-            className="govuk-link govuk-link--no-visited-state govuk-!-margin-0 flex items-center gap-2 text-(--govuk-link-colour) hover:cursor-pointer"
-            onClick={handleDuplicate}
-          >
-            <CopyPlus className="size-4" />
-            <span className="govuk-visually-hidden">Duplicate {name}</span>
-          </button>
-        </div>
-      </td>
-      <td className="govuk-!-padding-0 flex-1">
+      <td className="flex-1">
         <Link
-          href={`/templates/${template.id}`}
+          href={
+            template.isSystem
+              ? `/templates/system/${encodeURIComponent(template.name)}`
+              : `/templates/${template.id}`
+          }
           className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative flex flex-1 flex-col items-center gap-1 py-1 !text-(--govuk-text-colour) lg:flex-row lg:gap-2"
         >
           <span className="font-bold lg:min-w-60">{name}</span>{' '}
@@ -112,69 +98,24 @@ export function TemplateTableRow({
           </span>
         </Link>
       </td>
-      <td className="govuk-!-padding-0">
-        {template.is_default && (
-          <strong className="govuk-tag govuk-tag--blue govuk-!-margin-right-2">
-            Default
-          </strong>
-        )}
-        {template.isSystem && (
-          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">
-            System
-          </strong>
-        )}
-        <strong className="govuk-tag govuk-tag--green govuk-!-margin-right-2">
-          {template.format === 'document' ? 'Summary' : 'Q & A'}
-        </strong>
+      <td>
+        <div className="flex items-center justify-end govuk-!-padding-top-2 govuk-!-padding-bottom-2">
+          {template.is_default && (
+            <strong className="govuk-tag govuk-tag--blue govuk-!-margin-left-2">
+              Default
+            </strong>
+          )}
+          {template.isSystem ? (
+            <strong className="govuk-tag govuk-tag--grey govuk-!-margin-left-2">
+              System
+            </strong>
+          ) : (
+            <strong className="govuk-tag govuk-tag--green govuk-!-margin-left-2">
+              {template.format === 'document' ? 'Summary' : 'Q & A'}
+            </strong>
+          )}
+        </div>
       </td>
     </tr>
   )
 }
-
-const DeleteConfirmDialog = ({
-  name,
-  disabled,
-  onConfirm,
-}: {
-  name: string
-  disabled: boolean
-  onConfirm: () => void
-}) => (
-  <AlertDialog>
-    <AlertDialogTrigger asChild>
-      <button
-        className={`govuk-link link--warning flex items-center gap-2 hover:cursor-pointer ${disabled ? '!cursor-not-allowed !text-gray-500 opacity-50' : ''}`}
-        disabled={disabled}
-      >
-        <TrashIcon className="size-4" />
-        <span className="govuk-visually-hidden">Delete {name}</span>
-      </button>
-    </AlertDialogTrigger>
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle className="govuk-heading-l">
-          Delete template
-        </AlertDialogTitle>
-        <AlertDialogDescription className="govuk-body">
-          Are you sure you want to delete <strong>{name}</strong>? This action
-          cannot be undone.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter className="govuk-button-group sm:justify-start">
-        <AlertDialogAction asChild onClick={onConfirm}>
-          <button type="button" className="govuk-button govuk-button--warning">
-            Delete
-          </button>
-        </AlertDialogAction>
-        <AlertDialogCancel asChild>
-          <button
-            type="button"
-            className="govuk-button govuk-button--secondary"
-          >
-            Cancel
-          </button>
-        </AlertDialogCancel>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
-)

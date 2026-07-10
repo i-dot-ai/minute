@@ -5,16 +5,15 @@ import {
   DeleteTranscriptionDialog,
 } from '@/components/recent-meetings/delete-transcription-dialog'
 import { useState } from 'react'
-import { TrashIcon } from 'lucide-react'
 
 export function DeleteTranscriptionButton({
   transcription,
-  className,
   title,
+  disabled,
 }: {
   transcription: DeleteTranscription
-  className?: string
   title?: string
+  disabled?: boolean
 }) {
   const [open, setOpen] = useState(false)
 
@@ -22,11 +21,12 @@ export function DeleteTranscriptionButton({
     <>
       <button
         type="button"
-        className={className ?? 'govuk-link link--warning hover:cursor-pointer'}
+        className={`govuk-link ${disabled ? '!text-gray-400 pointer-events-none' : 'link--warning hover:cursor-pointer'}`}
         onClick={() => setOpen(true)}
+        disabled={disabled}
       >
-        <TrashIcon className="size-4" />
-        <span className="govuk-visually-hidden">Delete {title}</span>
+        Delete
+        <span className="govuk-visually-hidden">{title}</span>
       </button>
       <DeleteTranscriptionDialog
         open={open}

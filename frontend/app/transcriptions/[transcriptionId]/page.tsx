@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { AudioWav } from '@/components/icons/AudioWav'
 import Link from 'next/link'
+import { useState } from 'react'
 
 export default function TranscriptionPage({
   params: { transcriptionId },
@@ -24,10 +25,11 @@ export default function TranscriptionPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-      ['awaiting_start', 'in_progress'].includes(query.state.data.status)
+        ['awaiting_start', 'in_progress'].includes(query.state.data.status)
         ? 2000
         : false,
   })
+  const [isEditing, setIsEditing] = useState(false)
 
   const minutesEnabled =
     !!transcription?.status &&
@@ -54,10 +56,24 @@ export default function TranscriptionPage({
   if (!transcription) {
     return (
       <>
-        <p className="govuk-body">404 - Transcription not found</p>
+        <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
+          <ol className="govuk-breadcrumbs__list">
+            <li className="govuk-breadcrumbs__list-item">
+              <Link href="/transcriptions" className="govuk-breadcrumbs__link">
+                Back to transcriptions
+              </Link>
+            </li>
+          </ol>
+        </nav>
+        <h1 className="govuk-heading-l govuk-!-margin-bottom-2">404 - Transcription not found</h1>
         <p className="govuk-body">
           The transcription you are looking for does not exist.
         </p>
+        <div className="govuk-button-group">
+          <Link href="/transcriptions" className="govuk-button">
+            Back to transcriptions
+          </Link>
+        </div>
       </>
     )
   }
@@ -80,6 +96,15 @@ export default function TranscriptionPage({
     return (
       <div className="govuk-grid-row govuk-!-margin-bottom-2">
         <div className="govuk-grid-column-three-quarters">
+          <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
+            <ol className="govuk-breadcrumbs__list">
+              <li className="govuk-breadcrumbs__list-item">
+                <Link href="/transcriptions" className="govuk-breadcrumbs__link">
+                  Back to transcriptions
+                </Link>
+              </li>
+            </ol>
+          </nav>
           <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
             Generating transcript
           </h1>
@@ -106,6 +131,15 @@ export default function TranscriptionPage({
   if (transcription.status == 'failed') {
     return (
       <>
+        <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
+          <ol className="govuk-breadcrumbs__list">
+            <li className="govuk-breadcrumbs__list-item">
+              <Link href="/transcriptions" className="govuk-breadcrumbs__link">
+                Back to transcriptions
+              </Link>
+            </li>
+          </ol>
+        </nav>
         <div className="govuk-grid-row govuk-!-margin-bottom-2">
           <div className="govuk-grid-column-three-quarters">
             <RenameTranscriptionInline
@@ -116,17 +150,6 @@ export default function TranscriptionPage({
             <p className="govuk-body">{date}</p>
             <p className="govuk-body">
               The transcription failed to process. Please try again.
-            </p>
-            <p className="govuk-inset-text">
-              You can either{' '}
-              <Link href="/" className="govuk-link">
-                start a new transcription
-              </Link>{' '}
-              or download the audio file below and{' '}
-              <Link href="/new/upload" className="govuk-link">
-                upload it
-              </Link>
-              .
             </p>
           </div>
           <div className="govuk-grid-column-one-quarter">
@@ -146,22 +169,40 @@ export default function TranscriptionPage({
   }
   return (
     <>
-      <div className="govuk-grid-row govuk-!-margin-bottom-2">
-        <div className="govuk-grid-column-three-quarters">
-          <RenameTranscriptionInline
-            transcription={transcription}
-            headingLevel="h1"
-            headingClassName="govuk-heading-xl govuk-!-margin-bottom-2"
-          />
-          <p className="govuk-body">{date}</p>
+      <div className="govuk-grid-row">
+        <div className="govuk-grid-column-one-third">
+          <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
+            <ol className="govuk-breadcrumbs__list">
+              <li className="govuk-breadcrumbs__list-item">
+                <Link href="/transcriptions" className="govuk-breadcrumbs__link">
+                  Back to transcriptions
+                </Link>
+              </li>
+            </ol>
+          </nav>
         </div>
-        <div className="govuk-grid-column-one-quarter">
+        <div className="govuk-grid-column-two-thirds">
           <div className="govuk-button-group transcription-page__actions">
-            <DeleteTranscriptionButton transcription={transcription} />
+            <button type="button" className="govuk-button govuk-button--secondary" onClick={() => setIsEditing(true)}>
+              Edit
+            </button>
+            <button type="button" className="govuk-button govuk-button--secondary" disabled={isEditing}>
+              Download
+            </button>
+            <button type="button" className="govuk-button govuk-button--secondary" disabled={isEditing}>
+              Copy
+            </button>
+            <DeleteTranscriptionButton transcription={transcription} disabled={isEditing} />
           </div>
         </div>
       </div>
-      <GovukTranscriptionTabs transcription={transcription} minutes={minutes} />
+      <div className="govuk-grid-row govuk-!-margin-bottom-2">
+        <div className="govuk-grid-column-full">
+          <h1 className="govuk-heading-l govuk-!-margin-bottom-2">{transcription.title}</h1>
+          <p className="govuk-body">{date}</p>
+        </div>
+      </div>
+      <GovukTranscriptionTabs transcription={transcription} minutes={minutes} isEditing={isEditing} setIsEditing={setIsEditing} />
     </>
   )
 }

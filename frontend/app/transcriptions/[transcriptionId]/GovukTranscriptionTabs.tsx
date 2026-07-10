@@ -9,9 +9,13 @@ import { useRef } from 'react'
 export function GovukTranscriptionTabs({
   transcription,
   minutes,
+  isEditing,
+  setIsEditing,
 }: {
   transcription: Transcription
   minutes: MinuteListItem[]
+  isEditing: boolean
+  setIsEditing: (isEditing: boolean) => void
 }) {
   const tabsRef = useRef<HTMLDivElement>(null)
 

@@ -72,9 +72,8 @@ export function TemplateTableRow({
             <div className="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-right-1 flex items-center justify-end">
               <button
                 type="button"
-                className="govuk-link govuk-link--no-visited-state govuk-!-margin-0 flex items-center gap-2 !text-[#cecece] hover:cursor-not-allowed"
+                className="govuk-link govuk-link--no-visited-state govuk-!-margin-0 flex items-center gap-2 hover:cursor-pointer"
                 onClick={handleDuplicate}
-                disabled={template.isSystem}
               >
                 <CopyPlus className="size-4" />
                 <span className="govuk-visually-hidden">Duplicate {name}</span>

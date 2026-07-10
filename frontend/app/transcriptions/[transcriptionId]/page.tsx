@@ -1,5 +1,4 @@
 'use client'
-import { GovukTranscriptionTabs } from '@/app/transcriptions/[transcriptionId]/GovukTranscriptionTabs'
 import { DownloadButton } from '@/components/download-button'
 import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
 import { RenameTranscriptionInline } from '@/components/recent-meetings/rename-transcription'
@@ -12,7 +11,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { AudioWav } from '@/components/icons/AudioWav'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function TranscriptionPage({
   params: { transcriptionId },
@@ -29,13 +29,13 @@ export default function TranscriptionPage({
         ? 2000
         : false,
   })
-  const [isEditing, setIsEditing] = useState(false)
+  const router = useRouter()
 
   const minutesEnabled =
     !!transcription?.status &&
     !['awaiting_start', 'in_progress', 'failed'].includes(transcription.status)
 
-  const { data: minutes = [] } = useQuery({
+  const { data: minutes = [], isSuccess: minutesLoaded } = useQuery({
     ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(
       {
         path: { transcription_id: transcriptionId },
@@ -43,6 +43,16 @@ export default function TranscriptionPage({
     ),
     enabled: minutesEnabled,
   })
+
+  useEffect(() => {
+    if (minutesEnabled && minutesLoaded) {
+      router.replace(
+        minutes.length > 0
+          ? `/transcriptions/${transcriptionId}/summary/${minutes[0].id}`
+          : `/transcriptions/${transcriptionId}/transcript`
+      )
+    }
+  }, [minutesEnabled, minutesLoaded, minutes, router, transcriptionId])
 
   if (isLoading) {
     return (
@@ -167,43 +177,13 @@ export default function TranscriptionPage({
       </>
     )
   }
+  // Ready: the redirect effect above sends the user to the latest summary
+  // or the transcript page, so just show a loader in the meantime.
   return (
-    <>
-      <div className="govuk-grid-row">
-        <div className="govuk-grid-column-one-third">
-          <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
-            <ol className="govuk-breadcrumbs__list">
-              <li className="govuk-breadcrumbs__list-item">
-                <Link href="/transcriptions" className="govuk-breadcrumbs__link">
-                  Back to transcriptions
-                </Link>
-              </li>
-            </ol>
-          </nav>
-        </div>
-        <div className="govuk-grid-column-two-thirds">
-          <div className="govuk-button-group transcription-page__actions">
-            <button type="button" className="govuk-button govuk-button--secondary" onClick={() => setIsEditing(true)}>
-              Edit
-            </button>
-            <button type="button" className="govuk-button govuk-button--secondary" disabled={isEditing}>
-              Download
-            </button>
-            <button type="button" className="govuk-button govuk-button--secondary" disabled={isEditing}>
-              Copy
-            </button>
-            <DeleteTranscriptionButton transcription={transcription} disabled={isEditing} />
-          </div>
-        </div>
-      </div>
-      <div className="govuk-grid-row govuk-!-margin-bottom-2">
-        <div className="govuk-grid-column-full">
-          <h1 className="govuk-heading-l govuk-!-margin-bottom-2">{transcription.title}</h1>
-          <p className="govuk-body">{date}</p>
-        </div>
-      </div>
-      <GovukTranscriptionTabs transcription={transcription} minutes={minutes} isEditing={isEditing} setIsEditing={setIsEditing} />
-    </>
+    <div className="flex items-center gap-2">
+      <Loader2 className="animate-spin" />
+      <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
+    </div>
   )
 }
 

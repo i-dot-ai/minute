@@ -1,6 +1,6 @@
 'use client'
 
-import { DialogueEntryForm } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
+import { DialogueEntryForm } from '@/types/transcriptions'
 import { formatTime } from '@/components/audio/audio-player'
 import {
   Dialog,

@@ -39,10 +39,12 @@ export function NewMinuteDialog({
   transcriptionId,
   agenda,
   disabled,
+  onCreated,
 }: {
   transcriptionId: string
   agenda?: string
   disabled?: boolean
+  onCreated?: () => void
 }) {
   const [open, setOpen] = useState(false)
   const defaultTemplate = useDefaultTemplate()
@@ -80,8 +82,8 @@ export function NewMinuteDialog({
         },
       },
       {
-        onSuccess() {
-          queryClient.invalidateQueries({
+        async onSuccess() {
+          await queryClient.invalidateQueries({
             queryKey:
               listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey(
                 { path: { transcription_id: transcriptionId } }
@@ -91,6 +93,7 @@ export function NewMinuteDialog({
             style: !!template.id ? 'User generated' : template.name,
           })
           setOpen(false)
+          onCreated?.()
         },
       }
     )

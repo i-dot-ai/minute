@@ -1,4 +1,4 @@
-import { DialogueEntryForm } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
+import { DialogueEntryForm } from '@/types/transcriptions'
 import posthog from 'posthog-js'
 import { Control, Controller } from 'react-hook-form'
 

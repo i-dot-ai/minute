@@ -11,7 +11,7 @@ const PUBLIC_PATHS = [
   '/monitoring',
   '/privacy',
   '/support',
-  '/clear-cookies',
+  '/sign-out',
 ]
 
 export async function middleware(req: NextRequest) {
@@ -54,7 +54,7 @@ export async function middleware(req: NextRequest) {
     }
     if (authResult?.isAuthorised !== true) {
       if (authResult?.authReason === 'TOKEN_EXPIRED') {
-        return redirectToClearCookies(req)
+        return redirectToSignOut(req)
       }
       console.error(`User is not authorised to access ${pathname}`)
       return redirectToUnauthorised(req)
@@ -86,9 +86,9 @@ function redirectToGenericError(req: NextRequest) {
   url.pathname = '/generic-error'
   return NextResponse.redirect(url)
 }
-function redirectToClearCookies(req: NextRequest) {
+function redirectToSignOut(req: NextRequest) {
   const url = req.nextUrl.clone()
-  url.pathname = '/clear-cookies'
+  url.pathname = '/sign-out'
   return NextResponse.redirect(url)
 }
 // Configure which paths this middleware should run on

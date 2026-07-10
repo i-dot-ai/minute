@@ -122,6 +122,7 @@ module "frontend" {
     "BACKEND_HOST" : "http://${aws_service_discovery_service.service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}:${local.backend_port}"
     "AUTH_PROVIDER_PUBLIC_KEY" : data.aws_ssm_parameter.auth_provider_public_key.value,
     "AUTH_API_URL" : data.aws_ssm_parameter.auth_api_invoke_url.value,
+    "OIDC_CLIENT_ID" : aws_ssm_parameter.oidc_secrets["client_id"].value,
   }
 
   secrets = [

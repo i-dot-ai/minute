@@ -68,7 +68,7 @@ export const FormTemplateEditor = () => {
                     <button
                       type="button"
                       disabled={index === 0}
-                      className="govuk-button govuk-!-margin-0"
+                      className="govuk-button govuk-button--tertiary govuk-!-margin-0"
                       onClick={() => {
                         fieldArray.swap(index, index - 1)
                       }}
@@ -82,7 +82,7 @@ export const FormTemplateEditor = () => {
                   <li className="govuk-summary-card__action">
                     <button
                       type="button"
-                      className="govuk-button govuk-!-margin-0"
+                      className="govuk-button govuk-button--tertiary govuk-!-margin-0"
                       disabled={index === array.length - 1}
                       onClick={() => {
                         fieldArray.swap(index + 1, index)

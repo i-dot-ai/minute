@@ -10,6 +10,7 @@ import { DownloadButton } from '@/components/download-button'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, PlusIcon } from 'lucide-react'
 import Link from 'next/link'
+import { useEffect, useRef } from 'react'
 import { LoadingBar } from '@/components/ui/loading-bar'
 
 const GENERATING_STATUSES = ['awaiting_start', 'in_progress']
@@ -83,11 +84,20 @@ export default function RecordStatusPage({
   const isProcessing =
     transcriptionStatus === 'in_progress' || summaryStatus === 'in_progress'
 
+  // Land keyboard/screen-reader focus on the page heading after the client-side
+  // navigation from the recorder, which otherwise leaves focus on <body>.
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    headingRef.current?.focus()
+  }, [])
+
   return (
     <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-one-third">
-          <h1 className="govuk-heading-l">New meeting</h1>
+          <h1 ref={headingRef} tabIndex={-1} className="govuk-heading-l">
+            New meeting
+          </h1>
         </div>
         <div className="govuk-grid-column-two-thirds">
           <div className="govuk-button-group flex justify-end">

@@ -52,6 +52,8 @@ export type MinuteEditState = {
   hideCitations: boolean
   toggleHideCitations: () => void
   onSuccess: () => void
+  onSave: () => void
+  onCancel: () => void
 }
 
 export function MinuteEditor({
@@ -191,6 +193,8 @@ export function MinuteEditor({
         hideCitations: false,
         toggleHideCitations: () => {},
         onSuccess,
+        onSave: () => {},
+        onCancel: () => {},
       })
       return
     }
@@ -208,6 +212,8 @@ export function MinuteEditor({
       hideCitations,
       toggleHideCitations,
       onSuccess,
+      onSave: form.handleSubmit(onSubmit),
+      onCancel,
     })
   }, [
     form,
@@ -219,6 +225,7 @@ export function MinuteEditor({
     minute.id,
     minuteVersion,
     minuteVersions,
+    onCancel,
     onEditStateChange,
     onSubmit,
     onSuccess,
@@ -292,8 +299,6 @@ export function MinuteEditor({
               isEditing={isEditable}
               onContentChange={onChange}
               hideCitations={hideCitations && !isEditable}
-              onSave={form.handleSubmit(onSubmit)}
-              onCancel={onCancel}
             />
           )}
         />

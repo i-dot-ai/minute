@@ -17,10 +17,12 @@ import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
 import { useQuery } from '@tanstack/react-query'
 import {
   DownloadIcon,
+  CopyIcon,
   Eye,
   EyeOffIcon,
   Loader2,
   PencilIcon,
+  Save,
 } from 'lucide-react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
@@ -45,7 +47,6 @@ export default function SummaryPage({
     ),
   })
 
-  const [isEditing, setIsEditing] = useState(false)
   const [exportState, setExportState] = useState<MinuteExportState | null>(null)
   const [editState, setEditState] = useState<MinuteEditState | null>(null)
 
@@ -112,34 +113,122 @@ export default function SummaryPage({
         />
       </div>
       <div className="govuk-grid-column-three-quarters">
-        <div className="flex justify-end">
-          <div className="govuk-button-group transcription-page__actions">
-            <button
-              type="button"
-              className="govuk-button govuk-button--secondary"
-              onClick={() => setIsEditing(true)}
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              className="govuk-button govuk-button--secondary"
-              disabled={isEditing}
-            >
-              Download
-            </button>
-            <button
-              type="button"
-              className="govuk-button govuk-button--secondary"
-              disabled={isEditing}
-            >
-              Copy
-            </button>
-            <DeleteTranscriptionButton
-              transcription={transcription}
-              disabled={isEditing}
-            />
+        <div className="border-b border-(--govuk-border-colour) govuk-!-margin-bottom-6 govuk-!-padding-bottom-3">
+          <div className="flex justify-between">
+            <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
+              <ol className="govuk-breadcrumbs__list">
+                <li className="govuk-breadcrumbs__list-item">
+                  <Link href="/transcriptions" className="govuk-breadcrumbs__link">
+                    Back
+                  </Link>
+                </li>
+              </ol>
+            </nav>
+            <div className="govuk-button-group justify-end govuk-!-margin-bottom-0">
+              {editState && (
+                <>
+                  <button
+                    className="govuk-button govuk-button--secondary"
+                    onClick={() => editState.setIsEditable(true)}
+                    type="button"
+                    disabled={editState.isEditable}
+                  >
+                    <PencilIcon className="size-4" /> Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="govuk-button govuk-button--secondary"
+                    disabled={editState.isEditable}
+                  >
+                    <DownloadIcon className="size-4" />
+                    Export
+                  </button>
+                  <button
+                    className="govuk-button govuk-button--secondary min-w-48"
+                    onClick={editState.toggleHideCitations}
+                    disabled={editState.isEditable || !editState.hasCitations}
+                  >
+                    {editState.hideCitations ? (
+                      <Eye className="size-4" />
+                    ) : (
+                      <EyeOffIcon className="size-4" />
+                    )}
+                    {editState.hideCitations
+                      ? 'Show references'
+                      : 'Hide references'}
+                  </button>
+
+
+                  <DeleteTranscriptionButton
+                    transcription={transcription}
+                    disabled={editState?.isEditable}
+                  />
+                </>
+              )}
+            </div>
           </div>
+          {
+            editState && editState.isEditable && (
+              <div className="flex justify-between">
+                <div className="govuk-form-group govuk-!-margin-bottom-3">
+                  <label className="govuk-label" htmlFor="version">
+                    Version history
+                  </label>
+                  <select
+                    className="govuk-select w-full"
+                    id="version"
+                    name="version"
+                    onChange={(e) =>
+                      editState.setVersion(Number(e.target.value))
+                    }
+                    value={editState.version}
+                  >
+                    {editState.minuteVersions.map((version, index) => {
+                      const versionDate = new Date(
+                        version.created_datetime
+                      ).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: 'numeric',
+                        minute: 'numeric',
+                      })
+                      const versionNumber =
+                        editState.minuteVersions.length - index
+                      return (
+                        <option value={`${index}`} key={version.id}>
+                          {version.content_source === 'ai_edit' && 'AI edit'}
+                          {version.content_source === 'manual_edit' && 'Manual edit'}
+                          {version.content_source === 'initial_generation' && 'Initial'}
+                          {' '}- {versionDate}
+                        </option>
+                      )
+                    })}
+                  </select>
+                </div>
+                <div className="govuk-button-group !items-end">
+                  <AiEditPopover
+                    minuteId={editState.minuteId}
+                    minuteVersionId={editState.minuteVersionId}
+                    onSuccess={editState.onSuccess}
+                  />
+                  <button
+                    type="button"
+                    className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                    onClick={editState.onCancel}
+                  >
+                    Discard
+                  </button>
+                  <button
+                    type="button"
+                    className="govuk-button govuk-!-margin-bottom-0"
+                    onClick={editState.onSave}
+                  >
+                    <Save className="size-4" /> Save changes
+                  </button>
+                </div>
+              </div>
+            )
+          }
         </div>
         <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
           {transcription.title}
@@ -149,109 +238,9 @@ export default function SummaryPage({
           <p className="govuk-body">Summary not found.</p>
         ) : (
           <>
-            {editState && (
-              <div className="border-b border-(--govuk-border-colour) bg-[#8eb8dc] px-[20px] pt-[30px] pb-[10px]">
-                <div className="govuk-grid-row">
-                  <div className="govuk-grid-column-one-half govuk-grid-column-one-third-from-desktop">
-                    <div className="govuk-form-group govuk-!-margin-bottom-3">
-                      <label className="govuk-label" htmlFor="version">
-                        Choose an edit version
-                      </label>
-                      <select
-                        disabled={editState.isEditable}
-                        className="govuk-select w-full"
-                        id="version"
-                        name="version"
-                        onChange={(e) =>
-                          editState.setVersion(Number(e.target.value))
-                        }
-                        value={editState.version}
-                      >
-                        {editState.minuteVersions.map((version, index) => {
-                          const versionDate = new Date(
-                            version.created_datetime
-                          ).toLocaleDateString('en-GB', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: '2-digit',
-                            hour: 'numeric',
-                            minute: 'numeric',
-                          })
-                          const versionNumber =
-                            editState.minuteVersions.length - index
-                          return (
-                            <option value={`${index}`} key={version.id}>
-                              {versionNumber} -{' '}
-                              {version.content_source === 'ai_edit'
-                                ? 'AI edited'
-                                : 'Manually edited'}{' '}
-                              - {versionDate}
-                            </option>
-                          )
-                        })}
-                      </select>
-                    </div>
-                  </div>
-                  <div className="govuk-grid-column-one-half govuk-grid-column-two-thirds-from-desktop">
-                    <div className="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-top-6">
-                      {editState.showEditActions && (
-                        <>
-                          <button
-                            className="govuk-button govuk-button--inverse govuk-!-margin-bottom-3"
-                            onClick={() => editState.setIsEditable(true)}
-                            type="button"
-                            disabled={editState.isEditable}
-                          >
-                            <PencilIcon className="size-4" /> Edit manually
-                          </button>
-                          <AiEditPopover
-                            disabled={editState.isEditable}
-                            minuteId={editState.minuteId}
-                            minuteVersionId={editState.minuteVersionId}
-                            onSuccess={editState.onSuccess}
-                          />
-                          {exportState && (
-                            <>
-                              <button
-                                className="govuk-button govuk-button--inverse"
-                                disabled={editState.isEditable}
-                                onClick={handleWordDocDownload}
-                              >
-                                <DownloadIcon className="size-4" />
-                                Download
-                              </button>
-                              <CopyButton
-                                disabled={editState.isEditable}
-                                textToCopy={exportState.contentToCopy}
-                                posthogEvent="editor_content_copied"
-                              />
-                              {editState.hasCitations && (
-                                <button
-                                  className="govuk-button govuk-button--inverse"
-                                  onClick={editState.toggleHideCitations}
-                                  disabled={editState.isEditable}
-                                >
-                                  {editState.hideCitations ? (
-                                    <Eye className="size-4" />
-                                  ) : (
-                                    <EyeOffIcon className="size-4" />
-                                  )}
-                                  {editState.hideCitations
-                                    ? 'Show references'
-                                    : 'Hide references'}
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
             <div className="govuk-grid-row">
               <div className="govuk-grid-column-full">
+
                 <MinuteEditor
                   key={minute.id}
                   transcription={transcription}

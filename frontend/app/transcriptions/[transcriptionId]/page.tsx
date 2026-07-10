@@ -163,7 +163,7 @@ export default function TranscriptionPage({
             </p>
           </div>
           <div className="govuk-grid-column-one-quarter">
-            <div className="govuk-button-group transcription-page__actions float-right">
+            <div className="govuk-button-group transcription-page__actions float-right govuk-!-margin-bottom-0">
               <DeleteTranscriptionButton transcription={transcription} />
             </div>
           </div>

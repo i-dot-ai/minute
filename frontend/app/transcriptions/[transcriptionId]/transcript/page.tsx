@@ -159,33 +159,6 @@ export default function TranscriptPage({
           <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
             {transcription.title}
           </h1>
-          <div className="govuk-button-group transcription-page__actions">
-            <button
-              type="button"
-              className="govuk-button govuk-button--secondary"
-              onClick={() => setIsEditing(true)}
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              className="govuk-button govuk-button--secondary"
-              disabled={isEditing}
-            >
-              Download
-            </button>
-            <button
-              type="button"
-              className="govuk-button govuk-button--secondary"
-              disabled={isEditing}
-            >
-              Copy
-            </button>
-            <DeleteTranscriptionButton
-              transcription={transcription}
-              disabled={isEditing}
-            />
-          </div>
         </div>
         <p className="govuk-body">{date}</p>
         <FormProvider {...methods}>

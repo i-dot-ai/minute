@@ -6,18 +6,18 @@
 /* OVERRIDE GOVUK STYLES */
 
 .govuk-button {
-  /* background-color: var(--govuk-brand-colour); */
+  background-color: var(--govuk-brand-colour);
   box-shadow: none;
 }
 
 .govuk-button--secondary {
-  /* background-color: #d2e2f1; */
+  background-color: #d2e2f1;
 }
 
-/* .govuk-button--secondary:hover {
+.govuk-button--secondary:hover {
   background-color: #9db9d2;
   color: #0b0c0c;
-} */
+}
 
 .govuk-button--tertiary {
   background-color: var(--govuk-brand-colour);
@@ -190,6 +190,7 @@ html body[data-scroll-locked] {
 
 .editor-content [contenteditable='true'] {
   min-height: 12em;
+  padding: 0 10px;
 }
 
 .new-recording__radio-item {
@@ -394,8 +395,6 @@ html body[data-scroll-locked] {
 .editor-content {
   /* Add any global styles for your editor here */
   line-height: 1.4;
-  /* Increased line spacing */
-  padding: 10px;
 }
 
 .editor-content p {

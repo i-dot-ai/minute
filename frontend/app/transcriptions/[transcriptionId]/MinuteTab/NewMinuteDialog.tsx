@@ -1,15 +1,7 @@
 'use client'
 
-import { TemplateSelect } from '@/components/template-select/template-select'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+import { GenerateSummaryDialog } from '@/components/audio/generate-summary-dialog'
+import { TranscriptionForm } from '@/components/audio/types'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
@@ -20,12 +12,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useEffect, useState } from 'react'
-import { useController, useForm } from 'react-hook-form'
-
-type CreateMinuteForm = {
-  template: Template
-  agenda?: string
-}
+import { FormProvider, useForm } from 'react-hook-form'
 
 const GENERAL_TEMPLATE: Template = {
   name: 'General',
@@ -48,8 +35,9 @@ export function NewMinuteDialog({
 }) {
   const [open, setOpen] = useState(false)
   const defaultTemplate = useDefaultTemplate()
-  const form = useForm<CreateMinuteForm>({
+  const form = useForm<TranscriptionForm>({
     defaultValues: {
+      file: null,
       template: GENERAL_TEMPLATE,
       agenda,
     },
@@ -57,6 +45,7 @@ export function NewMinuteDialog({
   useEffect(() => {
     if (open) {
       form.reset({
+        file: null,
         template: defaultTemplate ?? GENERAL_TEMPLATE,
         agenda,
       })
@@ -65,20 +54,23 @@ export function NewMinuteDialog({
   const queryClient = useQueryClient()
 
   const selectedTemplate = form.watch('template')
+  const agendaValue = form.watch('agenda')
+  const agendaRequired =
+    typeof selectedTemplate !== 'string' &&
+    selectedTemplate?.agenda_usage === 'required'
 
-  const { mutate: createMinute } = useMutation({
+  const { mutate: createMinute, isPending } = useMutation({
     ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
   })
 
-  const onSubmit = ({ template, agenda }: CreateMinuteForm) => {
+  const onSubmit = ({ template, agenda }: TranscriptionForm) => {
     createMinute(
       {
         path: { transcription_id: transcriptionId },
         body: {
           template_name: template.name,
           template_id: template.id,
-          agenda:
-            selectedTemplate.agenda_usage != 'not_used' ? agenda : undefined,
+          agenda: template.agenda_usage != 'not_used' ? agenda : undefined,
         },
       },
       {
@@ -99,86 +91,27 @@ export function NewMinuteDialog({
     )
   }
 
-  const { field } = useController({
-    control: form.control,
-    name: 'template',
-  })
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button
-          className="govuk-button govuk-button--secondary flex items-center gap-2"
-          disabled={disabled}
-        >
-          <Plus className="size-4" />
-          New summary
-        </button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="govuk-heading-l">
-            Generate a new summary
-          </DialogTitle>
-          <DialogDescription className="govuk-body">
-            Choose a template style for your meeting summary
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <TemplateSelect value={field.value} onChange={field.onChange} />
-          {selectedTemplate && selectedTemplate.agenda_usage != 'not_used' && (
-            <div>
-              <div className="govuk-form-group">
-                <h3 className="govuk-label-wrapper">
-                  <label
-                    className="govuk-label govuk-label--m"
-                    htmlFor="agenda"
-                  >
-                    Agenda (
-                    {selectedTemplate.agenda_usage == 'optional'
-                      ? 'optional'
-                      : 'required'}
-                    ):
-                  </label>
-                </h3>
-                <div id="agenda-hint" className="govuk-hint">
-                  Add discussion points from the meeting that should be included
-                  in the summary.
-                </div>
-                <textarea
-                  className="govuk-textarea"
-                  id="agenda"
-                  rows={5}
-                  aria-describedby="agenda-hint"
-                  {...form.register('agenda', {
-                    required: selectedTemplate.agenda_usage == 'required',
-                  })}
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <button
-              className="govuk-button govuk-button--secondary"
-              type="button"
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </button>
-            <button
-              className="govuk-button"
-              type="submit"
-              disabled={
-                !selectedTemplate ||
-                (selectedTemplate.agenda_usage == 'required' &&
-                  !form.watch('agenda'))
-              }
-            >
-              Generate minute
-            </button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <>
+      <button
+        type="button"
+        className="govuk-button govuk-button--secondary flex items-center gap-2"
+        disabled={disabled}
+        onClick={() => setOpen(true)}
+      >
+        <Plus className="size-4" />
+        New summary
+      </button>
+      <FormProvider {...form}>
+        <GenerateSummaryDialog
+          open={open}
+          onOpenChange={setOpen}
+          title="Generate a new summary"
+          confirmLabel="Generate summary"
+          onConfirm={form.handleSubmit(onSubmit)}
+          disabled={isPending || (agendaRequired && !agendaValue)}
+        />
+      </FormProvider>
+    </>
   )
 }

@@ -108,7 +108,7 @@ export function NewMinuteDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
-          className="govuk-button govuk-button--inverse govuk-!-margin-bottom-2 govuk-!-margin-top-6"
+          className="govuk-button govuk-button--secondary flex items-center gap-2"
           disabled={disabled}
         >
           <Plus className="size-4" />

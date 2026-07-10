@@ -151,18 +151,10 @@ export default function TranscriptPage({
         <TranscriptionSidePanel
           transcriptionId={transcriptionId}
           minutes={minutes}
+          transcriptPage={true}
         />
       </div>
       <div className="govuk-grid-column-three-quarters">
-        <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
-          <ol className="govuk-breadcrumbs__list">
-            <li className="govuk-breadcrumbs__list-item">
-              <Link href="/transcriptions" className="govuk-breadcrumbs__link">
-                Back
-              </Link>
-            </li>
-          </ol>
-        </nav>
         <div className="flex justify-between">
           <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
             {transcription.title}

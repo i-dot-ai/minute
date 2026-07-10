@@ -13,39 +13,33 @@ import { TemplateData } from '@/types/templates'
 import { useMutation } from '@tanstack/react-query'
 import { Save } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { Suspense, useState } from 'react'
+import { useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
-function NewTemplateContent() {
-  const searchParams = useSearchParams()
+export default function NewTemplatePage() {
   const [newTemplateType, setNewTemplateType] =
     useState<TemplateType>('document')
-  const templateExampleParam = searchParams.get('example')
-  const foundExample = [
-    ...exampleDocumentTemplates,
-    ...exampleFormTemplates,
-  ].find((v) => v.name == templateExampleParam)
   const form = useForm<TemplateData>({
-    defaultValues: foundExample
-      ? {
-          ...foundExample,
-          styleGuide: foundExample.type === 'form' ? foundExample.content : '',
-        }
-      : {
-          name: '',
-          description: '',
-          content: '',
-          styleGuide: '',
-          questions: [],
-          type:
-            newTemplateType && ['document', 'form'].includes(newTemplateType)
-              ? (newTemplateType as TemplateType)
-              : undefined,
-        },
+    defaultValues: {
+      name: '',
+      description: '',
+      content: '',
+      styleGuide: '',
+      questions: [],
+      type: newTemplateType,
+    },
   })
+  const handleSelectExample = (template: TemplateData) => {
+    setNewTemplateType(template.type)
+    form.reset({
+      ...template,
+      content: template.type === 'form' ? '' : template.content,
+      styleGuide: template.type === 'form' ? template.content : '',
+    })
+  }
   const navigation = useRouter()
   const { mutateAsync: saveTemplate } = useMutation({
     ...createUserTemplateUserTemplatesPostMutation(),
@@ -68,7 +62,6 @@ function NewTemplateContent() {
       },
     })
   }
-  const templateType = form.watch('type')
 
   return (
     <FormProvider {...form}>
@@ -83,8 +76,14 @@ function NewTemplateContent() {
           </ol>
         </nav>
         <div className="govuk-grid-row">
-          <div className="govuk-grid-column-full">
+          <div className="govuk-grid-column-one-half">
             <h1 className="govuk-heading-xl">New template</h1>
+          </div>
+          <div className="govuk-grid-column-one-half flex justify-end">
+            <ExampleTemplatesDialog
+              examples={[...exampleDocumentTemplates, ...exampleFormTemplates]}
+              onSelectTemplate={handleSelectExample}
+            />
           </div>
         </div>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -108,7 +107,7 @@ function NewTemplateContent() {
                 </p>
               </div>
               <div className="govuk-form-group">
-                <label className="govuk-label" htmlFor="name">
+                <label className="govuk-label govuk-label--s" htmlFor="name">
                   Template name
                 </label>
                 <input
@@ -125,7 +124,7 @@ function NewTemplateContent() {
                 />
               </div>
               <div className="govuk-form-group">
-                <label className="govuk-label" htmlFor="description">
+                <label className="govuk-label govuk-label--s" htmlFor="description">
                   Description
                 </label>
                 <div id="description-hint" className="govuk-hint">
@@ -142,7 +141,7 @@ function NewTemplateContent() {
               </div>
               <div className="govuk-form-group">
                 <fieldset className="govuk-fieldset">
-                  <legend className="govuk-fieldset__legend">
+                  <legend className="govuk-fieldset__legend govuk-fieldset__legend--s">
                     <h2 className="govuk-fieldset__heading">Template type</h2>
                   </legend>
                   <div
@@ -220,13 +219,5 @@ function NewTemplateContent() {
         </form>
       </div>
     </FormProvider>
-  )
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <NewTemplateContent />
-    </Suspense>
   )
 }

@@ -10,6 +10,11 @@
   box-shadow: none;
 }
 
+.govuk-button:hover {
+  background-color: #16548a;
+  color: #fff;
+}
+
 .govuk-button--secondary {
   background-color: #d2e2f1;
 }

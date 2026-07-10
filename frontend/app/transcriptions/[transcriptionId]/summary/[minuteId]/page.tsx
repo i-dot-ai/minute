@@ -8,7 +8,14 @@ import {
 } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
 import { TranscriptionSidePanel } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/TranscriptionSidePanel'
 import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
+import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
 import CopyButton from '@/components/ui/copy-button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
@@ -17,7 +24,6 @@ import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
 import { useQuery } from '@tanstack/react-query'
 import {
   DownloadIcon,
-  CopyIcon,
   Eye,
   EyeOffIcon,
   Loader2,
@@ -26,7 +32,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 export default function SummaryPage({
   params: { transcriptionId, minuteId },
@@ -49,6 +55,30 @@ export default function SummaryPage({
 
   const [exportState, setExportState] = useState<MinuteExportState | null>(null)
   const [editState, setEditState] = useState<MinuteEditState | null>(null)
+  const [draftTitle, setDraftTitle] = useState('')
+  const [exportOpen, setExportOpen] = useState(false)
+
+  const { save: saveTitle } = useRenameTranscription({
+    id: transcriptionId,
+    title: transcription?.title,
+    status: transcription?.status ?? 'completed',
+  })
+
+  useEffect(() => {
+    if (editState?.isEditable && transcription) {
+      setDraftTitle(transcription.title ?? '')
+    }
+  }, [editState?.isEditable, transcription])
+
+  const handleSave = useCallback(() => {
+    saveTitle(draftTitle)
+    editState?.onSave()
+  }, [draftTitle, editState, saveTitle])
+
+  const handleDiscard = useCallback(() => {
+    setDraftTitle(transcription?.title ?? '')
+    editState?.onCancel()
+  }, [editState, transcription?.title])
 
   const handleWordDocDownload = useCallback(() => {
     if (!exportState || !transcription) return
@@ -62,6 +92,7 @@ export default function SummaryPage({
       transcription.dialogue_entries || [],
       transcription.title || 'minutes.docx'
     )
+    setExportOpen(false)
   }, [exportState, transcription])
 
   if (isLoading) {
@@ -135,14 +166,47 @@ export default function SummaryPage({
                   >
                     <PencilIcon className="size-4" /> Edit
                   </button>
-                  <button
-                    type="button"
-                    className="govuk-button govuk-button--secondary"
-                    disabled={editState.isEditable}
-                  >
-                    <DownloadIcon className="size-4" />
-                    Export
-                  </button>
+                  <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+                    <button
+                      type="button"
+                      className="govuk-button govuk-button--secondary"
+                      disabled={editState.isEditable || !exportState}
+                      onClick={() => setExportOpen(true)}
+                    >
+                      <DownloadIcon className="size-4" />
+                      Export
+                    </button>
+                    <DialogContent>
+                      <DialogTitle className="govuk-heading-l">
+                        Export summary
+                      </DialogTitle>
+                      <DialogDescription className="govuk-body">
+                        Copy or download your summary.
+                      </DialogDescription>
+                      <div className="govuk-button-group govuk-!-margin-top-4">
+                        <button
+                          type="button"
+                          className="govuk-button govuk-button--secondary"
+                          onClick={handleWordDocDownload}
+                          disabled={!exportState}
+                        >
+                          <DownloadIcon className="size-4" />
+                          Download Word doc
+                        </button>
+                        <CopyButton
+                          textToCopy={exportState?.contentToCopy ?? ''}
+                          posthogEvent="minutes_content_copied"
+                          posthogProperties={{
+                            version_id: exportState?.minuteVersionId ?? '',
+                          }}
+                          disabled={!exportState}
+                          variant="secondary"
+                          label="Copy summary"
+                          onCopied={() => setExportOpen(false)}
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   <button
                     className="govuk-button govuk-button--secondary min-w-48"
                     onClick={editState.toggleHideCitations}
@@ -169,7 +233,7 @@ export default function SummaryPage({
           </div>
           {
             editState && editState.isEditable && (
-              <div className="flex justify-between">
+              <div className="flex flex-col lg:flex-row justify-between">
                 <div className="govuk-form-group govuk-!-margin-bottom-3">
                   <label className="govuk-label" htmlFor="version">
                     Version history
@@ -197,7 +261,7 @@ export default function SummaryPage({
                       return (
                         <option value={`${index}`} key={version.id}>
                           {version.content_source === 'ai_edit' && 'AI edit'}
-                          {version.content_source === 'manual_edit' && 'Manual edit'}
+                          {version.content_source === 'manual_edit' && 'edit'}
                           {version.content_source === 'initial_generation' && 'Initial'}
                           {' '}- {versionDate}
                         </option>
@@ -214,25 +278,46 @@ export default function SummaryPage({
                   <button
                     type="button"
                     className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
-                    onClick={editState.onCancel}
+                    onClick={handleDiscard}
                   >
                     Discard
                   </button>
                   <button
                     type="button"
                     className="govuk-button govuk-!-margin-bottom-0"
-                    onClick={editState.onSave}
+                    onClick={handleSave}
                   >
-                    <Save className="size-4" /> Save changes
+                    <Save className="size-4" /> Save
                   </button>
                 </div>
               </div>
             )
           }
         </div>
-        <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
-          {transcription.title}
-        </h1>
+        {editState?.isEditable ? (
+          <div className="govuk-form-group govuk-!-margin-bottom-6">
+            <h1 className="govuk-label-wrapper">
+              <label
+                className="govuk-label govuk-label--m"
+                htmlFor="transcription-title"
+              >
+                Transcription title
+              </label>
+            </h1>
+            <input
+              id="transcription-title"
+              className="govuk-input"
+              type="text"
+              placeholder="Add title"
+              value={draftTitle}
+              onChange={(e) => setDraftTitle(e.target.value)}
+            />
+          </div>
+        ) : (
+          <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
+            {transcription.title}
+          </h1>
+        )}
         <p className="govuk-body">{date}</p>
         {!minute ? (
           <p className="govuk-body">Summary not found.</p>

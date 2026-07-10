@@ -87,7 +87,7 @@ export const SpeakerEditor = ({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <button type="button" className="govuk-button govuk-button--inverse">
+        <button type="button" className="govuk-button govuk-button--secondary">
           <User className="size-4" />
           Name all speakers
         </button>
@@ -130,20 +130,20 @@ export const SpeakerEditor = ({
             )}
           </ul>
         </div>
-        <div className="govuk-button-group govuk-!-margin-top-4">
+        <div className="govuk-button-group govuk-!-margin-top-4 justify-end">
+          <button
+            type="button"
+            className="govuk-link text-(--govuk-link-colour)"
+            onClick={handleCancel}
+          >
+            Cancel
+          </button>
           <button
             type="button"
             className="govuk-button"
             onClick={handleSaveAll}
           >
             <Save className="size-4" /> Save all
-          </button>
-          <button
-            type="button"
-            className="govuk-button govuk-button--secondary"
-            onClick={handleCancel}
-          >
-            Cancel
           </button>
         </div>
       </DialogContent>
@@ -225,7 +225,7 @@ const PlayClipButton = ({
   return (
     <button
       type="button"
-      className="govuk-button govuk-button--inverse play-section-trigger play-section-trigger--border"
+      className="govuk-button govuk-button--secondary"
       onClick={() => {
         if (audioRef.current) {
           if (audioRef.current.paused) {

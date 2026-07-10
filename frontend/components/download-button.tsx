@@ -12,10 +12,8 @@ import posthog from 'posthog-js'
 
 export const DownloadButton = ({
   recordings,
-  inverse = false,
 }: {
   recordings: SingleRecording[]
-  inverse?: boolean
 }) => {
   const onClick = (recording: SingleRecording) => () => {
     posthog.capture('recording_downloaded', {
@@ -30,7 +28,7 @@ export const DownloadButton = ({
         download
         role="button"
         onClick={onClick(recordings[0])}
-        className={`govuk-button ${inverse ? 'govuk-button--inverse' : 'govuk-button--secondary'}`}
+        className="govuk-button govuk-button--secondary"
       >
         <Download className="size-4" /> Download audio
       </a>
@@ -40,7 +38,7 @@ export const DownloadButton = ({
     <Dialog>
       <DialogTrigger asChild>
         <button
-          className={`govuk-button ${inverse ? 'govuk-button--inverse' : 'govuk-button--secondary'}`}
+          className="govuk-button govuk-button--secondary"
         >
           <Download className="size-4" /> Download audio
         </button>

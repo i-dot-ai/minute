@@ -6,7 +6,6 @@ interface CopyButtonProps {
   textToCopy: string
   posthogEvent: string
   disabled?: boolean
-  variant?: 'inverse' | 'secondary'
   label?: string
   posthogProperties?: Record<string, string | number>
   onCopied?: () => void
@@ -16,7 +15,6 @@ function CopyButton({
   textToCopy,
   posthogEvent,
   disabled,
-  variant = 'inverse',
   label = 'Copy',
   posthogProperties,
   onCopied,
@@ -59,7 +57,7 @@ function CopyButton({
   return (
     <>
       <button
-        className={`govuk-button flex items-center gap-2 ${variant === 'secondary' ? 'govuk-button--secondary' : 'govuk-button--inverse'}`}
+        className="govuk-button flex items-center gap-2 govuk-button--secondary"
         onClick={handleCopy}
         disabled={disabled}
       >

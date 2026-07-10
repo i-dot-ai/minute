@@ -112,7 +112,7 @@ export function NewMinuteDialog({
           disabled={disabled}
         >
           <Plus className="size-4" />
-          Generate new summary
+          New summary
         </button>
       </DialogTrigger>
       <DialogContent>

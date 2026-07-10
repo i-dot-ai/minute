@@ -11,13 +11,13 @@
 }
 
 .govuk-button--secondary {
-  background-color: #d2e2f1;
+  /* background-color: #d2e2f1; */
 }
 
-.govuk-button--secondary:hover {
+/* .govuk-button--secondary:hover {
   background-color: #9db9d2;
   color: #0b0c0c;
-}
+} */
 
 .govuk-button--tertiary {
   background-color: var(--govuk-brand-colour);

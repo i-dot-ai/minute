@@ -5,10 +5,10 @@ import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/Trans
 import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTextArea'
 import { DialogueEntryForm } from '@/types/transcriptions'
 import { TranscriptionSidePanel } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/TranscriptionSidePanel'
+import { ExportTranscriptDialog } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/ExportTranscriptDialog'
 import { formatTime } from '@/components/audio/audio-player'
-import { DownloadButton } from '@/components/download-button'
 import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
-import CopyButton from '@/components/ui/copy-button'
+import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
@@ -16,7 +16,7 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowDown, Loader2, Play } from 'lucide-react'
+import { ArrowDown, Loader2, Pencil, Play, Save } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
@@ -38,6 +38,14 @@ export default function TranscriptPage({
         path: { transcription_id: transcriptionId },
       }
     ),
+  })
+
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [draftTitle, setDraftTitle] = useState('')
+  const { save: saveTitle, isPending: isSavingTitle } = useRenameTranscription({
+    id: transcriptionId,
+    title: transcription?.title,
+    status: transcription?.status ?? 'completed',
   })
 
   const methods = useForm<DialogueEntryForm>({
@@ -168,27 +176,75 @@ export default function TranscriptPage({
               </ol>
             </nav>
             <div className="govuk-button-group justify-end govuk-!-margin-bottom-0">
+              <button
+                type="button"
+                className="govuk-button govuk-button--secondary"
+                onClick={() => {
+                  setDraftTitle(transcription.title ?? '')
+                  setIsRenaming(true)
+                }}
+              >
+                <Pencil className="size-4" /> Rename
+              </button>
+              <ExportTranscriptDialog
+                transcriptionString={transcriptionString}
+                recordings={recordings}
+              />
               <SpeakerEditor
                 transcription={transcription}
                 src={hasRecordings ? recordings[0].url : undefined}
               />
-              <CopyButton
-                textToCopy={transcriptionString}
-                posthogEvent="transcript_content_copied"
-              />
-              {hasRecordings && (
-                <DownloadButton recordings={recordings} />
-              )}
               <DeleteTranscriptionButton
                 transcription={transcription}
               />
             </div>
           </div>
-          <div className="flex justify-between">
-            <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
-              {transcription.title}
-            </h1>
-          </div>
+          {isRenaming ? (
+            <div className="govuk-form-group">
+              <h1 className="govuk-label-wrapper">
+                <label
+                  className="govuk-label govuk-label--m"
+                  htmlFor="transcription-title"
+                >
+                  Transcription title
+                </label>
+              </h1>
+              <input
+                id="transcription-title"
+                className="govuk-input"
+                type="text"
+                placeholder="Add title"
+                value={draftTitle}
+                onChange={(e) => setDraftTitle(e.target.value)}
+              />
+              <div className="govuk-button-group govuk-!-margin-top-2">
+                <button
+                  type="button"
+                  className="govuk-button"
+                  disabled={isSavingTitle}
+                  onClick={() => {
+                    saveTitle(draftTitle)
+                    setIsRenaming(false)
+                  }}
+                >
+                  <Save className="size-4" /> Save
+                </button>
+                <button
+                  type="button"
+                  className="govuk-button govuk-button--secondary"
+                  onClick={() => setIsRenaming(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
+                {transcription.title}
+              </h1>
+            </>
+          )}
           <p className="govuk-body">{date}</p>
           <div
             className="govuk-visually-hidden"

@@ -200,7 +200,6 @@ export default function SummaryPage({
                             version_id: exportState?.minuteVersionId ?? '',
                           }}
                           disabled={!exportState}
-                          variant="secondary"
                           label="Copy summary"
                           onCopied={() => setExportOpen(false)}
                         />

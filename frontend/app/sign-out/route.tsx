@@ -2,14 +2,9 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 export async function GET() {
-  let clientId = ''
-  try {
-    clientId = process.env.OIDC_CLIENT_ID || ''
-    if (!clientId) {
-      console.error('OIDC_CLIENT_ID environment variable is not set')
-    }
-  } catch (e) {
-    console.error('Failed to get client ID:', e)
+  const clientId = process.env.OIDC_CLIENT_ID || ''
+  if (!clientId) {
+    console.error('OIDC_CLIENT_ID environment variable is not set')
   }
 
   const cookieStore = cookies()

@@ -10,7 +10,7 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
 import Fuse from 'fuse.js'
-import { Eye, EyeOff, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -223,11 +223,11 @@ export const TemplatesTable = () => {
     )
   }
 
-  const toggleHideSystem = () => {
-    router.replace(
-      pathname + buildQueryString({ typeFilter, hideSystem: !hideSystem })
-    )
-  }
+  // const toggleHideSystem = () => {
+  //   router.replace(
+  //     pathname + buildQueryString({ typeFilter, hideSystem: !hideSystem })
+  //   )
+  // }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

@@ -1,7 +1,7 @@
 'use client'
 
 import { AudioUploadForm } from '@/components/audio/AudioUploadForm'
-import { PosthogBanner } from '@/components/posthog-banner'
+// import { PosthogBanner } from '@/components/posthog-banner'
 import UrlMigrationBanner from '@/components/url-migration-banner'
 import { useIsOldUrl } from '@/hooks/use-is-old-url'
 import { AudioDevice } from '@/components/audio/microphone-permission'
@@ -87,7 +87,7 @@ export default function Home() {
 
   return (
     <div className="govuk-width-container govuk-main-wrapper">
-      {isOldUrl ? <UrlMigrationBanner /> : <PosthogBanner />}
+      {/* {isOldUrl ? <UrlMigrationBanner /> : <PosthogBanner />} */}
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
           <h1 className="govuk-heading-l">New meeting</h1>

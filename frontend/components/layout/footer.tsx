@@ -56,27 +56,17 @@ export const Footer = () => (
           <ul className="col-span-4 row-start-2 md:col-span-3">
             <li>
               <Link className="govuk-link" href="/">
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link className="govuk-link" href="/">
-                New transcription
+                New meeting
               </Link>
             </li>
             <li>
               <Link className="govuk-link" href="/transcriptions">
-                Saved transcriptions
+                Transcriptions
               </Link>
             </li>
             <li>
               <Link className="govuk-link" href="/templates">
                 Templates
-              </Link>
-            </li>
-            <li>
-              <Link className="govuk-link" href="/settings">
-                Settings
               </Link>
             </li>
           </ul>

@@ -136,15 +136,15 @@ export default function SummaryPage({
   )
 
   return (
-    <div className="govuk-grid-row">
-      <div className="govuk-grid-column-one-quarter">
+    <div className="flex min-h-0 flex-1">
+      <div className="w-1/4 shrink-0 pr-6">
         <TranscriptionSidePanel
           transcriptionId={transcriptionId}
           minutes={minutes}
         />
       </div>
-      <div className="govuk-grid-column-three-quarters">
-        <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-3 border-b border-(--govuk-border-colour)">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="shrink-0 border-b border-(--govuk-border-colour)">
           <div className="flex justify-between">
             <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
               <ol className="govuk-breadcrumbs__list">
@@ -290,48 +290,50 @@ export default function SummaryPage({
             </div>
           )}
         </div>
-        {editState?.isEditable ? (
-          <div className="govuk-form-group govuk-!-margin-bottom-6">
-            <h1 className="govuk-label-wrapper">
-              <label
-                className="govuk-label govuk-label--m"
-                htmlFor="transcription-title"
-              >
-                Transcription title
-              </label>
-            </h1>
-            <input
-              id="transcription-title"
-              className="govuk-input"
-              type="text"
-              placeholder="Add title"
-              value={draftTitle}
-              onChange={(e) => setDraftTitle(e.target.value)}
-            />
-          </div>
-        ) : (
-          <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
-            {transcription.title}
-          </h1>
-        )}
-        <p className="govuk-body">{date}</p>
-        {!minute ? (
-          <p className="govuk-body">Summary not found.</p>
-        ) : (
-          <>
-            <div className="govuk-grid-row">
-              <div className="govuk-grid-column-full">
-                <MinuteEditor
-                  key={minute.id}
-                  transcription={transcription}
-                  minute={minute}
-                  onExportStateChange={setExportState}
-                  onEditStateChange={setEditState}
-                />
-              </div>
+        <div className="govuk-!-padding-top-6 min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+          {editState?.isEditable ? (
+            <div className="govuk-form-group govuk-!-margin-bottom-6">
+              <h1 className="govuk-label-wrapper">
+                <label
+                  className="govuk-label govuk-label--m"
+                  htmlFor="transcription-title"
+                >
+                  Transcription title
+                </label>
+              </h1>
+              <input
+                id="transcription-title"
+                className="govuk-input"
+                type="text"
+                placeholder="Add title"
+                value={draftTitle}
+                onChange={(e) => setDraftTitle(e.target.value)}
+              />
             </div>
-          </>
-        )}
+          ) : (
+            <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
+              {transcription.title}
+            </h1>
+          )}
+          <p className="govuk-body">{date}</p>
+          {!minute ? (
+            <p className="govuk-body">Summary not found.</p>
+          ) : (
+            <>
+              <div className="govuk-grid-row">
+                <div className="govuk-grid-column-full">
+                  <MinuteEditor
+                    key={minute.id}
+                    transcription={transcription}
+                    minute={minute}
+                    onExportStateChange={setExportState}
+                    onEditStateChange={setEditState}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

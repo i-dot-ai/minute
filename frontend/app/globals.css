@@ -5,7 +5,7 @@
 
 /* OVERRIDE GOVUK STYLES */
 
-.govuk-button {
+/* .govuk-button {
   background-color: var(--govuk-brand-colour);
   box-shadow: none;
 }
@@ -22,7 +22,7 @@
 .govuk-button--secondary:hover {
   background-color: #9db9d2;
   color: #0b0c0c;
-}
+} */
 
 .govuk-button--tertiary {
   background-color: var(--govuk-brand-colour);

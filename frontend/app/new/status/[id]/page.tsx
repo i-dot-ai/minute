@@ -95,9 +95,9 @@ export default function RecordStatusPage({
     <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-one-third">
-          <h1 ref={headingRef} tabIndex={-1} className="govuk-heading-l">
+          {/* <h1 ref={headingRef} tabIndex={-1} className="govuk-heading-l">
             New meeting
-          </h1>
+          </h1> */}
         </div>
         <div className="govuk-grid-column-two-thirds">
           <div className="govuk-button-group flex justify-end">

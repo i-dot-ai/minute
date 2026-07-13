@@ -155,8 +155,8 @@ export default function TranscriptPage({
   )
 
   return (
-    <div className="govuk-grid-row">
-      <div className="govuk-grid-column-one-quarter">
+    <div className="flex min-h-0 flex-1">
+      <div className="w-1/4 shrink-0 pr-6">
         <TranscriptionSidePanel
           transcriptionId={transcriptionId}
           minutes={minutes}
@@ -164,8 +164,8 @@ export default function TranscriptPage({
         />
       </div>
       <FormProvider {...methods}>
-        <div className="govuk-grid-column-three-quarters">
-          <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-3 flex justify-between border-b border-(--govuk-border-colour)">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <div className="govuk-!-padding-bottom-3 flex shrink-0 justify-between border-b border-(--govuk-border-colour)">
             <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
               <ol className="govuk-breadcrumbs__list">
                 <li className="govuk-breadcrumbs__list-item">
@@ -200,135 +200,141 @@ export default function TranscriptPage({
               <DeleteTranscriptionButton transcription={transcription} />
             </div>
           </div>
-          {isRenaming ? (
-            <div className="govuk-form-group">
-              <h1 className="govuk-label-wrapper">
-                <label
-                  className="govuk-label govuk-label--m"
-                  htmlFor="transcription-title"
-                >
-                  Transcription title
-                </label>
-              </h1>
-              <input
-                id="transcription-title"
-                className="govuk-input"
-                type="text"
-                placeholder="Add title"
-                value={draftTitle}
-                onChange={(e) => setDraftTitle(e.target.value)}
-              />
-              <div className="govuk-button-group govuk-!-margin-top-2">
-                <button
-                  type="button"
-                  className="govuk-button"
-                  disabled={isSavingTitle}
-                  onClick={() => {
-                    saveTitle(draftTitle)
-                    setIsRenaming(false)
-                  }}
-                >
-                  <Save className="size-4" /> Save
-                </button>
-                <button
-                  type="button"
-                  className="govuk-button govuk-button--secondary"
-                  onClick={() => setIsRenaming(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
-                {transcription.title}
-              </h1>
-            </>
-          )}
-          <p className="govuk-body">{date}</p>
-          <div
-            className="govuk-visually-hidden"
-            role="status"
-            aria-live="polite"
-          >
-            {saveMessage}
-          </div>
-          <form onSubmit={handleSubmit(saveTranscription)}>
-            {hasRecordings && (
-              <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-4 govuk-!-padding-top-2 sticky top-0 z-10 border-b border-(--govuk-border-colour) bg-white">
-                <div className="flex">
-                  <audio
-                    controls
-                    src={recordings[0].url}
-                    className="w-full"
-                    ref={audioRef}
-                    onSeeked={delayedScroll}
-                    onTimeUpdate={(e) => {
-                      if ((e.target as HTMLAudioElement).currentTime != null) {
-                        setTime((e.target as HTMLAudioElement).currentTime)
-                      }
+          <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+            {isRenaming ? (
+              <div className="govuk-form-group govuk-!-padding-top-6">
+                <h1 className="govuk-label-wrapper">
+                  <label
+                    className="govuk-label govuk-label--m"
+                    htmlFor="transcription-title"
+                  >
+                    Transcription title
+                  </label>
+                </h1>
+                <input
+                  id="transcription-title"
+                  className="govuk-input"
+                  type="text"
+                  placeholder="Add title"
+                  value={draftTitle}
+                  onChange={(e) => setDraftTitle(e.target.value)}
+                />
+                <div className="govuk-button-group govuk-!-margin-top-2">
+                  <button
+                    type="button"
+                    className="govuk-button"
+                    disabled={isSavingTitle}
+                    onClick={() => {
+                      saveTitle(draftTitle)
+                      setIsRenaming(false)
                     }}
-                  />
-                  <div className="govuk-button-group govuk-!-margin-top-1 govuk-!-margin-left-3 govuk-!-margin-bottom-0">
-                    <button
-                      type="button"
-                      onClick={scrollToPlaying}
-                      className="govuk-button govuk-button--secondary whitespace-nowrap"
-                    >
-                      <ArrowDown className="size-4" /> Scroll to current section
-                    </button>
-                  </div>
+                  >
+                    <Save className="size-4" /> Save
+                  </button>
+                  <button
+                    type="button"
+                    className="govuk-button govuk-button--secondary"
+                    onClick={() => setIsRenaming(false)}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
+            ) : (
+              <>
+                <h1 className="govuk-heading-l govuk-!-margin-bottom-2 govuk-!-padding-top-6">
+                  {transcription.title}
+                </h1>
+              </>
             )}
-            <div className="flex flex-col gap-6">
-              {fields.map((entry, index, array) => {
-                const isPlaying =
-                  time &&
-                  time >= entry.start_time &&
-                  (!array[index + 1] || time < array[index + 1].start_time)
-                return (
-                  <div
-                    className={`transcription-text-area ${isPlaying ? 'transcription-text-area--playing' : ''}`}
-                    key={index}
-                    ref={isPlaying ? playingRef : null}
-                  >
-                    <div className="flex justify-between">
-                      <SpeakerNamePopover
-                        entry={entry}
-                        index={index}
-                        update={update}
-                      />
-                      <div className="govuk-button-group govuk-!-margin-right-0 govuk-!-margin-bottom-0">
-                        {hasRecordings && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (audioRef.current) {
-                                audioRef.current.currentTime = entry.start_time
-                                if (audioRef.current.paused) {
-                                  audioRef.current.play()
-                                }
-                              }
-                            }}
-                            className="play-section-trigger govuk-link govuk-link--no-visited-state govuk-!-margin-top-4 govuk-!-margin-bottom-4"
-                          >
-                            <Play className="size-4" />
-                            <span className="govuk-visually-hidden">
-                              Play section from{' '}
-                            </span>
-                            {formatTime(entry.start_time)}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <TranscriptionTextArea control={control} index={index} />
-                  </div>
-                )
-              })}
+            <p className="govuk-body">{date}</p>
+            <div
+              className="govuk-visually-hidden"
+              role="status"
+              aria-live="polite"
+            >
+              {saveMessage}
             </div>
-          </form>
+            <form onSubmit={handleSubmit(saveTranscription)}>
+              {hasRecordings && (
+                <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-4 govuk-!-padding-top-2 sticky top-0 z-10 border-b border-(--govuk-border-colour) bg-white">
+                  <div className="flex">
+                    <audio
+                      controls
+                      src={recordings[0].url}
+                      className="w-full"
+                      ref={audioRef}
+                      onSeeked={delayedScroll}
+                      onTimeUpdate={(e) => {
+                        if (
+                          (e.target as HTMLAudioElement).currentTime != null
+                        ) {
+                          setTime((e.target as HTMLAudioElement).currentTime)
+                        }
+                      }}
+                    />
+                    <div className="govuk-button-group govuk-!-margin-top-1 govuk-!-margin-left-3 govuk-!-margin-bottom-0">
+                      <button
+                        type="button"
+                        onClick={scrollToPlaying}
+                        className="govuk-button govuk-button--secondary whitespace-nowrap"
+                      >
+                        <ArrowDown className="size-4" /> Scroll to current
+                        section
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="govuk-!-padding-bottom-8 flex flex-col gap-6">
+                {fields.map((entry, index, array) => {
+                  const isPlaying =
+                    time &&
+                    time >= entry.start_time &&
+                    (!array[index + 1] || time < array[index + 1].start_time)
+                  return (
+                    <div
+                      className={`transcription-text-area ${isPlaying ? 'transcription-text-area--playing' : ''}`}
+                      key={index}
+                      ref={isPlaying ? playingRef : null}
+                    >
+                      <div className="flex justify-between">
+                        <SpeakerNamePopover
+                          entry={entry}
+                          index={index}
+                          update={update}
+                        />
+                        <div className="govuk-button-group govuk-!-margin-right-0 govuk-!-margin-bottom-0">
+                          {hasRecordings && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (audioRef.current) {
+                                  audioRef.current.currentTime =
+                                    entry.start_time
+                                  if (audioRef.current.paused) {
+                                    audioRef.current.play()
+                                  }
+                                }
+                              }}
+                              className="play-section-trigger govuk-link govuk-link--no-visited-state govuk-!-margin-top-4 govuk-!-margin-bottom-4"
+                            >
+                              <Play className="size-4" />
+                              <span className="govuk-visually-hidden">
+                                Play section from{' '}
+                              </span>
+                              {formatTime(entry.start_time)}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <TranscriptionTextArea control={control} index={index} />
+                    </div>
+                  )
+                })}
+              </div>
+            </form>
+          </div>
         </div>
       </FormProvider>
     </div>

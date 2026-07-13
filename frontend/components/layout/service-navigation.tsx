@@ -11,12 +11,12 @@ export const ServiceNavigation = () => {
   return (
     <section
       aria-label="Service information"
-      className="sticky top-0 h-screen w-40 shrink-0 bg-(--govuk-surface-background-colour)"
+      className="sticky top-[61px] h-[calc(100vh-61px)] w-40 shrink-0 border-r border-(--govuk-surface-border-colour) bg-(--govuk-surface-background-colour)"
     >
       <nav aria-label="Menu" className="flex h-full flex-col justify-between">
         <ul className="flex w-40 flex-col" id="navigation">
           <li
-            className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname === '/' || pathname.includes('/new') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
+            className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname === '/' || pathname.includes('/new') ? '!border-r-(--govuk-surface-border-colour) !border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
             <GuardedLink
               href="/"
@@ -32,7 +32,7 @@ export const ServiceNavigation = () => {
             </GuardedLink>
           </li>
           <li
-            className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname.includes('/transcriptions') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
+            className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname.includes('/transcriptions') ? '!border-r-(--govuk-surface-border-colour) !border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
             <GuardedLink
               aria-current={
@@ -47,7 +47,7 @@ export const ServiceNavigation = () => {
             </GuardedLink>
           </li>
           <li
-            className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname.includes('/templates') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
+            className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname.includes('/templates') ? '!border-r-(--govuk-surface-border-colour) !border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
             <GuardedLink
               aria-current={
@@ -62,9 +62,9 @@ export const ServiceNavigation = () => {
             </GuardedLink>
           </li>
         </ul>
-        <ul className="flex w-40 flex-col border-t border-(--govuk-border-colour)">
+        <ul className="flex w-40 flex-col">
           <li
-            className={`w-full !border-l-4 ${pathname.includes('/privacy') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
+            className={`w-full !border-l-4 ${pathname.includes('/privacy') ? '!border-r-(--govuk-surface-border-colour) !border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
             <GuardedLink
               aria-current={pathname.includes('/privacy') ? 'page' : undefined}
@@ -75,7 +75,7 @@ export const ServiceNavigation = () => {
             </GuardedLink>
           </li>
           <li
-            className={`w-full !border-l-4 ${pathname.includes('/support') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
+            className={`w-full !border-l-4 ${pathname.includes('/support') ? '!border-r-(--govuk-surface-border-colour) !border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
             <GuardedLink
               aria-current={pathname.includes('/support') ? 'page' : undefined}

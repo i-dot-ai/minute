@@ -90,7 +90,7 @@ export default function Home() {
       {/* {isOldUrl ? <UrlMigrationBanner /> : <PosthogBanner />} */}
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
-          <h1 className="govuk-heading-l">New meeting</h1>
+          {/* <h1 className="govuk-heading-l">New meeting</h1> */}
           <p className="govuk-body">
             Please ensure that all participants are aware that they have been
             recorded. Suitable up to <strong>OFFICIAL SENSITIVE</strong>.

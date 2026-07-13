@@ -1,10 +1,10 @@
 import Link from 'next/link'
-import { Suspense } from 'react'
-import { ServiceNavigation } from '@/components/layout/service-navigation'
+// import { Suspense } from 'react'
+// import { ServiceNavigation } from '@/components/layout/service-navigation'
 
 export const Header = async () => {
   return (
-    <header>
+    <header className="fixed top-0 right-0 left-0 z-50">
       <div className="govuk-header">
         <div className="govuk-header__container govuk-width-container flex items-center justify-between">
           <div className="govuk-header__logo">
@@ -55,9 +55,9 @@ export const Header = async () => {
           </p>
         </div>
       </div>
-      <Suspense fallback={<div>Loading...</div>}>
+      {/* <Suspense fallback={<div>Loading...</div>}>
         <ServiceNavigation />
-      </Suspense>
+      </Suspense> */}
     </header>
   )
 }

@@ -286,7 +286,7 @@ export function MinuteEditor({
     )
   }
   return (
-    <div>
+    <div className="govuk-!-padding-bottom-8">
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Controller
           control={form.control}

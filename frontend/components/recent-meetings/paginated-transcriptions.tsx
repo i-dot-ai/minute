@@ -1,5 +1,6 @@
 'use client'
 
+import { DataRetentionSelect } from '@/components/recent-meetings/data-retention-select'
 import { DeleteTranscriptionsDialog } from '@/components/recent-meetings/delete-transcriptions-dialog'
 import { RecentOfflineRecordingsSection } from '@/components/recent-meetings/recent-offline-recordings-section'
 import { TranscriptionsList } from '@/components/recent-meetings/transcriptions-list'
@@ -145,14 +146,17 @@ export const PaginatedTranscriptions = () => {
   const selectedCount = selectedIds.size
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex shrink-0 items-end justify-between">
         <form
           role="search"
           className="govuk-form-group govuk-!-width-one-half"
           onSubmit={handleSearchSubmit}
         >
-          <label className="govuk-label" htmlFor="search-transcriptions">
+          <label
+            className="govuk-label govuk-label--m"
+            htmlFor="search-transcriptions"
+          >
             Search transcriptions by title
           </label>
           <input
@@ -165,7 +169,7 @@ export const PaginatedTranscriptions = () => {
           />
         </form>
         <div className="govuk-form-group">
-          <label className="govuk-label" htmlFor="filter">
+          <label className="govuk-label govuk-label--m" htmlFor="filter">
             Filter by
           </label>
           <select
@@ -180,11 +184,14 @@ export const PaginatedTranscriptions = () => {
             <option value="failed">Failed</option>
           </select>
         </div>
+        <DataRetentionSelect />
       </div>
-      <Suspense fallback={null}>
-        <RecentOfflineRecordingsSection />
-      </Suspense>
-      <div className="govuk-!-margin-bottom-3 govuk-!-padding-bottom-2 flex items-center justify-between border-b border-(--govuk-border-colour)">
+      <div className="shrink-0">
+        <Suspense fallback={null}>
+          <RecentOfflineRecordingsSection />
+        </Suspense>
+      </div>
+      <div className="govuk-!-margin-bottom-3 govuk-!-padding-bottom-2 flex shrink-0 items-center justify-between border-b border-(--govuk-border-colour)">
         <div className="flex items-center gap-2">
           <div
             className="govuk-checkboxes govuk-checkboxes--small relative flex"
@@ -231,104 +238,108 @@ export const PaginatedTranscriptions = () => {
           )}
         </p>
       </div>
-      {isLoading ? (
-        <p className="govuk-body" role="status">
-          Loading transcriptions...
-        </p>
-      ) : error ? (
-        <p className="govuk-body" role="status">
-          Error loading transcriptions
-        </p>
-      ) : transcriptions.length === 0 ? (
-        <p className="govuk-body" role="status">
-          No transcriptions found
-        </p>
-      ) : (
-        <>
-          <TranscriptionsList
-            transcriptions={transcriptions}
-            selectable
-            selectedIds={selectedIds}
-            onToggle={toggleOne}
-          />
-          {totalPages > 1 && (
-            <nav
-              className="govuk-pagination flex justify-center"
-              aria-label="Pagination"
-            >
-              {currentPage > 1 && (
-                <div className="govuk-pagination__prev">
-                  <Link
-                    className="govuk-link govuk-pagination__link"
-                    href={
-                      pathname +
-                      buildQueryString(currentPage - 1, filterBy, search)
-                    }
-                    rel="prev"
-                  >
-                    <svg
-                      className="govuk-pagination__icon govuk-pagination__icon--prev"
-                      xmlns="http://www.w3.org/2000/svg"
-                      height="13"
-                      width="15"
-                      aria-hidden="true"
-                      focusable="false"
-                      viewBox="0 0 15 13"
-                    >
-                      <path d="m6.5938-0.0078125-6.7266 6.7266 6.7441 6.4062 1.377-1.449-4.1856-3.9768h12.896v-2h-12.984l4.2931-4.293-1.414-1.414z"></path>
-                    </svg>
-                    <span className="govuk-pagination__link-title">
-                      Previous
-                      <span className="govuk-visually-hidden"> page</span>
-                    </span>
-                  </Link>
-                </div>
-              )}
-              <ul className="govuk-pagination__list">
-                {getPageNumbers().map((page) => (
-                  <li key={page} className="govuk-pagination__item">
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+        {isLoading ? (
+          <p className="govuk-body" role="status">
+            Loading transcriptions...
+          </p>
+        ) : error ? (
+          <p className="govuk-body" role="status">
+            Error loading transcriptions
+          </p>
+        ) : transcriptions.length === 0 ? (
+          <p className="govuk-body" role="status">
+            No transcriptions found
+          </p>
+        ) : (
+          <>
+            <TranscriptionsList
+              transcriptions={transcriptions}
+              selectable
+              selectedIds={selectedIds}
+              onToggle={toggleOne}
+            />
+            {totalPages > 1 && (
+              <nav
+                className="govuk-pagination flex justify-center"
+                aria-label="Pagination"
+              >
+                {currentPage > 1 && (
+                  <div className="govuk-pagination__prev">
                     <Link
                       className="govuk-link govuk-pagination__link"
-                      href={pathname + buildQueryString(page, filterBy, search)}
-                      aria-label={`Page ${page}`}
+                      href={
+                        pathname +
+                        buildQueryString(currentPage - 1, filterBy, search)
+                      }
+                      rel="prev"
                     >
-                      {page}
+                      <svg
+                        className="govuk-pagination__icon govuk-pagination__icon--prev"
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="13"
+                        width="15"
+                        aria-hidden="true"
+                        focusable="false"
+                        viewBox="0 0 15 13"
+                      >
+                        <path d="m6.5938-0.0078125-6.7266 6.7266 6.7441 6.4062 1.377-1.449-4.1856-3.9768h12.896v-2h-12.984l4.2931-4.293-1.414-1.414z"></path>
+                      </svg>
+                      <span className="govuk-pagination__link-title">
+                        Previous
+                        <span className="govuk-visually-hidden"> page</span>
+                      </span>
                     </Link>
-                  </li>
-                ))}
-              </ul>
-              {currentPage < totalPages && (
-                <div className="govuk-pagination__next">
-                  <Link
-                    className="govuk-link govuk-pagination__link"
-                    href={
-                      pathname +
-                      buildQueryString(currentPage + 1, filterBy, search)
-                    }
-                    rel="next"
-                  >
-                    <span className="govuk-pagination__link-title">
-                      Next
-                      <span className="govuk-visually-hidden"> page</span>
-                    </span>
-                    <svg
-                      className="govuk-pagination__icon govuk-pagination__icon--next"
-                      xmlns="http://www.w3.org/2000/svg"
-                      height="13"
-                      width="15"
-                      aria-hidden="true"
-                      focusable="false"
-                      viewBox="0 0 15 13"
+                  </div>
+                )}
+                <ul className="govuk-pagination__list">
+                  {getPageNumbers().map((page) => (
+                    <li key={page} className="govuk-pagination__item">
+                      <Link
+                        className="govuk-link govuk-pagination__link"
+                        href={
+                          pathname + buildQueryString(page, filterBy, search)
+                        }
+                        aria-label={`Page ${page}`}
+                      >
+                        {page}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                {currentPage < totalPages && (
+                  <div className="govuk-pagination__next">
+                    <Link
+                      className="govuk-link govuk-pagination__link"
+                      href={
+                        pathname +
+                        buildQueryString(currentPage + 1, filterBy, search)
+                      }
+                      rel="next"
                     >
-                      <path d="m8.107-0.0078125-1.4136 1.414 4.2926 4.293h-12.986v2h12.896l-4.1855 3.9766 1.377 1.4492 6.7441-6.4062-6.7246-6.7266z"></path>
-                    </svg>
-                  </Link>
-                </div>
-              )}
-            </nav>
-          )}
-        </>
-      )}
+                      <span className="govuk-pagination__link-title">
+                        Next
+                        <span className="govuk-visually-hidden"> page</span>
+                      </span>
+                      <svg
+                        className="govuk-pagination__icon govuk-pagination__icon--next"
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="13"
+                        width="15"
+                        aria-hidden="true"
+                        focusable="false"
+                        viewBox="0 0 15 13"
+                      >
+                        <path d="m8.107-0.0078125-1.4136 1.414 4.2926 4.293h-12.986v2h12.896l-4.1855 3.9766 1.377 1.4492 6.7441-6.4062-6.7246-6.7266z"></path>
+                      </svg>
+                    </Link>
+                  </div>
+                )}
+              </nav>
+            )}
+          </>
+        )}
+      </div>
       <DeleteTranscriptionsDialog
         open={deleteDialogOpen}
         setOpen={setDeleteDialogOpen}

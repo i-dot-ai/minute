@@ -11,6 +11,8 @@ import { Toaster } from 'sonner'
 import Link from 'next/link'
 import './globals.css'
 import ServiceNavigation from '@/components/layout/service-navigation'
+import { Header } from '@/components/layout/header'
+// import { Footer } from '@/components/layout/footer'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -44,9 +46,10 @@ export default function RootLayout({
                 </Link>
                 <OnboardingTour />
                 <RecordingSessionProvider>
-                  <div className="flex">
+                  <Header />
+                  <div className="mt-[61px] flex">
                     <ServiceNavigation />
-                    <div className="min-h-screen flex-1">
+                    <div className="min-h-[calc(100vh-61px)] flex-1">
                       <main id="main-content" tabIndex={-1}>
                         {children}
                       </main>

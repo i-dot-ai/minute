@@ -3,7 +3,7 @@
 import { AudioUploadForm } from '@/components/audio/AudioUploadForm'
 // import { PosthogBanner } from '@/components/posthog-banner'
 // import UrlMigrationBanner from '@/components/url-migration-banner'
-import { useIsOldUrl } from '@/hooks/use-is-old-url'
+// import { useIsOldUrl } from '@/hooks/use-is-old-url'
 import { AudioDevice } from '@/components/audio/microphone-permission'
 import { useRecordingSession } from '@/providers/recording-session-provider'
 import { Mic, Video, Upload } from 'lucide-react'

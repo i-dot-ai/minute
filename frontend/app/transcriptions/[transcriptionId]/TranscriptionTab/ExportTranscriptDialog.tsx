@@ -1,11 +1,7 @@
 'use client'
 
 import CopyButton from '@/components/ui/copy-button'
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { SingleRecording } from '@/lib/client'
 import { Download } from 'lucide-react'
 import posthog from 'posthog-js'
@@ -31,9 +27,7 @@ export const ExportTranscriptDialog = ({
         Export
       </button>
       <DialogContent>
-        <DialogTitle className="govuk-heading-l">
-          Export transcript
-        </DialogTitle>
+        <DialogTitle className="govuk-heading-l">Export transcript</DialogTitle>
         <p className="govuk-body">Copy transcript</p>
         <div className="govuk-button-group">
           <CopyButton
@@ -61,9 +55,7 @@ export const ExportTranscriptDialog = ({
               }}
             >
               <Download className="size-4" /> Download{' '}
-              {recordings.length > 1
-                ? `${recording.extension} file`
-                : 'audio'}
+              {recordings.length > 1 ? `${recording.extension} file` : 'audio'}
             </a>
           ))}
         </div>

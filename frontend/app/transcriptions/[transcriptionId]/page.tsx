@@ -25,7 +25,7 @@ export default function TranscriptionPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-        ['awaiting_start', 'in_progress'].includes(query.state.data.status)
+      ['awaiting_start', 'in_progress'].includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -75,7 +75,9 @@ export default function TranscriptionPage({
             </li>
           </ol>
         </nav>
-        <h1 className="govuk-heading-l govuk-!-margin-bottom-2">404 - Transcription not found</h1>
+        <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
+          404 - Transcription not found
+        </h1>
         <p className="govuk-body">
           The transcription you are looking for does not exist.
         </p>
@@ -109,7 +111,10 @@ export default function TranscriptionPage({
           <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
             <ol className="govuk-breadcrumbs__list">
               <li className="govuk-breadcrumbs__list-item">
-                <Link href="/transcriptions" className="govuk-breadcrumbs__link">
+                <Link
+                  href="/transcriptions"
+                  className="govuk-breadcrumbs__link"
+                >
                   Back to transcriptions
                 </Link>
               </li>
@@ -163,7 +168,7 @@ export default function TranscriptionPage({
             </p>
           </div>
           <div className="govuk-grid-column-one-quarter">
-            <div className="govuk-button-group transcription-page__actions float-right govuk-!-margin-bottom-0">
+            <div className="govuk-button-group transcription-page__actions govuk-!-margin-bottom-0 float-right">
               <DeleteTranscriptionButton transcription={transcription} />
             </div>
           </div>

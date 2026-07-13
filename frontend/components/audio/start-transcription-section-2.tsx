@@ -15,7 +15,6 @@ import { useEffect } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { Star } from 'lucide-react'
 
 function toFormTemplate(
   template: TemplateResponse | TemplateMetadata,
@@ -175,8 +174,7 @@ export const StartTranscriptionSection = ({
 
   const isCurrentDefault = resolvedTemplate.id
     ? userTemplates.find((t) => t.id === resolvedTemplate.id)?.is_default
-    : defaultTemplates.find((t) => t.name === resolvedTemplate.name)
-      ?.is_default
+    : defaultTemplates.find((t) => t.name === resolvedTemplate.name)?.is_default
 
   const handleSetAsDefault = () => {
     setDefault({
@@ -187,7 +185,9 @@ export const StartTranscriptionSection = ({
   }
 
   return (
-    <div className={`govuk-!-padding-top-6 items-start border-t border-(--govuk-border-colour) ${!isCurrentDefault ? 'border-b' : ''}`}>
+    <div
+      className={`govuk-!-padding-top-6 items-start border-t border-(--govuk-border-colour) ${!isCurrentDefault ? 'border-b' : ''}`}
+    >
       <div className="govuk-form-group flex items-center gap-2">
         <label className="govuk-label" htmlFor="template">
           Summarise using:
@@ -246,7 +246,7 @@ export const StartTranscriptionSection = ({
       {!isCurrentDefault && (
         <button
           type="button"
-          className="govuk-link text-(--govuk-link-colour) govuk-!-margin-bottom-6 float-right"
+          className="govuk-link govuk-!-margin-bottom-6 float-right text-(--govuk-link-colour)"
           disabled={isSettingDefault}
           onClick={handleSetAsDefault}
         >

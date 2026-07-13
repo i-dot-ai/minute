@@ -83,9 +83,7 @@ async def update_default_template(
     if data.template_id is not None:
         template = (
             await session.exec(
-                select(UserTemplate).where(
-                    UserTemplate.id == data.template_id, UserTemplate.user_id == user.id
-                )
+                select(UserTemplate).where(UserTemplate.id == data.template_id, UserTemplate.user_id == user.id)
             )
         ).first()
         if not template:

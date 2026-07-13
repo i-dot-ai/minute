@@ -144,18 +144,21 @@ export default function SummaryPage({
         />
       </div>
       <div className="govuk-grid-column-three-quarters">
-        <div className="border-b border-(--govuk-border-colour) govuk-!-margin-bottom-6 govuk-!-padding-bottom-3">
+        <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-3 border-b border-(--govuk-border-colour)">
           <div className="flex justify-between">
             <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
               <ol className="govuk-breadcrumbs__list">
                 <li className="govuk-breadcrumbs__list-item">
-                  <Link href="/transcriptions" className="govuk-breadcrumbs__link">
+                  <Link
+                    href="/transcriptions"
+                    className="govuk-breadcrumbs__link"
+                  >
                     Back
                   </Link>
                 </li>
               </ol>
             </nav>
-            <div className="govuk-button-group justify-end govuk-!-margin-bottom-0">
+            <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
               {editState && (
                 <>
                   <button
@@ -221,7 +224,6 @@ export default function SummaryPage({
                       : 'Hide references'}
                   </button>
 
-
                   <DeleteTranscriptionButton
                     transcription={transcription}
                     disabled={editState?.isEditable}
@@ -230,68 +232,63 @@ export default function SummaryPage({
               )}
             </div>
           </div>
-          {
-            editState && editState.isEditable && (
-              <div className="flex flex-col lg:flex-row justify-between">
-                <div className="govuk-form-group govuk-!-margin-bottom-3">
-                  <label className="govuk-label" htmlFor="version">
-                    Version history
-                  </label>
-                  <select
-                    className="govuk-select w-full"
-                    id="version"
-                    name="version"
-                    onChange={(e) =>
-                      editState.setVersion(Number(e.target.value))
-                    }
-                    value={editState.version}
-                  >
-                    {editState.minuteVersions.map((version, index) => {
-                      const versionDate = new Date(
-                        version.created_datetime
-                      ).toLocaleDateString('en-GB', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: 'numeric',
-                        minute: 'numeric',
-                      })
-                      const versionNumber =
-                        editState.minuteVersions.length - index
-                      return (
-                        <option value={`${index}`} key={version.id}>
-                          {version.content_source === 'ai_edit' && 'AI edit'}
-                          {version.content_source === 'manual_edit' && 'edit'}
-                          {version.content_source === 'initial_generation' && 'Initial'}
-                          {' '}- {versionDate}
-                        </option>
-                      )
-                    })}
-                  </select>
-                </div>
-                <div className="govuk-button-group !items-end">
-                  <AiEditPopover
-                    minuteId={editState.minuteId}
-                    minuteVersionId={editState.minuteVersionId}
-                    onSuccess={editState.onSuccess}
-                  />
-                  <button
-                    type="button"
-                    className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
-                    onClick={handleDiscard}
-                  >
-                    Discard
-                  </button>
-                  <button
-                    type="button"
-                    className="govuk-button govuk-!-margin-bottom-0"
-                    onClick={handleSave}
-                  >
-                    <Save className="size-4" /> Save
-                  </button>
-                </div>
+          {editState && editState.isEditable && (
+            <div className="flex flex-col justify-between lg:flex-row">
+              <div className="govuk-form-group govuk-!-margin-bottom-3">
+                <label className="govuk-label" htmlFor="version">
+                  Version history
+                </label>
+                <select
+                  className="govuk-select w-full"
+                  id="version"
+                  name="version"
+                  onChange={(e) => editState.setVersion(Number(e.target.value))}
+                  value={editState.version}
+                >
+                  {editState.minuteVersions.map((version, index) => {
+                    const versionDate = new Date(
+                      version.created_datetime
+                    ).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: 'numeric',
+                      minute: 'numeric',
+                    })
+                    return (
+                      <option value={`${index}`} key={version.id}>
+                        {version.content_source === 'ai_edit' && 'AI edit'}
+                        {version.content_source === 'manual_edit' && 'edit'}
+                        {version.content_source === 'initial_generation' &&
+                          'Initial'}{' '}
+                        - {versionDate}
+                      </option>
+                    )
+                  })}
+                </select>
               </div>
-            )
-          }
+              <div className="govuk-button-group !items-end">
+                <AiEditPopover
+                  minuteId={editState.minuteId}
+                  minuteVersionId={editState.minuteVersionId}
+                  onSuccess={editState.onSuccess}
+                />
+                <button
+                  type="button"
+                  className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                  onClick={handleDiscard}
+                >
+                  Discard
+                </button>
+                <button
+                  type="button"
+                  className="govuk-button govuk-!-margin-bottom-0"
+                  onClick={handleSave}
+                >
+                  <Save className="size-4" /> Save
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         {editState?.isEditable ? (
           <div className="govuk-form-group govuk-!-margin-bottom-6">
@@ -324,7 +321,6 @@ export default function SummaryPage({
           <>
             <div className="govuk-grid-row">
               <div className="govuk-grid-column-full">
-
                 <MinuteEditor
                   key={minute.id}
                   transcription={transcription}

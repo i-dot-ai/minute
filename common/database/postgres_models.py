@@ -124,9 +124,7 @@ class User(BaseTableMixin, table=True):
     # The user's chosen default template. At most one is ever set: a custom template
     # (default_template_id) or a system template keyed by name (default_template_name).
     # Both null means no explicit default (falls back to the implicit General template).
-    default_template_id: UUID | None = Field(
-        default=None, foreign_key="user_template.id", ondelete="SET NULL"
-    )
+    default_template_id: UUID | None = Field(default=None, foreign_key="user_template.id", ondelete="SET NULL")
     default_template_name: str | None = Field(default=None)
     transcriptions: list["Transcription"] = Relationship(back_populates="user")
 

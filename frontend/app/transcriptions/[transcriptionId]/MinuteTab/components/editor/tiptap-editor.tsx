@@ -169,8 +169,7 @@ function SimpleEditor({
 
       <div
         className={cn(
-          isEditing &&
-            'border border-2 border-(--govuk-input-border-colour)'
+          isEditing && 'border border-2 border-(--govuk-input-border-colour)'
         )}
       >
         <EditorContent

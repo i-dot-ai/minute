@@ -43,7 +43,7 @@ export default function RecordStatusPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-        GENERATING_STATUSES.includes(query.state.data.status)
+      GENERATING_STATUSES.includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -67,7 +67,7 @@ export default function RecordStatusPage({
     enabled: !!minuteId && transcriptionDone,
     refetchInterval: (query) =>
       query.state.data?.[0]?.status &&
-        GENERATING_STATUSES.includes(query.state.data[0].status)
+      GENERATING_STATUSES.includes(query.state.data[0].status)
         ? 2000
         : false,
   })
@@ -101,18 +101,12 @@ export default function RecordStatusPage({
         </div>
         <div className="govuk-grid-column-two-thirds">
           <div className="govuk-button-group flex justify-end">
-            <Link
-              href="/"
-              className="govuk-button govuk-button--secondary"
-            >
+            <Link href="/" className="govuk-button govuk-button--secondary">
               <PlusIcon className="size-4" />
               New meeting
             </Link>
             <DownloadButton recordings={recordings} />
-            <button
-              type="button"
-              className="govuk-link link--warning"
-            >
+            <button type="button" className="govuk-link link--warning">
               Delete
             </button>
           </div>
@@ -121,7 +115,8 @@ export default function RecordStatusPage({
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
           <p className="govuk-body">
-            You can leave this page and view the transcription and summary when it is ready.
+            You can leave this page and view the transcription and summary when
+            it is ready.
           </p>
         </div>
       </div>
@@ -167,20 +162,28 @@ export default function RecordStatusPage({
                   className="govuk-button govuk-button--start"
                 >
                   View transcription
-                  <svg className="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false">
-                    <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
+                  <svg
+                    className="govuk-button__start-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="17.5"
+                    height="19"
+                    viewBox="0 0 33 40"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M0 0h13l20 20-20 20H0l20-20z"
+                    />
                   </svg>
                 </Link>
               )}
               {(transcriptionStatus === 'failed' ||
                 summaryStatus === 'failed') && (
-                  <Link
-                    href={`/transcriptions/${id}`}
-                    className="govuk-button"
-                  >
-                    View details
-                  </Link>
-                )}
+                <Link href={`/transcriptions/${id}`} className="govuk-button">
+                  View details
+                </Link>
+              )}
             </div>
           </div>
         )}

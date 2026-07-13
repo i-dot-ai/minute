@@ -165,17 +165,20 @@ export default function TranscriptPage({
       </div>
       <FormProvider {...methods}>
         <div className="govuk-grid-column-three-quarters">
-          <div className="flex justify-between border-b border-(--govuk-border-colour) govuk-!-margin-bottom-6 govuk-!-padding-bottom-3">
+          <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-3 flex justify-between border-b border-(--govuk-border-colour)">
             <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
               <ol className="govuk-breadcrumbs__list">
                 <li className="govuk-breadcrumbs__list-item">
-                  <Link href="/transcriptions" className="govuk-breadcrumbs__link">
+                  <Link
+                    href="/transcriptions"
+                    className="govuk-breadcrumbs__link"
+                  >
                     Back
                   </Link>
                 </li>
               </ol>
             </nav>
-            <div className="govuk-button-group justify-end govuk-!-margin-bottom-0">
+            <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
               <button
                 type="button"
                 className="govuk-button govuk-button--secondary"
@@ -194,9 +197,7 @@ export default function TranscriptPage({
                 transcription={transcription}
                 src={hasRecordings ? recordings[0].url : undefined}
               />
-              <DeleteTranscriptionButton
-                transcription={transcription}
-              />
+              <DeleteTranscriptionButton transcription={transcription} />
             </div>
           </div>
           {isRenaming ? (
@@ -255,7 +256,7 @@ export default function TranscriptPage({
           </div>
           <form onSubmit={handleSubmit(saveTranscription)}>
             {hasRecordings && (
-              <div className="sticky top-0 z-10 border-b border-(--govuk-border-colour) bg-white govuk-!-margin-bottom-6 govuk-!-padding-bottom-4 govuk-!-padding-top-2">
+              <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-4 govuk-!-padding-top-2 sticky top-0 z-10 border-b border-(--govuk-border-colour) bg-white">
                 <div className="flex">
                   <audio
                     controls
@@ -264,9 +265,7 @@ export default function TranscriptPage({
                     ref={audioRef}
                     onSeeked={delayedScroll}
                     onTimeUpdate={(e) => {
-                      if (
-                        (e.target as HTMLAudioElement).currentTime != null
-                      ) {
+                      if ((e.target as HTMLAudioElement).currentTime != null) {
                         setTime((e.target as HTMLAudioElement).currentTime)
                       }
                     }}
@@ -277,8 +276,7 @@ export default function TranscriptPage({
                       onClick={scrollToPlaying}
                       className="govuk-button govuk-button--secondary whitespace-nowrap"
                     >
-                      <ArrowDown className="size-4" /> Scroll to current
-                      section
+                      <ArrowDown className="size-4" /> Scroll to current section
                     </button>
                   </div>
                 </div>
@@ -289,8 +287,7 @@ export default function TranscriptPage({
                 const isPlaying =
                   time &&
                   time >= entry.start_time &&
-                  (!array[index + 1] ||
-                    time < array[index + 1].start_time)
+                  (!array[index + 1] || time < array[index + 1].start_time)
                 return (
                   <div
                     className={`transcription-text-area ${isPlaying ? 'transcription-text-area--playing' : ''}`}
@@ -309,8 +306,7 @@ export default function TranscriptPage({
                             type="button"
                             onClick={() => {
                               if (audioRef.current) {
-                                audioRef.current.currentTime =
-                                  entry.start_time
+                                audioRef.current.currentTime = entry.start_time
                                 if (audioRef.current.paused) {
                                   audioRef.current.play()
                                 }
@@ -327,10 +323,7 @@ export default function TranscriptPage({
                         )}
                       </div>
                     </div>
-                    <TranscriptionTextArea
-                      control={control}
-                      index={index}
-                    />
+                    <TranscriptionTextArea control={control} index={index} />
                   </div>
                 )
               })}

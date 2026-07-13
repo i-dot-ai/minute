@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useMemo, useState } from 'react'
 import { FormProvider } from 'react-hook-form'
-import { DownloadIcon, TrashIcon, UploadIcon } from 'lucide-react'
+import { DownloadIcon, UploadIcon } from 'lucide-react'
 
 export const OfflineRecordingRow = ({
   recording,

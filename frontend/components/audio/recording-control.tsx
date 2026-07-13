@@ -381,7 +381,10 @@ export default function RecordingControl({
             tabIndex={-1}
             className="govuk-heading-m flex items-center gap-2"
           >
-            <span aria-hidden="true" className="relative mr-2 inline-flex size-3">
+            <span
+              aria-hidden="true"
+              className="relative mr-2 inline-flex size-3"
+            >
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75 motion-reduce:animate-none" />
               <span className="relative inline-flex size-3 rounded-full bg-red-600" />
             </span>

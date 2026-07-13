@@ -1,6 +1,5 @@
 'use client'
 
-import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
 import {
   getTranscriptionDisplayTitle,
   RenameButton,

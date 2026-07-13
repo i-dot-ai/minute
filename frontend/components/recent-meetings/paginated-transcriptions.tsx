@@ -58,7 +58,7 @@ export const PaginatedTranscriptions = () => {
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
     router.replace(
       pathname +
-      buildQueryString(paginatedResponse.total_pages, filterBy, search)
+        buildQueryString(paginatedResponse.total_pages, filterBy, search)
     )
   }
   const transcriptions = paginatedResponse?.items || []

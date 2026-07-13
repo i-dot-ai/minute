@@ -1,6 +1,4 @@
 import { OnboardingTour } from '@/components/onboarding/onboarding-tour'
-import { Footer } from '@/components/layout/footer'
-import { Header } from '@/components/layout/header'
 import { GovukInit } from '@/components/layout/govuk-init'
 import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { TanstackQueryProvider } from '@/providers/TanstackQueryProvider'
@@ -13,7 +11,6 @@ import { Toaster } from 'sonner'
 import Link from 'next/link'
 import './globals.css'
 import ServiceNavigation from '@/components/layout/service-navigation'
-import UrlMigrationBanner from '@/components/url-migration-banner'
 
 const inter = Inter({ subsets: ['latin'] })
 

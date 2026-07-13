@@ -57,7 +57,7 @@ function CopyButton({
   return (
     <>
       <button
-        className="govuk-button flex items-center gap-2 govuk-button--secondary"
+        className="govuk-button govuk-button--secondary flex items-center gap-2"
         onClick={handleCopy}
         disabled={disabled}
       >

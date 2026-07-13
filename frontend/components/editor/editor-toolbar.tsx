@@ -97,7 +97,10 @@ export const toolbarItems = {
     run: (editor) => editor.chain().focus().redo().run(),
     isDisabled: (editor) => !editor.can().chain().focus().redo().run(),
   },
-} satisfies Record<string, ToolbarItem | ((level: 1 | 2 | 3 | 4) => ToolbarItem)>
+} satisfies Record<
+  string,
+  ToolbarItem | ((level: 1 | 2 | 3 | 4) => ToolbarItem)
+>
 
 /**
  * WAI-ARIA toolbar: a single tab stop with roving tabindex, arrow-key

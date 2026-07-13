@@ -22,7 +22,9 @@ export function ExampleTemplatesDialog({
   examples,
 }: ExampleTemplatesDialogProps) {
   const [open, setOpen] = useState(false)
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateData | null>(null)
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateData | null>(
+    null
+  )
   const handleSelectExample = (template: TemplateData) => {
     onSelectTemplate(template)
     setOpen(false)
@@ -51,14 +53,35 @@ export function ExampleTemplatesDialog({
                 Choose an example template
               </DialogTitle>
             </legend>
-            <div className="govuk-radios govuk-!-margin-top-9 flex flex-wrap" data-module="govuk-radios">
+            <div
+              className="govuk-radios govuk-!-margin-top-9 flex flex-wrap"
+              data-module="govuk-radios"
+            >
               {examples.map((template, index) => (
-                <div className="govuk-radios__item new-recording__radio-item md:w-1/2" key={index}>
-                  <input className="govuk-radios__input" id={`example-template-${index}`} name="example-template" type="radio" value={template.name} checked={selectedTemplate?.name === template.name} onChange={() => setSelectedTemplate(template)} />
-                  <label className="govuk-label govuk-radios__label" htmlFor={`example-template-${index}`}>
-                    <div className="flex items-center gap-2 govuk-!-margin-bottom-2">
-                      <h2 className="govuk-heading-s govuk-!-margin-bottom-0">{template.name}</h2>
-                      <span className="govuk-tag govuk-tag--green">{template.type === 'document' ? 'Summary' : 'Q&A'}</span>
+                <div
+                  className="govuk-radios__item new-recording__radio-item md:w-1/2"
+                  key={index}
+                >
+                  <input
+                    className="govuk-radios__input"
+                    id={`example-template-${index}`}
+                    name="example-template"
+                    type="radio"
+                    value={template.name}
+                    checked={selectedTemplate?.name === template.name}
+                    onChange={() => setSelectedTemplate(template)}
+                  />
+                  <label
+                    className="govuk-label govuk-radios__label"
+                    htmlFor={`example-template-${index}`}
+                  >
+                    <div className="govuk-!-margin-bottom-2 flex items-center gap-2">
+                      <h2 className="govuk-heading-s govuk-!-margin-bottom-0">
+                        {template.name}
+                      </h2>
+                      <span className="govuk-tag govuk-tag--green">
+                        {template.type === 'document' ? 'Summary' : 'Q&A'}
+                      </span>
                     </div>
                     <p className="govuk-body-s">{template.description}</p>
                   </label>
@@ -76,7 +99,14 @@ export function ExampleTemplatesDialog({
             >
               Close
             </button>
-            <button type="button" className="govuk-button" disabled={!selectedTemplate} onClick={() => selectedTemplate && handleSelectExample(selectedTemplate)}>
+            <button
+              type="button"
+              className="govuk-button"
+              disabled={!selectedTemplate}
+              onClick={() =>
+                selectedTemplate && handleSelectExample(selectedTemplate)
+              }
+            >
               Select example
             </button>
           </div>

@@ -27,7 +27,7 @@ type LockNavigationContextType = {
 
 const LockNavigationContext = createContext<LockNavigationContextType>({
   lockNavigation: false,
-  setLockNavigation: () => { },
+  setLockNavigation: () => {},
   requestNavigation: (proceed) => {
     proceed()
     return true

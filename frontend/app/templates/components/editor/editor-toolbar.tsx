@@ -22,6 +22,8 @@ const TEMPLATE_TOOLBAR_ITEMS: ToolbarItem[] = [
   toolbarItems.redo,
 ]
 
-export const TemplateEditorToolbar = ({ editor }: { editor: Editor | null }) => (
-  <EditorToolbar editor={editor} items={TEMPLATE_TOOLBAR_ITEMS} />
-)
+export const TemplateEditorToolbar = ({
+  editor,
+}: {
+  editor: Editor | null
+}) => <EditorToolbar editor={editor} items={TEMPLATE_TOOLBAR_ITEMS} />

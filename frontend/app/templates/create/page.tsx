@@ -124,7 +124,10 @@ export default function NewTemplatePage() {
                 />
               </div>
               <div className="govuk-form-group">
-                <label className="govuk-label govuk-label--s" htmlFor="description">
+                <label
+                  className="govuk-label govuk-label--s"
+                  htmlFor="description"
+                >
                   Description
                 </label>
                 <div id="description-hint" className="govuk-hint">

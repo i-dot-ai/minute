@@ -37,9 +37,7 @@ export const DownloadButton = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button
-          className="govuk-button govuk-button--secondary"
-        >
+        <button className="govuk-button govuk-button--secondary">
           <Download className="size-4" /> Download audio
         </button>
       </DialogTrigger>

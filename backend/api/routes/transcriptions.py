@@ -3,6 +3,7 @@ import math
 import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import col, func, or_, select
@@ -46,6 +47,9 @@ transcription_queue_service = get_queue_service(
 
 logger = logging.getLogger(__name__)
 
+# Minimum pg_trgm similarity for a title to count as a fuzzy search match.
+SEARCH_SIMILARITY_THRESHOLD = 0.3
+
 
 def _next_cleanup_cutoff(retention_days: int) -> datetime:
     """Records created before this instant get deleted at the next cleanup run (23:00 UTC daily)."""
@@ -60,10 +64,10 @@ def _next_cleanup_cutoff(retention_days: int) -> datetime:
 async def list_transcriptions(
     session: SQLSessionDep,
     current_user: UserDep,
-    page: int = Query(1, ge=1, description="Page number (starts from 1)"),
-    page_size: int = Query(20, ge=1, le=100, description="Number of items per page"),
-    filter_by: TranscriptionListFilter | None = Query(None),
-    search: str | None = Query(None, max_length=100, description="Match against transcription title"),
+    page: Annotated[int, Query(ge=1, description="Page number (starts from 1)")] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100, description="Number of items per page")] = 20,
+    filter_by: Annotated[TranscriptionListFilter | None, Query()] = None,
+    search: Annotated[str | None, Query(max_length=100, description="Match against transcription title")] = None,
 ) -> PaginatedTranscriptionsResponse:
     """Get paginated metadata for transcriptions for the current user."""
 
@@ -90,7 +94,7 @@ async def list_transcriptions(
             or_(
                 col(Transcription.title).ilike(f"%{escaped}%"),
                 # pg_trgm similarity gives typo tolerance, e.g. "budjet" still matches "Budget review"
-                func.similarity(col(Transcription.title), search_term) >= 0.3,
+                func.similarity(col(Transcription.title), search_term) >= SEARCH_SIMILARITY_THRESHOLD,
             )
         )
 

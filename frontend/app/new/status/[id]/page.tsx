@@ -7,6 +7,7 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { DownloadButton } from '@/components/download-button'
+import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, PlusIcon } from 'lucide-react'
 import Link from 'next/link'
@@ -43,7 +44,7 @@ export default function RecordStatusPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-      GENERATING_STATUSES.includes(query.state.data.status)
+        GENERATING_STATUSES.includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -67,7 +68,7 @@ export default function RecordStatusPage({
     enabled: !!minuteId && transcriptionDone,
     refetchInterval: (query) =>
       query.state.data?.[0]?.status &&
-      GENERATING_STATUSES.includes(query.state.data[0].status)
+        GENERATING_STATUSES.includes(query.state.data[0].status)
         ? 2000
         : false,
   })
@@ -96,19 +97,18 @@ export default function RecordStatusPage({
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-one-third">
           <h1 ref={headingRef} tabIndex={-1} className="govuk-heading-l">
-            New meeting
+            Record a meeting
           </h1>
         </div>
         <div className="govuk-grid-column-two-thirds">
           <div className="govuk-button-group flex justify-end">
             <Link href="/" className="govuk-button govuk-button--secondary">
-              <PlusIcon className="size-4" />
-              New meeting
+              Record a meeting
             </Link>
             <DownloadButton recordings={recordings} />
-            <button type="button" className="govuk-link link--warning">
-              Delete
-            </button>
+            {transcription && (
+              <DeleteTranscriptionButton transcription={transcription} />
+            )}
           </div>
         </div>
       </div>
@@ -180,10 +180,10 @@ export default function RecordStatusPage({
               )}
               {(transcriptionStatus === 'failed' ||
                 summaryStatus === 'failed') && (
-                <Link href={`/transcriptions/${id}`} className="govuk-button">
-                  View details
-                </Link>
-              )}
+                  <Link href={`/transcriptions/${id}`} className="govuk-button">
+                    View details
+                  </Link>
+                )}
             </div>
           </div>
         )}

@@ -90,141 +90,143 @@ export default function Home() {
       {/* {isOldUrl ? <UrlMigrationBanner /> : <PosthogBanner />} */}
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
-          <h1 className="govuk-heading-l">New meeting</h1>
-          <p className="govuk-body">
-            Please ensure that all participants are aware that they have been
-            recorded. Suitable up to <strong>OFFICIAL SENSITIVE</strong>.
-          </p>
+          <h1 className="govuk-heading-l govuk-!-margin-bottom-3">Record a meeting</h1>
+          <p className="govuk-body govuk-!-margin-bottom-5">Choose how to capture this meeting</p>
           {started ? (
             <AudioUploadForm />
           ) : (
-            <div className="govuk-form-group">
-              <fieldset
-                className="govuk-fieldset govuk-!-margin-top-9 h-55"
-                aria-describedby="recordMeeting-hint"
-              >
-                <div
-                  className="govuk-radios govuk-radios--inline flex"
-                  data-module="govuk-radios"
+            <>
+              <div className="govuk-form-group">
+                <fieldset
+                  className="govuk-fieldset"
+                  aria-describedby="recordMeeting-hint"
                 >
-                  <div className="govuk-radios__item new-recording__radio-item flex-1">
-                    <input
-                      className="govuk-radios__input"
-                      id="in-person"
-                      name="recordMeeting"
-                      type="radio"
-                      value="in-person"
-                      checked={mode === 'in-person'}
-                      onChange={() => setMode('in-person')}
-                    />
-                    <label
-                      className="govuk-label govuk-radios__label"
-                      htmlFor="in-person"
-                    >
-                      <Mic className="mb-2 size-7" />
-                      <h2 className="govuk-heading-m">In person</h2>
-                      <p className="govuk-body">
-                        Record audio from this device&apos;s microphone.
-                      </p>
-                    </label>
-                  </div>
-                  <div className="govuk-radios__item new-recording__radio-item flex-1">
-                    <input
-                      className="govuk-radios__input"
-                      id="virtual-meeting"
-                      name="recordMeeting"
-                      type="radio"
-                      value="virtual-meeting"
-                      checked={mode === 'virtual-meeting'}
-                      onChange={() => setMode('virtual-meeting')}
-                    />
-                    <label
-                      className="govuk-label govuk-radios__label"
-                      htmlFor="virtual-meeting"
-                    >
-                      <Video className="mb-2 size-7" />
-                      <h2 className="govuk-heading-m">Virtual meeting</h2>
-                      <p className="govuk-body">
-                        Join your call silently — not visible to other
-                        attendees.
-                      </p>
-                    </label>
-                  </div>
-                  <div className="govuk-radios__item new-recording__radio-item flex-1">
-                    <input
-                      className="govuk-radios__input"
-                      id="upload-file"
-                      name="recordMeeting"
-                      type="radio"
-                      value="upload-file"
-                      checked={mode === 'upload-file'}
-                      onChange={() => setMode('upload-file')}
-                    />
-                    <label
-                      className="govuk-label govuk-radios__label"
-                      htmlFor="upload-file"
-                    >
-                      <Upload className="mb-2 size-7" />
-                      <h2 className="govuk-heading-m">Upload a file</h2>
-                      <p className="govuk-body">
-                        Use a recording you already have.
-                      </p>
-                    </label>
-                  </div>
-                </div>
-              </fieldset>
-              {mode === 'upload-file' ? (
-                <AudioUploadForm />
-              ) : (
-                <>
-                  <div className="govuk-form-group">
-                    <label className="govuk-label" htmlFor="microphone">
-                      Choose microphone
-                    </label>
-                    <select
-                      className="govuk-select"
-                      id="microphone"
-                      name="microphone"
-                      value={selectedDeviceId}
-                      onChange={(e) => setSelectedDeviceId(e.target.value)}
-                    >
-                      {devices.length > 0 ? (
-                        devices.map((d) => (
-                          <option key={d.deviceId} value={d.deviceId}>
-                            {d.label}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="">
-                          Requesting microphone access...
-                        </option>
-                      )}
-                    </select>
-                  </div>
-                  <button
-                    className="govuk-button govuk-button--start govuk-!-margin-top-6"
-                    data-module="govuk-button"
-                    onClick={handleStart}
+                  <div
+                    className="govuk-radios govuk-radios--inline govuk-radios--small govuk-radios--cards"
+                    data-module="govuk-radios"
                   >
-                    Start recording
-                    <svg
-                      className="govuk-button__start-icon"
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="17.5"
-                      height="19"
-                      viewBox="0 0 33 40"
-                      role="presentation"
-                      focusable="false"
-                    >
-                      <path
-                        fill="currentColor"
-                        d="M0 0h13l20 20-20 20H0l20-20z"
+                    <div className="govuk-radios__item">
+                      <input
+                        className="govuk-radios__input"
+                        id="in-person"
+                        name="recordMeeting"
+                        type="radio"
+                        value="in-person"
+                        checked={mode === 'in-person'}
+                        onChange={() => setMode('in-person')}
                       />
-                    </svg>
-                  </button>
-                </>
-              )}
-            </div>
+                      <label
+                        className="govuk-label govuk-radios__label"
+                        htmlFor="in-person"
+                      >
+                        <Mic className="size-7" />
+                        <h2 className="govuk-heading-m">In person</h2>
+                        <p className="govuk-body">
+                          Record audio from this device&apos;s microphone.
+                        </p>
+                      </label>
+                    </div>
+                    <div className="govuk-radios__item">
+                      <input
+                        className="govuk-radios__input"
+                        id="virtual-meeting"
+                        name="recordMeeting"
+                        type="radio"
+                        value="virtual-meeting"
+                        checked={mode === 'virtual-meeting'}
+                        onChange={() => setMode('virtual-meeting')}
+                      />
+                      <label
+                        className="govuk-label govuk-radios__label"
+                        htmlFor="virtual-meeting"
+                      >
+                        <Video className="size-7" />
+                        <h2 className="govuk-heading-m">Virtual meeting</h2>
+                        <p className="govuk-body">
+                          Join your call silently.
+                        </p>
+                      </label>
+                    </div>
+                    <div className="govuk-radios__item">
+                      <input
+                        className="govuk-radios__input"
+                        id="upload-file"
+                        name="recordMeeting"
+                        type="radio"
+                        value="upload-file"
+                        checked={mode === 'upload-file'}
+                        onChange={() => setMode('upload-file')}
+                      />
+                      <label
+                        className="govuk-label govuk-radios__label"
+                        htmlFor="upload-file"
+                      >
+                        <Upload className="size-7" />
+                        <h2 className="govuk-heading-m">Upload a file</h2>
+                        <p className="govuk-body">
+                          Use a recording you already have.
+                        </p>
+                      </label>
+                    </div>
+                  </div>
+                </fieldset>
+                {mode === 'upload-file' ? (
+                  <AudioUploadForm />
+                ) : (
+                  <>
+                    <div className="govuk-form-group flex items-center gap-2 govuk-!-margin-top-7">
+                      <label className="govuk-label" htmlFor="microphone">
+                        Record using:
+                      </label>
+                      <select
+                        className="govuk-select govuk-select--subtle"
+                        id="microphone"
+                        name="microphone"
+                        value={selectedDeviceId}
+                        onChange={(e) => setSelectedDeviceId(e.target.value)}
+                      >
+                        {devices.length > 0 ? (
+                          devices.map((d) => (
+                            <option key={d.deviceId} value={d.deviceId}>
+                              {d.label}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="">
+                            Requesting microphone access...
+                          </option>
+                        )}
+                      </select>
+                    </div>
+                    <button
+                      className="govuk-button govuk-button--start govuk-!-margin-top-6"
+                      data-module="govuk-button"
+                      onClick={handleStart}
+                    >
+                      Start recording
+                      <svg
+                        className="govuk-button__start-icon"
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="17.5"
+                        height="19"
+                        viewBox="0 0 33 40"
+                        role="presentation"
+                        focusable="false"
+                      >
+                        <path
+                          fill="currentColor"
+                          d="M0 0h13l20 20-20 20H0l20-20z"
+                        />
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </div>
+              <p className="govuk-body govuk-!-margin-top-6">
+                Please ensure that all participants are aware that they have been recorded.{' '}
+                Suitable up to <strong>OFFICIAL SENSITIVE</strong>.
+              </p>
+            </>
           )}
         </div>
       </div>

@@ -53,6 +53,8 @@ export const DeleteTranscriptionDialog = ({
       setOpen(false)
       if (pathname.startsWith('/transcriptions/')) {
         router.push('/transcriptions')
+      } else if (pathname.startsWith('/new/status/')) {
+        router.push('/')
       }
     },
   })

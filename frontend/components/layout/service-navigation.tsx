@@ -1,7 +1,7 @@
 'use client'
 import { GuardedLink } from '@/components/navigation/guarded-link'
 import { usePathname } from 'next/navigation'
-import { List, LayoutPanelTop, Plus } from 'lucide-react'
+import { Bookmark, LayoutPanelTop, AudioLines } from 'lucide-react'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
@@ -11,7 +11,7 @@ export const ServiceNavigation = () => {
   return (
     <section
       aria-label="Service information"
-      className="sticky top-0 h-screen w-40 shrink-0 bg-(--govuk-surface-background-colour)"
+      className="flex h-full w-40 shrink-0 flex-col bg-(--govuk-surface-background-colour)"
     >
       <nav aria-label="Menu" className="flex h-full flex-col justify-between">
         <ul className="flex w-40 flex-col" id="navigation">
@@ -27,8 +27,8 @@ export const ServiceNavigation = () => {
               }
               className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname === '/' || pathname.includes('/new') ? '!text-(--govuk-text-colour)' : ''}`}
             >
-              <Plus className="size-4" />
-              New meeting
+              <AudioLines className="size-4" />
+              Minute
             </GuardedLink>
           </li>
           <li
@@ -42,7 +42,7 @@ export const ServiceNavigation = () => {
               href="/transcriptions"
               data-onboarding="saved-transcriptions-nav"
             >
-              <List className="size-4" />
+              <Bookmark className="size-4" />
               Transcriptions
             </GuardedLink>
           </li>

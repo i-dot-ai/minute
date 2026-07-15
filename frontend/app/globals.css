@@ -8,6 +8,7 @@
 .govuk-button {
   background-color: var(--govuk-brand-colour);
   box-shadow: none;
+  border-radius: 0.25rem;
 }
 
 .govuk-button:hover {
@@ -31,6 +32,51 @@
 .govuk-button--tertiary:hover {
   background-color: #16548a;
   color: #fff;
+}
+
+.govuk-select--subtle {
+  border: 1px solid #858686;
+}
+
+.govuk-radios--cards {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (width > 48rem) {
+  .govuk-radios--cards {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+}
+
+.govuk-radios--cards .govuk-radios__item {
+  border: 2px solid transparent;
+  background-color: var(--govuk-surface-background-colour);
+  flex: 1;
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+}
+
+
+.govuk-radios--cards .govuk-radios__item:has(.govuk-radios__input:checked) {
+  border-color: var(--govuk-brand-colour);
+  background-color: #d2e2f1;
+}
+
+.govuk-radios--cards .govuk-radios__label {
+  /* margin-left: 15px; */
+}
+
+.govuk-radios--cards .govuk-radios__input:checked+.govuk-radios__label:after {
+  right: 22px;
+  left: auto;
+}
+
+.govuk-radios--cards .govuk-radios__label::before {
+  right: 15px;
+  left: auto;
 }
 
 /* Override the margin-right: from the modal dialog */
@@ -113,33 +159,6 @@ html body[data-scroll-locked] {
   }
 }
 
-.upload-radio__item .govuk-radios__label,
-.new-recording__radio-item .govuk-radios__label {
-  align-self: start;
-}
-
-.upload-radio__item .govuk-radios__label::before,
-.new-recording__radio-item .govuk-radios__label::before {
-  top: 14px;
-}
-
-.new-recording__radio-item .govuk-radios__label::before {
-  left: 12px;
-}
-
-.upload-radio__item .govuk-radios__input:checked + .govuk-radios__label:after,
-.new-recording__radio-item
-  .govuk-radios__input:checked
-  + .govuk-radios__label:after {
-  top: 24px;
-}
-
-.new-recording__radio-item
-  .govuk-radios__input:checked
-  + .govuk-radios__label:after {
-  left: 22px;
-}
-
 .transcription-page__actions {
   justify-content: flex-end;
 }
@@ -200,19 +219,6 @@ html body[data-scroll-locked] {
 .editor-content [contenteditable='true'] {
   min-height: 12em;
   padding: 0 10px;
-}
-
-.new-recording__radio-item {
-  border: 2px solid transparent;
-}
-
-.new-recording__radio-item:has(.govuk-radios__input:checked) {
-  border-color: var(--govuk-brand-colour);
-  background-color: #f4f8fb;
-}
-
-.new-recording__radio-item .govuk-radios__label {
-  margin-left: 15px;
 }
 
 /* service navigation move focus state to be focus-visible */
@@ -434,7 +440,7 @@ html body[data-scroll-locked] {
   list-style-type: none;
 }
 
-.editor-content ul > li::before {
+.editor-content ul>li::before {
   content: '•';
 }
 
@@ -443,11 +449,11 @@ html body[data-scroll-locked] {
   counter-reset: list-counter;
 }
 
-.editor-content ol > li {
+.editor-content ol>li {
   counter-increment: list-counter;
 }
 
-.editor-content ol > li::before {
+.editor-content ol>li::before {
   content: counter(list-counter) '.';
 }
 
@@ -496,12 +502,12 @@ html body[data-scroll-locked] {
   margin-bottom: 2.33em;
 }
 
-.editor-content p + p {
+.editor-content p+p {
   margin-top: 1em;
   /* Add margin only between consecutive paragraphs */
 }
 
-.editor-content pre > code {
+.editor-content pre>code {
   background-color: #444;
   color: white;
   width: 100% !;

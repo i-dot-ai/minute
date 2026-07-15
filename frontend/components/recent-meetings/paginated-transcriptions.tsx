@@ -8,6 +8,8 @@ import { TranscriptionListFilter } from '@/lib/client'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useRef, useState } from 'react'
+import { Search } from 'lucide-react'
+
 
 const PAGE_SIZE = 10
 
@@ -58,12 +60,14 @@ export const PaginatedTranscriptions = () => {
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
     router.replace(
       pathname +
-        buildQueryString(paginatedResponse.total_pages, filterBy, search)
+      buildQueryString(paginatedResponse.total_pages, filterBy, search)
     )
   }
   const transcriptions = paginatedResponse?.items || []
   const totalPages = paginatedResponse?.total_pages || 1
   const totalCount = paginatedResponse?.total_count || 0
+  const resultsStarting = (currentPage - 1) * PAGE_SIZE + 1
+  const resultsEnding = Math.min(currentPage * PAGE_SIZE, totalCount)
   const pageIds = transcriptions.map((t) => t.id)
   const allOnPageSelected =
     pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id))
@@ -146,48 +150,33 @@ export const PaginatedTranscriptions = () => {
 
   return (
     <div>
+
       <div className="flex items-center justify-between">
         <form
           role="search"
-          className="govuk-form-group govuk-!-width-one-half"
+          className="govuk-form-group govuk-!-width-one-half relative"
           onSubmit={handleSearchSubmit}
         >
-          <label className="govuk-label" htmlFor="search-transcriptions">
-            Search transcriptions by title
-          </label>
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-(--govuk-text-colour)" aria-hidden="true" />
           <input
             id="search-transcriptions"
             name="search-transcriptions"
+            aria-label="Search transcriptions by title"
             type="search"
-            className="govuk-input"
+            className="govuk-input govuk-input--subtle govuk-!-padding-left-7"
+            placeholder="Search transcriptions by title"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
         </form>
-        <div className="govuk-form-group">
-          <label className="govuk-label" htmlFor="filter">
-            Filter by
-          </label>
-          <select
-            className="govuk-select"
-            id="filter"
-            name="filter"
-            value={filterBy}
-            onChange={handleFilterChange}
-          >
-            <option value="all">All</option>
-            <option value="expiring-soon">Expiring soon</option>
-            <option value="failed">Failed</option>
-          </select>
-        </div>
       </div>
       <Suspense fallback={null}>
         <RecentOfflineRecordingsSection />
       </Suspense>
-      <div className="govuk-!-margin-bottom-3 govuk-!-padding-bottom-2 flex items-center justify-between border-b border-(--govuk-border-colour)">
-        <div className="flex items-center gap-2">
+      <div className="govuk-!-margin-bottom-3 flex items-center justify-between">
+        <div className="flex items-center gap-2 flex-1">
           <div
-            className="govuk-checkboxes govuk-checkboxes--small relative flex"
+            className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"
             data-module="govuk-checkboxes"
           >
             <input
@@ -222,14 +211,31 @@ export const PaginatedTranscriptions = () => {
         <span className="govuk-visually-hidden" aria-live="polite">
           {selectedCount > 0 ? `${selectedCount} transcriptions selected` : ''}
         </span>
-        <p className="govuk-body govuk-!-margin-bottom-0" role="status">
-          Total: {totalCount}
+        <p className="govuk-body govuk-!-margin-bottom-0 flex-1" role="status">
+          Showing {resultsStarting} to {resultsEnding} of {totalCount}
           {search && (
             <span className="govuk-visually-hidden">
               {` results for “${search}”`}
             </span>
           )}
         </p>
+
+        <div className="govuk-form-group flex items-center justify-end gap-2 govuk-!-margin-bottom-0 flex-1">
+          <label className="govuk-label" htmlFor="filter">
+            Filter by
+          </label>
+          <select
+            className="govuk-select govuk-select--subtle"
+            id="filter"
+            name="filter"
+            value={filterBy}
+            onChange={handleFilterChange}
+          >
+            <option value="all">All</option>
+            <option value="expiring-soon">Expiring soon</option>
+            <option value="failed">Failed</option>
+          </select>
+        </div>
       </div>
       {isLoading ? (
         <p className="govuk-body" role="status">

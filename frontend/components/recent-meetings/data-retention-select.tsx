@@ -22,12 +22,12 @@ export const DataRetentionSelect = () => {
   })
 
   return (
-    <div className="govuk-form-group">
+    <div className="govuk-form-group flex items-center gap-2">
       <label className="govuk-label" htmlFor="retention-period">
-        Retention period
+        Delete after
       </label>
       <select
-        className="govuk-select"
+        className="govuk-select govuk-select--subtle"
         id="retention-period"
         aria-describedby="retention-period-hint"
         value={user?.data_retention_days ?? 'indefinitely'}
@@ -45,7 +45,7 @@ export const DataRetentionSelect = () => {
         <option value="7">7 days</option>
         <option value="30">30 days</option>
         <option value="90">90 days</option>
-        <option value="indefinitely">Indefinitely</option>
+        <option value="indefinitely">Never</option>
       </select>
     </div>
   )

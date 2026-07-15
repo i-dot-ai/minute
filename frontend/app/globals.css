@@ -35,9 +35,20 @@
 }
 
 .govuk-select--subtle,
+.govuk-checkboxes--subtle .govuk-checkboxes__label::before,
 .govuk-textarea--subtle,
 .govuk-input--subtle {
   border: 1px solid #858686;
+}
+
+
+.govuk-select--subtle {
+  min-width: 0;
+}
+
+.govuk-table--subtle .govuk-table__header {
+  font-size: 1rem;
+  color: #484949;
 }
 
 .govuk-radios--cards {

@@ -44,10 +44,10 @@ function TranscriptionTableRow({
   )
 
   return (
-    <tr className="govuk-table__row relative flex items-center gap-4 border-b border-(--govuk-border-colour) hover:bg-[#f4f8fb]">
-      <td className="govuk-!-padding-0">
+    <tr className="govuk-table__row relative hover:bg-[#f4f8fb]">
+      <td>
         <div
-          className="govuk-checkboxes govuk-checkboxes--small flex"
+          className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle flex"
           data-module="govuk-checkboxes"
         >
           <input
@@ -67,14 +67,7 @@ function TranscriptionTableRow({
           </label>
         </div>
       </td>
-      <td className="govuk-!-padding-0">
-        <RenameButton
-          displayTitle={displayTitle}
-          disabled={editing || isPending}
-          onClick={() => setEditing(true)}
-        />
-      </td>
-      <td className="govuk-!-padding-0 flex-1">
+      <td className="flex-1">
         {editing ? (
           <RenameTitleInput
             transcription={transcription}
@@ -91,8 +84,8 @@ function TranscriptionTableRow({
           </Link>
         )}
       </td>
-      <td className="govuk-!-padding-0">
-        <div className="govuk-button-group govuk-!-margin-bottom-0 flex justify-end">
+      <td>
+        <div className="govuk-button-group flex justify-end govuk-!-margin-right-2">
           {transcription.expiring && (
             <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-right-2">
               Expiring soon
@@ -115,8 +108,15 @@ function TranscriptionTableRow({
           )}
         </div>
       </td>
-      <td className="govuk-!-padding-0 min-w-26">
+      <td className="min-w-26">
         <span className="govuk-body-s govuk-!-margin-0">{date}</span>
+      </td>
+      <td className="text-center">
+        <RenameButton
+          displayTitle={displayTitle}
+          disabled={editing || isPending}
+          onClick={() => setEditing(true)}
+        />
       </td>
     </tr>
   )
@@ -135,25 +135,25 @@ export function TranscriptionsList({
 }) {
   return (
     <table
-      className="govuk-table"
+      className="govuk-table govuk-table--subtle"
       aria-labelledby="transcriptions-list-heading"
     >
-      <thead className="govuk-table__head govuk-visually-hidden">
+      <thead className="govuk-table__head">
         <tr className="govuk-table__row">
           <th scope="col" className="govuk-table__header">
             Select
           </th>
           <th scope="col" className="govuk-table__header">
-            Rename
-          </th>
-          <th scope="col" className="govuk-table__header">
             Title
           </th>
-          <th scope="col" className="govuk-table__header">
+          <th scope="col" className="govuk-table__header !text-center">
             Status
           </th>
           <th scope="col" className="govuk-table__header">
             Date
+          </th>
+          <th scope="col" className="govuk-table__header">
+            Rename
           </th>
         </tr>
       </thead>

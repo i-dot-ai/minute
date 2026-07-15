@@ -45,12 +45,12 @@ export function TemplateTableRow({
   }
 
   return (
-    <tr className="govuk-table__row relative border-b border-(--govuk-border-colour) hover:bg-[#f4f8fb]">
-      <td>
+    <tr className="govuk-table__row relative hover:bg-[#f4f8fb]">
+      <td className="govuk-table__cell">
         {!template.isSystem && (
-          <div className="govuk-!-margin-right-2 flex items-center">
+          <div className="flex items-center gap-2">
             <div
-              className="govuk-checkboxes govuk-checkboxes--small flex"
+              className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle"
               data-module="govuk-checkboxes"
             >
               <input
@@ -63,7 +63,7 @@ export function TemplateTableRow({
                 onChange={(e) => onToggle?.(rowKey, e.target.checked)}
               />
               <label
-                className="govuk-label govuk-checkboxes__label"
+                className="govuk-label govuk-checkboxes__label govuk-!-padding-0"
                 htmlFor={inputId}
               >
                 <span className="govuk-visually-hidden">Select {name}</span>
@@ -72,7 +72,7 @@ export function TemplateTableRow({
             <div className="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-right-1 flex items-center justify-end">
               <button
                 type="button"
-                className="govuk-link govuk-link--no-visited-state govuk-!-margin-0 flex items-center gap-2 hover:cursor-pointer"
+                className="govuk-link govuk-link--no-visited-state govuk-!-margin-0 text-(--govuk-link-colour) hover:cursor-pointer"
                 onClick={handleDuplicate}
               >
                 <CopyPlus className="size-4" />
@@ -82,7 +82,7 @@ export function TemplateTableRow({
           </div>
         )}
       </td>
-      <td className="md:flex-1">
+      <td className="govuk-table__cell w-full">
         <Link
           href={
             template.isSystem
@@ -97,7 +97,7 @@ export function TemplateTableRow({
           </span>
         </Link>
       </td>
-      <td>
+      <td className="govuk-table__cell whitespace-nowrap">
         <div className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 flex items-center justify-end">
           {template.is_default && (
             <strong className="govuk-tag govuk-tag--blue govuk-!-margin-left-2">

@@ -18,20 +18,10 @@ export default function TemplatesPage() {
             >
               Templates
             </h1>
-            <p className="govuk-body govuk-!-margin-bottom-6">
+            <p className="govuk-body govuk-!-margin-bottom-7">
               Use templates to customise the structure and style of your
               minutes.
             </p>
-            <div className="govuk-button-group">
-              <Link
-                className="govuk-button"
-                role="button"
-                href="/templates/create"
-              >
-                <Plus className="size-4" />
-                Create new template
-              </Link>
-            </div>
           </div>
         </div>
         <Suspense fallback={<div>Loading...</div>}>

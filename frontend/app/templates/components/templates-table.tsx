@@ -13,7 +13,7 @@ import Fuse from 'fuse.js'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Search } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 
 const PAGE_SIZE = 10
 
@@ -238,15 +238,25 @@ export const TemplatesTable = () => {
           </form>
         </div>
         <div className="govuk-grid-column-one-quarter">
+          <div className="govuk-button-group">
+            <Link
+              className="govuk-button"
+              role="button"
+              href="/templates/create"
+            >
+              <Plus className="size-4" />
+              Create new template
+            </Link>
+          </div>
         </div>
       </div>
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
-          <div className="govuk-!-margin-bottom-3 flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 flex-1">
               {selectablePageKeys.length > 0 && (
                 <div
-                  className="govuk-checkboxes govuk-checkboxes--small relative flex"
+                  className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"
                   data-module="govuk-checkboxes"
                 >
                   <input

@@ -51,6 +51,11 @@
   color: #484949;
 }
 
+.govuk-table--subtle .govuk-table__cell {
+  padding: 0;
+  vertical-align: middle;
+}
+
 .govuk-radios--cards {
   align-items: stretch;
   flex-direction: column;

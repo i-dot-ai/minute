@@ -45,29 +45,36 @@ function TranscriptionTableRow({
 
   return (
     <tr className="govuk-table__row relative hover:bg-[#f4f8fb]">
-      <td>
-        <div
-          className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle flex"
-          data-module="govuk-checkboxes"
-        >
-          <input
-            className="govuk-checkboxes__input"
-            id={`transcription-${transcription.id}`}
-            name="transcription"
-            type="checkbox"
-            value={transcription.id}
-            checked={selectedIds?.has(transcription.id) ?? false}
-            onChange={(e) => onToggle?.(transcription.id, e.target.checked)}
-          />
-          <label
-            className="govuk-label govuk-checkboxes__label"
-            htmlFor={`transcription-${transcription.id}`}
+      <td className="govuk-table__cell">
+        <div className="flex items-center gap-2">
+          <div
+            className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle flex"
+            data-module="govuk-checkboxes"
           >
-            <span className="govuk-visually-hidden">Select {displayTitle}</span>
-          </label>
+            <input
+              className="govuk-checkboxes__input"
+              id={`transcription-${transcription.id}`}
+              name="transcription"
+              type="checkbox"
+              value={transcription.id}
+              checked={selectedIds?.has(transcription.id) ?? false}
+              onChange={(e) => onToggle?.(transcription.id, e.target.checked)}
+            />
+            <label
+              className="govuk-label govuk-checkboxes__label govuk-!-padding-0"
+              htmlFor={`transcription-${transcription.id}`}
+            >
+              <span className="govuk-visually-hidden">Select {displayTitle}</span>
+            </label>
+          </div>
+          <RenameButton
+            displayTitle={displayTitle}
+            disabled={editing || isPending}
+            onClick={() => setEditing(true)}
+          />
         </div>
       </td>
-      <td className="flex-1">
+      <td className="govuk-table__cell w-full">
         {editing ? (
           <RenameTitleInput
             transcription={transcription}
@@ -84,39 +91,30 @@ function TranscriptionTableRow({
           </Link>
         )}
       </td>
-      <td>
-        <div className="govuk-button-group flex justify-end govuk-!-margin-right-2">
-          {transcription.expiring && (
-            <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-right-2">
-              Expiring soon
-            </strong>
-          )}
-          {transcription.status === 'failed' && (
-            <strong className="govuk-tag govuk-tag--red govuk-!-margin-right-2">
-              Failed
-            </strong>
-          )}
-          {transcription.status === 'awaiting_start' && (
-            <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">
-              Awaiting start
-            </strong>
-          )}
-          {transcription.status === 'in_progress' && (
-            <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">
-              In progress
-            </strong>
-          )}
-        </div>
-      </td>
-      <td className="min-w-26">
+      <td className="govuk-table__cell whitespace-nowrap">
         <span className="govuk-body-s govuk-!-margin-0">{date}</span>
       </td>
-      <td className="text-center">
-        <RenameButton
-          displayTitle={displayTitle}
-          disabled={editing || isPending}
-          onClick={() => setEditing(true)}
-        />
+      <td className="govuk-table__cell whitespace-nowrap">
+        {transcription.expiring && (
+          <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-left-2">
+            Expiring soon
+          </strong>
+        )}
+        {transcription.status === 'failed' && (
+          <strong className="govuk-tag govuk-tag--red govuk-!-margin-left-2">
+            Failed
+          </strong>
+        )}
+        {transcription.status === 'awaiting_start' && (
+          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-left-2">
+            Awaiting start
+          </strong>
+        )}
+        {transcription.status === 'in_progress' && (
+          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-left-2">
+            In progress
+          </strong>
+        )}
       </td>
     </tr>
   )
@@ -141,19 +139,16 @@ export function TranscriptionsList({
       <thead className="govuk-table__head">
         <tr className="govuk-table__row">
           <th scope="col" className="govuk-table__header">
-            Select
+            Actions
           </th>
           <th scope="col" className="govuk-table__header">
             Title
-          </th>
-          <th scope="col" className="govuk-table__header !text-center">
-            Status
           </th>
           <th scope="col" className="govuk-table__header">
             Date
           </th>
           <th scope="col" className="govuk-table__header">
-            Rename
+            Status
           </th>
         </tr>
       </thead>

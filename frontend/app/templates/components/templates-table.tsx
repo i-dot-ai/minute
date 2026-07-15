@@ -10,57 +10,52 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
 import Fuse from 'fuse.js'
-import { Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Search } from 'lucide-react'
 
 const PAGE_SIZE = 10
 
-type TypeFilter = 'all' | 'summary' | 'q-and-a'
+type TypeFilter = 'all' | 'summary' | 'q-and-a' | 'system'
 
 function parseTypeFilter(searchParams: URLSearchParams): TypeFilter {
   const filterBy = searchParams.get('filterBy')
-  if (filterBy === 'summary' || filterBy === 'q-and-a') {
+  if (
+    filterBy === 'summary' ||
+    filterBy === 'q-and-a' ||
+    filterBy === 'system'
+  ) {
     return filterBy
   }
   return 'all'
 }
 
-function parseHideSystem(searchParams: URLSearchParams): boolean {
-  return searchParams.get('hideSystemTemplates') === 'true'
-}
-
 function buildQueryString({
   page,
   typeFilter = 'all',
-  hideSystem = false,
 }: {
   page?: number
   typeFilter?: TypeFilter
-  hideSystem?: boolean
 }): string {
   const params = new URLSearchParams()
   if (page && page > 1) params.set('page', String(page))
   if (typeFilter !== 'all') params.set('filterBy', typeFilter)
-  if (hideSystem) params.set('hideSystemTemplates', 'true')
   const qs = params.toString()
   return qs ? `?${qs}` : ''
 }
 
 function matchesFilters(
   row: TemplateRowData,
-  typeFilter: TypeFilter,
-  hideSystem: boolean
+  typeFilter: TypeFilter
 ): boolean {
-  if (hideSystem && row.isSystem) {
-    return false
-  }
   switch (typeFilter) {
     case 'summary':
       return row.format === 'document' && !row.isSystem
     case 'q-and-a':
       return row.format === 'form' && !row.isSystem
+    case 'system':
+      return row.isSystem
     default:
       return true
   }
@@ -72,7 +67,6 @@ export const TemplatesTable = () => {
   const router = useRouter()
   const currentPage = Number(searchParams.get('page')) || 1
   const typeFilter = parseTypeFilter(searchParams)
-  const hideSystem = parseHideSystem(searchParams)
 
   const {
     data: defaultTemplates = [],
@@ -127,10 +121,8 @@ export const TemplatesTable = () => {
     const searchedRows = query
       ? fuse.search(query).map((result) => result.item)
       : rows
-    return searchedRows.filter((row) =>
-      matchesFilters(row, typeFilter, hideSystem)
-    )
-  }, [rows, fuse, search, typeFilter, hideSystem])
+    return searchedRows.filter((row) => matchesFilters(row, typeFilter))
+  }, [rows, fuse, search, typeFilter])
 
   const totalCount = filteredRows.length
   const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1
@@ -161,13 +153,13 @@ export const TemplatesTable = () => {
 
   if (!isLoading && currentPage > totalPages) {
     router.replace(
-      pathname + buildQueryString({ page: totalPages, typeFilter, hideSystem })
+      pathname + buildQueryString({ page: totalPages, typeFilter })
     )
   }
 
   useEffect(() => {
     setSelectedIds(new Set())
-  }, [currentPage, typeFilter, hideSystem, search])
+  }, [currentPage, typeFilter, search])
 
   useEffect(() => {
     if (selectAllRef.current) {
@@ -218,16 +210,11 @@ export const TemplatesTable = () => {
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value as TypeFilter
-    router.replace(
-      pathname + buildQueryString({ typeFilter: value, hideSystem })
-    )
+    router.replace(pathname + buildQueryString({ typeFilter: value }))
   }
 
-  const toggleHideSystem = () => {
-    router.replace(
-      pathname + buildQueryString({ typeFilter, hideSystem: !hideSystem })
-    )
-  }
+  const startNumber = (currentPage - 1) * PAGE_SIZE + 1
+  const endNumber = Math.min(currentPage * PAGE_SIZE, totalCount)
 
   return (
     <>
@@ -235,62 +222,28 @@ export const TemplatesTable = () => {
         <div className="govuk-grid-column-one-half">
           <form
             role="search"
-            className="govuk-form-group"
+            className="govuk-form-group relative"
             onSubmit={(e) => e.preventDefault()}
           >
-            <label className="govuk-label" htmlFor="search-templates">
-              Search templates
-            </label>
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-(--govuk-text-colour)" aria-hidden="true" />
             <input
               id="search-templates"
               name="search-templates"
               type="search"
-              className="govuk-input"
+              className="govuk-input govuk-input--subtle govuk-!-padding-left-7"
+              placeholder="Search templates"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </form>
         </div>
         <div className="govuk-grid-column-one-quarter">
-          <div className="govuk-form-group">
-            <label className="govuk-label" htmlFor="filter">
-              Filter by
-            </label>
-            <select
-              className="govuk-select govuk-!-width-full"
-              id="filter"
-              name="filter"
-              value={typeFilter}
-              onChange={handleFilterChange}
-            >
-              <option value="all">All</option>
-              <option value="summary">Summary</option>
-              <option value="q-and-a">Q &amp; A</option>
-            </select>
-          </div>
-        </div>
-        <div className="govuk-grid-column-one-quarter">
-          <div className="govuk-form-group">
-            <button
-              type="button"
-              className="govuk-button govuk-button--secondary govuk-!-margin-0 whitespace-nowrap"
-              aria-pressed={hideSystem}
-              onClick={toggleHideSystem}
-            >
-              {hideSystem ? (
-                <Eye className="size-4" />
-              ) : (
-                <EyeOff className="size-4" />
-              )}
-              {hideSystem ? 'Show system templates' : 'Hide system templates'}
-            </button>
-          </div>
         </div>
       </div>
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
-          <div className="govuk-!-margin-bottom-3 govuk-!-padding-bottom-2 flex items-center justify-between border-b border-(--govuk-border-colour)">
-            <div className="flex items-center gap-2">
+          <div className="govuk-!-margin-bottom-3 flex items-center justify-between">
+            <div className="flex items-center gap-2 flex-1">
               {selectablePageKeys.length > 0 && (
                 <div
                   className="govuk-checkboxes govuk-checkboxes--small relative flex"
@@ -313,11 +266,6 @@ export const TemplatesTable = () => {
                   </label>
                 </div>
               )}
-              {hasSystemSelected && (
-                <p className="govuk-body govuk-!-margin-0 text-red-600">
-                  (Cannot delete system templates)
-                </p>
-              )}
               {deleteCount > 0 && (
                 <div className="govuk-button-group govuk-!-margin-bottom-0">
                   <button
@@ -333,14 +281,31 @@ export const TemplatesTable = () => {
             <span className="govuk-visually-hidden" aria-live="polite">
               {deleteCount > 0 ? `${deleteCount} templates selected` : ''}
             </span>
-            <p className="govuk-body govuk-!-margin-bottom-0" role="status">
-              Total: {totalCount}
+            <p className="govuk-body govuk-!-margin-bottom-0 flex-1" role="status">
+              Showing {startNumber} to {endNumber} of {totalCount}
               {search.trim() && (
                 <span className="govuk-visually-hidden">
                   {` results for “${search.trim()}”`}
                 </span>
               )}
             </p>
+            <div className="govuk-form-group flex-1 flex items-center justify-end gap-2">
+              <label className="govuk-label" htmlFor="filter">
+                Filter by
+              </label>
+              <select
+                className="govuk-select govuk-select--subtle"
+                id="filter"
+                name="filter"
+                value={typeFilter}
+                onChange={handleFilterChange}
+              >
+                <option value="all">All</option>
+                <option value="summary">Summary</option>
+                <option value="q-and-a">Q &amp; A</option>
+                <option value="system">System</option>
+              </select>
+            </div>
           </div>
           {isLoading ? (
             <p className="govuk-body">Loading templates...</p>
@@ -371,7 +336,6 @@ export const TemplatesTable = () => {
                           buildQueryString({
                             page: currentPage - 1,
                             typeFilter,
-                            hideSystem,
                           })
                         }
                         rel="prev"
@@ -401,7 +365,7 @@ export const TemplatesTable = () => {
                           className="govuk-link govuk-pagination__link"
                           href={
                             pathname +
-                            buildQueryString({ page, typeFilter, hideSystem })
+                            buildQueryString({ page, typeFilter })
                           }
                           aria-label={`Page ${page}`}
                         >
@@ -419,7 +383,6 @@ export const TemplatesTable = () => {
                           buildQueryString({
                             page: currentPage + 1,
                             typeFilter,
-                            hideSystem,
                           })
                         }
                         rel="next"

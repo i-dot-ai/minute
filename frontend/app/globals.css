@@ -65,10 +65,6 @@
   background-color: #d2e2f1;
 }
 
-.govuk-radios--cards .govuk-radios__label {
-  /* margin-left: 15px; */
-}
-
 .govuk-radios--cards .govuk-radios__input:checked+.govuk-radios__label:after {
   right: 22px;
   left: auto;

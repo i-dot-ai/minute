@@ -44,7 +44,7 @@ export const AudioUploadForm = () => {
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="govuk-!-margin-top-7">
         <label
           className="govuk-label govuk-fieldset__legend--s"
           htmlFor="file-upload"

@@ -28,7 +28,7 @@ export const DownloadButton = ({
         download
         role="button"
         onClick={onClick(recordings[0])}
-        className="govuk-button govuk-button--secondary"
+        className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
       >
         <Download className="size-4" /> Download audio
       </a>
@@ -37,7 +37,7 @@ export const DownloadButton = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="govuk-button govuk-button--secondary">
+        <button className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0">
           <Download className="size-4" /> Download audio
         </button>
       </DialogTrigger>

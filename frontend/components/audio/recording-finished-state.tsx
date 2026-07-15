@@ -1,13 +1,10 @@
 'use client'
 
-import { Loader2 } from 'lucide-react'
+import { LoadingBar } from '@/components/ui/loading-bar'
+import { RefreshCw } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 
-export function RecordingFinishedState({
-  isUploading,
-}: {
-  isUploading: boolean
-}) {
+export function RecordingFinishedState() {
   const headingRef = useRef<HTMLHeadingElement>(null)
 
   // The recording controls (including the focused stop button) unmount when this
@@ -20,24 +17,18 @@ export function RecordingFinishedState({
 
   return (
     <div className="govuk-!-margin-top-4" role="status">
-      <div className="flex items-center gap-2">
-        <Loader2
-          className="size-5 animate-spin motion-reduce:animate-none"
-          aria-hidden="true"
-        />
-        <h2
-          ref={headingRef}
-          tabIndex={-1}
-          className="govuk-heading-m govuk-!-margin-bottom-0"
-        >
-          Recording finished
-        </h2>
+      <p className="govuk-body">Recording finished</p>
+      <div className="bg-(--govuk-surface-background-colour) govuk-!-padding-5 govuk-!-padding-top-8 govuk-!-margin-top-5">
+        <div className="inline-flex items-center gap-2">
+          <RefreshCw className="size-4 animate-spin text-(--govuk-text-colour)" />
+          <h2 className="govuk-heading-m govuk-!-margin-bottom-0">
+            Uploading your recording...
+          </h2>
+        </div>
+        <div className="govuk-!-margin-bottom-7 govuk-!-margin-top-6">
+          <LoadingBar />
+        </div>
       </div>
-      {isUploading && (
-        <p className="govuk-hint govuk-!-margin-top-2 govuk-!-margin-bottom-0">
-          Uploading your recording...
-        </p>
-      )}
     </div>
   )
 }

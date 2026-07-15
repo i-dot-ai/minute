@@ -14,7 +14,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 
 function toFormTemplate(
   template: TemplateResponse | TemplateMetadata,
@@ -90,11 +89,7 @@ function getSelectedOptionValue(
   return `default:${template.name}`
 }
 
-export const StartTranscriptionSection = ({
-  fullWidth = true,
-}: {
-  fullWidth?: boolean
-}) => {
+export const StartTranscriptionSection = () => {
   const form = useFormContext<TranscriptionForm>()
   const queryClient = useQueryClient()
   const selectedTemplate = form.watch('template')
@@ -185,15 +180,13 @@ export const StartTranscriptionSection = ({
   }
 
   return (
-    <div
-      className={`govuk-!-padding-top-6 items-start border-t border-(--govuk-border-colour) ${!isCurrentDefault ? 'border-b' : ''}`}
-    >
+    <div>
       <div className="govuk-form-group flex items-center gap-2">
         <label className="govuk-label" htmlFor="template">
           Summarise using:
         </label>
         <select
-          className="govuk-select"
+          className="govuk-select govuk-select--subtle"
           id="template"
           value={selectedOptionValue}
           onChange={(e) => handleTemplateChange(e.target.value)}
@@ -229,10 +222,7 @@ export const StartTranscriptionSection = ({
             )
           </label>
           <textarea
-            className={cn(
-              'govuk-textarea',
-              fullWidth ? '' : 'govuk-!-width-three-quarters'
-            )}
+            className="govuk-textarea govuk-textarea--subtle"
             placeholder="Add discussion points from the meeting that should be included in the summary."
             id="agenda"
             rows={4}

@@ -34,7 +34,9 @@
   color: #fff;
 }
 
-.govuk-select--subtle {
+.govuk-select--subtle,
+.govuk-textarea--subtle,
+.govuk-input--subtle {
   border: 1px solid #858686;
 }
 

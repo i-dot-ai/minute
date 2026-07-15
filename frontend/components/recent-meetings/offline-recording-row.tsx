@@ -113,7 +113,6 @@ export const OfflineRecordingRow = ({
           <GenerateSummaryDialog
             open={uploadOpen}
             onOpenChange={setUploadOpen}
-            title="Generate summary"
             onConfirm={form.handleSubmit(onSubmit)}
             disabled={isPending}
           />

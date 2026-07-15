@@ -103,7 +103,6 @@ export const AudioUploadForm = () => {
         <GenerateSummaryDialog
           open={open}
           onOpenChange={setOpen}
-          title="Generate summary"
           onConfirm={form.handleSubmit(onSubmit)}
           disabled={isPending}
         />

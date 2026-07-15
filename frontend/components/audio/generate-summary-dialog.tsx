@@ -13,17 +13,13 @@ import {
 export const GenerateSummaryDialog = ({
   open,
   onOpenChange,
-  title,
-  description,
-  confirmLabel = 'Generate summary',
+  warningText,
   onConfirm,
   disabled = false,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  title: string
-  description?: string
-  confirmLabel?: string
+  warningText?: string
   onConfirm: () => void
   disabled?: boolean
 }) => {
@@ -31,10 +27,14 @@ export const GenerateSummaryDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle className="govuk-heading-l">{title}</DialogTitle>
-          {description && (
-            <DialogDescription className="govuk-body">
-              {description}
+          <DialogTitle className="govuk-heading-l">Generate summary</DialogTitle>
+          {warningText && (
+            <DialogDescription className="govuk-warning-text">
+              <span className="govuk-warning-text__icon" aria-hidden="true">!</span>
+              <strong className="govuk-warning-text__text">
+                <span className="govuk-visually-hidden">Warning</span>
+                {warningText}
+              </strong>
             </DialogDescription>
           )}
         </DialogHeader>
@@ -42,7 +42,7 @@ export const GenerateSummaryDialog = ({
         <DialogFooter className="govuk-button-group ml-auto sm:justify-end">
           <button
             type="button"
-            className="govuk-link text-(--govuk-link-colour)"
+            className="govuk-button govuk-button--secondary"
             onClick={() => onOpenChange(false)}
           >
             Cancel
@@ -53,7 +53,7 @@ export const GenerateSummaryDialog = ({
             disabled={disabled}
             onClick={onConfirm}
           >
-            {confirmLabel}
+            Generate summary
             <svg
               className="govuk-button__start-icon"
               xmlns="http://www.w3.org/2000/svg"

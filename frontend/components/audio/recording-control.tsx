@@ -432,8 +432,7 @@ export default function RecordingControl({
             onClick={handleStopRecording}
             className="govuk-button"
           >
-            <Save className="size-4" />
-            Save and generate summary
+            Save recording
           </button>
           {onDiscard && (
             <button
@@ -449,9 +448,8 @@ export default function RecordingControl({
 
       <GenerateSummaryDialog
         open={showStopDialog}
+        warningText="You won't be able to resume recording after stopping."
         onOpenChange={setShowStopDialog}
-        title="Stop recording and generate summary?"
-        description="You won't be able to resume recording after stopping."
         onConfirm={confirmStop}
       />
     </div>

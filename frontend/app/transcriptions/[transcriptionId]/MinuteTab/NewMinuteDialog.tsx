@@ -106,8 +106,6 @@ export function NewMinuteDialog({
         <GenerateSummaryDialog
           open={open}
           onOpenChange={setOpen}
-          title="Generate a new summary"
-          confirmLabel="Generate summary"
           onConfirm={form.handleSubmit(onSubmit)}
           disabled={isPending || (agendaRequired && !agendaValue)}
         />

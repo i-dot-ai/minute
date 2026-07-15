@@ -237,18 +237,6 @@ export const TemplatesTable = () => {
             />
           </form>
         </div>
-        <div className="govuk-grid-column-one-quarter">
-          <div className="govuk-button-group">
-            <Link
-              className="govuk-button"
-              role="button"
-              href="/templates/create"
-            >
-              <Plus className="size-4" />
-              Create new template
-            </Link>
-          </div>
-        </div>
       </div>
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">

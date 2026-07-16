@@ -98,7 +98,7 @@ export default function SummaryPage({
   return (
     <div className="govuk-grid-row">
       <div className="govuk-grid-column-full">
-        <div className="govuk-!-padding-top-8 sticky top-0 z-10">
+        <div className="govuk-!-padding-top-8 sticky top-0 z-10 bg-white">
           {!editState?.isEditable && (
             <div className="flex justify-between">
               <div className="govuk-button-group govuk-!-margin-bottom-0">

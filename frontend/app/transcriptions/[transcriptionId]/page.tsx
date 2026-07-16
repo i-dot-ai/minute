@@ -1,18 +1,18 @@
 'use client'
 import { DownloadButton } from '@/components/download-button'
 import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
-import { RenameTranscriptionInline } from '@/components/recent-meetings/rename-transcription'
+import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Pencil, Save } from 'lucide-react'
 import { AudioWav } from '@/components/icons/AudioWav'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function TranscriptionPage({
   params: { transcriptionId },
@@ -25,11 +25,19 @@ export default function TranscriptionPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-      ['awaiting_start', 'in_progress'].includes(query.state.data.status)
+        ['awaiting_start', 'in_progress'].includes(query.state.data.status)
         ? 2000
         : false,
   })
   const router = useRouter()
+
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [draftTitle, setDraftTitle] = useState('')
+  const { save: saveTitle, isPending: isSavingTitle } = useRenameTranscription({
+    id: transcriptionId,
+    title: transcription?.title,
+    status: transcription?.status ?? 'completed',
+  })
 
   const minutesEnabled =
     !!transcription?.status &&
@@ -106,37 +114,27 @@ export default function TranscriptionPage({
     ['awaiting_start', 'in_progress'].includes(transcription.status)
   ) {
     return (
-      <div className="govuk-grid-row govuk-!-margin-bottom-2">
-        <div className="govuk-grid-column-three-quarters">
-          <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
-            <ol className="govuk-breadcrumbs__list">
-              <li className="govuk-breadcrumbs__list-item">
-                <Link
-                  href="/transcriptions"
-                  className="govuk-breadcrumbs__link"
-                >
-                  Back to transcriptions
-                </Link>
-              </li>
-            </ol>
-          </nav>
-          <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
-            Generating transcript
-          </h1>
-          <p className="govuk-body">{date}</p>
-          <p className="govuk-body">
-            The transcription is being processed. Return later to view the
-            transcript.
-          </p>
-          <div className="flex w-full justify-center">
-            <AudioWav />
+      <div className="govuk-main-wrapper govuk-width-container">
+        <div className="govuk-grid-row govuk-!-margin-bottom-2">
+          <div className="govuk-grid-column-three-quarters">
+            <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
+              Generating transcript
+            </h1>
+            <p className="govuk-body">{date}</p>
+            <p className="govuk-body">
+              The transcription is being processed. Return later to view the
+              transcript.
+            </p>
+            <div className="flex w-full justify-center">
+              <AudioWav />
+            </div>
+            <h2 className="govuk-heading-m">Audio</h2>
+            <AudioPlayer transcriptionId={transcription.id} />
           </div>
-          <h2 className="govuk-heading-m">Audio</h2>
-          <AudioPlayer transcriptionId={transcription.id} />
-        </div>
-        <div className="govuk-grid-column-one-quarter">
-          <div className="govuk-button-group">
-            <DeleteTranscriptionButton transcription={transcription} />
+          <div className="govuk-grid-column-one-quarter">
+            <div className="govuk-button-group">
+              <DeleteTranscriptionButton transcription={transcription} />
+            </div>
           </div>
         </div>
       </div>
@@ -145,41 +143,93 @@ export default function TranscriptionPage({
 
   if (transcription.status == 'failed') {
     return (
-      <>
-        <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
-          <ol className="govuk-breadcrumbs__list">
-            <li className="govuk-breadcrumbs__list-item">
-              <Link href="/transcriptions" className="govuk-breadcrumbs__link">
-                Back to transcriptions
-              </Link>
-            </li>
-          </ol>
-        </nav>
+      <div className="govuk-main-wrapper govuk-width-container">
         <div className="govuk-grid-row govuk-!-margin-bottom-2">
-          <div className="govuk-grid-column-three-quarters">
-            <RenameTranscriptionInline
-              transcription={transcription}
-              headingLevel="h1"
-              headingClassName="govuk-heading-xl govuk-!-margin-bottom-2"
-            />
-            <p className="govuk-body">{date}</p>
-            <p className="govuk-body">
-              The transcription failed to process. Please try again.
-            </p>
+          <div className="govuk-grid-column-two-thirds">
+            {!isRenaming && (
+              <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
+                {transcription.title ?? "No title"}
+              </h1>
+            )}
           </div>
-          <div className="govuk-grid-column-one-quarter">
-            <div className="govuk-button-group transcription-page__actions govuk-!-margin-bottom-0 float-right">
-              <DeleteTranscriptionButton transcription={transcription} />
+          <div className={isRenaming ? "govuk-grid-column-full" : "govuk-grid-column-one-third"}>
+            <div className="govuk-button-group transcription-page__actions govuk-!-margin-bottom-0 justify-end">
+              <button
+                type="button"
+                className="govuk-button govuk-button--secondary"
+                disabled={isRenaming}
+                onClick={() => {
+                  setDraftTitle(transcription.title ?? '')
+                  setIsRenaming(true)
+                }}
+              >
+                <Pencil className="size-4" /> Rename
+              </button>
+              <DeleteTranscriptionButton transcription={transcription} disabled={isRenaming} />
             </div>
           </div>
         </div>
-        <div className="govuk-grid-row govuk-!-margin-bottom-2">
+        {isRenaming && (
+          <form
+            className="govuk-form-group"
+            onSubmit={(e) => {
+              e.preventDefault()
+              saveTitle(draftTitle)
+              setIsRenaming(false)
+            }}
+          >
+            <h1 className="govuk-label-wrapper">
+              <label
+                className="govuk-label govuk-label--m"
+                htmlFor="transcription-title"
+              >
+                Transcription title
+              </label>
+            </h1>
+            <input
+              id="transcription-title"
+              className="govuk-input"
+              type="text"
+              placeholder="Add title"
+              value={draftTitle}
+              onChange={(e) => setDraftTitle(e.target.value)}
+            />
+            <div className="govuk-button-group govuk-!-margin-top-2">
+              <button
+                type="submit"
+                className="govuk-button"
+                disabled={isSavingTitle}
+              >
+                <Save className="size-4" /> Save
+              </button>
+              <button
+                type="button"
+                className="govuk-button govuk-button--secondary"
+                onClick={() => setIsRenaming(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )
+        }
+        < div className="govuk-grid-row govuk-!-margin-bottom-2">
           <div className="govuk-grid-column-two-thirds">
+            <p className="govuk-body">{date}</p>
+            <p className="govuk-body">
+              <div className="govuk-warning-text">
+                <span className="govuk-warning-text__icon" aria-hidden="true">!</span>
+                <strong className="govuk-warning-text__text">
+                  <span className="govuk-visually-hidden">Warning</span>
+                  The transcription failed to process. Please try again.
+                </strong>
+              </div>
+            </p>
             <h2 className="govuk-heading-m">Audio:</h2>
             <AudioPlayer transcriptionId={transcription.id} />
           </div>
         </div>
-      </>
+      </div >
     )
   }
   // Ready: the redirect effect above sends the user to the latest summary
@@ -206,6 +256,7 @@ const AudioPlayer = ({ transcriptionId }: { transcriptionId: string }) => {
       <audio controls src={recordings[0].url} className="w-full" />
       <div className="govuk-button-group govuk-!-margin-top-2">
         <DownloadButton recordings={recordings} />
+        <Link href="/transcriptions/" className="govuk-button">Back to transcriptions</Link>
       </div>
     </div>
   )

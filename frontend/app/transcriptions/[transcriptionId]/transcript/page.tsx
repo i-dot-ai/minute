@@ -200,7 +200,14 @@ export default function TranscriptPage({
             </div>
           </div>
           {isRenaming ? (
-            <div className="govuk-form-group">
+            <form
+              className="govuk-form-group"
+              onSubmit={(e) => {
+                e.preventDefault()
+                saveTitle(draftTitle)
+                setIsRenaming(false)
+              }}
+            >
               <h1 className="govuk-label-wrapper">
                 <label
                   className="govuk-label govuk-label--m"
@@ -219,13 +226,9 @@ export default function TranscriptPage({
               />
               <div className="govuk-button-group govuk-!-margin-top-2">
                 <button
-                  type="button"
+                  type="submit"
                   className="govuk-button"
                   disabled={isSavingTitle}
-                  onClick={() => {
-                    saveTitle(draftTitle)
-                    setIsRenaming(false)
-                  }}
                 >
                   <Save className="size-4" /> Save
                 </button>
@@ -237,7 +240,7 @@ export default function TranscriptPage({
                   Cancel
                 </button>
               </div>
-            </div>
+            </form>
           ) : (
             <>
               <h1 className="govuk-heading-l govuk-!-margin-bottom-2">

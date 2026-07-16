@@ -92,24 +92,24 @@ function TranscriptionTableRow({
       <td className="govuk-table__cell whitespace-nowrap">
         <span className="govuk-body-s govuk-!-margin-0">{date}</span>
       </td>
-      <td className="govuk-table__cell whitespace-nowrap">
+      <td className="govuk-table__cell whitespace-nowrap govuk-!-padding-left-2">
         {transcription.expiring && (
-          <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-left-2">
+          <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-right-2">
             Expiring soon
           </strong>
         )}
         {transcription.status === 'failed' && (
-          <strong className="govuk-tag govuk-tag--red govuk-!-margin-left-2">
+          <strong className="govuk-tag govuk-tag--red govuk-!-margin-right-2">
             Failed
           </strong>
         )}
         {transcription.status === 'awaiting_start' && (
-          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-left-2">
+          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">
             Awaiting start
           </strong>
         )}
         {transcription.status === 'in_progress' && (
-          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-left-2">
+          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">
             In progress
           </strong>
         )}

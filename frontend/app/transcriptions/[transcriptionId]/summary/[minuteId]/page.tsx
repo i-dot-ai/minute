@@ -228,7 +228,13 @@ export default function SummaryPage({
           )}
         </div>
         {editState?.isEditable ? (
-          <div className="govuk-form-group govuk-!-margin-bottom-6">
+          <form
+            className="govuk-form-group govuk-!-margin-bottom-6"
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleSave()
+            }}
+          >
             <h1 className="govuk-label-wrapper">
               <label
                 className="govuk-label govuk-label--m"
@@ -245,7 +251,7 @@ export default function SummaryPage({
               value={draftTitle}
               onChange={(e) => setDraftTitle(e.target.value)}
             />
-          </div>
+          </form>
         ) : (
           <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
             {transcription.title}

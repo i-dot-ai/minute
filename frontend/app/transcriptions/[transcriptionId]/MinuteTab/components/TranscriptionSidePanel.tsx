@@ -23,7 +23,7 @@ export function TranscriptionSidePanel() {
   return (
     <nav
       aria-label="Summaries and transcript"
-      className="secondary-nav govuk-main-wrapper govuk-!-padding-left-6 overflow-y-auto bg-[#f4f8fb]"
+      className="secondary-nav govuk-main-wrapper govuk-!-padding-left-6 overflow-y-auto"
     >
       <ul className="govuk-list govuk-list--spaced">
         <li

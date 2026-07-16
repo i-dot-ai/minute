@@ -46,7 +46,7 @@ export function MicRecorderForm({
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        {isFinishing && <RecordingFinishedState isUploading={isPending} />}
+        {isFinishing && <RecordingFinishedState />}
         <Controller
           name="file"
           control={form.control}

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import { Pause, Play, Save } from 'lucide-react'
+import { Pause, Play } from 'lucide-react'
 import RecordingTimer from './recording-timer'
 import { GenerateSummaryDialog } from './generate-summary-dialog'
 

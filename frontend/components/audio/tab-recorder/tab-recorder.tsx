@@ -47,7 +47,7 @@ export const TabRecorderForm = ({
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        {isFinishing && <RecordingFinishedState isUploading={isPending} />}
+        {isFinishing && <RecordingFinishedState />}
         <Controller
           control={form.control}
           name="file"

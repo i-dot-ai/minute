@@ -16,23 +16,6 @@ import { LoadingBar } from '@/components/ui/loading-bar'
 
 const GENERATING_STATUSES = ['awaiting_start', 'in_progress']
 
-function StatusTag({ status }: { status: string | undefined }) {
-  const { colour, label } = (() => {
-    switch (status) {
-      case 'completed':
-        return { colour: 'green', label: 'Ready' }
-      case 'in_progress':
-        return { colour: 'blue', label: 'Processing' }
-      case 'failed':
-        return { colour: 'red', label: 'Failed' }
-      default:
-        return { colour: 'grey', label: 'Waiting' }
-    }
-  })()
-
-  return <strong className={`govuk-tag govuk-tag--${colour}`}>{label}</strong>
-}
-
 export default function RecordStatusPage({
   params: { id },
 }: {
@@ -44,7 +27,7 @@ export default function RecordStatusPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-      GENERATING_STATUSES.includes(query.state.data.status)
+        GENERATING_STATUSES.includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -68,7 +51,7 @@ export default function RecordStatusPage({
     enabled: !!minuteId && transcriptionDone,
     refetchInterval: (query) =>
       query.state.data?.[0]?.status &&
-      GENERATING_STATUSES.includes(query.state.data[0].status)
+        GENERATING_STATUSES.includes(query.state.data[0].status)
         ? 2000
         : false,
   })

@@ -141,9 +141,6 @@ export const TemplatesTable = () => {
     .filter((row) => !row.isSystem && selectedIds.has(templateRowKey(row)))
     .map((row) => row.id!)
   const deleteCount = deletableIds.length
-  const hasSystemSelected = filteredRows.some(
-    (row) => row.isSystem && selectedIds.has(templateRowKey(row))
-  )
 
   const isLoading = defaultsLoading || userLoading
   const isError = defaultsError || userError

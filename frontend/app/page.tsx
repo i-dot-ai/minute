@@ -2,8 +2,7 @@
 
 import { AudioUploadForm } from '@/components/audio/AudioUploadForm'
 // import { PosthogBanner } from '@/components/posthog-banner'
-import UrlMigrationBanner from '@/components/url-migration-banner'
-import { useIsOldUrl } from '@/hooks/use-is-old-url'
+// import { useIsOldUrl } from '@/hooks/use-is-old-url'
 import { AudioDevice } from '@/components/audio/microphone-permission'
 import { useRecordingSession } from '@/providers/recording-session-provider'
 import { Mic, Video, Upload } from 'lucide-react'
@@ -13,7 +12,7 @@ import { useState, useEffect } from 'react'
 type RecordingMode = 'in-person' | 'virtual-meeting' | 'upload-file'
 
 export default function Home() {
-  const isOldUrl = useIsOldUrl()
+  // const isOldUrl = useIsOldUrl()
   const router = useRouter()
   const session = useRecordingSession()
   const [mode, setMode] = useState<RecordingMode>('in-person')

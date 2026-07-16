@@ -8,7 +8,6 @@ import {
 } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
 import { ExportSummaryDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/ExportSummaryDialog'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
-import { TranscriptionSidePanel } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/TranscriptionSidePanel'
 import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
 import {
@@ -95,17 +94,6 @@ export default function SummaryPage({
   }
 
   const minute = minutes.find((m) => m.id === minuteId)
-
-  const date = new Date(transcription.created_datetime).toLocaleString(
-    'en-GB',
-    {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }
-  )
 
   return (
     <div className="govuk-grid-row">

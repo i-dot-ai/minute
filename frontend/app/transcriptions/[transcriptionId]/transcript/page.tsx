@@ -12,7 +12,6 @@ import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
-  listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowDown, Loader2, Pencil, Play, Save } from 'lucide-react'
@@ -31,14 +30,6 @@ export default function TranscriptPage({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId },
     }),
-  })
-
-  const { data: minutes = [] } = useQuery({
-    ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(
-      {
-        path: { transcription_id: transcriptionId },
-      }
-    ),
   })
 
   const [isRenaming, setIsRenaming] = useState(false)
@@ -153,17 +144,6 @@ export default function TranscriptPage({
       </div>
     )
   }
-
-  const date = new Date(transcription.created_datetime).toLocaleString(
-    'en-GB',
-    {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }
-  )
 
   return (
     <div className="govuk-grid-row">

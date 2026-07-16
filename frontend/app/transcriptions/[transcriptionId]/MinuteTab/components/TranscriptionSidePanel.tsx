@@ -23,11 +23,11 @@ export function TranscriptionSidePanel() {
   return (
     <nav
       aria-label="Summaries and transcript"
-      className="secondary-nav govuk-main-wrapper govuk-!-padding-left-6 overflow-y-auto"
+      className="secondary-nav govuk-main-wrapper govuk-!-padding-left-6 overflow-y-auto bg-[#f3f3f3]"
     >
       <ul className="govuk-list govuk-list--spaced">
         <li
-          className={`w-50 border-l-4 border-[transparent] pl-4 ${!transcriptPage ? '!border-(--govuk-brand-colour)' : ''}`}
+          className={`w-50 border-l-4 border-[transparent] pl-4 ${!transcriptPage ? '!border-(--govuk-link-colour)' : ''}`}
         >
           {transcriptPage || minutes.length <= 1 ? (
             <Link
@@ -81,7 +81,7 @@ export function TranscriptionSidePanel() {
         <li>
           <Link
             href={`/transcriptions/${transcriptionId}/transcript`}
-            className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline border-l-4 border-[transparent] pl-2 ${transcriptPage ? '!border-(--govuk-brand-colour) font-bold' : ''}`}
+            className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline border-l-4 border-[transparent] pl-2 ${transcriptPage ? '!border-(--govuk-link-colour) font-bold' : ''}`}
             aria-current={transcriptPage ? 'page' : undefined}
           >
             Transcript

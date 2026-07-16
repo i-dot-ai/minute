@@ -7,7 +7,6 @@ import {
   saveTranscriptionTranscriptionsTranscriptionIdPatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { PencilIcon } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'

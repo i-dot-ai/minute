@@ -1,5 +1,4 @@
 import { TemplatesTable } from '@/app/templates/components/templates-table'
-import Link from 'next/link'
 import { Suspense } from 'react'
 
 export default function TemplatesPage() {

@@ -12,7 +12,7 @@ export const ServiceNavigation = () => {
   return (
     <section
       aria-label="Service information"
-      className="flex h-full w-40 shrink-0 flex-col bg-(--govuk-surface-background-colour)"
+      className="flex h-full w-40 shrink-0 flex-col bg-[#d2e2f1]"
     >
       <nav aria-label="Menu" className="flex h-full flex-col justify-between">
         <ul className="flex w-40 flex-col" id="navigation">
@@ -28,7 +28,12 @@ export const ServiceNavigation = () => {
               }
               className="govuk-service-navigation__link ml-4 flex items-center gap-2 font-bold !text-(--govuk-text-colour)"
             >
-              <Image src="/logos/minute-logo.svg" alt="" width={24} height={24} />
+              <Image
+                src="/logos/minute-logo.svg"
+                alt=""
+                width={24}
+                height={24}
+              />
               Minute
             </GuardedLink>
           </li>

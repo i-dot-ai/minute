@@ -94,7 +94,7 @@ export function TemplateTableRow({
               ? `/templates/system/${encodeURIComponent(template.name)}`
               : `/templates/${template.id}`
           }
-          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline font-bold group-has-[a:hover]:text-[var(--govuk-link-hover-colour,#0f385c)]! group-has-[a:hover]:underline! group-has-[a:hover]:decoration-[max(3px,.1875rem,.12em)]! group-has-[a:hover]:[text-decoration-skip-ink:none]! w-full inline-block govuk-!-margin-right-1"
+          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-right-1 inline-block w-full font-bold group-has-[a:hover]:text-[var(--govuk-link-hover-colour,#0f385c)]! group-has-[a:hover]:underline! group-has-[a:hover]:decoration-[max(3px,.1875rem,.12em)]! group-has-[a:hover]:[text-decoration-skip-ink:none]!"
         >
           {name}
         </Link>
@@ -146,7 +146,9 @@ export function TemplateTableRow({
             </button>
             <DeleteConfirmDialog
               name={name}
-              disabled={isDeleting || duplicateMutation.isPending || !template.id}
+              disabled={
+                isDeleting || duplicateMutation.isPending || !template.id
+              }
               onConfirm={() =>
                 deleteTemplate({ path: { template_id: template.id! } })
               }

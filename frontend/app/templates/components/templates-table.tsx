@@ -237,10 +237,21 @@ export const TemplatesTable = () => {
             />
           </form>
         </div>
+        <div className="govuk-grid-column-one-half">
+          <div className="govuk-button-group">
+            <Link
+              className="govuk-button"
+              role="button"
+              href="/templates/create"
+            >
+              Create new template
+            </Link>
+          </div>
+        </div>
       </div>
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
-          <div className="flex items-center justify-between govuk-!-margin-bottom-3">
+          <div className="govuk-!-margin-bottom-3 flex items-center justify-between">
             <div className="flex flex-1 items-center gap-2">
               {selectablePageKeys.length > 0 && (
                 <div
@@ -290,7 +301,7 @@ export const TemplatesTable = () => {
                 </span>
               )}
             </p>
-            <div className="govuk-form-group flex flex-1 items-center justify-end gap-2 govuk-!-margin-bottom-0">
+            <div className="govuk-form-group govuk-!-margin-bottom-0 flex flex-1 items-center justify-end gap-2">
               <label className="govuk-label" htmlFor="filter">
                 Filter by
               </label>

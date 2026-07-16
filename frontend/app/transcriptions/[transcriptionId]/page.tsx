@@ -25,7 +25,7 @@ export default function TranscriptionPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-        ['awaiting_start', 'in_progress'].includes(query.state.data.status)
+      ['awaiting_start', 'in_progress'].includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -114,27 +114,25 @@ export default function TranscriptionPage({
     ['awaiting_start', 'in_progress'].includes(transcription.status)
   ) {
     return (
-      <div className="govuk-main-wrapper govuk-width-container">
-        <div className="govuk-grid-row govuk-!-margin-bottom-2">
-          <div className="govuk-grid-column-three-quarters">
-            <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
-              Generating transcript
-            </h1>
-            <p className="govuk-body">{date}</p>
-            <p className="govuk-body">
-              The transcription is being processed. Return later to view the
-              transcript.
-            </p>
-            <div className="flex w-full justify-center">
-              <AudioWav />
-            </div>
-            <h2 className="govuk-heading-m">Audio</h2>
-            <AudioPlayer transcriptionId={transcription.id} />
+      <div className="govuk-grid-row govuk-!-margin-bottom-2">
+        <div className="govuk-grid-column-three-quarters">
+          <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
+            Generating transcript
+          </h1>
+          <p className="govuk-body">{date}</p>
+          <p className="govuk-body">
+            The transcription is being processed. Return later to view the
+            transcript.
+          </p>
+          <div className="flex w-full justify-center">
+            <AudioWav />
           </div>
-          <div className="govuk-grid-column-one-quarter">
-            <div className="govuk-button-group">
-              <DeleteTranscriptionButton transcription={transcription} />
-            </div>
+          <h2 className="govuk-heading-m">Audio</h2>
+          <AudioPlayer transcriptionId={transcription.id} />
+        </div>
+        <div className="govuk-grid-column-one-quarter">
+          <div className="govuk-button-group">
+            <DeleteTranscriptionButton transcription={transcription} />
           </div>
         </div>
       </div>
@@ -143,16 +141,22 @@ export default function TranscriptionPage({
 
   if (transcription.status == 'failed') {
     return (
-      <div className="govuk-main-wrapper govuk-width-container">
+      <>
         <div className="govuk-grid-row govuk-!-margin-bottom-2">
           <div className="govuk-grid-column-two-thirds">
             {!isRenaming && (
               <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
-                {transcription.title ?? "No title"}
+                {transcription.title ?? 'No title'}
               </h1>
             )}
           </div>
-          <div className={isRenaming ? "govuk-grid-column-full" : "govuk-grid-column-one-third"}>
+          <div
+            className={
+              isRenaming
+                ? 'govuk-grid-column-full'
+                : 'govuk-grid-column-one-third'
+            }
+          >
             <div className="govuk-button-group transcription-page__actions govuk-!-margin-bottom-0 justify-end">
               <button
                 type="button"
@@ -165,7 +169,10 @@ export default function TranscriptionPage({
               >
                 <Pencil className="size-4" /> Rename
               </button>
-              <DeleteTranscriptionButton transcription={transcription} disabled={isRenaming} />
+              <DeleteTranscriptionButton
+                transcription={transcription}
+                disabled={isRenaming}
+              />
             </div>
           </div>
         </div>
@@ -211,14 +218,15 @@ export default function TranscriptionPage({
               </button>
             </div>
           </form>
-        )
-        }
-        < div className="govuk-grid-row govuk-!-margin-bottom-2">
+        )}
+        <div className="govuk-grid-row govuk-!-margin-bottom-2">
           <div className="govuk-grid-column-two-thirds">
             <p className="govuk-body">{date}</p>
             <p className="govuk-body">
               <div className="govuk-warning-text">
-                <span className="govuk-warning-text__icon" aria-hidden="true">!</span>
+                <span className="govuk-warning-text__icon" aria-hidden="true">
+                  !
+                </span>
                 <strong className="govuk-warning-text__text">
                   <span className="govuk-visually-hidden">Warning</span>
                   The transcription failed to process. Please try again.
@@ -229,15 +237,19 @@ export default function TranscriptionPage({
             <AudioPlayer transcriptionId={transcription.id} />
           </div>
         </div>
-      </div >
+      </>
     )
   }
   // Ready: the redirect effect above sends the user to the latest summary
   // or the transcript page, so just show a loader in the meantime.
   return (
-    <div className="flex items-center gap-2">
-      <Loader2 className="animate-spin" />
-      <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
+    <div className="govuk-main-wrapper">
+      <div className="govuk-width-container">
+        <div className="flex items-center gap-2">
+          <Loader2 className="animate-spin" />
+          <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
+        </div>
+      </div>
     </div>
   )
 }
@@ -256,7 +268,9 @@ const AudioPlayer = ({ transcriptionId }: { transcriptionId: string }) => {
       <audio controls src={recordings[0].url} className="w-full" />
       <div className="govuk-button-group govuk-!-margin-top-2">
         <DownloadButton recordings={recordings} />
-        <Link href="/transcriptions/" className="govuk-button">Back to transcriptions</Link>
+        <Link href="/transcriptions/" className="govuk-button">
+          Back to transcriptions
+        </Link>
       </div>
     </div>
   )

@@ -92,7 +92,7 @@ function TranscriptionTableRow({
       <td className="govuk-table__cell whitespace-nowrap">
         <span className="govuk-body-s govuk-!-margin-0">{date}</span>
       </td>
-      <td className="govuk-table__cell whitespace-nowrap govuk-!-padding-left-2">
+      <td className="govuk-table__cell govuk-!-padding-left-2 whitespace-nowrap">
         {transcription.expiring && (
           <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-right-2">
             Expiring soon

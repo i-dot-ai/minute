@@ -4,11 +4,9 @@ import { SpeakerEditor } from '@/app/transcriptions/[transcriptionId]/Transcript
 import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNamePopover'
 import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTextArea'
 import { DialogueEntryForm } from '@/types/transcriptions'
-import { TranscriptionSidePanel } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/TranscriptionSidePanel'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { ExportTranscriptDialog } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/ExportTranscriptDialog'
 import { formatTime } from '@/components/audio/audio-player'
-import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import {
@@ -121,28 +119,38 @@ export default function TranscriptPage({
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2">
-        <Loader2 className="animate-spin" />
-        <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
+      <div className="govuk-main-wrapper">
+        <div className="govuk-grid-row">
+          <div className="govuk-grid-column-full">
+            <div className="flex items-center gap-2">
+              <Loader2 className="animate-spin" />
+              <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (!transcription) {
     return (
-      <>
-        <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
-          404 - Transcription not found
-        </h1>
-        <p className="govuk-body">
-          The transcription you are looking for does not exist.
-        </p>
-        <div className="govuk-button-group">
-          <Link href="/transcriptions" className="govuk-button">
-            Back to transcriptions
-          </Link>
+      <div className="govuk-main-wrapper">
+        <div className="govuk-grid-row">
+          <div className="govuk-grid-column-full">
+            <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
+              404 - Transcription not found
+            </h1>
+            <p className="govuk-body">
+              The transcription you are looking for does not exist.
+            </p>
+            <div className="govuk-button-group">
+              <Link href="/transcriptions" className="govuk-button">
+                Back to transcriptions
+              </Link>
+            </div>
+          </div>
         </div>
-      </>
+      </div>
     )
   }
 
@@ -159,45 +167,66 @@ export default function TranscriptPage({
 
   return (
     <div className="govuk-grid-row">
-      <div className="govuk-grid-column-one-quarter">
-        <TranscriptionSidePanel
-          transcriptionId={transcriptionId}
-          minutes={minutes}
-          transcriptPage={true}
-        />
-      </div>
       <FormProvider {...methods}>
-        <div className="govuk-grid-column-three-quarters">
-          <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-3 flex justify-between border-b border-(--govuk-border-colour)">
-            <div className="govuk-button-group govuk-!-margin-bottom-0">
-              <NewMinuteDialog
-                transcriptionId={transcriptionId}
-                onCreated={() =>
-                  router.push(`/transcriptions/${transcriptionId}/summary`)
-                }
-              />
+        <div className="govuk-grid-column-full">
+          <div className="sticky top-0 z-10 bg-white">
+            <div className="govuk-!-padding-bottom-4 govuk-!-padding-top-8 flex justify-between">
+              <div className="govuk-button-group govuk-!-margin-bottom-0">
+                <NewMinuteDialog
+                  transcriptionId={transcriptionId}
+                  onCreated={() =>
+                    router.push(`/transcriptions/${transcriptionId}/summary`)
+                  }
+                />
+              </div>
+              <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
+                <button
+                  type="button"
+                  className="govuk-button govuk-button--secondary"
+                  onClick={() => {
+                    setDraftTitle(transcription.title ?? '')
+                    setIsRenaming(true)
+                  }}
+                >
+                  <Pencil className="size-4" /> Edit
+                </button>
+                <ExportTranscriptDialog
+                  transcriptionString={transcriptionString}
+                  recordings={recordings}
+                />
+                <SpeakerEditor
+                  transcription={transcription}
+                  src={hasRecordings ? recordings[0].url : undefined}
+                />
+              </div>
             </div>
-            <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
-              <button
-                type="button"
-                className="govuk-button govuk-button--secondary"
-                onClick={() => {
-                  setDraftTitle(transcription.title ?? '')
-                  setIsRenaming(true)
-                }}
-              >
-                <Pencil className="size-4" /> Rename
-              </button>
-              <ExportTranscriptDialog
-                transcriptionString={transcriptionString}
-                recordings={recordings}
-              />
-              <SpeakerEditor
-                transcription={transcription}
-                src={hasRecordings ? recordings[0].url : undefined}
-              />
-              <DeleteTranscriptionButton transcription={transcription} />
-            </div>
+            {hasRecordings && (
+              <div className="govuk-!-padding-bottom-4">
+                <div className="flex">
+                  <audio
+                    controls
+                    src={recordings[0].url}
+                    className="w-full"
+                    ref={audioRef}
+                    onSeeked={delayedScroll}
+                    onTimeUpdate={(e) => {
+                      if ((e.target as HTMLAudioElement).currentTime != null) {
+                        setTime((e.target as HTMLAudioElement).currentTime)
+                      }
+                    }}
+                  />
+                  <div className="govuk-button-group govuk-!-margin-top-1 govuk-!-margin-left-3 govuk-!-margin-bottom-0">
+                    <button
+                      type="button"
+                      onClick={scrollToPlaying}
+                      className="govuk-button govuk-button--secondary whitespace-nowrap"
+                    >
+                      <ArrowDown className="size-4" /> Scroll to current section
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           {isRenaming ? (
             <form
@@ -243,12 +272,9 @@ export default function TranscriptPage({
             </form>
           ) : (
             <>
-              <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
-                {transcription.title}
-              </h1>
+              <h1 className="govuk-heading-m">{transcription.title}</h1>
             </>
           )}
-          <p className="govuk-body">{date}</p>
           <div
             className="govuk-visually-hidden"
             role="status"
@@ -257,33 +283,6 @@ export default function TranscriptPage({
             {saveMessage}
           </div>
           <form onSubmit={handleSubmit(saveTranscription)}>
-            {hasRecordings && (
-              <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-4 govuk-!-padding-top-2 sticky top-0 z-10 border-b border-(--govuk-border-colour) bg-white">
-                <div className="flex">
-                  <audio
-                    controls
-                    src={recordings[0].url}
-                    className="w-full"
-                    ref={audioRef}
-                    onSeeked={delayedScroll}
-                    onTimeUpdate={(e) => {
-                      if ((e.target as HTMLAudioElement).currentTime != null) {
-                        setTime((e.target as HTMLAudioElement).currentTime)
-                      }
-                    }}
-                  />
-                  <div className="govuk-button-group govuk-!-margin-top-1 govuk-!-margin-left-3 govuk-!-margin-bottom-0">
-                    <button
-                      type="button"
-                      onClick={scrollToPlaying}
-                      className="govuk-button govuk-button--secondary whitespace-nowrap"
-                    >
-                      <ArrowDown className="size-4" /> Scroll to current section
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
             <div className="flex flex-col gap-6">
               {fields.map((entry, index, array) => {
                 const isPlaying =

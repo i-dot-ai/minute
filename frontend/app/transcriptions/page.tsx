@@ -8,17 +8,15 @@ export default function TranscriptionsPage() {
       <div className="govuk-width-container">
         <div className="govuk-grid-row">
           <div
-            className="govuk-grid-column-one-half"
+            className="govuk-grid-column-full"
             data-onboarding="saved-transcriptions-page"
           >
             <h1
-              className="govuk-heading-l govuk-!-margin-bottom-3"
+              className="govuk-heading-m govuk-!-margin-bottom-2"
               id="transcriptions-list-heading"
             >
               Transcriptions
             </h1>
-          </div>
-          <div className="govuk-grid-column-one-half flex justify-end">
             <DataRetentionSelect />
           </div>
         </div>

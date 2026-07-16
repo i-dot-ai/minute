@@ -1,25 +1,33 @@
 'use client'
 
-import { MinuteListItem } from '@/lib/client'
+import { listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useParams, usePathname } from 'next/navigation'
 
-export function TranscriptionSidePanel({
-  transcriptionId,
-  minutes,
-  transcriptPage = false,
-}: {
-  transcriptionId: string
-  minutes: MinuteListItem[]
-  transcriptPage?: boolean
-}) {
+export function TranscriptionSidePanel() {
+  const { transcriptionId } = useParams<{ transcriptionId?: string }>()
   const pathname = usePathname()
+  const { data: minutes = [] } = useQuery({
+    ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(
+      {
+        path: { transcription_id: transcriptionId ?? '' },
+      }
+    ),
+    enabled: !!transcriptionId,
+  })
+  const transcriptPage = !pathname.includes('/summary')
+
+  if (!transcriptionId) return null
 
   return (
-    <nav aria-label="Summaries and transcript">
+    <nav
+      aria-label="Summaries and transcript"
+      className="secondary-nav govuk-main-wrapper govuk-!-padding-left-6 overflow-y-auto bg-[#f4f8fb]"
+    >
       <ul className="govuk-list govuk-list--spaced">
         <li
-          className={`border-l-4 border-[transparent] pl-4 ${!transcriptPage ? '!border-(--govuk-brand-colour)' : ''}`}
+          className={`w-50 border-l-4 border-[transparent] pl-4 ${!transcriptPage ? '!border-(--govuk-brand-colour)' : ''}`}
         >
           {transcriptPage || minutes.length <= 1 ? (
             <Link

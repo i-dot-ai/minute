@@ -109,74 +109,70 @@ export default function SummaryPage({
 
   return (
     <div className="govuk-grid-row">
-      <div className="govuk-grid-column-one-quarter">
-        <TranscriptionSidePanel
-          transcriptionId={transcriptionId}
-          minutes={minutes}
-        />
-      </div>
-      <div className="govuk-grid-column-three-quarters">
-        <div className="govuk-!-margin-bottom-6 border-b border-(--govuk-border-colour)">
-          <div className="flex justify-between">
-            <div className="govuk-button-group govuk-!-margin-bottom-0">
-              <NewMinuteDialog
-                transcriptionId={transcriptionId}
-                disabled={editState?.isEditable}
-                onCreated={() =>
-                  router.push(`/transcriptions/${transcriptionId}/summary`)
-                }
-              />
-            </div>
-            <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
-              {editState && (
-                <>
-                  <button
-                    className="govuk-button govuk-button--secondary"
-                    onClick={() => editState.setIsEditable(true)}
-                    type="button"
-                    disabled={editState.isEditable}
-                  >
-                    <PencilIcon className="size-4" /> Edit
-                  </button>
-                  <ExportSummaryDialog
-                    exportState={exportState}
-                    title={transcription.title}
-                    dialogueEntries={transcription.dialogue_entries}
-                    disabled={editState.isEditable}
-                  />
-                  {editState.hasCitations && (
+      <div className="govuk-grid-column-full">
+        <div className="govuk-!-padding-top-8 sticky top-0 z-10 bg-white">
+          {!editState?.isEditable && (
+            <div className="flex justify-between">
+              <div className="govuk-button-group govuk-!-margin-bottom-0">
+                <NewMinuteDialog
+                  transcriptionId={transcriptionId}
+                  disabled={editState?.isEditable}
+                  onCreated={() =>
+                    router.push(`/transcriptions/${transcriptionId}/summary`)
+                  }
+                />
+              </div>
+              <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
+                {editState && (
+                  <>
                     <button
-                      className="govuk-button govuk-button--secondary min-w-48"
-                      onClick={editState.toggleHideCitations}
+                      className="govuk-button govuk-button--secondary"
+                      onClick={() => editState.setIsEditable(true)}
+                      type="button"
                       disabled={editState.isEditable}
                     >
-                      {editState.hideCitations ? (
-                        <Eye className="size-4" />
-                      ) : (
-                        <EyeOffIcon className="size-4" />
-                      )}
-                      {editState.hideCitations
-                        ? 'Show references'
-                        : 'Hide references'}
+                      <PencilIcon className="size-4" /> Edit
                     </button>
-                  )}
+                    <ExportSummaryDialog
+                      exportState={exportState}
+                      title={transcription.title}
+                      dialogueEntries={transcription.dialogue_entries}
+                      disabled={editState.isEditable}
+                    />
+                    {editState.hasCitations && (
+                      <button
+                        className="govuk-button govuk-button--secondary min-w-48"
+                        onClick={editState.toggleHideCitations}
+                        disabled={editState.isEditable}
+                      >
+                        {editState.hideCitations ? (
+                          <Eye className="size-4" />
+                        ) : (
+                          <EyeOffIcon className="size-4" />
+                        )}
+                        {editState.hideCitations
+                          ? 'Show references'
+                          : 'Hide references'}
+                      </button>
+                    )}
 
-                  <DeleteTranscriptionButton
-                    transcription={transcription}
-                    disabled={editState?.isEditable}
-                  />
-                </>
-              )}
+                    <DeleteTranscriptionButton
+                      transcription={transcription}
+                      disabled={editState?.isEditable}
+                    />
+                  </>
+                )}
+              </div>
             </div>
-          </div>
+          )}
           {editState && editState.isEditable && (
             <div className="flex flex-col justify-between lg:flex-row">
-              <div className="govuk-form-group govuk-!-margin-bottom-3">
+              <div className="govuk-form-group govuk-!-margin-bottom-3 flex items-center gap-2">
                 <label className="govuk-label" htmlFor="version">
                   Version history
                 </label>
                 <select
-                  className="govuk-select w-full"
+                  className="govuk-select"
                   id="version"
                   name="version"
                   onChange={(e) => editState.setVersion(Number(e.target.value))}
@@ -203,7 +199,7 @@ export default function SummaryPage({
                   })}
                 </select>
               </div>
-              <div className="govuk-button-group !items-end">
+              <div className="govuk-button-group sticky top-0 z-10 !items-end bg-white">
                 <AiEditPopover
                   minuteId={editState.minuteId}
                   minuteVersionId={editState.minuteVersionId}
@@ -227,53 +223,61 @@ export default function SummaryPage({
             </div>
           )}
         </div>
-        {editState?.isEditable ? (
-          <form
-            className="govuk-form-group govuk-!-margin-bottom-6"
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleSave()
-            }}
-          >
-            <h1 className="govuk-label-wrapper">
-              <label
-                className="govuk-label govuk-label--m"
-                htmlFor="transcription-title"
-              >
-                Transcription title
-              </label>
+        <div
+          className={
+            editState?.isEditable
+              ? 'govuk-!-padding-4 bg-(--govuk-surface-background-colour)'
+              : ''
+          }
+        >
+          {editState?.isEditable ? (
+            <form
+              className="govuk-form-group govuk-!-margin-bottom-6"
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleSave()
+              }}
+            >
+              <h1 className="govuk-label-wrapper">
+                <label
+                  className="govuk-label govuk-label--m"
+                  htmlFor="transcription-title"
+                >
+                  Transcription title
+                </label>
+              </h1>
+              <input
+                id="transcription-title"
+                className="govuk-input bg-white"
+                type="text"
+                placeholder="Add title"
+                value={draftTitle}
+                onChange={(e) => setDraftTitle(e.target.value)}
+              />
+            </form>
+          ) : (
+            <h1 className="govuk-heading-l govuk-!-margin-top-4">
+              {transcription.title}
             </h1>
-            <input
-              id="transcription-title"
-              className="govuk-input"
-              type="text"
-              placeholder="Add title"
-              value={draftTitle}
-              onChange={(e) => setDraftTitle(e.target.value)}
-            />
-          </form>
-        ) : (
-          <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
-            {transcription.title}
-          </h1>
-        )}
-        {!minute ? (
-          <p className="govuk-body">Summary not found.</p>
-        ) : (
-          <>
-            <div className="govuk-grid-row">
-              <div className="govuk-grid-column-full">
-                <MinuteEditor
-                  key={minute.id}
-                  transcription={transcription}
-                  minute={minute}
-                  onExportStateChange={setExportState}
-                  onEditStateChange={setEditState}
-                />
+          )}
+          {!minute ? (
+            <p className="govuk-body">Summary not found.</p>
+          ) : (
+            <>
+              <div className="govuk-grid-row">
+                <div className="govuk-grid-column-full govuk-!-margin-bottom-8">
+                  <MinuteEditor
+                    key={minute.id}
+                    transcription={transcription}
+                    minute={minute}
+                    onExportStateChange={setExportState}
+                    onEditStateChange={setEditState}
+                  />
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

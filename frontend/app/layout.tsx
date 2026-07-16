@@ -12,6 +12,7 @@ import Link from 'next/link'
 import './globals.css'
 import { Header } from '@/components/layout/header'
 import ServiceNavigation from '@/components/layout/service-navigation'
+import { TranscriptionSidePanel } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/TranscriptionSidePanel'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -29,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.className} govuk-template h-full`}>
+    <html lang="en" className={`${inter.className} govuk-template h-dvh`}>
       <body className="govuk-template__body govuk-frontend-supported h-full overflow-hidden">
         <GovukInit />
         <TanstackQueryProvider>
@@ -49,10 +50,11 @@ export default function RootLayout({
                     <Header />
                     <div className="flex min-h-0 flex-1">
                       <ServiceNavigation />
+                      <TranscriptionSidePanel />
                       <main
                         id="main-content"
                         tabIndex={-1}
-                        className="min-h-0 flex-1 overflow-y-auto"
+                        className="relative min-h-0 flex-1 overflow-y-auto"
                       >
                         {children}
                       </main>

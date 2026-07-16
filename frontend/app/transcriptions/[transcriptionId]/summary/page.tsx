@@ -1,5 +1,6 @@
 'use client'
 
+import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { TranscriptionSidePanel } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/TranscriptionSidePanel'
 import { listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
@@ -48,6 +49,14 @@ export default function SummaryIndexPage({
         />
       </div>
       <div className="govuk-grid-column-three-quarters">
+        <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-3 border-b border-(--govuk-border-colour)">
+          <NewMinuteDialog
+            transcriptionId={transcriptionId}
+            onCreated={() =>
+              router.push(`/transcriptions/${transcriptionId}/summary`)
+            }
+          />
+        </div>
         <p className="govuk-body">No summaries generated yet.</p>
       </div>
     </div>

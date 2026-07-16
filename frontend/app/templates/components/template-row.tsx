@@ -1,14 +1,16 @@
 'use client'
 
+import { DeleteConfirmDialog } from '@/app/templates/components/delete-single-template-dialog'
 import {
+  deleteUserTemplateUserTemplatesTemplateIdDeleteMutation,
   duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation,
   getUserTemplatesUserTemplatesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { TemplateRowData } from '@/types/templates'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { CopyPlus } from 'lucide-react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
+import { toast } from 'sonner'
 
 export const templateRowKey = (template: TemplateRowData) =>
   template.id ?? `default:${template.name}`
@@ -37,6 +39,17 @@ export function TemplateTableRow({
     },
   })
 
+  const { mutate: deleteTemplate, isPending: isDeleting } = useMutation({
+    ...deleteUserTemplateUserTemplatesTemplateIdDeleteMutation(),
+    onSuccess: () => {
+      toast.success('Template deleted')
+      queryClient.invalidateQueries({
+        queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
+      })
+      posthog.capture('template_deleted')
+    },
+  })
+
   const handleDuplicate = () => {
     // Default templates have no id yet; duplication will be wired to a backend
     // endpoint later.
@@ -45,9 +58,11 @@ export function TemplateTableRow({
   }
 
   return (
-    <tr className="govuk-table__row relative hover:bg-[#f4f8fb]">
+    <tr className="govuk-table__row group relative hover:bg-[#f4f8fb]">
       <td className="govuk-table__cell">
-        {!template.isSystem && (
+        {template.isSystem ? (
+          <div className="govuk-!-margin-left-2">-</div>
+        ) : (
           <div className="flex items-center gap-2">
             <div
               className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle"
@@ -69,51 +84,75 @@ export function TemplateTableRow({
                 <span className="govuk-visually-hidden">Select {name}</span>
               </label>
             </div>
-            <div className="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-right-1 flex items-center justify-end">
-              <button
-                type="button"
-                className="govuk-link govuk-link--no-visited-state govuk-!-margin-0 text-(--govuk-link-colour) hover:cursor-pointer"
-                onClick={handleDuplicate}
-              >
-                <CopyPlus className="size-4" />
-                <span className="govuk-visually-hidden">Duplicate {name}</span>
-              </button>
-            </div>
           </div>
         )}
       </td>
-      <td className="govuk-table__cell w-full">
+      <td className="govuk-table__cell whitespace-nowrap">
         <Link
           href={
             template.isSystem
               ? `/templates/system/${encodeURIComponent(template.name)}`
               : `/templates/${template.id}`
           }
-          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative flex flex-1 flex-col items-start gap-1 py-1 !text-(--govuk-text-colour) lg:flex-row lg:gap-2"
+          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline font-bold group-has-[a:hover]:text-[var(--govuk-link-hover-colour,#0f385c)]! group-has-[a:hover]:underline! group-has-[a:hover]:decoration-[max(3px,.1875rem,.12em)]! group-has-[a:hover]:[text-decoration-skip-ink:none]! w-full inline-block govuk-!-margin-right-1"
         >
-          <span className="font-bold lg:min-w-60">{name}</span>{' '}
-          <span className="govuk-body-s govuk-!-margin-0">
-            {template.description}
-          </span>
+          {name}
+        </Link>
+      </td>
+      <td className="govuk-table__cell w-full">
+        <Link
+          tabIndex={-1}
+          href={
+            template.isSystem
+              ? `/templates/system/${encodeURIComponent(template.name)}`
+              : `/templates/${template.id}`
+          }
+          className="govuk-body-s govuk-!-margin-bottom-0 inline-block w-full"
+        >
+          {template.description}
         </Link>
       </td>
       <td className="govuk-table__cell whitespace-nowrap">
         <div className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 flex items-center justify-end">
           {template.is_default && (
-            <strong className="govuk-tag govuk-tag--blue govuk-!-margin-left-2">
+            <strong className="govuk-tag govuk-tag--blue govuk-!-margin-right-2">
               Default
             </strong>
           )}
           {template.isSystem ? (
-            <strong className="govuk-tag govuk-tag--grey govuk-!-margin-left-2">
+            <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">
               System
             </strong>
           ) : (
-            <strong className="govuk-tag govuk-tag--green govuk-!-margin-left-2">
+            <strong className="govuk-tag govuk-tag--green govuk-!-margin-right-2">
               {template.format === 'document' ? 'Summary' : 'Q & A'}
             </strong>
           )}
         </div>
+      </td>
+      <td className="govuk-table__cell whitespace-nowrap">
+        {template.isSystem ? (
+          <div className="text-center">-</div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="govuk-link govuk-link--no-underline govuk-link--no-visited-state govuk-!-margin-0 govuk-!-font-size-16 text-(--govuk-link-colour) hover:cursor-pointer"
+              onClick={handleDuplicate}
+              disabled={duplicateMutation.isPending || isDeleting}
+            >
+              Duplicate
+              <span className="govuk-visually-hidden">{name}</span>
+            </button>
+            <DeleteConfirmDialog
+              name={name}
+              disabled={isDeleting || duplicateMutation.isPending || !template.id}
+              onConfirm={() =>
+                deleteTemplate({ path: { template_id: template.id! } })
+              }
+            />
+          </div>
+        )}
       </td>
     </tr>
   )

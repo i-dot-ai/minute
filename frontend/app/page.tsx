@@ -90,8 +90,12 @@ export default function Home() {
       {/* {isOldUrl ? <UrlMigrationBanner /> : <PosthogBanner />} */}
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
-          <h1 className="govuk-heading-l govuk-!-margin-bottom-3">Record a meeting</h1>
-          <p className="govuk-body govuk-!-margin-bottom-5">Choose how to capture this meeting</p>
+          <h1 className="govuk-heading-l govuk-!-margin-bottom-3">
+            Record a meeting
+          </h1>
+          <p className="govuk-body govuk-!-margin-bottom-5">
+            Choose how to capture this meeting
+          </p>
           {started ? (
             <AudioUploadForm />
           ) : (
@@ -142,9 +146,7 @@ export default function Home() {
                       >
                         <Video className="size-7" />
                         <h2 className="govuk-heading-m">Virtual meeting</h2>
-                        <p className="govuk-body">
-                          Join your call silently.
-                        </p>
+                        <p className="govuk-body">Join your call silently.</p>
                       </label>
                     </div>
                     <div className="govuk-radios__item">
@@ -174,7 +176,7 @@ export default function Home() {
                   <AudioUploadForm />
                 ) : (
                   <>
-                    <div className="govuk-form-group flex items-center gap-2 govuk-!-margin-top-7">
+                    <div className="govuk-form-group govuk-!-margin-top-7 flex items-center gap-2">
                       <label className="govuk-label" htmlFor="microphone">
                         Record using:
                       </label>
@@ -223,8 +225,9 @@ export default function Home() {
                 )}
               </div>
               <p className="govuk-body govuk-!-margin-top-6">
-                Please ensure that all participants are aware that they have been recorded.{' '}
-                Suitable up to <strong>OFFICIAL SENSITIVE</strong>.
+                Please ensure that all participants are aware that they have
+                been recorded. Suitable up to{' '}
+                <strong>OFFICIAL SENSITIVE</strong>.
               </p>
             </>
           )}

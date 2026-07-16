@@ -27,10 +27,14 @@ export const GenerateSummaryDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle className="govuk-heading-l">Generate summary</DialogTitle>
+          <DialogTitle className="govuk-heading-l">
+            Generate summary
+          </DialogTitle>
           {warningText && (
             <DialogDescription className="govuk-warning-text">
-              <span className="govuk-warning-text__icon" aria-hidden="true">!</span>
+              <span className="govuk-warning-text__icon" aria-hidden="true">
+                !
+              </span>
               <strong className="govuk-warning-text__text">
                 <span className="govuk-visually-hidden">Warning</span>
                 {warningText}

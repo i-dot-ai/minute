@@ -79,13 +79,13 @@ export function RenameButton({
     <button
       type="button"
       data-module="govuk-button"
-      className="govuk-link govuk-!-margin-bottom-0 shrink-0 text-(--govuk-link-colour) hover:cursor-pointer"
+      className="govuk-link govuk-link--no-underline govuk-!-margin-bottom-0 govuk-!-font-size-16 shrink-0 text-(--govuk-link-colour) hover:cursor-pointer"
       onClick={onClick}
       disabled={disabled}
       aria-label={`Rename ${displayTitle}`}
     >
-      <PencilIcon className="size-4" aria-hidden="true" />
-      <span className="govuk-visually-hidden">Rename {displayTitle}</span>
+      Rename
+      <span className="govuk-visually-hidden">{displayTitle}</span>
     </button>
   )
 }

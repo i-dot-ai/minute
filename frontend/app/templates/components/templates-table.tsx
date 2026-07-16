@@ -13,9 +13,9 @@ import Fuse from 'fuse.js'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Plus, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 20
 
 type TypeFilter = 'all' | 'summary' | 'q-and-a' | 'system'
 
@@ -45,10 +45,7 @@ function buildQueryString({
   return qs ? `?${qs}` : ''
 }
 
-function matchesFilters(
-  row: TemplateRowData,
-  typeFilter: TypeFilter
-): boolean {
+function matchesFilters(row: TemplateRowData, typeFilter: TypeFilter): boolean {
   switch (typeFilter) {
     case 'summary':
       return row.format === 'document' && !row.isSystem
@@ -225,7 +222,10 @@ export const TemplatesTable = () => {
             className="govuk-form-group relative"
             onSubmit={(e) => e.preventDefault()}
           >
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-(--govuk-text-colour)" aria-hidden="true" />
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-(--govuk-text-colour)"
+              aria-hidden="true"
+            />
             <input
               id="search-templates"
               name="search-templates"
@@ -240,8 +240,8 @@ export const TemplatesTable = () => {
       </div>
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 flex-1">
+          <div className="flex items-center justify-between govuk-!-margin-bottom-3">
+            <div className="flex flex-1 items-center gap-2">
               {selectablePageKeys.length > 0 && (
                 <div
                   className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"
@@ -279,7 +279,10 @@ export const TemplatesTable = () => {
             <span className="govuk-visually-hidden" aria-live="polite">
               {deleteCount > 0 ? `${deleteCount} templates selected` : ''}
             </span>
-            <p className="govuk-body govuk-!-margin-bottom-0 flex-1" role="status">
+            <p
+              className="govuk-body govuk-!-margin-bottom-0 flex-1"
+              role="status"
+            >
               Showing {startNumber} to {endNumber} of {totalCount}
               {search.trim() && (
                 <span className="govuk-visually-hidden">
@@ -287,7 +290,7 @@ export const TemplatesTable = () => {
                 </span>
               )}
             </p>
-            <div className="govuk-form-group flex-1 flex items-center justify-end gap-2">
+            <div className="govuk-form-group flex flex-1 items-center justify-end gap-2 govuk-!-margin-bottom-0">
               <label className="govuk-label" htmlFor="filter">
                 Filter by
               </label>
@@ -362,8 +365,7 @@ export const TemplatesTable = () => {
                         <Link
                           className="govuk-link govuk-pagination__link"
                           href={
-                            pathname +
-                            buildQueryString({ page, typeFilter })
+                            pathname + buildQueryString({ page, typeFilter })
                           }
                           aria-label={`Page ${page}`}
                         >

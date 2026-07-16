@@ -21,7 +21,7 @@ export function DeleteTranscriptionButton({
     <>
       <button
         type="button"
-        className={`govuk-link ${disabled ? 'pointer-events-none !text-gray-400' : 'link--warning hover:cursor-pointer'}`}
+        className={`govuk-link govuk-link--no-underline govuk-!-font-size-16 ${disabled ? 'pointer-events-none !text-gray-400' : 'link--warning hover:cursor-pointer'}`}
         onClick={() => setOpen(true)}
         disabled={disabled}
       >

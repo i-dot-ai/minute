@@ -41,7 +41,6 @@
   border: 1px solid #858686;
 }
 
-
 .govuk-select--subtle {
   min-width: 0;
 }
@@ -73,17 +72,20 @@
   border: 2px solid transparent;
   background-color: var(--govuk-surface-background-colour);
   flex: 1;
-  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
-  --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+  box-shadow:
+    var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
+    var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  --tw-shadow:
+    0 4px 6px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)),
+    0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
 }
-
 
 .govuk-radios--cards .govuk-radios__item:has(.govuk-radios__input:checked) {
   border-color: var(--govuk-brand-colour);
   background-color: #d2e2f1;
 }
 
-.govuk-radios--cards .govuk-radios__input:checked+.govuk-radios__label:after {
+.govuk-radios--cards .govuk-radios__input:checked + .govuk-radios__label:after {
   right: 22px;
   left: auto;
 }
@@ -454,7 +456,7 @@ html body[data-scroll-locked] {
   list-style-type: none;
 }
 
-.editor-content ul>li::before {
+.editor-content ul > li::before {
   content: '•';
 }
 
@@ -463,11 +465,11 @@ html body[data-scroll-locked] {
   counter-reset: list-counter;
 }
 
-.editor-content ol>li {
+.editor-content ol > li {
   counter-increment: list-counter;
 }
 
-.editor-content ol>li::before {
+.editor-content ol > li::before {
   content: counter(list-counter) '.';
 }
 
@@ -516,12 +518,12 @@ html body[data-scroll-locked] {
   margin-bottom: 2.33em;
 }
 
-.editor-content p+p {
+.editor-content p + p {
   margin-top: 1em;
   /* Add margin only between consecutive paragraphs */
 }
 
-.editor-content pre>code {
+.editor-content pre > code {
   background-color: #444;
   color: white;
   width: 100% !;

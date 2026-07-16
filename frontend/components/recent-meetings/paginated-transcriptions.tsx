@@ -10,8 +10,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { Search } from 'lucide-react'
 
-
-const PAGE_SIZE = 10
+const PAGE_SIZE = 20
 
 type TranscriptionFilter = 'all' | TranscriptionListFilter
 
@@ -150,14 +149,16 @@ export const PaginatedTranscriptions = () => {
 
   return (
     <div>
-
       <div className="flex items-center justify-between">
         <form
           role="search"
           className="govuk-form-group govuk-!-width-one-half relative"
           onSubmit={handleSearchSubmit}
         >
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-(--govuk-text-colour)" aria-hidden="true" />
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-(--govuk-text-colour)"
+            aria-hidden="true"
+          />
           <input
             id="search-transcriptions"
             name="search-transcriptions"
@@ -173,8 +174,8 @@ export const PaginatedTranscriptions = () => {
       <Suspense fallback={null}>
         <RecentOfflineRecordingsSection />
       </Suspense>
-      <div className="govuk-!-margin-bottom-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 flex-1">
+      <div className="govuk-!-margin-margin-3 flex items-center justify-between">
+        <div className="flex flex-1 items-center gap-2">
           <div
             className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"
             data-module="govuk-checkboxes"
@@ -220,7 +221,7 @@ export const PaginatedTranscriptions = () => {
           )}
         </p>
 
-        <div className="govuk-form-group flex items-center justify-end gap-2 govuk-!-margin-bottom-0 flex-1">
+        <div className="govuk-form-group govuk-!-margin-bottom-0 flex flex-1 items-center justify-end gap-2">
           <label className="govuk-label" htmlFor="filter">
             Filter by
           </label>

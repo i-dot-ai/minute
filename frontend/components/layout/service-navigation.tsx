@@ -1,7 +1,8 @@
 'use client'
 import { GuardedLink } from '@/components/navigation/guarded-link'
 import { usePathname } from 'next/navigation'
-import { Bookmark, LayoutPanelTop, AudioLines } from 'lucide-react'
+import { Bookmark, LayoutPanelTop } from 'lucide-react'
+import Image from 'next/image'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
@@ -25,9 +26,9 @@ export const ServiceNavigation = () => {
                   ? 'page'
                   : undefined
               }
-              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname === '/' || pathname.includes('/new') ? '!text-(--govuk-text-colour)' : ''}`}
+              className="govuk-service-navigation__link ml-4 flex items-center gap-2 font-bold !text-(--govuk-text-colour)"
             >
-              <AudioLines className="size-4" />
+              <Image src="/logos/minute-logo.svg" alt="" width={24} height={24} />
               Minute
             </GuardedLink>
           </li>

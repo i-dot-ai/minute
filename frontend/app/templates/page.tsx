@@ -8,11 +8,11 @@ export default function TemplatesPage() {
       <div className="govuk-width-container">
         <div className="govuk-grid-row">
           <div
-            className="govuk-grid-column-full"
+            className="govuk-grid-column-two-thirds"
             data-onboarding="templates-page"
           >
             <h1
-              className="govuk-heading-xl govuk-!-margin-bottom-2"
+              className="govuk-heading-l govuk-!-margin-bottom-2"
               id="templates-list-heading"
             >
               Templates
@@ -21,6 +21,8 @@ export default function TemplatesPage() {
               Use templates to customise the structure and style of your
               minutes.
             </p>
+          </div>
+          <div className="govuk-grid-column-one-third flex justify-end">
             <div className="govuk-button-group">
               <Link
                 className="govuk-button"

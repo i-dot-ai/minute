@@ -16,17 +16,26 @@ export function TemplatesList({
   onToggle?: (id: string, checked: boolean) => void
 }) {
   return (
-    <table className="govuk-table govuk-table--subtle" aria-labelledby="templates-list-heading">
+    <table
+      className="govuk-table govuk-table--subtle"
+      aria-labelledby="templates-list-heading"
+    >
       <thead className="govuk-table__head">
         <tr className="govuk-table__row">
           <th scope="col" className="govuk-table__header">
-            Actions
+            Select
           </th>
           <th scope="col" className="govuk-table__header">
-            Name and description
+            Name
+          </th>
+          <th scope="col" className="govuk-table__header">
+            Description
           </th>
           <th scope="col" className="govuk-table__header">
             Template type
+          </th>
+          <th scope="col" className="govuk-table__header">
+            Actions
           </th>
         </tr>
       </thead>

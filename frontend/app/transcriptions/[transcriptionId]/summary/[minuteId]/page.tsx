@@ -6,32 +6,19 @@ import {
   MinuteEditor,
   MinuteExportState,
 } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
+import { ExportSummaryDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/ExportSummaryDialog'
+import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { TranscriptionSidePanel } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/TranscriptionSidePanel'
 import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
-import CopyButton from '@/components/ui/copy-button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
-import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
 import { useQuery } from '@tanstack/react-query'
-import {
-  DownloadIcon,
-  Eye,
-  EyeOffIcon,
-  Loader2,
-  PencilIcon,
-  Save,
-} from 'lucide-react'
+import { Eye, EyeOffIcon, Loader2, PencilIcon, Save } from 'lucide-react'
 import Link from 'next/link'
-import posthog from 'posthog-js'
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 
 export default function SummaryPage({
@@ -39,6 +26,7 @@ export default function SummaryPage({
 }: {
   params: { transcriptionId: string; minuteId: string }
 }) {
+  const router = useRouter()
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId },
@@ -56,7 +44,6 @@ export default function SummaryPage({
   const [exportState, setExportState] = useState<MinuteExportState | null>(null)
   const [editState, setEditState] = useState<MinuteEditState | null>(null)
   const [draftTitle, setDraftTitle] = useState('')
-  const [exportOpen, setExportOpen] = useState(false)
 
   const { save: saveTitle } = useRenameTranscription({
     id: transcriptionId,
@@ -79,21 +66,6 @@ export default function SummaryPage({
     setDraftTitle(transcription?.title ?? '')
     editState?.onCancel()
   }, [editState, transcription?.title])
-
-  const handleWordDocDownload = useCallback(() => {
-    if (!exportState || !transcription) return
-    posthog.capture('minutes_downloaded', {
-      format: 'word',
-      version_id: exportState.minuteVersionId,
-    })
-
-    convertAIMinutesToWordDoc(
-      exportState.htmlContent,
-      transcription.dialogue_entries || [],
-      transcription.title || 'minutes.docx'
-    )
-    setExportOpen(false)
-  }, [exportState, transcription])
 
   if (isLoading) {
     return (
@@ -144,20 +116,17 @@ export default function SummaryPage({
         />
       </div>
       <div className="govuk-grid-column-three-quarters">
-        <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-3 border-b border-(--govuk-border-colour)">
+        <div className="govuk-!-margin-bottom-6 border-b border-(--govuk-border-colour)">
           <div className="flex justify-between">
-            <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
-              <ol className="govuk-breadcrumbs__list">
-                <li className="govuk-breadcrumbs__list-item">
-                  <Link
-                    href="/transcriptions"
-                    className="govuk-breadcrumbs__link"
-                  >
-                    Back
-                  </Link>
-                </li>
-              </ol>
-            </nav>
+            <div className="govuk-button-group govuk-!-margin-bottom-0">
+              <NewMinuteDialog
+                transcriptionId={transcriptionId}
+                disabled={editState?.isEditable}
+                onCreated={() =>
+                  router.push(`/transcriptions/${transcriptionId}/summary`)
+                }
+              />
+            </div>
             <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
               {editState && (
                 <>
@@ -169,60 +138,28 @@ export default function SummaryPage({
                   >
                     <PencilIcon className="size-4" /> Edit
                   </button>
-                  <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+                  <ExportSummaryDialog
+                    exportState={exportState}
+                    title={transcription.title}
+                    dialogueEntries={transcription.dialogue_entries}
+                    disabled={editState.isEditable}
+                  />
+                  {editState.hasCitations && (
                     <button
-                      type="button"
-                      className="govuk-button govuk-button--secondary"
-                      disabled={editState.isEditable || !exportState}
-                      onClick={() => setExportOpen(true)}
+                      className="govuk-button govuk-button--secondary min-w-48"
+                      onClick={editState.toggleHideCitations}
+                      disabled={editState.isEditable}
                     >
-                      <DownloadIcon className="size-4" />
-                      Export
+                      {editState.hideCitations ? (
+                        <Eye className="size-4" />
+                      ) : (
+                        <EyeOffIcon className="size-4" />
+                      )}
+                      {editState.hideCitations
+                        ? 'Show references'
+                        : 'Hide references'}
                     </button>
-                    <DialogContent>
-                      <DialogTitle className="govuk-heading-l">
-                        Export summary
-                      </DialogTitle>
-                      <DialogDescription className="govuk-body">
-                        Copy or download your summary.
-                      </DialogDescription>
-                      <div className="govuk-button-group govuk-!-margin-top-4">
-                        <button
-                          type="button"
-                          className="govuk-button govuk-button--secondary"
-                          onClick={handleWordDocDownload}
-                          disabled={!exportState}
-                        >
-                          <DownloadIcon className="size-4" />
-                          Download Word doc
-                        </button>
-                        <CopyButton
-                          textToCopy={exportState?.contentToCopy ?? ''}
-                          posthogEvent="minutes_content_copied"
-                          posthogProperties={{
-                            version_id: exportState?.minuteVersionId ?? '',
-                          }}
-                          disabled={!exportState}
-                          label="Copy summary"
-                          onCopied={() => setExportOpen(false)}
-                        />
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                  <button
-                    className="govuk-button govuk-button--secondary min-w-48"
-                    onClick={editState.toggleHideCitations}
-                    disabled={editState.isEditable || !editState.hasCitations}
-                  >
-                    {editState.hideCitations ? (
-                      <Eye className="size-4" />
-                    ) : (
-                      <EyeOffIcon className="size-4" />
-                    )}
-                    {editState.hideCitations
-                      ? 'Show references'
-                      : 'Hide references'}
-                  </button>
+                  )}
 
                   <DeleteTranscriptionButton
                     transcription={transcription}
@@ -314,7 +251,6 @@ export default function SummaryPage({
             {transcription.title}
           </h1>
         )}
-        <p className="govuk-body">{date}</p>
         {!minute ? (
           <p className="govuk-body">Summary not found.</p>
         ) : (

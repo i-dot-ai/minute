@@ -5,6 +5,7 @@ import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/Trans
 import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTextArea'
 import { DialogueEntryForm } from '@/types/transcriptions'
 import { TranscriptionSidePanel } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/TranscriptionSidePanel'
+import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { ExportTranscriptDialog } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/ExportTranscriptDialog'
 import { formatTime } from '@/components/audio/audio-player'
 import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
@@ -18,6 +19,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { ArrowDown, Loader2, Pencil, Play, Save } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 
@@ -26,6 +28,7 @@ export default function TranscriptPage({
 }: {
   params: { transcriptionId: string }
 }) {
+  const router = useRouter()
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId },
@@ -166,18 +169,14 @@ export default function TranscriptPage({
       <FormProvider {...methods}>
         <div className="govuk-grid-column-three-quarters">
           <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-3 flex justify-between border-b border-(--govuk-border-colour)">
-            <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
-              <ol className="govuk-breadcrumbs__list">
-                <li className="govuk-breadcrumbs__list-item">
-                  <Link
-                    href="/transcriptions"
-                    className="govuk-breadcrumbs__link"
-                  >
-                    Back
-                  </Link>
-                </li>
-              </ol>
-            </nav>
+            <div className="govuk-button-group govuk-!-margin-bottom-0">
+              <NewMinuteDialog
+                transcriptionId={transcriptionId}
+                onCreated={() =>
+                  router.push(`/transcriptions/${transcriptionId}/summary`)
+                }
+              />
+            </div>
             <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
               <button
                 type="button"

@@ -1,5 +1,6 @@
 'use client'
 
+import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
 import {
   getTranscriptionDisplayTitle,
   RenameButton,
@@ -44,7 +45,7 @@ function TranscriptionTableRow({
   )
 
   return (
-    <tr className="govuk-table__row relative hover:bg-[#f4f8fb]">
+    <tr className="govuk-table__row relative hover:bg-[#f4f8fb] has-[:checked]:bg-[#f4f8fb]">
       <td className="govuk-table__cell">
         <div className="flex items-center gap-2">
           <div
@@ -64,14 +65,11 @@ function TranscriptionTableRow({
               className="govuk-label govuk-checkboxes__label govuk-!-padding-0"
               htmlFor={`transcription-${transcription.id}`}
             >
-              <span className="govuk-visually-hidden">Select {displayTitle}</span>
+              <span className="govuk-visually-hidden">
+                Select {displayTitle}
+              </span>
             </label>
           </div>
-          <RenameButton
-            displayTitle={displayTitle}
-            disabled={editing || isPending}
-            onClick={() => setEditing(true)}
-          />
         </div>
       </td>
       <td className="govuk-table__cell w-full">
@@ -85,7 +83,7 @@ function TranscriptionTableRow({
         ) : (
           <Link
             href={`/transcriptions/${transcription.id}`}
-            className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative flex flex-1 items-center gap-2 !text-(--govuk-text-colour)"
+            className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative flex flex-1 items-center gap-2 !text-(--govuk-link-colour)"
           >
             {displayTitle}
           </Link>
@@ -115,6 +113,23 @@ function TranscriptionTableRow({
             In progress
           </strong>
         )}
+        {transcription.status === 'completed' && !transcription.expiring && (
+          <p className="govuk-body-s govuk-!-margin-0 text-center">-</p>
+        )}
+      </td>
+      <td className="govuk-table__cell whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          <RenameButton
+            displayTitle={displayTitle}
+            disabled={editing || isPending}
+            onClick={() => setEditing(true)}
+          />
+          <DeleteTranscriptionButton
+            transcription={transcription}
+            title={displayTitle}
+            disabled={editing || isPending}
+          />
+        </div>
       </td>
     </tr>
   )
@@ -139,7 +154,7 @@ export function TranscriptionsList({
       <thead className="govuk-table__head">
         <tr className="govuk-table__row">
           <th scope="col" className="govuk-table__header">
-            Actions
+            Select
           </th>
           <th scope="col" className="govuk-table__header">
             Title
@@ -149,6 +164,9 @@ export function TranscriptionsList({
           </th>
           <th scope="col" className="govuk-table__header">
             Status
+          </th>
+          <th scope="col" className="govuk-table__header">
+            Actions
           </th>
         </tr>
       </thead>

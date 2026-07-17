@@ -1,25 +1,20 @@
 'use client'
 
 import { DocumentTemplateEditor } from '@/app/templates/components/document-template-editor'
-import { ExampleTemplatesDialog } from '@/app/templates/components/example-templates-dialog'
 import { FormTemplateEditor } from '@/app/templates/components/form-template-editor'
-import {
-  exampleDocumentTemplates,
-  exampleFormTemplates,
-} from '@/app/templates/data/example-templates'
+import { allExampleTemplates } from '@/app/templates/data/example-templates'
 import { TemplateType } from '@/lib/client'
 import { createUserTemplateUserTemplatesPostMutation } from '@/lib/client/@tanstack/react-query.gen'
 import { TemplateData } from '@/types/templates'
 import { useMutation } from '@tanstack/react-query'
-import { Save } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
-import { useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
-export default function NewTemplatePage() {
+function NewTemplatePageContent() {
   const [newTemplateType, setNewTemplateType] =
     useState<TemplateType>('document')
   const form = useForm<TemplateData>({
@@ -32,15 +27,23 @@ export default function NewTemplatePage() {
       type: newTemplateType,
     },
   })
-  const handleSelectExample = (template: TemplateData) => {
-    setNewTemplateType(template.type)
-    form.reset({
-      ...template,
-      content: template.type === 'form' ? '' : template.content,
-      styleGuide: template.type === 'form' ? template.content : '',
-    })
-  }
   const navigation = useRouter()
+  const searchParams = useSearchParams()
+  const exampleId = searchParams.get('example')
+  useEffect(() => {
+    const example = allExampleTemplates.find((t) => t.id === exampleId)
+    if (!example) return
+    setNewTemplateType(example.type)
+    form.reset({
+      name: example.name,
+      description: example.description,
+      type: example.type,
+      questions: example.questions,
+      content: example.type === 'form' ? '' : example.content,
+      styleGuide: example.type === 'form' ? example.content : '',
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exampleId])
   const { mutateAsync: saveTemplate } = useMutation({
     ...createUserTemplateUserTemplatesPostMutation(),
     onSuccess: () => {
@@ -66,29 +69,19 @@ export default function NewTemplatePage() {
   return (
     <FormProvider {...form}>
       <div className="govuk-width-container govuk-main-wrapper">
-        <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
-          <ol className="govuk-breadcrumbs__list">
-            <li className="govuk-breadcrumbs__list-item">
-              <Link className="govuk-breadcrumbs__link" href="/templates">
-                Back
-              </Link>
-            </li>
-          </ol>
-        </nav>
         <div className="govuk-grid-row">
-          <div className="govuk-grid-column-one-half">
-            <h1 className="govuk-heading-xl">New template</h1>
-          </div>
-          <div className="govuk-grid-column-one-half flex justify-end">
-            <ExampleTemplatesDialog
-              examples={[...exampleDocumentTemplates, ...exampleFormTemplates]}
-              onSelectTemplate={handleSelectExample}
-            />
-          </div>
-        </div>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="govuk-grid-row">
-            <div className="govuk-grid-column-full">
+          <div className="govuk-grid-column-full">
+            <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
+              <ol className="govuk-breadcrumbs__list">
+                <li className="govuk-breadcrumbs__list-item">
+                  <Link className="govuk-breadcrumbs__link" href="/templates">
+                    Back
+                  </Link>
+                </li>
+              </ol>
+            </nav>
+            <h1 className="govuk-heading-l">New template</h1>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
               <div className="text-red-600">
                 <p className="govuk-body">
                   {form.formState.errors.questions?.root?.message
@@ -148,10 +141,10 @@ export default function NewTemplatePage() {
                     <h2 className="govuk-fieldset__heading">Template type</h2>
                   </legend>
                   <div
-                    className="govuk-radios flex gap-4"
+                    className="govuk-radios govuk-radios--inline govuk-radios--small govuk-radios--cards"
                     data-module="govuk-radios"
                   >
-                    <div className="govuk-radios__item new-recording__radio-item flex-1">
+                    <div className="govuk-radios__item">
                       <input
                         className="govuk-radios__input"
                         id="template-type-document"
@@ -169,13 +162,13 @@ export default function NewTemplatePage() {
                         className="govuk-label govuk-radios__label"
                         htmlFor="template-type-document"
                       >
-                        <h3 className="govuk-body">Summary template</h3>
+                        <h3 className="govuk-heading-s">Summary</h3>
                         <p className="govuk-body">
                           Provides a summary of the meeting.
                         </p>
                       </label>
                     </div>
-                    <div className="govuk-radios__item new-recording__radio-item flex-1">
+                    <div className="govuk-radios__item">
                       <input
                         className="govuk-radios__input"
                         id="template-type-form"
@@ -193,7 +186,7 @@ export default function NewTemplatePage() {
                         className="govuk-label govuk-radios__label"
                         htmlFor="template-type-form"
                       >
-                        <h3 className="govuk-body">Q&A template</h3>
+                        <h3 className="govuk-heading-s">Q & A</h3>
                         <p className="govuk-body">
                           Answers a list of questions from the meeting.
                         </p>
@@ -202,25 +195,25 @@ export default function NewTemplatePage() {
                   </div>
                 </fieldset>
               </div>
-            </div>
-          </div>
-          <div className="govuk-grid-row">
-            <div className="govuk-grid-column-full">
               {newTemplateType === 'document' && <DocumentTemplateEditor />}
               {newTemplateType === 'form' && <FormTemplateEditor />}
               <div className="govuk-button-group">
-                <button
-                  type="submit"
-                  className="govuk-button govuk-button--start"
-                >
-                  <Save />
+                <button type="submit" className="govuk-button">
                   Save template
                 </button>
               </div>
-            </div>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
     </FormProvider>
+  )
+}
+
+export default function NewTemplatePage() {
+  return (
+    <Suspense>
+      <NewTemplatePageContent />
+    </Suspense>
   )
 }

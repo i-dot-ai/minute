@@ -39,7 +39,7 @@ export const DiscardConfirmDialog = ({
           <AlertDialogCancel asChild>
             <button
               type="button"
-              className="govuk-link text-(--govuk-link-colour)"
+              className="govuk-button govuk-button--secondary !no-underline"
             >
               Cancel
             </button>
@@ -47,7 +47,7 @@ export const DiscardConfirmDialog = ({
           <button
             type="button"
             onClick={onClickConfirm}
-            className="govuk-link link--warning"
+            className="govuk-button govuk-button--warning"
           >
             {confirmLabel}
           </button>

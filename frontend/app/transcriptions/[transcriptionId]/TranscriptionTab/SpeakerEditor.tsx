@@ -18,9 +18,11 @@ import { useFieldArray, useFormContext } from 'react-hook-form'
 export const SpeakerEditor = ({
   transcription,
   src,
+  onSaved,
 }: {
   transcription: Transcription
   src?: string
+  onSaved?: (data: DialogueEntryForm) => void
 }) => {
   const { saveTranscription } = useSaveTranscription(transcription.id!)
 
@@ -76,9 +78,16 @@ export const SpeakerEditor = ({
           fieldArray.update(i, { ...entry, speaker: trimmed })
         })
     })
-    form.handleSubmit(saveTranscription)()
-    setOpen(false)
-  }, [draftNames, fieldArray, form, saveTranscription])
+    form.handleSubmit(async (data) => {
+      try {
+        await saveTranscription(data)
+        setOpen(false)
+        onSaved?.(data)
+      } catch {
+        // keep dialog open so changes are not lost
+      }
+    })()
+  }, [draftNames, fieldArray, form, onSaved, saveTranscription])
 
   const handleCancel = useCallback(() => {
     setOpen(false)
@@ -89,7 +98,7 @@ export const SpeakerEditor = ({
       <DialogTrigger asChild>
         <button type="button" className="govuk-button govuk-button--secondary">
           <User className="size-4" />
-          Name all speakers
+          Edit all speaker names
         </button>
       </DialogTrigger>
       <DialogContent>

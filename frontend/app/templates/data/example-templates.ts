@@ -1,5 +1,7 @@
 import { TemplateData } from '@/types/templates'
 
+export type ExampleTemplate = TemplateData & { id: string }
+
 const GENERAL_TEMPLATE = `<h2>1. Meeting Overview</h2>
 <ul>
   <li>
@@ -55,8 +57,9 @@ const GENERAL_TEMPLATE = `<h2>1. Meeting Overview</h2>
   <li><p>List any pending items for future discussion</p></li>
 </ul>`
 
-export const exampleDocumentTemplates: TemplateData[] = [
+export const exampleDocumentTemplates: ExampleTemplate[] = [
   {
+    id: 'meeting-minutes',
     name: 'Meeting minutes',
     type: 'document',
     description: 'Standard template for recording meeting minutes',
@@ -65,6 +68,7 @@ export const exampleDocumentTemplates: TemplateData[] = [
     questions: null,
   },
   {
+    id: 'project-kickoff',
     name: 'Project kickoff',
     type: 'document',
     description: 'Template for project kickoff meetings',
@@ -73,6 +77,7 @@ export const exampleDocumentTemplates: TemplateData[] = [
     questions: null,
   },
   {
+    id: 'weekly-standup',
     name: 'Weekly standup',
     type: 'document',
     description: 'Template for weekly team standup meetings',
@@ -81,6 +86,7 @@ export const exampleDocumentTemplates: TemplateData[] = [
     questions: null,
   },
   {
+    id: 'my-general',
     name: 'My general',
     type: 'document',
     description: 'The General template from Minute which you can customise.',
@@ -89,8 +95,9 @@ export const exampleDocumentTemplates: TemplateData[] = [
   },
 ]
 
-export const exampleFormTemplates: TemplateData[] = [
+export const exampleFormTemplates: ExampleTemplate[] = [
   {
+    id: 'my-care-assessment',
     name: 'My care assessment',
     type: 'form',
     description: 'A care assessment form',
@@ -222,4 +229,9 @@ Provide as much detail as possible.
       },
     ],
   },
+]
+
+export const allExampleTemplates: ExampleTemplate[] = [
+  ...exampleDocumentTemplates,
+  ...exampleFormTemplates,
 ]

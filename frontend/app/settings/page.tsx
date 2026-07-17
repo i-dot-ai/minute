@@ -8,11 +8,9 @@ import {
   updateDataRetentionUsersDataRetentionPatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import Link from 'next/link'
 import { useGovukModule } from '@/hooks/use-govuk-module'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Save } from 'lucide-react'
 
 type UserSettingsForm = { dataRetention: 'none' | `${number}` }
 
@@ -31,21 +29,12 @@ export default function SettingsPage() {
   }
   return (
     <div className="govuk-width-container govuk-main-wrapper">
-      <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
-        <ol className="govuk-breadcrumbs__list">
-          <li className="govuk-breadcrumbs__list-item">
-            <Link className="govuk-breadcrumbs__link" href="/">
-              Home
-            </Link>
-          </li>
-        </ol>
-      </nav>
       <div className="govuk-grid-row">
         <div
           className="govuk-grid-column-two-thirds"
           data-onboarding="settings-page"
         >
-          <h1 className="govuk-heading-xl">Settings</h1>
+          <h1 className="govuk-heading-l">Settings</h1>
           <SettingsForm user={user} />
         </div>
       </div>
@@ -125,7 +114,7 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
             className="govuk-fieldset"
             aria-describedby="dataRetention-hint"
           >
-            <legend className="govuk-fieldset__legend govuk-fieldset__legend--l">
+            <legend className="govuk-fieldset__legend govuk-fieldset__legend--s">
               <h1 className="govuk-fieldset__heading">Data Retention Period</h1>
             </legend>
             <div id="dataRetention-hint" className="govuk-hint">
@@ -134,7 +123,7 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
             </div>
             <div
               ref={radiosRef}
-              className="govuk-radios"
+              className="govuk-radios govuk-radios--small"
               data-module="govuk-radios"
             >
               <div className="govuk-radios__item">
@@ -222,7 +211,7 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
             data-module="govuk-button"
             disabled={isPending}
           >
-            <Save className="size-4" /> Save
+            Save
           </button>
           {isPending && <strong className="govuk-tag">Saving...</strong>}
           {showSaved && (

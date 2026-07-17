@@ -1,8 +1,8 @@
 'use client'
 import { GuardedLink } from '@/components/navigation/guarded-link'
 import { usePathname } from 'next/navigation'
-import { Bookmark, LayoutPanelTop } from 'lucide-react'
-import Image from 'next/image'
+import { Bookmark, LayoutPanelTop, Plus } from 'lucide-react'
+// import Image from 'next/image'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
@@ -26,10 +26,11 @@ export const ServiceNavigation = () => {
                   ? 'page'
                   : undefined
               }
-              className="govuk-service-navigation__link ml-4 flex items-center gap-2 font-bold !text-(--govuk-text-colour)"
+              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname === '/' || pathname.includes('/new') ? '!text-(--govuk-text-colour)' : ''}`}
             >
-              <Image src="/logos/minute-logo.svg" alt="" width={24} height={24} />
-              Minute
+              {/* <Image src="/logos/minute-logo.svg" alt="" width={24} height={24} /> */}
+              <Plus className="size-4" />
+              Record
             </GuardedLink>
           </li>
           <li
@@ -64,6 +65,17 @@ export const ServiceNavigation = () => {
           </li>
         </ul>
         <ul className="flex w-40 flex-col border-t border-(--govuk-border-colour)">
+          <li
+            className={`w-full !border-l-4 ${pathname.includes('/settings') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
+          >
+            <GuardedLink
+              aria-current={pathname.includes('/settings') ? 'page' : undefined}
+              className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ml-4 flex items-center gap-2 !text-[#484949]"
+              href="/settings"
+            >
+              Settings
+            </GuardedLink>
+          </li>
           <li
             className={`w-full !border-l-4 ${pathname.includes('/privacy') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >

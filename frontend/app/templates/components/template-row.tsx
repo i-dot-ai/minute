@@ -87,18 +87,21 @@ export function TemplateTableRow({
           </div>
         )}
       </td>
-      <td className="govuk-table__cell whitespace-nowrap">
+      <td className="govuk-table__cell w-full">
         <Link
           href={
             template.isSystem
               ? `/templates/system/${encodeURIComponent(template.name)}`
               : `/templates/${template.id}`
           }
-          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-right-1 inline-block w-full font-bold group-has-[a:hover]:text-[var(--govuk-link-hover-colour,#0f385c)]! group-has-[a:hover]:underline! group-has-[a:hover]:decoration-[max(3px,.1875rem,.12em)]! group-has-[a:hover]:[text-decoration-skip-ink:none]!"
+          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-right-1 inline-block w-full group-has-[a:hover]:text-[var(--govuk-link-hover-colour,#0f385c)]! group-has-[a:hover]:underline! group-has-[a:hover]:decoration-[max(3px,.1875rem,.12em)]! group-has-[a:hover]:[text-decoration-skip-ink:none]!"
         >
-          {name}
-        </Link>
-      </td>
+          <span className="block">{name}</span>
+          <span className="govuk-!-font-size-16 block !text-(--govuk-text-colour)">
+            {template.description}
+          </span>
+          {/* </Link>
+        </td>
       <td className="govuk-table__cell w-full">
         <Link
           tabIndex={-1}
@@ -108,8 +111,8 @@ export function TemplateTableRow({
               : `/templates/${template.id}`
           }
           className="govuk-body-s govuk-!-margin-bottom-0 inline-block w-full"
-        >
-          {template.description}
+        > */}
+          {/* {template.description} */}
         </Link>
       </td>
       <td className="govuk-table__cell whitespace-nowrap">

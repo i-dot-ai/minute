@@ -63,7 +63,7 @@ const ControlledEditor = ({
   return (
     <div>
       <TemplateEditorToolbar editor={editor} />
-      <div className="border border-2 border-(--govuk-input-border-colour)">
+      <div className="border border-2 border-t-0 border-(--govuk-input-border-colour)">
         <EditorContent editor={editor} className="editor-content" />
       </div>
     </div>

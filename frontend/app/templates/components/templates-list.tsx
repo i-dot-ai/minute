@@ -26,10 +26,7 @@ export function TemplatesList({
             Select
           </th>
           <th scope="col" className="govuk-table__header">
-            Name
-          </th>
-          <th scope="col" className="govuk-table__header">
-            Description
+            Name and description
           </th>
           <th scope="col" className="govuk-table__header">
             Template type

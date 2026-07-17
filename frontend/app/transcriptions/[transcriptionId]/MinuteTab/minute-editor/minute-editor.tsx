@@ -70,6 +70,13 @@ export function MinuteEditor({
   const [version, setVersion] = useState(0)
   const [hideCitations, setHideCitations] = useState(false)
   const [editorResetKey, setEditorResetKey] = useState(0)
+  // Snapshot of the version history taken when edit mode starts, so Discard
+  // can remove any versions created during the session and restore the
+  // previous selection.
+  const [editBaseline, setEditBaseline] = useState<{
+    versionIds: string[]
+    selectedVersionId: string
+  } | null>(null)
   const { data: minuteVersions = [], isLoading } = useQuery({
     ...listMinuteVersionsMinutesMinuteIdVersionsGetOptions({
       path: { minute_id: minute.id! },
@@ -118,6 +125,22 @@ export function MinuteEditor({
   const { mutate: saveEdit } = useMutation({
     ...createMinuteVersionMinutesMinuteIdVersionsPostMutation(),
   })
+  const { mutateAsync: deleteVersion } = useMutation({
+    ...deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation(),
+  })
+
+  const startEditing = useCallback(
+    (editable: boolean) => {
+      if (editable && minuteVersion) {
+        setEditBaseline({
+          versionIds: minuteVersions.map((v) => v.id!),
+          selectedVersionId: minuteVersion.id!,
+        })
+      }
+      setIsEditable(editable)
+    },
+    [minuteVersion, minuteVersions]
+  )
 
   const onSuccess = useCallback(() => {
     setIsEditable(false)
@@ -131,6 +154,7 @@ export function MinuteEditor({
 
   const onSubmit = useCallback(
     (data: MinuteEditorForm) => {
+      setEditBaseline(null)
       if (data.html != minuteVersion?.html_content) {
         saveEdit(
           {
@@ -148,11 +172,47 @@ export function MinuteEditor({
     },
     [minute.id, minuteVersion?.html_content, onSuccess, saveEdit]
   )
-  const onCancel = useCallback(() => {
-    form.setValue('html', minuteVersion?.html_content || '')
+  const onCancel = useCallback(async () => {
+    const baseline = editBaseline
+    setEditBaseline(null)
     setIsEditable(false)
     setEditorResetKey((key) => key + 1)
-  }, [form, minuteVersion?.html_content])
+    if (!baseline) {
+      form.setValue('html', minuteVersion?.html_content || '')
+      return
+    }
+    // Restore the selection made before editing started. Versions created
+    // during the session are all newer than the baseline, so once they are
+    // deleted the baseline indices are valid again.
+    setVersion(
+      Math.max(0, baseline.versionIds.indexOf(baseline.selectedVersionId))
+    )
+    const createdDuringEdit = minuteVersions.filter(
+      (v) => !baseline.versionIds.includes(v.id!)
+    )
+    if (createdDuringEdit.length > 0) {
+      await Promise.allSettled(
+        createdDuringEdit.map((v) =>
+          deleteVersion({ path: { minute_version_id: v.id! } })
+        )
+      )
+      queryClient.invalidateQueries({
+        queryKey: listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey({
+          path: { minute_id: minute.id! },
+        }),
+      })
+    } else {
+      form.setValue('html', minuteVersion?.html_content || '')
+    }
+  }, [
+    deleteVersion,
+    editBaseline,
+    form,
+    minute.id,
+    minuteVersion?.html_content,
+    minuteVersions,
+    queryClient,
+  ])
   useEffect(() => {
     if (!onExportStateChange) return
     if (!minuteVersion || isGenerating || isError) {
@@ -207,7 +267,7 @@ export function MinuteEditor({
       minuteVersionHtml: minuteVersion.html_content || '',
       showEditActions: true,
       isEditable,
-      setIsEditable,
+      setIsEditable: startEditing,
       hasCitations,
       hideCitations,
       toggleHideCitations,
@@ -229,6 +289,7 @@ export function MinuteEditor({
     onEditStateChange,
     onSubmit,
     onSuccess,
+    startEditing,
     toggleHideCitations,
     version,
   ])

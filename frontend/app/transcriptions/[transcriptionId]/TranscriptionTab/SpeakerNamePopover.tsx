@@ -8,7 +8,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { PenIcon } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
@@ -64,11 +63,9 @@ export const SpeakerNamePopover = ({
       <DialogTrigger asChild>
         <button
           type="button"
-          className="speaker-name-popover__trigger govuk-link govuk-link--no-visited-state"
+          className="govuk-link govuk-link--no-visited-state text-(--govuk-link-colour)"
         >
-          <PenIcon className="size-4" />
-          <span className="govuk-visually-hidden">Edit speaker name for </span>
-          {entry.speaker}:
+          Edit name
         </button>
       </DialogTrigger>
       <DialogContent>

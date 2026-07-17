@@ -1,5 +1,6 @@
 'use client'
 
+import { CreateTemplateDialog } from '@/app/templates/components/create-template-dialog'
 import { DeleteTemplatesDialog } from '@/app/templates/components/delete-templates-dialog'
 import { templateRowKey } from '@/app/templates/components/template-row'
 import { TemplatesList } from '@/app/templates/components/templates-list'
@@ -236,13 +237,7 @@ export const TemplatesTable = () => {
         </div>
         <div className="govuk-grid-column-one-half">
           <div className="govuk-button-group">
-            <Link
-              className="govuk-button"
-              role="button"
-              href="/templates/create"
-            >
-              Create new template
-            </Link>
+            <CreateTemplateDialog />
           </div>
         </div>
       </div>

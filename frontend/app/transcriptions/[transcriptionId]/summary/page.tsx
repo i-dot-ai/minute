@@ -32,25 +32,29 @@ export default function SummaryIndexPage({
 
   if (!minutesLoaded || minutes.length > 0) {
     return (
-      <div className="flex items-center gap-2">
-        <Loader2 className="animate-spin" />
-        <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
+      <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
+        <div className="flex items-center gap-2">
+          <Loader2 className="animate-spin" />
+          <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="govuk-grid-row">
-      <div className="govuk-grid-column-full">
-        <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-3 border-b border-(--govuk-border-colour)">
-          <NewMinuteDialog
-            transcriptionId={transcriptionId}
-            onCreated={() =>
-              router.push(`/transcriptions/${transcriptionId}/summary`)
-            }
-          />
+    <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
+      <div className="govuk-grid-row">
+        <div className="govuk-grid-column-full">
+          <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-3 border-b border-(--govuk-border-colour)">
+            <NewMinuteDialog
+              transcriptionId={transcriptionId}
+              onCreated={() =>
+                router.push(`/transcriptions/${transcriptionId}/summary`)
+              }
+            />
+          </div>
+          <p className="govuk-body">No summaries generated yet.</p>
         </div>
-        <p className="govuk-body">No summaries generated yet.</p>
       </div>
     </div>
   )

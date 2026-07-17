@@ -152,7 +152,7 @@ export const EditorToolbar = ({
   return (
     <Card
       className={cn(
-        'rounded-none border border-2 border-b-0 border-(--govuk-input-border-colour) p-2',
+        'rounded-none border border-2 border-b-1 border-(--govuk-input-border-colour) p-2',
         className
       )}
     >

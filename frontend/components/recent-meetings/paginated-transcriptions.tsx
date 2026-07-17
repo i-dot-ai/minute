@@ -174,7 +174,7 @@ export const PaginatedTranscriptions = () => {
       <Suspense fallback={null}>
         <RecentOfflineRecordingsSection />
       </Suspense>
-      <div className="govuk-!-margin-margin-3 flex items-center justify-between">
+      <div className="govuk-!-margin-bottom-4 flex items-center justify-between">
         <div className="flex flex-1 items-center gap-2">
           <div
             className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"

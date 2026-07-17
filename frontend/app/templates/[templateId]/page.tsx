@@ -2,7 +2,6 @@
 
 import { DocumentTemplateEditor } from '@/app/templates/components/document-template-editor'
 import { FormTemplateEditor } from '@/app/templates/components/form-template-editor'
-import { TemplateNameDescriptionEditor } from '@/app/templates/components/template-name-description-editor'
 import {
   deleteUserTemplateUserTemplatesTemplateIdDeleteMutation,
   editUserTemplateUserTemplatesTemplateIdPatchMutation,
@@ -23,7 +22,7 @@ import { Loader2, Pencil, Save, Star, StarOff } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { DeleteConfirmDialog } from '../components/delete-single-template-dialog'
@@ -42,6 +41,27 @@ export default function EditTemplatePage({
   const [isEditing, setIsEditing] = useState(false)
   const router = useRouter()
   const queryClient = useQueryClient()
+
+  const form = useForm<TemplateData>()
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = form
+
+  const resetToTemplate = useCallback(() => {
+    if (!template) return
+    reset({
+      name: template.name,
+      description: template.description,
+      type: template.type,
+      content: template.content,
+      styleGuide: template.type === 'form' ? template.content : '',
+      questions: template.questions,
+    })
+  }, [reset, template])
+
   const { mutate: deleteTemplate, isPending: isDeleting } = useMutation({
     ...deleteUserTemplateUserTemplatesTemplateIdDeleteMutation(),
     onSuccess: () => {
@@ -74,137 +94,7 @@ export default function EditTemplatePage({
       })
     },
   })
-  return (
-    <div className="govuk-width-container govuk-main-wrapper">
-      <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
-        <ol className="govuk-breadcrumbs__list">
-          <li className="govuk-breadcrumbs__list-item">
-            <Link className="govuk-breadcrumbs__link" href="/templates">
-              Back
-            </Link>
-          </li>
-        </ol>
-      </nav>
-      {isEditing && template ? (
-        <div className="govuk-grid-row govuk-!-margin-bottom-6 border-b border-(--govuk-border-colour)">
-          <TemplateNameDescriptionEditor
-            templateId={templateId}
-            type={template.type}
-            defaultValues={{
-              name: template.name,
-              description: template.description,
-            }}
-            onDone={() => setIsEditing(false)}
-          />
-        </div>
-      ) : (
-        <>
-          <div className="govuk-grid-row">
-            <div className="govuk-grid-column-one-half">
-              <h1 className="govuk-heading-xl">{template?.name}</h1>
-              <ul className="govuk-list flex gap-2">
-                {template?.is_default && (
-                  <li>
-                    <span className="govuk-tag govuk-tag--blue govuk-!-margin-bottom-3">
-                      Default
-                    </span>
-                  </li>
-                )}
-                <li>
-                  <span className="govuk-tag govuk-tag--green govuk-!-margin-bottom-3">
-                    {template?.type === 'document' ? 'Summary' : 'Q&A'}
-                  </span>
-                </li>
-              </ul>
-            </div>
-            <div className="govuk-grid-column-one-half">
-              <div className="govuk-button-group float-right">
-                <button
-                  className="govuk-button"
-                  disabled={isSettingDefault}
-                  onClick={() =>
-                    setDefault({
-                      body: template?.is_default
-                        ? {}
-                        : { template_id: templateId },
-                    })
-                  }
-                >
-                  {template?.is_default ? (
-                    <>
-                      <StarOff className="size-4" />
-                      Remove default
-                    </>
-                  ) : (
-                    <>
-                      <Star className="size-4" />
-                      Set as default
-                    </>
-                  )}
-                </button>
-                <button
-                  className="govuk-button govuk-button--secondary"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <Pencil className="size-4" /> Rename
-                </button>
-                <DeleteConfirmDialog
-                  name={template?.name ?? ''}
-                  disabled={isDeleting}
-                  onConfirm={() =>
-                    deleteTemplate({ path: { template_id: templateId } })
-                  }
-                />
-              </div>
-            </div>
-          </div>
-          <div className="govuk-grid-row govuk-!-margin-bottom-6 border-b border-(--govuk-border-colour)">
-            <div className="govuk-grid-column-full">
-              <p className="govuk-body-l">{template?.description}</p>
-            </div>
-          </div>
-        </>
-      )}
-      <div className="govuk-grid-row">
-        <div className="govuk-grid-column-full">
-          {template ? (
-            <TemplateEditorForm
-              templateId={templateId}
-              defaultValues={{
-                questions: template.questions,
-                type: template.type,
-                content: template.content,
-                styleGuide: template.type === 'form' ? template.content : '',
-              }}
-            />
-          ) : (
-            <div className="flex justify-center">
-              <Loader2 className="animate-spin" />
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const TemplateEditorForm = ({
-  defaultValues,
-  templateId,
-}: {
-  defaultValues: Omit<TemplateData, 'name' | 'description'>
-  templateId: string
-}) => {
-  const form = useForm<TemplateData>({ defaultValues })
-
-  useEffect(() => {
-    if (form.formState.isSubmitSuccessful) {
-      form.reset(form.getValues(), { keepValues: true })
-    }
-  }, [form, form.formState.isSubmitSuccessful])
-
-  const queryClient = useQueryClient()
-  const { mutate } = useMutation({
+  const { mutate: saveTemplate, isPending: isSaving } = useMutation({
     ...editUserTemplateUserTemplatesTemplateIdPatchMutation(),
     onSuccess: () => {
       toast.success('Changes saved!', { position: 'top-center' })
@@ -213,16 +103,21 @@ const TemplateEditorForm = ({
           path: { template_id: templateId },
         }),
       })
+      queryClient.invalidateQueries({
+        queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
+      })
       posthog.capture('template_edited')
+      setIsEditing(false)
     },
   })
 
-  const onSubmit = (data: TemplateData) => {
+  const handleSave = handleSubmit((data) => {
     const { styleGuide, ...rest } = data
-    mutate({
+    saveTemplate({
       path: { template_id: templateId },
       body: {
-        ...rest,
+        name: rest.name,
+        description: rest.description,
         content: data.type === 'form' ? (styleGuide ?? '') : rest.content,
         questions:
           data.type === 'form' && data.questions
@@ -230,20 +125,198 @@ const TemplateEditorForm = ({
             : null,
       },
     })
+  })
+
+  const handleDiscard = () => {
+    resetToTemplate()
+    setIsEditing(false)
   }
 
   return (
-    <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        {defaultValues.type === 'document' && <DocumentTemplateEditor />}
-        {defaultValues.type === 'form' && <FormTemplateEditor />}
-        <div className="govuk-button-group">
-          <button type="submit" className="govuk-button govuk-button--start">
-            <Save />
-            Save template
-          </button>
+    <div className="govuk-width-container govuk-main-wrapper">
+      <div className="govuk-grid-row">
+        <div className="govuk-grid-column-one-third">
+          <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
+            <ol className="govuk-breadcrumbs__list">
+              <li className="govuk-breadcrumbs__list-item">
+                <Link className="govuk-breadcrumbs__link" href="/templates">
+                  Back
+                </Link>
+              </li>
+            </ol>
+          </nav>
         </div>
-      </form>
-    </FormProvider>
+        <div className="govuk-grid-column-two-thirds">
+          {!isEditing && (
+            <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
+              <button
+                className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                disabled={isSettingDefault}
+                onClick={() =>
+                  setDefault({
+                    body: template?.is_default
+                      ? {}
+                      : { template_id: templateId },
+                  })
+                }
+              >
+                {template?.is_default ? (
+                  <>
+                    <StarOff className="size-4" />
+                    Remove default
+                  </>
+                ) : (
+                  <>
+                    <Star className="size-4" />
+                    Set as default
+                  </>
+                )}
+              </button>
+              <button
+                className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                onClick={() => {
+                  resetToTemplate()
+                  setIsEditing(true)
+                }}
+              >
+                <Pencil className="size-4" /> Edit
+              </button>
+              <DeleteConfirmDialog
+                name={template?.name ?? ''}
+                disabled={isDeleting}
+                onConfirm={() =>
+                  deleteTemplate({ path: { template_id: templateId } })
+                }
+              />
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="govuk-grid-row">
+        <div className="govuk-grid-column-full">
+          {template && isEditing && (
+            <FormProvider {...form}>
+              <form onSubmit={handleSave}>
+                <div className="text-red-600">
+                  <p className="govuk-body">{errors.name?.message ?? null}</p>
+                  <p className="govuk-body">
+                    {errors.description?.message ?? null}
+                  </p>
+                </div>
+                <div className="govuk-form-group">
+                  <h1 className="govuk-label-wrapper">
+                    <label
+                      className="govuk-label govuk-label--s"
+                      htmlFor="name"
+                    >
+                      Template name
+                    </label>
+                  </h1>
+                  <input
+                    id="name"
+                    className="govuk-input govuk-!-width-one-half"
+                    {...register('name', {
+                      required: {
+                        value: true,
+                        message: 'Template name required',
+                      },
+                    })}
+                  />
+                </div>
+                <div className="govuk-form-group">
+                  <label
+                    className="govuk-label govuk-label--s"
+                    htmlFor="description"
+                  >
+                    Description
+                  </label>
+                  <textarea
+                    id="description"
+                    className="govuk-textarea govuk-!-width-one-half"
+                    rows={3}
+                    {...register('description', {
+                      required: {
+                        value: true,
+                        message: 'Description required',
+                      },
+                    })}
+                  />
+                </div>
+                {template.type === 'document' && <DocumentTemplateEditor />}
+                {template.type === 'form' && <FormTemplateEditor />}
+                <div className="govuk-button-group">
+                  <button
+                    type="submit"
+                    className="govuk-button"
+                    disabled={isSaving}
+                  >
+                    <Save className="size-4" /> Save
+                  </button>
+                  <button
+                    type="button"
+                    className="govuk-button govuk-button--secondary"
+                    onClick={handleDiscard}
+                  >
+                    Discard
+                  </button>
+                </div>
+              </form>
+            </FormProvider>
+          )}
+          {template && !isEditing && (
+            <>
+              <h1 className="govuk-heading-l govuk-!-margin-right-4">
+                {template.name}
+              </h1>
+              <ul className="govuk-list govuk-!-margin-bottom-4 flex gap-2">
+                {template.is_default && (
+                  <li>
+                    <span className="govuk-tag govuk-tag--blue">Default</span>
+                  </li>
+                )}
+                <li>
+                  <span className="govuk-tag govuk-tag--green">
+                    {template.type === 'document' ? 'Summary' : 'Q&A'}
+                  </span>
+                </li>
+              </ul>
+              <p className="govuk-body-l">{template.description}</p>
+              {template.type === 'document' ? (
+                <>
+                  <h2 className="govuk-heading-s">Template content</h2>
+                  <div dangerouslySetInnerHTML={{ __html: template.content }} />
+                </>
+              ) : (
+                <>
+                  <h2 className="govuk-heading-m">Style guide</h2>
+                  <div dangerouslySetInnerHTML={{ __html: template.content }} />
+                  <h2 className="govuk-heading-m">Questions</h2>
+                  <ul className="govuk-list">
+                    {template.questions?.map((question) => (
+                      <li key={question.id}>
+                        <div className="transcription-text-area">
+                          <h3 className="govuk-heading-s">
+                            Question {question.position + 1}
+                          </h3>
+                          <p className="govuk-body govuk-!-font-weight-bold">
+                            {question.title}
+                          </p>
+                          <p className="govuk-body">{question.description}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </>
+          )}
+          {!template && (
+            <div className="flex justify-center">
+              <Loader2 className="animate-spin" />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }

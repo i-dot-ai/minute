@@ -12,7 +12,6 @@ import {
 import { getUserTemplatesUserTemplatesGetQueryKey } from '@/lib/client/@tanstack/react-query.gen'
 import { deleteUserTemplateUserTemplatesTemplateIdDelete } from '@/lib/client/sdk.gen'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
 import posthog from 'posthog-js'
 import { Dispatch, SetStateAction } from 'react'
 
@@ -66,7 +65,7 @@ export const DeleteTemplatesDialog = ({
           <AlertDialogCancel asChild>
             <button
               type="button"
-              className="govuk-link text-(--govuk-link-colour)"
+              className="govuk-button govuk-button--secondary !no-underline"
               disabled={isPending}
             >
               Cancel
@@ -74,17 +73,11 @@ export const DeleteTemplatesDialog = ({
           </AlertDialogCancel>
           <button
             type="button"
-            className="govuk-link link--warning"
+            className="govuk-button govuk-button--warning"
             disabled={isPending}
             onClick={() => deleteTemplates(templateIds)}
           >
-            {isPending ? (
-              <>
-                <Loader2 className="size-4 animate-spin" /> Deleting
-              </>
-            ) : (
-              `Delete ${count} selected`
-            )}
+            Delete
           </button>
         </AlertDialogFooter>
       </AlertDialogContent>

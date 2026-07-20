@@ -9,10 +9,10 @@ import {
 import { useDefaultTemplate } from '@/hooks/useDefaultTemplate'
 import { Template } from '@/types/templates'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
+import { PlusIcon } from 'lucide-react'
 
 const GENERAL_TEMPLATE: Template = {
   name: 'General',
@@ -95,12 +95,11 @@ export function NewMinuteDialog({
     <>
       <button
         type="button"
-        className="govuk-button govuk-button--secondary flex items-center gap-2"
+        className="govuk-button govuk-button--secondary !w-full"
         disabled={disabled}
         onClick={() => setOpen(true)}
       >
-        <Plus className="size-4" />
-        New summary
+        <PlusIcon className="size-4" /> New summary
       </button>
       <FormProvider {...form}>
         <GenerateSummaryDialog

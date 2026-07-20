@@ -7,8 +7,8 @@ import {
   MinuteExportState,
 } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
 import { ExportSummaryDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/ExportSummaryDialog'
-import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
-import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
+// import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
+// import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
@@ -17,7 +17,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { Eye, EyeOffIcon, Loader2, PencilIcon, Save } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+// import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 
 export default function SummaryPage({
@@ -25,7 +25,7 @@ export default function SummaryPage({
 }: {
   params: { transcriptionId: string; minuteId: string }
 }) {
-  const router = useRouter()
+  // const router = useRouter()
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId },
@@ -68,9 +68,11 @@ export default function SummaryPage({
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2">
-        <Loader2 className="animate-spin" />
-        <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
+      <div className="govuk-width-container govuk-main-wrapper govuk-width-container--with-secondary-nav">
+        <div className="flex items-center gap-2">
+          <Loader2 className="animate-spin" />
+          <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
+        </div>
       </div>
     )
   }
@@ -102,15 +104,18 @@ export default function SummaryPage({
           <div className="govuk-width-container govuk-width-container--with-secondary-nav">
             {!editState?.isEditable && (
               <div className="flex justify-between">
-                <div className="govuk-button-group govuk-!-margin-bottom-0">
-                  <NewMinuteDialog
-                    transcriptionId={transcriptionId}
-                    disabled={editState?.isEditable}
-                    onCreated={() =>
-                      router.push(`/transcriptions/${transcriptionId}/summary`)
-                    }
-                  />
-                </div>
+                <nav
+                  className="govuk-breadcrumbs govuk-!-margin-bottom-0"
+                  aria-label="Breadcrumb"
+                >
+                  <ol className="govuk-breadcrumbs__list">
+                    <li className="govuk-breadcrumbs__list-item">
+                      <Link className="govuk-breadcrumbs__link" href="/transcriptions">
+                        Back
+                      </Link>
+                    </li>
+                  </ol>
+                </nav>
                 <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
                   {editState && (
                     <>
@@ -144,11 +149,6 @@ export default function SummaryPage({
                             : 'Hide references'}
                         </button>
                       )}
-
-                      <DeleteTranscriptionButton
-                        transcription={transcription}
-                        disabled={editState?.isEditable}
-                      />
                     </>
                   )}
                 </div>

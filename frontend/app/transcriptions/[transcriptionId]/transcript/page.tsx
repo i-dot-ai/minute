@@ -3,7 +3,7 @@
 import { SpeakerEditor } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerEditor'
 import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNamePopover'
 import { DialogueEntryForm } from '@/types/transcriptions'
-import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
+// import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { ExportTranscriptDialog } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/ExportTranscriptDialog'
 import { formatTime } from '@/components/audio/audio-player'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
@@ -22,7 +22,7 @@ import {
   CircleUserRound,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+// import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
@@ -32,7 +32,7 @@ export default function TranscriptPage({
 }: {
   params: { transcriptionId: string }
 }) {
-  const router = useRouter()
+  // const router = useRouter()
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId },
@@ -165,16 +165,18 @@ export default function TranscriptPage({
             <div className="govuk-width-container govuk-width-container--with-secondary-nav">
               {!isEditing && (
                 <div className="flex justify-between">
-                  <div className="govuk-button-group govuk-!-margin-bottom-0">
-                    <NewMinuteDialog
-                      transcriptionId={transcriptionId}
-                      onCreated={() =>
-                        router.push(
-                          `/transcriptions/${transcriptionId}/summary`
-                        )
-                      }
-                    />
-                  </div>
+                  <nav
+                    className="govuk-breadcrumbs govuk-!-margin-bottom-0"
+                    aria-label="Breadcrumb"
+                  >
+                    <ol className="govuk-breadcrumbs__list">
+                      <li className="govuk-breadcrumbs__list-item">
+                        <Link className="govuk-breadcrumbs__link" href="/transcriptions">
+                          Back
+                        </Link>
+                      </li>
+                    </ol>
+                  </nav>
                   <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
                     <button
                       type="button"

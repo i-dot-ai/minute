@@ -99,7 +99,7 @@
   background-color: #d2e2f1;
 }
 
-.govuk-radios--cards .govuk-radios__input:checked + .govuk-radios__label:after {
+.govuk-radios--cards .govuk-radios__input:checked+.govuk-radios__label:after {
   right: 22px;
   left: auto;
 }
@@ -450,7 +450,7 @@ html body[data-scroll-locked] {
   list-style-type: none;
 }
 
-.editor-content ul > li::before {
+.editor-content ul>li::before {
   content: '•';
 }
 
@@ -459,11 +459,11 @@ html body[data-scroll-locked] {
   counter-reset: list-counter;
 }
 
-.editor-content ol > li {
+.editor-content ol>li {
   counter-increment: list-counter;
 }
 
-.editor-content ol > li::before {
+.editor-content ol>li::before {
   content: counter(list-counter) '.';
 }
 
@@ -512,12 +512,12 @@ html body[data-scroll-locked] {
   margin-bottom: 2.33em;
 }
 
-.editor-content p + p {
+.editor-content p+p {
   margin-top: 1em;
   /* Add margin only between consecutive paragraphs */
 }
 
-.editor-content pre > code {
+.editor-content pre>code {
   background-color: #444;
   color: white;
   width: 100% !;

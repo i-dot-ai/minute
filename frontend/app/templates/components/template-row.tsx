@@ -58,7 +58,7 @@ export function TemplateTableRow({
   }
 
   return (
-    <tr className="govuk-table__row group relative hover:bg-[#f4f8fb]">
+    <tr className="govuk-table__row group relative hover:bg-[#f4f8fb] has-[:checked]:bg-[#f4f8fb]">
       <td className="govuk-table__cell">
         {template.isSystem ? (
           <div className="govuk-!-margin-left-2">-</div>

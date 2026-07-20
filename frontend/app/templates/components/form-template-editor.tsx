@@ -25,7 +25,7 @@ export const FormTemplateEditor = () => {
           apply every question.
         </div>
         <textarea
-          className="govuk-textarea"
+          className="govuk-textarea bg-white"
           id="styleGuide"
           rows={10}
           {...form.register('styleGuide')}
@@ -46,7 +46,7 @@ export const FormTemplateEditor = () => {
           {fieldArray.fields.map((field, index, array) => (
             <li
               key={field.id}
-              className="govuk-!-padding-4 govuk-!-margin-top-6 border-l-4 border-(--govuk-brand-colour) bg-[#f4f8fb]"
+              className="govuk-!-padding-4 govuk-!-margin-top-6 border-l-4 border-(--govuk-brand-colour) bg-[#d2e2f1]"
             >
               <div className="govuk-!-margin-bottom-4 flex items-center gap-2">
                 <div className="govuk-form-group flex-1">

@@ -18,7 +18,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { Loader2, Pencil, Save, Star, StarOff } from 'lucide-react'
+import { Loader2, Pencil, Star, StarOff } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
@@ -210,7 +210,7 @@ export default function EditTemplatePage({
                     onClick={handleSave}
                     disabled={isSaving}
                   >
-                    <Save className="size-4" /> Save
+                    Save
                   </button>
                 </div>
               )}
@@ -223,55 +223,57 @@ export default function EditTemplatePage({
           <div className="govuk-grid-column-full">
             {template && isEditing && (
               <FormProvider {...form}>
-                <form onSubmit={handleSave}>
-                  <div className="text-red-600">
-                    <p className="govuk-body">{errors.name?.message ?? null}</p>
-                    <p className="govuk-body">
-                      {errors.description?.message ?? null}
-                    </p>
-                  </div>
-                  <div className="govuk-form-group">
-                    <h1 className="govuk-label-wrapper">
+                <div className="govuk-!-padding-4 bg-(--govuk-surface-background-colour)">
+                  <form onSubmit={handleSave}>
+                    <div className="text-red-600">
+                      <p className="govuk-body">{errors.name?.message ?? null}</p>
+                      <p className="govuk-body">
+                        {errors.description?.message ?? null}
+                      </p>
+                    </div>
+                    <div className="govuk-form-group">
+                      <h1 className="govuk-label-wrapper">
+                        <label
+                          className="govuk-label govuk-label--s"
+                          htmlFor="name"
+                        >
+                          Template name
+                        </label>
+                      </h1>
+                      <input
+                        id="name"
+                        className="govuk-input govuk-!-width-one-half bg-white"
+                        {...register('name', {
+                          required: {
+                            value: true,
+                            message: 'Template name required',
+                          },
+                        })}
+                      />
+                    </div>
+                    <div className="govuk-form-group">
                       <label
                         className="govuk-label govuk-label--s"
-                        htmlFor="name"
+                        htmlFor="description"
                       >
-                        Template name
+                        Description
                       </label>
-                    </h1>
-                    <input
-                      id="name"
-                      className="govuk-input govuk-!-width-one-half"
-                      {...register('name', {
-                        required: {
-                          value: true,
-                          message: 'Template name required',
-                        },
-                      })}
-                    />
-                  </div>
-                  <div className="govuk-form-group">
-                    <label
-                      className="govuk-label govuk-label--s"
-                      htmlFor="description"
-                    >
-                      Description
-                    </label>
-                    <textarea
-                      id="description"
-                      className="govuk-textarea govuk-!-width-one-half"
-                      rows={3}
-                      {...register('description', {
-                        required: {
-                          value: true,
-                          message: 'Description required',
-                        },
-                      })}
-                    />
-                  </div>
-                  {template.type === 'document' && <DocumentTemplateEditor />}
-                  {template.type === 'form' && <FormTemplateEditor />}
-                </form>
+                      <textarea
+                        id="description"
+                        className="govuk-textarea govuk-!-width-one-half bg-white"
+                        rows={3}
+                        {...register('description', {
+                          required: {
+                            value: true,
+                            message: 'Description required',
+                          },
+                        })}
+                      />
+                    </div>
+                    {template.type === 'document' && <DocumentTemplateEditor />}
+                    {template.type === 'form' && <FormTemplateEditor />}
+                  </form>
+                </div>
               </FormProvider>
             )}
             {template && !isEditing && (
@@ -332,6 +334,6 @@ export default function EditTemplatePage({
           </div>
         </div>
       </div>
-    </div>
+    </div >
   )
 }

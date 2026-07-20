@@ -175,6 +175,32 @@ export default function Home() {
                   <AudioUploadForm />
                 ) : (
                   <>
+                    {
+                      mode === 'virtual-meeting' && (
+                        <div className="bg-[#f3f3f3] govuk-!-padding-5 govuk-!-margin-bottom-4 govuk-!-margin-top-4">
+                          <h2 className="govuk-heading-s">Before you start</h2>
+                          <ol className="govuk-list govuk-list--number">
+                            <li>
+                              Start Minute first, then join your meeting (Teams, Zoom, or Google Meet).
+                            </li>
+                            <li>
+                              When the browser asks to share:
+                              <ol className="govuk-list govuk-list--number govuk-!-margin-bottom-0">
+                                <li>
+                                  Share your <strong>Tab</strong>(Mac) or <strong>Entire Screen</strong>(Windows)
+                                </li>
+                                <li>
+                                  Tick <strong>Share audio</strong>.
+                                </li>
+                              </ol>
+                            </li>
+                            <li>
+                              Keep Minute open and in the background for the duration of the meeting.
+                            </li>
+                          </ol>
+                        </div>
+                      )
+                    }
                     <div className="govuk-form-group govuk-!-margin-top-7 flex items-center gap-2">
                       <label className="govuk-label" htmlFor="microphone">
                         Record using:
@@ -206,6 +232,25 @@ export default function Home() {
                     >
                       Start recording
                     </button>
+                    {mode === 'virtual-meeting' && (
+                      <details className="govuk-details">
+                        <summary className="govuk-details__summary">
+                          <span className="govuk-details__summary-text">
+                            Audio or screen share not picking up? Check system settings
+                          </span>
+                        </summary>
+                        <div className="govuk-details__text">
+                          <h2 className="govuk-heading-s">MacOS</h2>
+                          <p className="govuk-body">
+                            Go to <strong>System Settings → Privacy & Security → Screen Recording</strong> and ensure your browser is listed and enabled. Then check <strong>Sound → Input</strong> and confirm the correct microphone is selected.
+                          </p>
+                          <h2 className="govuk-heading-s">Windows</h2>
+                          <p className="govuk-body">
+                            Go to <strong>Settings → Privacy → Microphone</strong> and confirm your browser has access. Check <strong>Sound → Input</strong> to confirm the correct device is selected.
+                          </p>
+                        </div>
+                      </details>
+                    )}
                   </>
                 )}
               </div>

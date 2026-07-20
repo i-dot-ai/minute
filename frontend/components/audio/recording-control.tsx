@@ -402,7 +402,7 @@ export default function RecordingControl({
           // className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
           >
             {/* <canvas ref={canvasRef} aria-hidden="true" className="size-full" /> */}
-            {/* <MinuteVisualizer stream={stream} isRecording={isRecording} isPaused={isPaused} /> */}
+            <MinuteVisualizer stream={stream} isRecording={isRecording} isPaused={isPaused} />
             {!isRecording && (
               <p className="govuk-body">
                 Audio visualization will appear here when recording

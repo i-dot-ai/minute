@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Pause, Play } from 'lucide-react'
 import RecordingTimer from './recording-timer'
 import { GenerateSummaryDialog } from './generate-summary-dialog'
+import MinuteVisualizer from './minute-visualizer'
 
 interface RecordingControlProps {
   stream: MediaStream | null
@@ -374,77 +375,84 @@ export default function RecordingControl({
           ? 'No audio detected from your microphone'
           : ''}
       </p>
-      {isRecording && (
-        <div className="flex justify-between">
-          <h2
-            ref={recordingHeadingRef}
-            tabIndex={-1}
-            className="govuk-heading-m flex items-center gap-2"
-          >
-            <span
-              aria-hidden="true"
-              className="relative mr-2 inline-flex size-3"
+      <div className="govuk-!-padding-5 bg-(--govuk-surface-background-colour)">
+        {isRecording && (
+          <div className="flex justify-between">
+            <h2
+              ref={recordingHeadingRef}
+              tabIndex={-1}
+              className="govuk-heading-m flex items-center gap-2"
             >
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75 motion-reduce:animate-none" />
-              <span className="relative inline-flex size-3 rounded-full bg-red-600" />
-            </span>
-            Recording
-          </h2>
-          <RecordingTimer isRecording={isRecording} isPaused={isPaused} />
-        </div>
-      )}
-      <div
-        ref={containerRef}
-        className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
-      >
-        <canvas ref={canvasRef} aria-hidden="true" className="size-full" />
-        {!isRecording && (
-          <p className="govuk-body">
-            Audio visualization will appear here when recording
-          </p>
+              <span
+                aria-hidden="true"
+                className="relative mr-2 inline-flex size-3"
+              >
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75 motion-reduce:animate-none" />
+                <span className="relative inline-flex size-3 rounded-full bg-red-600" />
+              </span>
+              Recording
+            </h2>
+            <RecordingTimer isRecording={isRecording} isPaused={isPaused} />
+          </div>
         )}
-        {isRecording && !stream && (
-          <p className="govuk-body">Connecting to audio stream...</p>
-        )}
-      </div>
-
-      {isRecording && (
-        <div className="govuk-button-group flex w-full gap-2">
-          <button
-            type="button"
-            onClick={togglePause}
-            className="govuk-button govuk-button--secondary min-w-32"
+        <div className="govuk-!-width-two-thirds mx-auto border-4 border-[#8eb8dc] govuk-!-margin-bottom-4">
+          <div
+            ref={containerRef}
+            className="govuk-!-width-one-half mx-auto"
+          // className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
           >
-            {isPaused ? (
-              <>
-                <Play className="size-4" />
-                Resume
-              </>
-            ) : (
-              <>
-                <Pause className="size-4" />
-                Pause
-              </>
+            {/* <canvas ref={canvasRef} aria-hidden="true" className="size-full" /> */}
+            {/* <MinuteVisualizer stream={stream} isRecording={isRecording} isPaused={isPaused} /> */}
+            {!isRecording && (
+              <p className="govuk-body">
+                Audio visualization will appear here when recording
+              </p>
             )}
-          </button>
-          <button
-            type="button"
-            onClick={handleStopRecording}
-            className="govuk-button"
-          >
-            Save recording
-          </button>
-          {onDiscard && (
-            <button
-              type="button"
-              className="govuk-link link--warning ml-auto"
-              onClick={onDiscard}
-            >
-              Discard recording
-            </button>
-          )}
+            {isRecording && !stream && (
+              <p className="govuk-body">Connecting to audio stream...</p>
+            )}
+          </div>
         </div>
-      )}
+        {
+          isRecording && (
+            <div className="govuk-button-group flex w-full gap-2 govuk-!-margin-bottom-0">
+              <button
+                type="button"
+                onClick={togglePause}
+                className="govuk-button govuk-button--secondary min-w-32"
+              >
+                {isPaused ? (
+                  <>
+                    <Play className="size-4" />
+                    Resume
+                  </>
+                ) : (
+                  <>
+                    <Pause className="size-4" />
+                    Pause
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleStopRecording}
+                className="govuk-button"
+              >
+                Save recording
+              </button>
+              {onDiscard && (
+                <button
+                  type="button"
+                  className="govuk-link link--warning ml-auto"
+                  onClick={onDiscard}
+                >
+                  Discard recording
+                </button>
+              )}
+            </div>
+          )
+        }
+      </div>
 
       <GenerateSummaryDialog
         open={showStopDialog}
@@ -452,6 +460,6 @@ export default function RecordingControl({
         onOpenChange={setShowStopDialog}
         onConfirm={confirmStop}
       />
-    </div>
+    </div >
   )
 }

@@ -28,7 +28,7 @@ export const DeleteConfirmDialog = ({
       <AlertDialogTrigger asChild>
         <button
           type="button"
-          className={`govuk-link govuk-link--no-underline govuk-!-font-size-16 link--warning hover:cursor-pointer ${disabled ? '!cursor-not-allowed !text-gray-500 opacity-50' : ''}`}
+          className={`govuk-link govuk-link--no-underline govuk-!-font-size-16 link--warning govuk-!-margin-bottom-0 hover:cursor-pointer ${disabled ? '!cursor-not-allowed !text-gray-500 opacity-50' : ''}`}
           disabled={disabled}
         >
           Delete

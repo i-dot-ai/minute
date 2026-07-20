@@ -176,7 +176,7 @@ async def delete_user_template(user: UserDep, session: SQLSessionDep, template_i
 
 
 @templates_router.post("/user-templates/{template_id}/duplicate")
-async def duplicate_user_template(user: UserDep, session: SQLSessionDep, template_id: UUID) -> None:
+async def duplicate_user_template(user: UserDep, session: SQLSessionDep, template_id: UUID) -> UUID:
     original_template = (
         await session.exec(
             select(UserTemplate)
@@ -206,3 +206,5 @@ async def duplicate_user_template(user: UserDep, session: SQLSessionDep, templat
 
     session.add(template)
     await session.commit()
+
+    return template.id

@@ -80,7 +80,14 @@ export const TemplatesTable = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [highlightedId, setHighlightedId] = useState<string | null>(null)
   const selectAllRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!highlightedId) return
+    const timeout = setTimeout(() => setHighlightedId(null), 2000)
+    return () => clearTimeout(timeout)
+  }, [highlightedId])
 
   const rows: TemplateRowData[] = useMemo(
     () => [
@@ -325,6 +332,8 @@ export const TemplatesTable = () => {
                 templates={pageRows}
                 selectedIds={selectedIds}
                 onToggle={toggleOne}
+                highlightedId={highlightedId}
+                onDuplicated={setHighlightedId}
               />
               {totalPages > 1 && (
                 <nav

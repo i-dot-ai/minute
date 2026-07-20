@@ -1609,8 +1609,11 @@ export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses =
     /**
      * Successful Response
      */
-    200: unknown
+    200: string
   }
+
+export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse =
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses[keyof DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses]
 
 export type DeleteChatsTranscriptionsTranscriptionIdChatDeleteData = {
   body?: never

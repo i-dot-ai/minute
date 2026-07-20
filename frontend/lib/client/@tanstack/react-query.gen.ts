@@ -85,6 +85,7 @@ import type {
   EditUserTemplateUserTemplatesTemplateIdPatchError,
   DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData,
   DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError,
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteData,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteError,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteResponse,
@@ -1030,12 +1031,12 @@ export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation =
       Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
     >
   ): UseMutationOptions<
-    unknown,
+    DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
     DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError,
     Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
   > => {
     const mutationOptions: UseMutationOptions<
-      unknown,
+      DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
       DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError,
       Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
     > = {

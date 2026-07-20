@@ -6,6 +6,7 @@ import {
   duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation,
   getUserTemplatesUserTemplatesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { cn } from '@/lib/utils'
 import { TemplateRowData } from '@/types/templates'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
@@ -19,10 +20,14 @@ export function TemplateTableRow({
   template,
   selectedIds,
   onToggle,
+  isHighlighted,
+  onDuplicated,
 }: {
   template: TemplateRowData
   selectedIds?: Set<string>
   onToggle?: (id: string, checked: boolean) => void
+  isHighlighted?: boolean
+  onDuplicated?: (id: string) => void
 }) {
   const queryClient = useQueryClient()
   const name = template.name || 'Untitled template'
@@ -31,10 +36,11 @@ export function TemplateTableRow({
 
   const duplicateMutation = useMutation({
     ...duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation(),
-    onSuccess: () => {
+    onSuccess: (id) => {
       queryClient.invalidateQueries({
         queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
       })
+      onDuplicated?.(id)
       posthog.capture('template_duplicated')
     },
   })
@@ -58,7 +64,12 @@ export function TemplateTableRow({
   }
 
   return (
-    <tr className="govuk-table__row group relative hover:bg-[#f4f8fb] has-[:checked]:bg-[#f4f8fb]">
+    <tr
+      className={cn(
+        'govuk-table__row group relative hover:bg-[#f4f8fb] has-[:checked]:bg-[#f4f8fb]',
+        isHighlighted && 'template-row--just-duplicated',
+      )}
+    >
       <td className="govuk-table__cell">
         {template.isSystem ? (
           <div className="govuk-!-margin-left-2">-</div>
@@ -100,19 +111,6 @@ export function TemplateTableRow({
           <span className="govuk-!-font-size-16 block !text-(--govuk-text-colour)">
             {template.description}
           </span>
-          {/* </Link>
-        </td>
-      <td className="govuk-table__cell w-full">
-        <Link
-          tabIndex={-1}
-          href={
-            template.isSystem
-              ? `/templates/system/${encodeURIComponent(template.name)}`
-              : `/templates/${template.id}`
-          }
-          className="govuk-body-s govuk-!-margin-bottom-0 inline-block w-full"
-        > */}
-          {/* {template.description} */}
         </Link>
       </td>
       <td className="govuk-table__cell whitespace-nowrap">

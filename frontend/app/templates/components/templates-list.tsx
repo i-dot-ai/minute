@@ -10,10 +10,14 @@ export function TemplatesList({
   templates,
   selectedIds,
   onToggle,
+  highlightedId,
+  onDuplicated,
 }: {
   templates: TemplateRowData[]
   selectedIds?: Set<string>
   onToggle?: (id: string, checked: boolean) => void
+  highlightedId?: string | null
+  onDuplicated?: (id: string) => void
 }) {
   return (
     <table
@@ -43,6 +47,10 @@ export function TemplatesList({
             template={template}
             selectedIds={selectedIds}
             onToggle={onToggle}
+            isHighlighted={
+              highlightedId != null && template.id === highlightedId
+            }
+            onDuplicated={onDuplicated}
           />
         ))}
       </tbody>

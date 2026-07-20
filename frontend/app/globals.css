@@ -551,3 +551,24 @@ html body[data-scroll-locked] {
   cursor: pointer;
   color: #0b0c0c;
 }
+
+@keyframes template-row-flash {
+  0% {
+    background-color: #d2e2f1;
+  }
+
+  100% {
+    background-color: transparent;
+  }
+}
+
+.template-row--just-duplicated {
+  animation: template-row-flash 2s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .template-row--just-duplicated {
+    animation: none;
+    background-color: #d2e2f1;
+  }
+}

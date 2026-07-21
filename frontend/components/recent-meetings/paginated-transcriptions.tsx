@@ -59,7 +59,7 @@ export const PaginatedTranscriptions = () => {
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
     router.replace(
       pathname +
-        buildQueryString(paginatedResponse.total_pages, filterBy, search)
+      buildQueryString(paginatedResponse.total_pages, filterBy, search)
     )
   }
   const transcriptions = paginatedResponse?.items || []
@@ -174,7 +174,7 @@ export const PaginatedTranscriptions = () => {
       <Suspense fallback={null}>
         <RecentOfflineRecordingsSection />
       </Suspense>
-      <div className="govuk-!-margin-bottom-4 flex items-center justify-between">
+      <div className="govuk-!-margin-bottom-1 flex items-center justify-between">
         <div className="flex flex-1 items-center gap-2">
           <div
             className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"

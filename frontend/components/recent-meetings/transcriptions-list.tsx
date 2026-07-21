@@ -92,24 +92,24 @@ function TranscriptionTableRow({
       <td className="govuk-table__cell whitespace-nowrap">
         <span className="govuk-body-s govuk-!-margin-0">{date}</span>
       </td>
-      <td className="govuk-table__cell govuk-!-padding-left-2 whitespace-nowrap">
+      <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 whitespace-nowrap">
         {transcription.expiring && (
-          <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-right-2">
+          <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-right-1 govuk-!-padding-left-1">
             Expiring soon
           </strong>
         )}
         {transcription.status === 'failed' && (
-          <strong className="govuk-tag govuk-tag--red govuk-!-margin-right-2">
+          <strong className="govuk-tag govuk-tag--red govuk-!-margin-right-1 govuk-!-padding-left-1">
             Failed
           </strong>
         )}
         {transcription.status === 'awaiting_start' && (
-          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">
+          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-padding-left-1">
             Awaiting start
           </strong>
         )}
         {transcription.status === 'in_progress' && (
-          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">
+          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-padding-left-1">
             In progress
           </strong>
         )}
@@ -117,7 +117,7 @@ function TranscriptionTableRow({
           <p className="govuk-body-s govuk-!-margin-0 text-center">-</p>
         )}
       </td>
-      <td className="govuk-table__cell whitespace-nowrap">
+      <td className="govuk-table__cell  whitespace-nowrap">
         <div className="flex items-center gap-2">
           <RenameButton
             displayTitle={displayTitle}
@@ -152,7 +152,7 @@ export function TranscriptionsList({
       className="govuk-table govuk-table--subtle"
       aria-labelledby="transcriptions-list-heading"
     >
-      <thead className="govuk-table__head">
+      <thead className="govuk-table__head  sticky top-0 bg-white z-10">
         <tr className="govuk-table__row">
           <th scope="col" className="govuk-table__header">
             Select

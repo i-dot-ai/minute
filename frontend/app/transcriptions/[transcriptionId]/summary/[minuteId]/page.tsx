@@ -100,7 +100,7 @@ export default function SummaryPage({
   return (
     <div className="govuk-grid-row">
       <div className="govuk-grid-column-full">
-        <div className="govuk-!-padding-top-4 sticky top-0 z-10 bg-white">
+        <div className="govuk-!-padding-top-4 sticky top-0 z-10 bg-white border-b border-(--govuk-border-colour)">
           <div className="govuk-width-container govuk-width-container--with-secondary-nav">
             {!editState?.isEditable && (
               <div className="flex justify-between">
@@ -120,7 +120,7 @@ export default function SummaryPage({
                   {editState && (
                     <>
                       <button
-                        className="govuk-button govuk-button--secondary"
+                        className="govuk-button"
                         onClick={() => editState.setIsEditable(true)}
                         type="button"
                         disabled={editState.isEditable}
@@ -215,56 +215,58 @@ export default function SummaryPage({
             )}
           </div>
         </div>
-        <div
-          className={`govuk-width-container govuk-width-container--with-secondary-nav ${editState?.isEditable ? 'govuk-!-padding-4 bg-(--govuk-surface-background-colour)' : ''}`}
-        >
-          {editState?.isEditable ? (
-            <form
-              className="govuk-form-group govuk-!-margin-bottom-6 govuk-!-margin-top-4"
-              onSubmit={(e) => {
-                e.preventDefault()
-                handleSave()
-              }}
-            >
-              <h1 className="govuk-label-wrapper">
-                <label
-                  className="govuk-label govuk-label--m"
-                  htmlFor="transcription-title"
-                >
-                  Transcription title
-                </label>
+        <div className={editState?.isEditable ? 'govuk-!-padding-4 bg-(--govuk-surface-background-colour)' : ''}>
+          <div
+            className="govuk-width-container govuk-width-container--with-secondary-nav"
+          >
+            {editState?.isEditable ? (
+              <form
+                className="govuk-form-group govuk-!-margin-bottom-6 govuk-!-margin-top-4"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  handleSave()
+                }}
+              >
+                <h1 className="govuk-label-wrapper">
+                  <label
+                    className="govuk-label govuk-label--m"
+                    htmlFor="transcription-title"
+                  >
+                    Transcription title
+                  </label>
+                </h1>
+                <input
+                  id="transcription-title"
+                  className="govuk-input bg-white"
+                  type="text"
+                  placeholder="Add title"
+                  value={draftTitle}
+                  onChange={(e) => setDraftTitle(e.target.value)}
+                />
+              </form>
+            ) : (
+              <h1 className="govuk-heading-l govuk-!-margin-top-4">
+                {transcription.title}
               </h1>
-              <input
-                id="transcription-title"
-                className="govuk-input bg-white"
-                type="text"
-                placeholder="Add title"
-                value={draftTitle}
-                onChange={(e) => setDraftTitle(e.target.value)}
-              />
-            </form>
-          ) : (
-            <h1 className="govuk-heading-l govuk-!-margin-top-4">
-              {transcription.title}
-            </h1>
-          )}
-          {!minute ? (
-            <p className="govuk-body">Summary not found.</p>
-          ) : (
-            <>
-              <div className="govuk-grid-row">
-                <div className="govuk-grid-column-full govuk-!-margin-bottom-8">
-                  <MinuteEditor
-                    key={minute.id}
-                    transcription={transcription}
-                    minute={minute}
-                    onExportStateChange={setExportState}
-                    onEditStateChange={setEditState}
-                  />
+            )}
+            {!minute ? (
+              <p className="govuk-body">Summary not found.</p>
+            ) : (
+              <>
+                <div className="govuk-grid-row">
+                  <div className="govuk-grid-column-full govuk-!-margin-bottom-8">
+                    <MinuteEditor
+                      key={minute.id}
+                      transcription={transcription}
+                      minute={minute}
+                      onExportStateChange={setExportState}
+                      onEditStateChange={setEditState}
+                    />
+                  </div>
                 </div>
-              </div>
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

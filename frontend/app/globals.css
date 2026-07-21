@@ -58,6 +58,11 @@
   min-width: 0;
 }
 
+.govuk-table--subtle {
+  border-collapse: separate;
+  border-spacing: 0
+}
+
 .govuk-table--subtle .govuk-table__header {
   font-size: 1rem;
   color: #484949;

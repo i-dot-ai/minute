@@ -250,7 +250,7 @@ export const TemplatesTable = () => {
       </div>
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
-          <div className="govuk-!-margin-bottom-3 flex items-center justify-between">
+          <div className="govuk-!-margin-bottom-1 flex items-center justify-between">
             <div className="flex flex-1 items-center gap-2">
               {selectablePageKeys.length > 0 && (
                 <div

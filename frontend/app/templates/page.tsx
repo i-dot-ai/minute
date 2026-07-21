@@ -10,7 +10,7 @@ export default function TemplatesPage() {
             className="govuk-grid-column-full"
             data-onboarding="templates-page"
           >
-            <h1 className="govuk-heading-m" id="templates-list-heading">
+            <h1 className="govuk-heading-l govuk-!-margin-bottom-3" id="templates-list-heading">
               Templates
             </h1>
             <p className="govuk-body">

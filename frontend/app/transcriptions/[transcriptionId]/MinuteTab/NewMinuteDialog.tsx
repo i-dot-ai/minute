@@ -12,7 +12,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import posthog from 'posthog-js'
 import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
-import { PlusIcon } from 'lucide-react'
 
 const GENERAL_TEMPLATE: Template = {
   name: 'General',
@@ -95,11 +94,11 @@ export function NewMinuteDialog({
     <>
       <button
         type="button"
-        className="govuk-button govuk-button--secondary !w-full"
+        className="govuk-button govuk-button--secondary govuk-!-font-size-16"
         disabled={disabled}
         onClick={() => setOpen(true)}
       >
-        <PlusIcon className="size-4" /> New summary
+        New summary
       </button>
       <FormProvider {...form}>
         <GenerateSummaryDialog

@@ -17,14 +17,22 @@ export default function TranscriptionsPage() {
             className="govuk-grid-column-full"
             data-onboarding="saved-transcriptions-page"
           >
-            <h1 className="govuk-heading-m" id="transcriptions-list-heading">
+            <h1 className="govuk-heading-l govuk-!-margin-bottom-3" id="transcriptions-list-heading">
               Transcriptions
             </h1>
-            {user && user.data_retention_days && (
+            {user && (
               <p className="govuk-body">
                 Your current data retention period is set to{' '}
-                {user?.data_retention_days} day
-                {user.data_retention_days > 1 ? 's' : ''}.{' '}
+                {user?.data_retention_days ? (
+                  <>
+                    {user?.data_retention_days} day{user?.data_retention_days > 1 ? 's' : ''}
+                  </>
+                ) : (
+                  <>
+                    keep indefinitely
+                  </>
+                )}
+                .{' '}
                 <Link
                   href="/settings"
                   className="govuk-link govuk-link--no-visited-state"

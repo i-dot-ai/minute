@@ -30,14 +30,7 @@ export function TranscriptionSidePanel() {
   if (!transcriptionId) return null
 
   return (
-    <div className="govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 overflow-y-auto bg-[#f3f3f3]">
-      {transcription && (
-        <div className="border-b border-(--govuk-border-colour) govuk-!-margin-bottom-4">
-          <div className="govuk-button-group justify-center flex-col govuk-!-margin-bottom-0">
-            <DeleteTranscriptionButton transcription={transcription} />
-          </div>
-        </div>
-      )}
+    <div className="govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 overflow-y-auto bg-white border-r border-(--govuk-border-colour)">
       <nav
         aria-label="Summaries and transcript"
         className="secondary-nav"
@@ -55,7 +48,7 @@ export function TranscriptionSidePanel() {
               </Link>
             ) : (
               <>
-                <h2 className="govuk-caption-s font-normal text-[#484949]">
+                <h2 className="govuk-caption-s font-normal text-(--govuk-link-colour)">
                   Summaries
                 </h2>
                 <ul className="govuk-list !pl-[20px]">
@@ -78,13 +71,13 @@ export function TranscriptionSidePanel() {
                       >
                         <Link
                           href={href}
-                          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline ml-2"
+                          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline ml-2 govuk-!-font-size-16"
                           aria-current={isActive ? 'page' : undefined}
                           style={isActive ? { fontWeight: 'bold' } : undefined}
                         >
                           {minute.template_name}
                         </Link>
-                        <p className="govuk-body-s ml-2">{date}</p>
+                        <p className="govuk-body-s ml-2 govuk-!-font-size-16">{date}</p>
                       </li>
                     )
                   })}
@@ -98,7 +91,7 @@ export function TranscriptionSidePanel() {
           <li>
             <Link
               href={`/transcriptions/${transcriptionId}/transcript`}
-              className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline border-l-4 border-[transparent] pl-2 ${transcriptPage ? '!border-(--govuk-link-colour) font-bold' : ''}`}
+              className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline border-l-4 border-[transparent] pl-4 ${transcriptPage ? '!border-(--govuk-link-colour) font-bold' : ''}`}
               aria-current={transcriptPage ? 'page' : undefined}
             >
               Transcript
@@ -106,16 +99,17 @@ export function TranscriptionSidePanel() {
           </li>
         </ul>
       </nav>
-      <div className="govuk-button-group justify-center flex-col govuk-!-margin-bottom-0">
-        <div className="border-t border-(--govuk-border-colour) govuk-!-padding-top-4">
-          <NewMinuteDialog
-            transcriptionId={transcriptionId}
-            onCreated={() =>
-              router.push(`/transcriptions/${transcriptionId}/summary`)
-            }
-          />
-        </div>
+      <div className="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-top-5">
+        {transcription && (
+          <DeleteTranscriptionButton transcription={transcription} />
+        )}
+        <NewMinuteDialog
+          transcriptionId={transcriptionId}
+          onCreated={() =>
+            router.push(`/transcriptions/${transcriptionId}/summary`)
+          }
+        />
       </div>
-    </div>
+    </div >
   )
 }

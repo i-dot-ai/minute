@@ -98,7 +98,7 @@ export function TemplateTableRow({
           </div>
         )}
       </td>
-      <td className="govuk-table__cell w-full">
+      <td className="govuk-table__cell w-full govuk-!-padding-top-1 govuk-!-padding-bottom-1">
         <Link
           href={
             template.isSystem
@@ -114,19 +114,19 @@ export function TemplateTableRow({
         </Link>
       </td>
       <td className="govuk-table__cell whitespace-nowrap">
-        <div className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 flex items-center justify-end">
-          {template.is_default && (
-            <strong className="govuk-tag govuk-tag--blue govuk-!-margin-right-2">
-              Default
-            </strong>
-          )}
+        <div className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 flex items-center govuk-!-padding-right-4">
           {template.isSystem ? (
-            <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-2">
+            <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-margin-left-1 govuk-!-font-size-16">
               System
             </strong>
           ) : (
-            <strong className="govuk-tag govuk-tag--green govuk-!-margin-right-2">
+            <strong className="govuk-tag govuk-tag--teal govuk-!-margin-right-1 govuk-!-margin-left-1 govuk-!-font-size-16">
               {template.format === 'document' ? 'Summary' : 'Q & A'}
+            </strong>
+          )}
+          {template.is_default && (
+            <strong className="govuk-tag govuk-tag--purple govuk-!-margin-right-1 govuk-!-margin-left-1 govuk-!-font-size-16">
+              Default
             </strong>
           )}
         </div>

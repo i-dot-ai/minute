@@ -94,22 +94,22 @@ function TranscriptionTableRow({
       </td>
       <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 whitespace-nowrap">
         {transcription.expiring && (
-          <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-right-1 govuk-!-padding-left-1">
+          <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
             Expiring soon
           </strong>
         )}
         {transcription.status === 'failed' && (
-          <strong className="govuk-tag govuk-tag--red govuk-!-margin-right-1 govuk-!-padding-left-1">
+          <strong className="govuk-tag govuk-tag--red govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
             Failed
           </strong>
         )}
         {transcription.status === 'awaiting_start' && (
-          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-padding-left-1">
+          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
             Awaiting start
           </strong>
         )}
         {transcription.status === 'in_progress' && (
-          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-padding-left-1">
+          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
             In progress
           </strong>
         )}

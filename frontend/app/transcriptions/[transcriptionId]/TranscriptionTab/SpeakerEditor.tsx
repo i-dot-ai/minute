@@ -96,18 +96,17 @@ export const SpeakerEditor = ({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <button type="button" className="govuk-button govuk-button--secondary">
+        <button type="button" className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0">
           <User className="size-4" />
           Edit all speaker names
         </button>
       </DialogTrigger>
       <DialogContent>
         <DialogTitle className="govuk-heading-m">
-          Edit speaker names
+          Edit all speaker names
         </DialogTitle>
-        <DialogDescription className="govuk-body">
-          You can edit speaker names here or on the transcript. Click on the
-          speaker&apos;s name to edit
+        <DialogDescription className="govuk-body govuk-!-margin-bottom-0">
+          This will not update existing summaries, generate a new summary to see the changes reflected.
         </DialogDescription>
         <div className="max-h-[50vh] overflow-x-hidden overflow-y-auto">
           <ul>
@@ -142,7 +141,7 @@ export const SpeakerEditor = ({
         <div className="govuk-button-group govuk-!-margin-top-4 justify-end">
           <button
             type="button"
-            className="govuk-link text-(--govuk-link-colour)"
+            className="govuk-button govuk-button--secondary"
             onClick={handleCancel}
           >
             Cancel
@@ -152,7 +151,7 @@ export const SpeakerEditor = ({
             className="govuk-button"
             onClick={handleSaveAll}
           >
-            <Save className="size-4" /> Save all
+            Save all
           </button>
         </div>
       </DialogContent>

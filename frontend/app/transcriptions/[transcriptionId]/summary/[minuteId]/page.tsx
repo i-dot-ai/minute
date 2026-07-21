@@ -119,20 +119,6 @@ export default function SummaryPage({
                 <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
                   {editState && (
                     <>
-                      <button
-                        className="govuk-button"
-                        onClick={() => editState.setIsEditable(true)}
-                        type="button"
-                        disabled={editState.isEditable}
-                      >
-                        <PencilIcon className="size-4" /> Edit
-                      </button>
-                      <ExportSummaryDialog
-                        exportState={exportState}
-                        title={transcription.title}
-                        dialogueEntries={transcription.dialogue_entries}
-                        disabled={editState.isEditable}
-                      />
                       {editState.hasCitations && (
                         <button
                           className="govuk-button govuk-button--secondary min-w-48"
@@ -149,6 +135,20 @@ export default function SummaryPage({
                             : 'Hide references'}
                         </button>
                       )}
+                      <ExportSummaryDialog
+                        exportState={exportState}
+                        title={transcription.title}
+                        dialogueEntries={transcription.dialogue_entries}
+                        disabled={editState.isEditable}
+                      />
+                      <button
+                        className="govuk-button"
+                        onClick={() => editState.setIsEditable(true)}
+                        type="button"
+                        disabled={editState.isEditable}
+                      >
+                        <PencilIcon className="size-4" /> Edit
+                      </button>
                     </>
                   )}
                 </div>

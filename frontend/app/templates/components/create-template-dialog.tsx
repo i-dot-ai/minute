@@ -60,7 +60,7 @@ export function CreateTemplateDialog() {
       <DialogContent wideModal={step === 'example'}>
         {step === 'choice' ? (
           <>
-            <div className="govuk-form-group">
+            <div className="govuk-form-group govuk-!-padding-bottom-0">
               <fieldset className="govuk-fieldset">
                 <legend className="govuk-fieldset__legend govuk-fieldset__legend--l">
                   <DialogTitle className="govuk-fieldset__heading">
@@ -68,7 +68,7 @@ export function CreateTemplateDialog() {
                   </DialogTitle>
                 </legend>
                 <div
-                  className="govuk-radios govuk-!-margin-top-6"
+                  className="govuk-radios govuk-radios--small govuk-!-margin-top-6"
                   data-module="govuk-radios"
                 >
                   <div className="govuk-radios__item">

@@ -126,6 +126,7 @@ function TranscriptionTableRow({
           />
           <DeleteTranscriptionButton
             transcription={transcription}
+            noUnderline={true}
             title={displayTitle}
             disabled={editing || isPending}
           />

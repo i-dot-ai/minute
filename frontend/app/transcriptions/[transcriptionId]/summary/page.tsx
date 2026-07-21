@@ -32,7 +32,7 @@ export default function SummaryIndexPage({
 
   if (!minutesLoaded || minutes.length > 0) {
     return (
-      <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
+      <div className="govuk-!-padding-top-4 govuk-width-container govuk-width-container--with-secondary-nav">
         <div className="flex items-center gap-2">
           <Loader2 className="animate-spin" />
           <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
@@ -42,7 +42,7 @@ export default function SummaryIndexPage({
   }
 
   return (
-    <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
+    <div className="govuk-!-padding-top-4 govuk-width-container govuk-width-container--with-secondary-nav">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
           <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-3 border-b border-(--govuk-border-colour)">

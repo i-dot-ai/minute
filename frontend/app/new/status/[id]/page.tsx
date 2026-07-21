@@ -27,7 +27,7 @@ export default function RecordStatusPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-      GENERATING_STATUSES.includes(query.state.data.status)
+        GENERATING_STATUSES.includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -51,7 +51,7 @@ export default function RecordStatusPage({
     enabled: !!minuteId && transcriptionDone,
     refetchInterval: (query) =>
       query.state.data?.[0]?.status &&
-      GENERATING_STATUSES.includes(query.state.data[0].status)
+        GENERATING_STATUSES.includes(query.state.data[0].status)
         ? 2000
         : false,
   })
@@ -99,7 +99,7 @@ export default function RecordStatusPage({
   const meetingLength = lengthSeconds ? formatLength(lengthSeconds) : ''
 
   return (
-    <div className="govuk-width-container govuk-main-wrapper">
+    <div className="govuk-width-container govuk-!-padding-top-4">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-three-quarters">
           <h1 ref={headingRef} tabIndex={-1} className="govuk-heading-l">
@@ -195,7 +195,7 @@ export default function RecordStatusPage({
                   </h2>
                 </div>
                 <p className="govuk-body govuk-!-margin-top-3">
-                  {meetingLength} -{' '}
+                  {/* {meetingLength} -{' '}
                   {new Date(transcription.created_datetime).toLocaleString(
                     'en-GB',
                     {
@@ -203,7 +203,8 @@ export default function RecordStatusPage({
                       month: 'long',
                       day: 'numeric',
                     }
-                  )}
+                  )} */}
+                  View and edit the transcription and summary at any time.
                 </p>
               </>
             )}

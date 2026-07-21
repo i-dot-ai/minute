@@ -68,7 +68,7 @@ export default function SummaryPage({
 
   if (isLoading) {
     return (
-      <div className="govuk-width-container govuk-main-wrapper govuk-width-container--with-secondary-nav">
+      <div className="govuk-width-container govuk-!-padding-top-4 govuk-width-container--with-secondary-nav">
         <div className="flex items-center gap-2">
           <Loader2 className="animate-spin" />
           <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>

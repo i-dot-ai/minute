@@ -3,7 +3,7 @@ import { Suspense } from 'react'
 
 export default function TemplatesPage() {
   return (
-    <div className="govuk-main-wrapper">
+    <div className="govuk-!-padding-top-4">
       <div className="govuk-width-container">
         <div className="govuk-grid-row">
           <div

@@ -64,7 +64,7 @@ export default function TranscriptionPage({
 
   if (isLoading) {
     return (
-      <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
+      <div className="govuk-!-padding-top-4 govuk-width-container govuk-width-container--with-secondary-nav">
         <div className="flex items-center gap-2">
           <Loader2 className="animate-spin" />
           <p className="govuk-body govuk-!-margin-bottom-0">Loading...</p>
@@ -75,7 +75,7 @@ export default function TranscriptionPage({
 
   if (!transcription) {
     return (
-      <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
+      <div className="govuk-!-padding-top-4 govuk-width-container govuk-width-container--with-secondary-nav">
         <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
           <ol className="govuk-breadcrumbs__list">
             <li className="govuk-breadcrumbs__list-item">
@@ -116,7 +116,7 @@ export default function TranscriptionPage({
     ['awaiting_start', 'in_progress'].includes(transcription.status)
   ) {
     return (
-      <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
+      <div className="govuk-!-padding-top-4 govuk-width-container govuk-width-container--with-secondary-nav">
         <div className="govuk-grid-row govuk-!-margin-bottom-2">
           <div className="govuk-grid-column-three-quarters">
             <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
@@ -140,7 +140,7 @@ export default function TranscriptionPage({
 
   if (transcription.status == 'failed') {
     return (
-      <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
+      <div className="govuk-!-padding-top-4 govuk-width-container govuk-width-container--with-secondary-nav">
         <div className="govuk-grid-row govuk-!-margin-bottom-2">
           <div className="govuk-grid-column-two-thirds">
             {!isRenaming && (
@@ -238,7 +238,7 @@ export default function TranscriptionPage({
   // Ready: the redirect effect above sends the user to the latest summary
   // or the transcript page, so just show a loader in the meantime.
   return (
-    <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
+    <div className="govuk-!-padding-top-4 govuk-width-container govuk-width-container--with-secondary-nav">
       <div className="govuk-width-container">
         <div className="flex items-center gap-2">
           <Loader2 className="animate-spin" />

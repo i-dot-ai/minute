@@ -438,7 +438,7 @@ export default function RecordingControl({
                 onClick={handleStopRecording}
                 className="govuk-button"
               >
-                Save recording
+                Stop recording and save
               </button>
               {onDiscard && (
                 <button

@@ -26,7 +26,7 @@ export default function RecordPage() {
   }
 
   return (
-    <div className="govuk-width-container govuk-main-wrapper">
+    <div className="govuk-width-container govuk-!-padding-top-4">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
           <h1 className="govuk-heading-l">Record a meeting</h1>

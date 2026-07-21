@@ -10,7 +10,7 @@ export default function TranscriptionsPage() {
   console.log(user)
 
   return (
-    <div className="govuk-main-wrapper">
+    <div className="govuk-!-padding-top-4">
       <div className="govuk-width-container">
         <div className="govuk-grid-row">
           <div

@@ -195,7 +195,7 @@ export default function Home() {
                     }
                     <div className="govuk-form-group govuk-!-margin-top-7 flex items-center gap-2">
                       <label className="govuk-label" htmlFor="microphone">
-                        Record using:
+                        Select microphone:
                       </label>
                       <select
                         className="govuk-select govuk-select--subtle"

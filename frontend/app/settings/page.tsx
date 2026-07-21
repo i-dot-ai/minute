@@ -18,7 +18,7 @@ export default function SettingsPage() {
   const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
   if (!user) {
     return (
-      <div className="govuk-width-container govuk-main-wrapper">
+      <div className="govuk-width-container govuk-!-padding-top-4">
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-two-thirds">
             <p className="govuk-body">Loading...</p>
@@ -28,7 +28,7 @@ export default function SettingsPage() {
     )
   }
   return (
-    <div className="govuk-width-container govuk-main-wrapper">
+    <div className="govuk-width-container govuk-!-padding-top-4">
       <div className="govuk-grid-row">
         <div
           className="govuk-grid-column-two-thirds"

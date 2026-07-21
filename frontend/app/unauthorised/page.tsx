@@ -5,7 +5,7 @@ import React from 'react'
 function Unauthorised(): React.JSX.Element {
   const isOldUrl = useIsOldUrl()
   return (
-    <div className="govuk-width-container govuk-main-wrapper">
+    <div className="govuk-width-container govuk-!-padding-top-4">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-two-thirds">
           {isOldUrl && (

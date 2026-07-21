@@ -122,7 +122,7 @@ export default function TranscriptPage({
 
   if (isLoading) {
     return (
-      <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
+      <div className="govuk-!-padding-top-4 govuk-width-container govuk-width-container--with-secondary-nav">
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-full">
             <div className="flex items-center gap-2">
@@ -137,7 +137,7 @@ export default function TranscriptPage({
 
   if (!transcription) {
     return (
-      <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
+      <div className="govuk-!-padding-top-4 govuk-width-container govuk-width-container--with-secondary-nav">
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-full">
             <h1 className="govuk-heading-l govuk-!-margin-bottom-2">

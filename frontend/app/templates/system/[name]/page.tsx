@@ -48,7 +48,7 @@ export default function SystemTemplatePage({
 
   if (isLoading) {
     return (
-      <div className="govuk-width-container govuk-main-wrapper flex justify-center">
+      <div className="govuk-width-container govuk-!-padding-top-4 flex justify-center">
         <Loader2 className="animate-spin" />
       </div>
     )

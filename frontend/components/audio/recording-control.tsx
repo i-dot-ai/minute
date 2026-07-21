@@ -395,10 +395,10 @@ export default function RecordingControl({
             <RecordingTimer isRecording={isRecording} isPaused={isPaused} />
           </div>
         )}
-        <div className="govuk-!-width-two-thirds mx-auto border-4 border-[#8eb8dc] govuk-!-margin-bottom-4">
+        <div className="mx-auto border-[#8eb8dc] govuk-!-margin-bottom-4">
           <div
             ref={containerRef}
-            className="govuk-!-width-one-half mx-auto"
+            className="mx-auto"
           // className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
           >
             {/* <canvas ref={canvasRef} aria-hidden="true" className="size-full" /> */}

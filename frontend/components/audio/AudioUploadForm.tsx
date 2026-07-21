@@ -88,7 +88,7 @@ export const AudioUploadForm = () => {
             className="govuk-button govuk-!-margin-top-4"
             onClick={() => setOpen(true)}
           >
-            Generate summary
+            Upload file
           </button>
         )}
 

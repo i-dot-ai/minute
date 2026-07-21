@@ -85,7 +85,7 @@ export default function Home() {
   }
 
   return (
-    <div className="govuk-width-container govuk-main-wrapper">
+    <div className="govuk-width-container govuk-!-padding-top-4">
       {/* {isOldUrl ? <UrlMigrationBanner /> : <PosthogBanner />} */}
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
@@ -177,25 +177,17 @@ export default function Home() {
                   <>
                     {
                       mode === 'virtual-meeting' && (
-                        <div className="bg-[#f3f3f3] govuk-!-padding-5 govuk-!-margin-bottom-4 govuk-!-margin-top-4">
+                        <div className="bg-[#f3f3f3] govuk-!-padding-5 govuk-!-margin-bottom-2 govuk-!-margin-top-4">
                           <h2 className="govuk-heading-s">Before you start</h2>
-                          <ol className="govuk-list govuk-list--number">
+                          <ol className="govuk-list govuk-list--number govuk-!-margin-bottom-0">
                             <li>
-                              Start Minute first, then join your meeting (Teams, Zoom, or Google Meet).
+                              Start Minute
                             </li>
                             <li>
-                              When the browser asks to share:
-                              <ol className="govuk-list govuk-list--number govuk-!-margin-bottom-0">
-                                <li>
-                                  Share your <strong>Tab</strong>(Mac) or <strong>Entire Screen</strong>(Windows)
-                                </li>
-                                <li>
-                                  Tick <strong>Share audio</strong>.
-                                </li>
-                              </ol>
+                              Join your meeting (Teams, Zoom, or Google Meet).
                             </li>
                             <li>
-                              Keep Minute open and in the background for the duration of the meeting.
+                              When the browser asks to share: Share your <strong>Tab</strong> (Mac) or <strong>Entire Screen</strong> (Windows), then tick <strong>Share audio</strong>.
                             </li>
                           </ol>
                         </div>
@@ -225,6 +217,7 @@ export default function Home() {
                         )}
                       </select>
                     </div>
+
                     <button
                       className="govuk-button govuk-!-margin-top-6"
                       data-module="govuk-button"
@@ -253,12 +246,15 @@ export default function Home() {
                     )}
                   </>
                 )}
+                <p className="govuk-body govuk-body-s govuk-!-margin-top-6 govuk-!-margin-bottom-2">
+                  Please ensure that all participants are aware that they have
+                  been recorded.{' '}
+                  {/* </p>
+                    <p className="govuk-body govuk-body-s"> */}
+                  Suitable up to{' '}
+                  <strong>OFFICIAL SENSITIVE</strong>.
+                </p>
               </div>
-              <p className="govuk-body govuk-!-margin-top-6">
-                Please ensure that all participants are aware that they have
-                been recorded. Suitable up to{' '}
-                <strong>OFFICIAL SENSITIVE</strong>.
-              </p>
             </>
           )}
         </div>

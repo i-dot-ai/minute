@@ -15,6 +15,12 @@
   border: none;
 }
 
+.govuk-button[disabled],
+.govuk-button[disabled]:hover {
+  background-color: var(--govuk-brand-colour);
+  box-shadow: none;
+}
+
 .govuk-button:hover {
   background-color: #16548a;
   color: #fff;
@@ -25,6 +31,13 @@
 .govuk-button--secondary {
   background-color: #d2e2f1;
   color: var(--govuk-text-colour);
+}
+
+
+.govuk-button--secondary[disabled],
+.govuk-button--secondary[disabled]:hover {
+  background-color: #d2e2f1;
+  box-shadow: none;
 }
 
 .govuk-button--warning {
@@ -52,6 +65,7 @@
 
 .govuk-button--inverse {
   background-color: #fff;
+  color: var(--govuk-text-colour);
 }
 
 .govuk-button:focus-visible:not(:active):not(:hover) {
@@ -139,7 +153,7 @@
   background-color: #d2e2f1;
 }
 
-.govuk-radios--cards .govuk-radios__input:checked + .govuk-radios__label:after {
+.govuk-radios--cards .govuk-radios__input:checked+.govuk-radios__label:after {
   right: 22px;
   left: auto;
 }
@@ -490,7 +504,7 @@ html body[data-scroll-locked] {
   list-style-type: none;
 }
 
-.editor-content ul > li::before {
+.editor-content ul>li::before {
   content: '•';
 }
 
@@ -499,11 +513,11 @@ html body[data-scroll-locked] {
   counter-reset: list-counter;
 }
 
-.editor-content ol > li {
+.editor-content ol>li {
   counter-increment: list-counter;
 }
 
-.editor-content ol > li::before {
+.editor-content ol>li::before {
   content: counter(list-counter) '.';
 }
 
@@ -552,12 +566,12 @@ html body[data-scroll-locked] {
   margin-bottom: 2.33em;
 }
 
-.editor-content p + p {
+.editor-content p+p {
   margin-top: 1em;
   /* Add margin only between consecutive paragraphs */
 }
 
-.editor-content pre > code {
+.editor-content pre>code {
   background-color: #444;
   color: white;
   width: 100% !;

@@ -1,4 +1,5 @@
 'use client'
+
 import { PaginatedTranscriptions } from '@/components/recent-meetings/paginated-transcriptions'
 import { SettingsDialog } from '@/components/settings/settings-dialog'
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
@@ -24,16 +25,16 @@ export default function TranscriptionsPage() {
             </h1>
             {user && (
               <p className="govuk-body">
-                Your current data retention period is set to{' '}
-                {user?.data_retention_days ? (
+                Transcriptions will be{' '}
+                {user.data_retention_days ? (
                   <>
-                    {user?.data_retention_days} day
-                    {user?.data_retention_days > 1 ? 's' : ''}
+                    deleted after {user.data_retention_days} day
+                    {user.data_retention_days > 1 ? 's' : ''}
                   </>
                 ) : (
-                  <>keep indefinitely</>
+                  <>kept indefinitely</>
                 )}
-                . <SettingsDialog />
+                . <SettingsDialog user={user} />.
               </p>
             )}
           </div>

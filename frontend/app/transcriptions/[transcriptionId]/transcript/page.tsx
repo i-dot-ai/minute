@@ -16,6 +16,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   ArrowDown,
   Loader2,
+  Pause,
   Pencil,
   Play,
   Save,
@@ -102,9 +103,45 @@ export default function TranscriptPage({
     ),
   })
 
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioEls = useRef<Set<HTMLAudioElement>>(new Set())
   const playingRef = useRef<HTMLDivElement | null>(null)
   const [time, setTime] = useState(0)
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false)
+
+  const registerAudio = (el: HTMLAudioElement | null) => {
+    if (el) {
+      audioEls.current.add(el)
+    }
+  }
+
+  const getAudioEls = () => {
+    const els = [...audioEls.current].filter((el) => el.isConnected)
+    audioEls.current = new Set(els)
+    return els
+  }
+
+  // The page renders separate audio elements for desktop and mobile layouts,
+  // so playback must always target the one that is currently visible
+  const getActiveAudio = () => {
+    const els = getAudioEls()
+    return els.find((el) => el.offsetParent !== null) ?? els[0] ?? null
+  }
+
+  const audioHandlers = {
+    onSeeked: () => delayedScroll(),
+    onTimeUpdate: (e: React.SyntheticEvent<HTMLAudioElement>) =>
+      setTime(e.currentTarget.currentTime),
+    onPlay: (e: React.SyntheticEvent<HTMLAudioElement>) => {
+      const current = e.currentTarget
+      getAudioEls().forEach((el) => {
+        if (el !== current && !el.paused) {
+          el.pause()
+        }
+      })
+      setIsAudioPlaying(true)
+    },
+    onPause: () => setIsAudioPlaying(getAudioEls().some((el) => !el.paused)),
+  }
 
   const scrollToPlaying = () => {
     if (playingRef.current) {
@@ -158,249 +195,227 @@ export default function TranscriptPage({
   }
 
   return (
-    <div className="govuk-grid-row">
-      <FormProvider {...methods}>
-        <div className="govuk-grid-column-full">
-          <div className="govuk-!-padding-bottom-4 govuk-!-padding-top-4 sticky top-0 z-10 border-b border-(--govuk-border-colour) bg-white">
-            <div className="govuk-width-container govuk-width-container--with-secondary-nav">
-              {!isEditing && (
-                <div className="flex items-center justify-between">
-                  <nav
-                    className="govuk-breadcrumbs govuk-!-margin-bottom-0"
-                    aria-label="Breadcrumb"
-                  >
-                    <ol className="govuk-breadcrumbs__list">
-                      <li className="govuk-breadcrumbs__list-item">
-                        <Link
-                          className="govuk-breadcrumbs__link"
-                          href="/transcriptions"
-                        >
-                          Back
-                        </Link>
-                      </li>
-                    </ol>
-                  </nav>
-                  {hasRecordings && (
-                    <audio
-                      controls
-                      src={recordings[0].url}
-                      className="govuk-!-margin-left-4 govuk-!-margin-right-4 hidden flex-1 xl:block"
-                      ref={audioRef}
-                      onSeeked={delayedScroll}
-                      onTimeUpdate={(e) => {
-                        if (
-                          (e.target as HTMLAudioElement).currentTime != null
-                        ) {
-                          setTime((e.target as HTMLAudioElement).currentTime)
-                        }
-                      }}
-                    />
-                  )}
-                  <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
-                    {hasRecordings && (
-                      <button
-                        type="button"
-                        onClick={scrollToPlaying}
-                        className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 hidden xl:block"
+    <FormProvider {...methods}>
+      <div className="flex h-full flex-col">
+        <div className="govuk-!-padding-bottom-4 govuk-!-padding-top-4 shrink-0 border-b border-(--govuk-border-colour) bg-white">
+          <div className="govuk-width-container govuk-width-container--with-secondary-nav">
+            <div className="flex items-center justify-between">
+              {!isEditing ? (
+                <nav
+                  className="govuk-breadcrumbs govuk-!-margin-bottom-0 govuk-!-margin-top-2"
+                  aria-label="Breadcrumb"
+                >
+                  <ol className="govuk-breadcrumbs__list">
+                    <li className="govuk-breadcrumbs__list-item">
+                      <Link
+                        className="govuk-breadcrumbs__link"
+                        href="/transcriptions"
                       >
-                        <ArrowDown className="size-4" /> Scroll to current
-                        section
-                      </button>
-                    )}
-                    <ExportTranscriptDialog
-                      transcriptionString={transcriptionString}
-                      recordings={recordings}
-                    />
-                    <button
-                      type="button"
-                      className="govuk-button govuk-!-margin-bottom-0"
-                      onClick={() => {
-                        setDraftTitle(transcription.title ?? '')
-                        setIsEditing(true)
-                      }}
-                    >
-                      <Pencil className="size-4" /> Edit
-                    </button>
-                  </div>
-                </div>
-              )}
-              {isEditing && (
-                <div className="flex items-center justify-between">
-                  <div className="govuk-button-group govuk-!-margin-bottom-0">
-                    <SpeakerEditor
-                      transcription={transcription}
-                      src={hasRecordings ? recordings[0].url : undefined}
-                      onSaved={(data) => {
-                        reset(data)
-                        setIsEditing(false)
-                      }}
-                    />
-                  </div>
-                  {hasRecordings && (
-                    <audio
-                      controls
-                      src={recordings[0].url}
-                      className="govuk-!-margin-left-4 govuk-!-margin-right-4 hidden flex-1 xl:block"
-                      ref={audioRef}
-                      onSeeked={delayedScroll}
-                      onTimeUpdate={(e) => {
-                        if (
-                          (e.target as HTMLAudioElement).currentTime != null
-                        ) {
-                          setTime((e.target as HTMLAudioElement).currentTime)
-                        }
-                      }}
-                    />
-                  )}
-                  <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
-                    <button
-                      type="button"
-                      className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
-                      onClick={handleDiscard}
-                    >
-                      Discard
-                    </button>
-                    <button
-                      type="button"
-                      className="govuk-button govuk-!-margin-bottom-0"
-                      onClick={handleSave}
-                      disabled={isSavingTitle}
-                    >
-                      <Save className="size-4" /> Save
-                    </button>
-                  </div>
+                        Back
+                      </Link>
+                    </li>
+                  </ol>
+                </nav>
+              ) : (
+                <div className="govuk-button-group govuk-!-margin-bottom-0">
+                  <SpeakerEditor
+                    transcription={transcription}
+                    src={hasRecordings ? recordings[0].url : undefined}
+                    onSaved={(data) => {
+                      reset(data)
+                      setIsEditing(false)
+                    }}
+                  />
                 </div>
               )}
               {hasRecordings && (
-                <div className="govuk-!-margin-top-4 flex xl:hidden">
-                  <audio
-                    controls
-                    src={recordings[0].url}
-                    className="w-full"
-                    ref={audioRef}
-                    onSeeked={delayedScroll}
-                    onTimeUpdate={(e) => {
-                      if ((e.target as HTMLAudioElement).currentTime != null) {
-                        setTime((e.target as HTMLAudioElement).currentTime)
-                      }
-                    }}
-                  />
-                  <div className="govuk-button-group govuk-!-margin-top-1 govuk-!-margin-left-3 govuk-!-margin-bottom-0">
+                <audio
+                  controls
+                  src={recordings[0].url}
+                  className="govuk-!-margin-left-4 govuk-!-margin-right-4 hidden flex-1 xl:block"
+                  ref={registerAudio}
+                  {...audioHandlers}
+                />
+              )}
+              {!isEditing ? (
+                <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
+                  {hasRecordings && (
                     <button
                       type="button"
                       onClick={scrollToPlaying}
-                      className="govuk-button govuk-button--secondary whitespace-nowrap"
+                      className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 hidden xl:block"
                     >
                       <ArrowDown className="size-4" /> Scroll to current section
                     </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          <div
-            className={`${isEditing ? 'bg-(--govuk-surface-background-colour)' : ''}`}
-          >
-            <div className="govuk-width-container govuk-width-container--with-secondary-nav">
-              {isEditing ? (
-                <div className="govuk-form-group govuk-!-padding-top-4">
-                  <h1 className="govuk-label-wrapper">
-                    <label
-                      className="govuk-label govuk-label--m"
-                      htmlFor="transcription-title"
-                    >
-                      Transcription title
-                    </label>
-                  </h1>
-                  <input
-                    id="transcription-title"
-                    className="govuk-input bg-white"
-                    type="text"
-                    placeholder="Add title"
-                    value={draftTitle}
-                    onChange={(e) => setDraftTitle(e.target.value)}
+                  )}
+                  <ExportTranscriptDialog
+                    transcriptionString={transcriptionString}
+                    recordings={recordings}
                   />
+                  <button
+                    type="button"
+                    className="govuk-button govuk-!-margin-bottom-0"
+                    onClick={() => {
+                      setDraftTitle(transcription.title ?? '')
+                      setIsEditing(true)
+                    }}
+                  >
+                    <Pencil className="size-4" /> Edit
+                  </button>
                 </div>
               ) : (
-                <h1 className="govuk-heading-m govuk-!-margin-top-4">
-                  {transcription.title}
-                </h1>
-              )}
-              <form onSubmit={handleSave}>
-                <div className="flex flex-col gap-6">
-                  {fields.map((entry, index, array) => {
-                    const isPlaying =
-                      time &&
-                      time >= entry.start_time &&
-                      (!array[index + 1] || time < array[index + 1].start_time)
-                    return (
-                      <div
-                        className={`govuk-!-margin-bottom-4 govuk-!-padding-4 ${isPlaying ? 'bg-[#d2e2f1]' : ''}`}
-                        key={index}
-                        ref={isPlaying ? playingRef : null}
-                      >
-                        <div className="flex justify-between">
-                          <div className="govuk-!-margin-bottom-3 govuk-!-padding-top-1 flex items-center gap-2">
-                            <CircleUserRound />
-                            <h2
-                              className={`govuk-heading-s govuk-!-margin-bottom-0 ${isPlaying ? '' : 'govuk-!-font-weight-regular'}`}
-                            >
-                              {entry.speaker}
-                            </h2>
-
-                            {isEditing && (
-                              <SpeakerNamePopover
-                                entry={entry}
-                                index={index}
-                                update={update}
-                              />
-                            )}
-                          </div>
-                          <div className="govuk-button-group govuk-!-margin-right-0 govuk-!-margin-bottom-0">
-                            {hasRecordings && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (audioRef.current) {
-                                    audioRef.current.currentTime =
-                                      entry.start_time
-                                    if (audioRef.current.paused) {
-                                      audioRef.current.play()
-                                    }
-                                  }
-                                }}
-                                className={`govuk-button ${isPlaying ? 'govuk-button--inverse' : 'govuk-button--secondary'}`}
-                              >
-                                <Play className="size-4" />
-                                <span className="govuk-visually-hidden">
-                                  Play section from{' '}
-                                </span>
-                                {formatTime(entry.start_time)}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                        {isEditing ? (
-                          <textarea
-                            className="govuk-textarea govuk-!-margin-bottom-0 field-sizing-content bg-white"
-                            id={`transcript-entry-${index}`}
-                            aria-label={`Transcript text for entry ${index + 1}`}
-                            {...register(`entries.${index}.text`)}
-                          />
-                        ) : (
-                          <p className="govuk-body govuk-!-margin-bottom-0">
-                            {entry.text}
-                          </p>
-                        )}
-                      </div>
-                    )
-                  })}
+                <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
+                  <button
+                    type="button"
+                    className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                    onClick={handleDiscard}
+                  >
+                    Discard
+                  </button>
+                  <button
+                    type="button"
+                    className="govuk-button govuk-!-margin-bottom-0"
+                    onClick={handleSave}
+                    disabled={isSavingTitle}
+                  >
+                    <Save className="size-4" /> Save
+                  </button>
                 </div>
-              </form>
+              )}
             </div>
+            {hasRecordings && (
+              <div className="govuk-!-margin-top-4 flex xl:hidden">
+                <audio
+                  controls
+                  src={recordings[0].url}
+                  className="w-full"
+                  ref={registerAudio}
+                  {...audioHandlers}
+                />
+                <div className="govuk-button-group govuk-!-margin-top-1 govuk-!-margin-left-3 govuk-!-margin-bottom-0">
+                  <button
+                    type="button"
+                    onClick={scrollToPlaying}
+                    className="govuk-button govuk-button--secondary whitespace-nowrap"
+                  >
+                    <ArrowDown className="size-4" /> Scroll to current section
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </FormProvider>
-    </div>
+        <div
+          className={`min-h-0 flex-1 overflow-y-auto ${isEditing ? 'bg-(--govuk-surface-background-colour)' : ''}`}
+        >
+          <div className="govuk-width-container govuk-width-container--with-secondary-nav">
+            {isEditing ? (
+              <div className="govuk-form-group govuk-!-padding-top-4">
+                <h1 className="govuk-label-wrapper">
+                  <label
+                    className="govuk-label govuk-label--m"
+                    htmlFor="transcription-title"
+                  >
+                    Transcription title
+                  </label>
+                </h1>
+                <input
+                  id="transcription-title"
+                  className="govuk-input bg-white"
+                  type="text"
+                  placeholder="Add title"
+                  value={draftTitle}
+                  onChange={(e) => setDraftTitle(e.target.value)}
+                />
+              </div>
+            ) : (
+              <h1 className="govuk-heading-m govuk-!-margin-top-4">
+                {transcription.title}
+              </h1>
+            )}
+            <form onSubmit={handleSave}>
+              <div className="flex flex-col gap-6">
+                {fields.map((entry, index, array) => {
+                  const isPlaying =
+                    time &&
+                    time >= entry.start_time &&
+                    (!array[index + 1] || time < array[index + 1].start_time)
+                  return (
+                    <div
+                      className={`govuk-!-margin-bottom-4 govuk-!-padding-4 ${isPlaying ? 'bg-[#d2e2f1]' : ''}`}
+                      key={index}
+                      ref={isPlaying ? playingRef : null}
+                    >
+                      <div className="flex justify-between">
+                        <div className="govuk-!-margin-bottom-3 govuk-!-padding-top-1 flex items-center gap-2">
+                          <CircleUserRound />
+                          <h2
+                            className={`govuk-heading-s govuk-!-margin-bottom-0 ${isPlaying ? '' : 'govuk-!-font-weight-regular'}`}
+                          >
+                            {entry.speaker}
+                          </h2>
+
+                          {isEditing && (
+                            <SpeakerNamePopover
+                              entry={entry}
+                              index={index}
+                              update={update}
+                            />
+                          )}
+                        </div>
+                        <div className="govuk-button-group govuk-!-margin-right-0 govuk-!-margin-bottom-0">
+                          {hasRecordings && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const audio = getActiveAudio()
+                                if (!audio) return
+                                if (isPlaying && !audio.paused) {
+                                  audio.pause()
+                                  return
+                                }
+                                if (!isPlaying) {
+                                  audio.currentTime = entry.start_time
+                                }
+                                audio.play()
+                              }}
+                              className={`govuk-button ${isPlaying ? 'govuk-button--inverse' : 'govuk-button--secondary'}`}
+                            >
+                              {isPlaying && isAudioPlaying ? (
+                                <Pause className="size-4" />
+                              ) : (
+                                <Play className="size-4" />
+                              )}
+                              <span className="govuk-visually-hidden">
+                                {isPlaying && isAudioPlaying
+                                  ? 'Pause section from '
+                                  : 'Play section from '}
+                              </span>
+                              {formatTime(entry.start_time)}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {isEditing ? (
+                        <textarea
+                          className="govuk-textarea govuk-!-margin-bottom-0 field-sizing-content bg-white"
+                          id={`transcript-entry-${index}`}
+                          aria-label={`Transcript text for entry ${index + 1}`}
+                          {...register(`entries.${index}.text`)}
+                        />
+                      ) : (
+                        <p className="govuk-body govuk-!-margin-bottom-0">
+                          {entry.text}
+                        </p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </FormProvider>
   )
 }

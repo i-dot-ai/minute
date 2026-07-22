@@ -28,9 +28,7 @@ export const GenerateSummaryDialog = ({
       <DialogContent showCloseButton={false} className="overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="govuk-heading-l">
-            {
-              warningText ? 'Transcribe meeting' : 'Generate summary'
-            }
+            {warningText ? 'Transcribe meeting' : 'Generate summary'}
           </DialogTitle>
           {warningText && (
             <DialogDescription className="govuk-warning-text govuk-!-margin-bottom-0">
@@ -44,13 +42,11 @@ export const GenerateSummaryDialog = ({
             </DialogDescription>
           )}
         </DialogHeader>
-        {
-          warningText && (
-            <p className="govuk-body govuk-!-margin-bottom-0">
-              Transcribe the recording and summarise the meeting.
-            </p>
-          )
-        }
+        {warningText && (
+          <p className="govuk-body govuk-!-margin-bottom-0">
+            Transcribe the recording and summarise the meeting.
+          </p>
+        )}
         <StartTranscriptionSection />
         <DialogFooter className="govuk-button-group ml-auto sm:justify-end">
           <button
@@ -66,9 +62,7 @@ export const GenerateSummaryDialog = ({
             disabled={disabled}
             onClick={onConfirm}
           >
-            {
-              warningText ? 'Stop recording and save' : 'Generate summary'
-            }
+            {warningText ? 'Stop recording and save' : 'Generate summary'}
           </button>
         </DialogFooter>
       </DialogContent>

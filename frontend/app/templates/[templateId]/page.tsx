@@ -226,7 +226,9 @@ export default function EditTemplatePage({
                 <div className="govuk-!-padding-4 bg-(--govuk-surface-background-colour)">
                   <form onSubmit={handleSave}>
                     <div className="text-red-600">
-                      <p className="govuk-body">{errors.name?.message ?? null}</p>
+                      <p className="govuk-body">
+                        {errors.name?.message ?? null}
+                      </p>
                       <p className="govuk-body">
                         {errors.description?.message ?? null}
                       </p>
@@ -334,6 +336,6 @@ export default function EditTemplatePage({
           </div>
         </div>
       </div>
-    </div >
+    </div>
   )
 }

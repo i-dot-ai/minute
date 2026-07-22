@@ -117,7 +117,7 @@ function TranscriptionTableRow({
           <p className="govuk-body-s govuk-!-margin-0 text-center">-</p>
         )}
       </td>
-      <td className="govuk-table__cell  whitespace-nowrap">
+      <td className="govuk-table__cell whitespace-nowrap">
         <div className="flex items-center gap-2">
           <RenameButton
             displayTitle={displayTitle}
@@ -152,7 +152,7 @@ export function TranscriptionsList({
       className="govuk-table govuk-table--subtle"
       aria-labelledby="transcriptions-list-heading"
     >
-      <thead className="govuk-table__head  sticky top-0 bg-white z-10">
+      <thead className="govuk-table__head sticky top-0 z-10 bg-white">
         <tr className="govuk-table__row">
           <th scope="col" className="govuk-table__header">
             Select

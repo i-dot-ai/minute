@@ -11,7 +11,7 @@ export function DeleteTranscriptionButton({
   className,
   title,
   disabled,
-  noUnderline = false
+  noUnderline = false,
 }: {
   transcription: DeleteTranscription
   className?: string
@@ -25,7 +25,11 @@ export function DeleteTranscriptionButton({
     <>
       <button
         type="button"
-        className={className ? className : `govuk-link ${noUnderline ? 'govuk-link--no-underline' : ''} govuk-!-font-size-16 ${disabled ? 'pointer-events-none !text-gray-400' : 'link--warning hover:cursor-pointer'}`}
+        className={
+          className
+            ? className
+            : `govuk-link ${noUnderline ? 'govuk-link--no-underline' : ''} govuk-!-font-size-16 ${disabled ? 'pointer-events-none !text-gray-400' : 'link--warning hover:cursor-pointer'}`
+        }
         onClick={() => setOpen(true)}
         disabled={disabled}
       >

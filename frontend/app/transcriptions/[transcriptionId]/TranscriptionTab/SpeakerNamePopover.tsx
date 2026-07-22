@@ -4,7 +4,6 @@ import { DialogueEntryForm } from '@/types/transcriptions'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
@@ -70,7 +69,10 @@ export const SpeakerNamePopover = ({
       </DialogTrigger>
       <DialogContent>
         <DialogTitle>
-          <label className="govuk-label govuk-label--m govuk-!-margin-bottom-0" htmlFor={inputId}>
+          <label
+            className="govuk-label govuk-label--m govuk-!-margin-bottom-0"
+            htmlFor={inputId}
+          >
             Edit speaker name
           </label>
         </DialogTitle>

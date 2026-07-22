@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import { DialogueEntry, Transcription } from '@/lib/client'
-import { Pause, Play, Save, User } from 'lucide-react'
+import { Pause, Play, User } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
 
@@ -96,7 +96,10 @@ export const SpeakerEditor = ({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <button type="button" className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0">
+        <button
+          type="button"
+          className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+        >
           <User className="size-4" />
           Edit all speaker names
         </button>
@@ -106,7 +109,8 @@ export const SpeakerEditor = ({
           Edit all speaker names
         </DialogTitle>
         <DialogDescription className="govuk-body govuk-!-margin-bottom-0">
-          This will not update existing summaries, generate a new summary to see the changes reflected.
+          This will not update existing summaries, generate a new summary to see
+          the changes reflected.
         </DialogDescription>
         <div className="max-h-[50vh] overflow-x-hidden overflow-y-auto">
           <ul>

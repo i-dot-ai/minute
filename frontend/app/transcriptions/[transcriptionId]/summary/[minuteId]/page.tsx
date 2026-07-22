@@ -100,7 +100,7 @@ export default function SummaryPage({
   return (
     <div className="govuk-grid-row">
       <div className="govuk-grid-column-full">
-        <div className="govuk-!-padding-top-4 sticky top-0 z-10 bg-white border-b border-(--govuk-border-colour)">
+        <div className="govuk-!-padding-top-4 sticky top-0 z-10 border-b border-(--govuk-border-colour) bg-white">
           <div className="govuk-width-container govuk-width-container--with-secondary-nav">
             {!editState?.isEditable && (
               <div className="flex justify-between">
@@ -110,7 +110,10 @@ export default function SummaryPage({
                 >
                   <ol className="govuk-breadcrumbs__list">
                     <li className="govuk-breadcrumbs__list-item">
-                      <Link className="govuk-breadcrumbs__link" href="/transcriptions">
+                      <Link
+                        className="govuk-breadcrumbs__link"
+                        href="/transcriptions"
+                      >
                         Back
                       </Link>
                     </li>
@@ -215,10 +218,14 @@ export default function SummaryPage({
             )}
           </div>
         </div>
-        <div className={editState?.isEditable ? 'govuk-!-padding-4 bg-(--govuk-surface-background-colour)' : ''}>
-          <div
-            className="govuk-width-container govuk-width-container--with-secondary-nav"
-          >
+        <div
+          className={
+            editState?.isEditable
+              ? 'govuk-!-padding-4 bg-(--govuk-surface-background-colour)'
+              : ''
+          }
+        >
+          <div className="govuk-width-container govuk-width-container--with-secondary-nav">
             {editState?.isEditable ? (
               <form
                 className="govuk-form-group govuk-!-margin-bottom-6 govuk-!-margin-top-4"

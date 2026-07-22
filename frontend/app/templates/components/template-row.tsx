@@ -67,7 +67,7 @@ export function TemplateTableRow({
     <tr
       className={cn(
         'govuk-table__row group relative hover:bg-[#f4f8fb] has-[:checked]:bg-[#f4f8fb]',
-        isHighlighted && 'template-row--just-duplicated',
+        isHighlighted && 'template-row--just-duplicated'
       )}
     >
       <td className="govuk-table__cell">
@@ -98,7 +98,7 @@ export function TemplateTableRow({
           </div>
         )}
       </td>
-      <td className="govuk-table__cell w-full govuk-!-padding-top-1 govuk-!-padding-bottom-1">
+      <td className="govuk-table__cell govuk-!-padding-top-1 govuk-!-padding-bottom-1 w-full">
         <Link
           href={
             template.isSystem
@@ -114,7 +114,7 @@ export function TemplateTableRow({
         </Link>
       </td>
       <td className="govuk-table__cell whitespace-nowrap">
-        <div className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 flex items-center govuk-!-padding-right-4">
+        <div className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-!-padding-right-4 flex items-center">
           {template.isSystem ? (
             <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-margin-left-1 govuk-!-font-size-16">
               System

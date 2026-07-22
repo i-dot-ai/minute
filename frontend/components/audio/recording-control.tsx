@@ -395,14 +395,18 @@ export default function RecordingControl({
             <RecordingTimer isRecording={isRecording} isPaused={isPaused} />
           </div>
         )}
-        <div className="mx-auto border-[#8eb8dc] govuk-!-margin-bottom-4">
+        <div className="govuk-!-margin-bottom-4 mx-auto border-[#8eb8dc]">
           <div
             ref={containerRef}
             className="mx-auto"
-          // className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
+            // className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
           >
             {/* <canvas ref={canvasRef} aria-hidden="true" className="size-full" /> */}
-            <MinuteVisualizer stream={stream} isRecording={isRecording} isPaused={isPaused} />
+            <MinuteVisualizer
+              stream={stream}
+              isRecording={isRecording}
+              isPaused={isPaused}
+            />
             {!isRecording && (
               <p className="govuk-body">
                 Audio visualization will appear here when recording
@@ -413,45 +417,43 @@ export default function RecordingControl({
             )}
           </div>
         </div>
-        {
-          isRecording && (
-            <div className="govuk-button-group flex w-full gap-2 govuk-!-margin-bottom-0">
-              <button
-                type="button"
-                onClick={togglePause}
-                className="govuk-button govuk-button--secondary min-w-32"
-              >
-                {isPaused ? (
-                  <>
-                    <Play className="size-4" />
-                    Resume
-                  </>
-                ) : (
-                  <>
-                    <Pause className="size-4" />
-                    Pause
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={handleStopRecording}
-                className="govuk-button"
-              >
-                Stop recording and save
-              </button>
-              {onDiscard && (
-                <button
-                  type="button"
-                  className="govuk-link link--warning ml-auto"
-                  onClick={onDiscard}
-                >
-                  Discard recording
-                </button>
+        {isRecording && (
+          <div className="govuk-button-group govuk-!-margin-bottom-0 flex w-full gap-2">
+            <button
+              type="button"
+              onClick={togglePause}
+              className="govuk-button govuk-button--secondary min-w-32"
+            >
+              {isPaused ? (
+                <>
+                  <Play className="size-4" />
+                  Resume
+                </>
+              ) : (
+                <>
+                  <Pause className="size-4" />
+                  Pause
+                </>
               )}
-            </div>
-          )
-        }
+            </button>
+            <button
+              type="button"
+              onClick={handleStopRecording}
+              className="govuk-button"
+            >
+              Stop recording and save
+            </button>
+            {onDiscard && (
+              <button
+                type="button"
+                className="govuk-link link--warning ml-auto"
+                onClick={onDiscard}
+              >
+                Discard recording
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <GenerateSummaryDialog
@@ -460,6 +462,6 @@ export default function RecordingControl({
         onOpenChange={setShowStopDialog}
         onConfirm={confirmStop}
       />
-    </div >
+    </div>
   )
 }

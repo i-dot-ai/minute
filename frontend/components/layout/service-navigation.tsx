@@ -1,7 +1,15 @@
 'use client'
 import { GuardedLink } from '@/components/navigation/guarded-link'
 import { usePathname } from 'next/navigation'
-import { Bookmark, LayoutPanelTop, Mic, PanelLeftClose, PanelLeftOpen, ShieldCheck, Mail } from 'lucide-react'
+import {
+  Bookmark,
+  LayoutPanelTop,
+  Mic,
+  PanelLeftClose,
+  PanelLeftOpen,
+  ShieldCheck,
+  Mail,
+} from 'lucide-react'
 import { useState } from 'react'
 // import Image from 'next/image'
 
@@ -67,13 +75,18 @@ export const ServiceNavigation = () => {
           </li>
         </ul>
         <div>
-
-          <button className="govuk-link govuk-link--no-visited-state govuk-link--no-underline text-(--govuk-link-colour) flex items-center gap-2  ml-4 border-l-4 border-transparent govuk-!-margin-bottom-2" onClick={() => setIsCollapsed(prev => !prev)}>
-            {isCollapsed ? <PanelLeftOpen className="size-4" /> : (
+          <button
+            className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-bottom-2 ml-4 flex items-center gap-2 border-l-4 border-transparent text-(--govuk-link-colour)"
+            onClick={() => setIsCollapsed((prev) => !prev)}
+          >
+            {isCollapsed ? (
+              <PanelLeftOpen className="size-4" />
+            ) : (
               <>
                 <PanelLeftClose className="size-4" />
-                <span className={isCollapsed ? 'sr-only' : ''}>{isCollapsed ? 'Expand' : 'Collapse'}</span>
-
+                <span className={isCollapsed ? 'sr-only' : ''}>
+                  {isCollapsed ? 'Expand' : 'Collapse'}
+                </span>
               </>
             )}
           </button>
@@ -82,7 +95,9 @@ export const ServiceNavigation = () => {
               className={`w-full !border-l-4 ${pathname.includes('/privacy') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
             >
               <GuardedLink
-                aria-current={pathname.includes('/privacy') ? 'page' : undefined}
+                aria-current={
+                  pathname.includes('/privacy') ? 'page' : undefined
+                }
                 className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ml-4 flex items-center gap-2 !text-[#484949]"
                 href="/privacy"
               >
@@ -94,7 +109,9 @@ export const ServiceNavigation = () => {
               className={`w-full !border-l-4 ${pathname.includes('/support') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
             >
               <GuardedLink
-                aria-current={pathname.includes('/support') ? 'page' : undefined}
+                aria-current={
+                  pathname.includes('/support') ? 'page' : undefined
+                }
                 className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ml-4 flex items-center gap-2 !text-[#484949]"
                 href="/support"
               >

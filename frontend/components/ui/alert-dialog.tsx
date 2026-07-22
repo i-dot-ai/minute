@@ -147,7 +147,7 @@ function AlertDialogCancel({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Cancel>) {
   return (
     <AlertDialogPrimitive.Cancel
-      className={cn('govuk-link text-(--govuk-link-colour)', className)}
+      className={cn('govuk-button govuk-button--secondary', className)}
       {...props}
     />
   )

@@ -5,10 +5,14 @@
 
 /* OVERRIDE GOVUK STYLES */
 
+.govuk-button:focus:not(:active):not(:hover),
+.govuk-button:focus,
 .govuk-button {
   background-color: var(--govuk-brand-colour);
+  color: #fff;
   box-shadow: none;
   border-radius: 0.25rem;
+  border: none;
 }
 
 .govuk-button:hover {
@@ -16,8 +20,11 @@
   color: #fff;
 }
 
+.govuk-button--secondary:focus:not(:active):not(:hover),
+.govuk-button--secondary:focus,
 .govuk-button--secondary {
   background-color: #d2e2f1;
+  color: var(--govuk-text-colour);
 }
 
 .govuk-button--warning {
@@ -47,6 +54,34 @@
   background-color: #fff;
 }
 
+.govuk-button:focus-visible:not(:active):not(:hover) {
+  border-color: var(--govuk-focus-colour, #fd0);
+  color: var(--govuk-focus-text-colour, #0b0c0c);
+  background-color: var(--govuk-focus-colour, #fd0);
+  box-shadow: 0 2px 0 var(--govuk-focus-text-colour, #0b0c0c);
+}
+
+.govuk-link:focus {
+  color: var(--govuk-link-colour);
+  outline: 3px solid transparent;
+  background-color: transparent;
+  box-shadow: none;
+  text-decoration: none;
+}
+
+.govuk-link:focus-visible {
+  outline: 3px solid transparent;
+  background-color: var(--govuk-focus-colour, #fd0);
+  box-shadow:
+    0 -2px var(--govuk-focus-colour, #fd0),
+    0 4px var(--govuk-focus-text-colour, #0b0c0c);
+  text-decoration: none;
+}
+
+.govuk-radios__item {
+  align-content: flex-start;
+}
+
 .govuk-select--subtle,
 .govuk-checkboxes--subtle .govuk-checkboxes__label::before,
 .govuk-textarea--subtle,
@@ -60,7 +95,7 @@
 
 .govuk-table--subtle {
   border-collapse: separate;
-  border-spacing: 0
+  border-spacing: 0;
 }
 
 .govuk-table--subtle .govuk-table__header {
@@ -104,7 +139,7 @@
   background-color: #d2e2f1;
 }
 
-.govuk-radios--cards .govuk-radios__input:checked+.govuk-radios__label:after {
+.govuk-radios--cards .govuk-radios__input:checked + .govuk-radios__label:after {
   right: 22px;
   left: auto;
 }
@@ -455,7 +490,7 @@ html body[data-scroll-locked] {
   list-style-type: none;
 }
 
-.editor-content ul>li::before {
+.editor-content ul > li::before {
   content: '•';
 }
 
@@ -464,11 +499,11 @@ html body[data-scroll-locked] {
   counter-reset: list-counter;
 }
 
-.editor-content ol>li {
+.editor-content ol > li {
   counter-increment: list-counter;
 }
 
-.editor-content ol>li::before {
+.editor-content ol > li::before {
   content: counter(list-counter) '.';
 }
 
@@ -517,12 +552,12 @@ html body[data-scroll-locked] {
   margin-bottom: 2.33em;
 }
 
-.editor-content p+p {
+.editor-content p + p {
   margin-top: 1em;
   /* Add margin only between consecutive paragraphs */
 }
 
-.editor-content pre>code {
+.editor-content pre > code {
   background-color: #444;
   color: white;
   width: 100% !;

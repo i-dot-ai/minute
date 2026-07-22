@@ -161,7 +161,7 @@ export default function TranscriptPage({
     <div className="govuk-grid-row">
       <FormProvider {...methods}>
         <div className="govuk-grid-column-full">
-          <div className="govuk-!-padding-bottom-4 govuk-!-padding-top-4 sticky top-0 z-10 bg-white border-b border-(--govuk-border-colour)">
+          <div className="govuk-!-padding-bottom-4 govuk-!-padding-top-4 sticky top-0 z-10 border-b border-(--govuk-border-colour) bg-white">
             <div className="govuk-width-container govuk-width-container--with-secondary-nav">
               {!isEditing && (
                 <div className="flex items-center justify-between">
@@ -171,7 +171,10 @@ export default function TranscriptPage({
                   >
                     <ol className="govuk-breadcrumbs__list">
                       <li className="govuk-breadcrumbs__list-item">
-                        <Link className="govuk-breadcrumbs__link" href="/transcriptions">
+                        <Link
+                          className="govuk-breadcrumbs__link"
+                          href="/transcriptions"
+                        >
                           Back
                         </Link>
                       </li>
@@ -181,11 +184,13 @@ export default function TranscriptPage({
                     <audio
                       controls
                       src={recordings[0].url}
-                      className="hidden xl:block flex-1 govuk-!-margin-left-4 govuk-!-margin-right-4"
+                      className="govuk-!-margin-left-4 govuk-!-margin-right-4 hidden flex-1 xl:block"
                       ref={audioRef}
                       onSeeked={delayedScroll}
                       onTimeUpdate={(e) => {
-                        if ((e.target as HTMLAudioElement).currentTime != null) {
+                        if (
+                          (e.target as HTMLAudioElement).currentTime != null
+                        ) {
                           setTime((e.target as HTMLAudioElement).currentTime)
                         }
                       }}
@@ -196,9 +201,10 @@ export default function TranscriptPage({
                       <button
                         type="button"
                         onClick={scrollToPlaying}
-                        className="hidden xl:block govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                        className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 hidden xl:block"
                       >
-                        <ArrowDown className="size-4" /> Scroll to current section
+                        <ArrowDown className="size-4" /> Scroll to current
+                        section
                       </button>
                     )}
                     <ExportTranscriptDialog
@@ -219,7 +225,7 @@ export default function TranscriptPage({
                 </div>
               )}
               {isEditing && (
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <div className="govuk-button-group govuk-!-margin-bottom-0">
                     <SpeakerEditor
                       transcription={transcription}
@@ -234,11 +240,13 @@ export default function TranscriptPage({
                     <audio
                       controls
                       src={recordings[0].url}
-                      className="hidden xl:block flex-1 govuk-!-margin-left-4 govuk-!-margin-right-4"
+                      className="govuk-!-margin-left-4 govuk-!-margin-right-4 hidden flex-1 xl:block"
                       ref={audioRef}
                       onSeeked={delayedScroll}
                       onTimeUpdate={(e) => {
-                        if ((e.target as HTMLAudioElement).currentTime != null) {
+                        if (
+                          (e.target as HTMLAudioElement).currentTime != null
+                        ) {
                           setTime((e.target as HTMLAudioElement).currentTime)
                         }
                       }}
@@ -264,7 +272,7 @@ export default function TranscriptPage({
                 </div>
               )}
               {hasRecordings && (
-                <div className="flex xl:hidden govuk-!-margin-top-4">
+                <div className="govuk-!-margin-top-4 flex xl:hidden">
                   <audio
                     controls
                     src={recordings[0].url}
@@ -290,7 +298,9 @@ export default function TranscriptPage({
               )}
             </div>
           </div>
-          <div className={`${isEditing ? 'bg-(--govuk-surface-background-colour)' : ''}`}>
+          <div
+            className={`${isEditing ? 'bg-(--govuk-surface-background-colour)' : ''}`}
+          >
             <div className="govuk-width-container govuk-width-container--with-secondary-nav">
               {isEditing ? (
                 <div className="govuk-form-group govuk-!-padding-top-4">
@@ -332,7 +342,9 @@ export default function TranscriptPage({
                         <div className="flex justify-between">
                           <div className="govuk-!-margin-bottom-3 govuk-!-padding-top-1 flex items-center gap-2">
                             <CircleUserRound />
-                            <h2 className={`govuk-heading-s govuk-!-margin-bottom-0 ${isPlaying ? '' : 'govuk-!-font-weight-regular'}`}>
+                            <h2
+                              className={`govuk-heading-s govuk-!-margin-bottom-0 ${isPlaying ? '' : 'govuk-!-font-weight-regular'}`}
+                            >
                               {entry.speaker}
                             </h2>
 
@@ -368,20 +380,18 @@ export default function TranscriptPage({
                             )}
                           </div>
                         </div>
-                        {
-                          isEditing ? (
-                            <textarea
-                              className="govuk-textarea govuk-!-margin-bottom-0 field-sizing-content bg-white"
-                              id={`transcript-entry-${index}`}
-                              aria-label={`Transcript text for entry ${index + 1}`}
-                              {...register(`entries.${index}.text`)}
-                            />
-                          ) : (
-                            <p className="govuk-body govuk-!-margin-bottom-0">
-                              {entry.text}
-                            </p>
-                          )
-                        }
+                        {isEditing ? (
+                          <textarea
+                            className="govuk-textarea govuk-!-margin-bottom-0 field-sizing-content bg-white"
+                            id={`transcript-entry-${index}`}
+                            aria-label={`Transcript text for entry ${index + 1}`}
+                            {...register(`entries.${index}.text`)}
+                          />
+                        ) : (
+                          <p className="govuk-body govuk-!-margin-bottom-0">
+                            {entry.text}
+                          </p>
+                        )}
                       </div>
                     )
                   })}
@@ -389,8 +399,8 @@ export default function TranscriptPage({
               </form>
             </div>
           </div>
-        </div >
-      </FormProvider >
-    </div >
+        </div>
+      </FormProvider>
+    </div>
   )
 }

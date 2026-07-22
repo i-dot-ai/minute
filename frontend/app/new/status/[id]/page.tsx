@@ -80,23 +80,23 @@ export default function RecordStatusPage({
     headingRef.current?.focus()
   }, [])
 
-  const lengthSeconds = transcription?.dialogue_entries?.at(-1)?.end_time
-  function formatLength(seconds: number): string {
-    const totalMinutes = Math.round(seconds / 60)
-    if (totalMinutes < 1) {
-      return '1 min'
-    }
-    if (totalMinutes < 60) {
-      return `${totalMinutes} ${totalMinutes === 1 ? 'min' : 'mins'}`
-    }
-    const hours = Math.floor(totalMinutes / 60)
-    const minutes = totalMinutes % 60
-    const hoursLabel = `${hours} ${hours === 1 ? 'hr' : 'hrs'}`
-    if (minutes === 0) return hoursLabel
-    return `${hoursLabel} ${minutes} ${minutes === 1 ? 'min' : 'mins'}`
-  }
+  // const lengthSeconds = transcription?.dialogue_entries?.at(-1)?.end_time
+  // function formatLength(seconds: number): string {
+  //   const totalMinutes = Math.round(seconds / 60)
+  //   if (totalMinutes < 1) {
+  //     return '1 min'
+  //   }
+  //   if (totalMinutes < 60) {
+  //     return `${totalMinutes} ${totalMinutes === 1 ? 'min' : 'mins'}`
+  //   }
+  //   const hours = Math.floor(totalMinutes / 60)
+  //   const minutes = totalMinutes % 60
+  //   const hoursLabel = `${hours} ${hours === 1 ? 'hr' : 'hrs'}`
+  //   if (minutes === 0) return hoursLabel
+  //   return `${hoursLabel} ${minutes} ${minutes === 1 ? 'min' : 'mins'}`
+  // }
 
-  const meetingLength = lengthSeconds ? formatLength(lengthSeconds) : ''
+  // const meetingLength = lengthSeconds ? formatLength(lengthSeconds) : ''
 
   return (
     <div className="govuk-width-container govuk-!-padding-top-4">

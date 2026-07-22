@@ -24,7 +24,7 @@ export function TemplatesList({
       className="govuk-table govuk-table--subtle"
       aria-labelledby="templates-list-heading"
     >
-      <thead className="govuk-table__head sticky top-0 bg-white z-10">
+      <thead className="govuk-table__head sticky top-0 z-10 bg-white">
         <tr className="govuk-table__row">
           <th scope="col" className="govuk-table__header">
             Select

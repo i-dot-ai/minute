@@ -2,7 +2,10 @@
 
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
-import { getTranscriptionTranscriptionsTranscriptionIdGetOptions, listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+import {
+  getTranscriptionTranscriptionsTranscriptionIdGetOptions,
+  listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
+} from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams, usePathname, useRouter } from 'next/navigation'
@@ -30,11 +33,8 @@ export function TranscriptionSidePanel() {
   if (!transcriptionId) return null
 
   return (
-    <div className="govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 overflow-y-auto bg-white border-r border-(--govuk-border-colour)">
-      <nav
-        aria-label="Summaries and transcript"
-        className="secondary-nav"
-      >
+    <div className="govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 overflow-y-auto border-r border-(--govuk-border-colour) bg-white">
+      <nav aria-label="Summaries and transcript" className="secondary-nav">
         <ul className="govuk-list govuk-list--spaced">
           <li
             className={`w-50 border-l-4 border-[transparent] pl-4 ${!transcriptPage ? '!border-(--govuk-link-colour)' : ''}`}
@@ -71,13 +71,15 @@ export function TranscriptionSidePanel() {
                       >
                         <Link
                           href={href}
-                          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline ml-2 govuk-!-font-size-16"
+                          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-font-size-16 ml-2"
                           aria-current={isActive ? 'page' : undefined}
                           style={isActive ? { fontWeight: 'bold' } : undefined}
                         >
                           {minute.template_name}
                         </Link>
-                        <p className="govuk-body-s ml-2 govuk-!-font-size-16">{date}</p>
+                        <p className="govuk-body-s govuk-!-font-size-16 ml-2">
+                          {date}
+                        </p>
                       </li>
                     )
                   })}
@@ -110,6 +112,6 @@ export function TranscriptionSidePanel() {
           }
         />
       </div>
-    </div >
+    </div>
   )
 }

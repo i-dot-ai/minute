@@ -78,7 +78,7 @@ export const IncompleteRecordingTableRow = ({
       <td className="govuk-table__cell w-full govuk-!-padding-right-4">
         <div className="flex items-center justify-between gap-2">
           <span>Incomplete recording</span>
-          <audio src={url} controls className="max-h-10 w-30" />
+          <audio src={url} controls className="max-h-10 w-52" />
         </div>
       </td>
       <td className="govuk-table__cell whitespace-nowrap">

@@ -17,11 +17,16 @@ import { Search } from 'lucide-react'
 
 const PAGE_SIZE = 20
 
-type TranscriptionFilter = 'all' | TranscriptionListFilter
+type TranscriptionFilter = 'all' | 'incomplete' | TranscriptionListFilter
 
 function parseFilterBy(searchParams: URLSearchParams): TranscriptionFilter {
   const filterBy = searchParams.get('filterBy')
-  if (filterBy === 'expiring-soon' || filterBy === 'failed') return filterBy
+  if (
+    filterBy === 'expiring-soon' ||
+    filterBy === 'failed' ||
+    filterBy === 'incomplete'
+  )
+    return filterBy
   if (searchParams.get('expiring') === 'true') return 'expiring-soon'
   return 'all'
 }
@@ -57,7 +62,8 @@ export const PaginatedTranscriptions = () => {
   } = useTranscriptions({
     page: currentPage,
     pageSize: PAGE_SIZE,
-    filterBy: filterBy === 'all' ? undefined : filterBy,
+    filterBy:
+      filterBy === 'all' || filterBy === 'incomplete' ? undefined : filterBy,
     search: search || undefined,
   })
   const { data: dbRecordings = [] } = useOfflineRecordings()
@@ -78,13 +84,16 @@ export const PaginatedTranscriptions = () => {
         buildQueryString(paginatedResponse.total_pages, filterBy, search)
     )
   }
-  const transcriptions = paginatedResponse?.items || []
+  const transcriptions =
+    filterBy === 'incomplete' ? [] : paginatedResponse?.items || []
+  const visibleOfflineRecordings =
+    filterBy === 'all' || filterBy === 'incomplete' ? offlineRecordings : []
   const totalPages = paginatedResponse?.total_pages || 1
   const totalCount = paginatedResponse?.total_count || 0
   const resultsStarting = (currentPage - 1) * PAGE_SIZE + 1
   const resultsEnding = Math.min(currentPage * PAGE_SIZE, totalCount)
   const pageIds = [
-    ...offlineRecordings.map((r) => r.recording_id),
+    ...visibleOfflineRecordings.map((r) => r.recording_id),
     ...transcriptions.map((t) => t.id),
   ]
   const allOnPageSelected =
@@ -229,11 +238,17 @@ export const PaginatedTranscriptions = () => {
           {selectedCount > 0 ? `${selectedCount} transcriptions selected` : ''}
         </span>
         <p className="govuk-body govuk-!-margin-bottom-0 flex-1" role="status">
-          Showing {resultsStarting} to {resultsEnding} of {totalCount}
-          {search && (
-            <span className="govuk-visually-hidden">
-              {` results for “${search}”`}
-            </span>
+          {filterBy === 'incomplete' ? (
+            <>Showing {visibleOfflineRecordings.length} incomplete recordings</>
+          ) : (
+            <>
+              Showing {resultsStarting} to {resultsEnding} of {totalCount}
+              {search && (
+                <span className="govuk-visually-hidden">
+                  {` results for “${search}”`}
+                </span>
+              )}
+            </>
           )}
         </p>
 
@@ -251,6 +266,7 @@ export const PaginatedTranscriptions = () => {
             <option value="all">All</option>
             <option value="expiring-soon">Expiring soon</option>
             <option value="failed">Failed</option>
+            <option value="incomplete">Incomplete recordings</option>
           </select>
         </div>
       </div>
@@ -262,20 +278,22 @@ export const PaginatedTranscriptions = () => {
         <p className="govuk-body" role="status">
           Error loading transcriptions
         </p>
-      ) : transcriptions.length === 0 && offlineRecordings.length === 0 ? (
+      ) : transcriptions.length === 0 && visibleOfflineRecordings.length === 0 ? (
         <p className="govuk-body" role="status">
-          No transcriptions found
+          {filterBy === 'incomplete'
+            ? 'No incomplete recordings found'
+            : 'No transcriptions found'}
         </p>
       ) : (
         <>
           <TranscriptionsList
             transcriptions={transcriptions}
-            offlineRecordings={offlineRecordings}
+            offlineRecordings={visibleOfflineRecordings}
             selectable
             selectedIds={selectedIds}
             onToggle={toggleOne}
           />
-          {totalPages > 1 && (
+          {filterBy !== 'incomplete' && totalPages > 1 && (
             <nav
               className="govuk-pagination flex justify-center"
               aria-label="Pagination"

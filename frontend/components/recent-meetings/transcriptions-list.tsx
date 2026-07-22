@@ -7,7 +7,9 @@ import {
   RenameTitleInput,
   useRenameTranscription,
 } from '@/components/recent-meetings/rename-transcription'
+import { IncompleteRecordingTableRow } from '@/components/recent-meetings/incomplete-recording-table-row'
 import { TranscriptionMetadata } from '@/lib/client'
+import { RecordingDbItem } from '@/providers/transcription-db-provider'
 import Link from 'next/link'
 import { useCallback, useState } from 'react'
 
@@ -45,11 +47,11 @@ function TranscriptionTableRow({
   )
 
   return (
-    <tr className="govuk-table__row relative hover:bg-[#f4f8fb] has-[:checked]:bg-[#f4f8fb]">
+    <tr className="govuk-table__row hover:bg-[#f4f8fb] has-[:checked]:bg-[#f4f8fb]">
       <td className="govuk-table__cell">
         <div className="flex items-center gap-2">
           <div
-            className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle flex"
+            className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle flex relative"
             data-module="govuk-checkboxes"
           >
             <input
@@ -118,7 +120,7 @@ function TranscriptionTableRow({
         )}
       </td>
       <td className="govuk-table__cell whitespace-nowrap">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 justify-end">
           <RenameButton
             displayTitle={displayTitle}
             disabled={editing || isPending}
@@ -138,10 +140,12 @@ function TranscriptionTableRow({
 
 export function TranscriptionsList({
   transcriptions,
+  offlineRecordings = [],
   selectedIds,
   onToggle,
 }: {
   transcriptions: TranscriptionMetadata[]
+  offlineRecordings?: RecordingDbItem[]
   headingLevel?: 'h2' | 'h3'
   selectable?: boolean
   selectedIds?: Set<string>
@@ -159,6 +163,11 @@ export function TranscriptionsList({
           </th>
           <th scope="col" className="govuk-table__header">
             Title
+            {
+              offlineRecordings.length > 0 && (
+                <>{' '}and audio</>
+              )
+            }
           </th>
           <th scope="col" className="govuk-table__header">
             Date
@@ -172,6 +181,14 @@ export function TranscriptionsList({
         </tr>
       </thead>
       <tbody className="govuk-table__body">
+        {offlineRecordings.map((recording) => (
+          <IncompleteRecordingTableRow
+            key={recording.recording_id}
+            recording={recording}
+            selectedIds={selectedIds}
+            onToggle={onToggle}
+          />
+        ))}
         {transcriptions.map((transcription) => (
           <TranscriptionTableRow
             key={transcription.id}

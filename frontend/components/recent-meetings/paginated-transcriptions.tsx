@@ -1,13 +1,18 @@
 'use client'
 
 import { DeleteTranscriptionsDialog } from '@/components/recent-meetings/delete-transcriptions-dialog'
-import { RecentOfflineRecordingsSection } from '@/components/recent-meetings/recent-offline-recordings-section'
 import { TranscriptionsList } from '@/components/recent-meetings/transcriptions-list'
+import {
+  sortRecordingsNewestFirst,
+  useOfflineRecordings,
+} from '@/components/recent-meetings/use-offline-recordings'
 import { useTranscriptions } from '@/components/recent-meetings/use-transcriptions'
 import { TranscriptionListFilter } from '@/lib/client'
+import { useRecordingDb } from '@/providers/transcription-db-provider'
+import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Search } from 'lucide-react'
 
 const PAGE_SIZE = 20
@@ -55,6 +60,17 @@ export const PaginatedTranscriptions = () => {
     filterBy: filterBy === 'all' ? undefined : filterBy,
     search: search || undefined,
   })
+  const { data: dbRecordings = [] } = useOfflineRecordings()
+  const offlineRecordings = sortRecordingsNewestFirst(dbRecordings)
+  const { removeRecording } = useRecordingDb()
+  const queryClient = useQueryClient()
+  const offlineIdSet = new Set(offlineRecordings.map((r) => r.recording_id))
+  const selectedOfflineIds = [...selectedIds].filter((id) =>
+    offlineIdSet.has(id)
+  )
+  const selectedTranscriptionIds = [...selectedIds].filter(
+    (id) => !offlineIdSet.has(id)
+  )
 
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
     router.replace(
@@ -67,7 +83,10 @@ export const PaginatedTranscriptions = () => {
   const totalCount = paginatedResponse?.total_count || 0
   const resultsStarting = (currentPage - 1) * PAGE_SIZE + 1
   const resultsEnding = Math.min(currentPage * PAGE_SIZE, totalCount)
-  const pageIds = transcriptions.map((t) => t.id)
+  const pageIds = [
+    ...offlineRecordings.map((r) => r.recording_id),
+    ...transcriptions.map((t) => t.id),
+  ]
   const allOnPageSelected =
     pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id))
   const someOnPageSelected = pageIds.some((id) => selectedIds.has(id))
@@ -171,9 +190,6 @@ export const PaginatedTranscriptions = () => {
           />
         </form>
       </div>
-      <Suspense fallback={null}>
-        <RecentOfflineRecordingsSection />
-      </Suspense>
       <div className="govuk-!-margin-bottom-1 flex items-center justify-between">
         <div className="flex flex-1 items-center gap-2">
           <div
@@ -188,7 +204,7 @@ export const PaginatedTranscriptions = () => {
               type="checkbox"
               checked={allOnPageSelected}
               onChange={toggleAllOnPage}
-              disabled={transcriptions.length === 0}
+              disabled={pageIds.length === 0}
             />
             <label
               className="govuk-label govuk-checkboxes__label ml-3 whitespace-nowrap"
@@ -246,7 +262,7 @@ export const PaginatedTranscriptions = () => {
         <p className="govuk-body" role="status">
           Error loading transcriptions
         </p>
-      ) : transcriptions.length === 0 ? (
+      ) : transcriptions.length === 0 && offlineRecordings.length === 0 ? (
         <p className="govuk-body" role="status">
           No transcriptions found
         </p>
@@ -254,6 +270,7 @@ export const PaginatedTranscriptions = () => {
         <>
           <TranscriptionsList
             transcriptions={transcriptions}
+            offlineRecordings={offlineRecordings}
             selectable
             selectedIds={selectedIds}
             onToggle={toggleOne}
@@ -339,8 +356,16 @@ export const PaginatedTranscriptions = () => {
       <DeleteTranscriptionsDialog
         open={deleteDialogOpen}
         setOpen={setDeleteDialogOpen}
-        transcriptionIds={[...selectedIds]}
-        onDeleted={() => setSelectedIds(new Set())}
+        transcriptionIds={selectedTranscriptionIds}
+        onDeleted={() => {
+          selectedOfflineIds.forEach((id) => removeRecording(id))
+          if (selectedOfflineIds.length > 0) {
+            queryClient.invalidateQueries({
+              queryKey: ['list-db-recordings'],
+            })
+          }
+          setSelectedIds(new Set())
+        }}
       />
     </div>
   )

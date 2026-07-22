@@ -101,16 +101,18 @@ export function TranscriptionSidePanel() {
           </li>
         </ul>
       </nav>
-      <div className="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-top-5">
+      <div className="flex flex-col gap-2 govuk-!-margin-bottom-0 govuk-!-margin-top-5">
         {transcription && (
-          <DeleteTranscriptionButton transcription={transcription} />
+          <>
+            <NewMinuteDialog
+              transcriptionId={transcriptionId}
+              onCreated={() =>
+                router.push(`/transcriptions/${transcriptionId}/summary`)
+              }
+            />
+            <DeleteTranscriptionButton transcription={transcription} />
+          </>
         )}
-        <NewMinuteDialog
-          transcriptionId={transcriptionId}
-          onCreated={() =>
-            router.push(`/transcriptions/${transcriptionId}/summary`)
-          }
-        />
       </div>
     </div>
   )

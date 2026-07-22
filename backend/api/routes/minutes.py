@@ -90,6 +90,17 @@ async def get_minute(minutes_id: uuid.UUID, session: SQLSessionDep, user: UserDe
     return minute
 
 
+@minutes_router.delete("/minutes/{minute_id}", status_code=204)
+async def delete_minute(minute_id: uuid.UUID, session: SQLSessionDep, user: UserDep) -> None:
+    query = select(Minute).where(Minute.id == minute_id).options(selectinload(Minute.transcription))
+    minute = (await session.exec(query)).first()
+    if not minute or not minute.transcription.user_id or minute.transcription.user_id != user.id:
+        raise HTTPException(404, "Not found")
+
+    await session.delete(minute)
+    await session.commit()
+
+
 @minutes_router.get("/minutes/{minute_id}/versions")
 async def list_minute_versions(
     minute_id: uuid.UUID, session: SQLSessionDep, user: UserDep

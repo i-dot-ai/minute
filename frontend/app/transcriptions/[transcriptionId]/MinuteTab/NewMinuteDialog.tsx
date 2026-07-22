@@ -94,7 +94,7 @@ export function NewMinuteDialog({
     <>
       <button
         type="button"
-        className="govuk-button govuk-button--secondary govuk-!-font-size-16"
+        className="govuk-button govuk-button--secondary govuk-!-font-size-16 govuk-!-margin-bottom-0"
         disabled={disabled}
         onClick={() => setOpen(true)}
       >

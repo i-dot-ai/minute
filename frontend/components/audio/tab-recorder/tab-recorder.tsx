@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
+import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
 import { AudioDevice } from '@/components/audio/microphone-permission'
 import RecordingControl from '@/components/audio/recording-control'
 import { TranscriptionForm } from '@/components/audio/types'
@@ -99,9 +100,12 @@ function TabRecorder({
   // already granted upstream — so skip the cold flow and start recording immediately.
   const autoStart = !!(initialDeviceId && initialDevices?.length)
   const { requestWakeLock, releaseWakeLock } = useWakeLock()
-  const { updateRecording, addRecording } = useRecordingDb()
+  const { updateRecording, addRecording, removeRecording } = useRecordingDb()
   const [err, setError] = useState<string | null>(null)
   const [isRecording, setIsRecording] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  // Set when discarding mid-recording so onstop drops the audio instead of saving it.
+  const discardingRef = useRef(false)
   const audioContext = useRef<AudioContext | null>(null)
   const recordingGain = useRef<GainNode | null>(null)
   const form = useFormContext<TranscriptionForm>()
@@ -280,6 +284,17 @@ function TabRecorder({
       }
 
       mediaRecorder.onstop = async () => {
+        if (discardingRef.current) {
+          discardingRef.current = false
+          setRecordedAudio(null)
+          const recordingId = form.getValues('recordingId')
+          if (recordingId) {
+            await removeRecording(recordingId)
+          }
+          stopAllTracks()
+          onDiscard?.()
+          return
+        }
         if (mediaChunksRef.current.length > 0) {
           const audioBlob = new Blob(mediaChunksRef.current, {
             type: 'audio/webm',
@@ -311,6 +326,8 @@ function TabRecorder({
     addRecording,
     form,
     initialScreenStream,
+    onDiscard,
+    removeRecording,
     requestWakeLock,
     selectedDeviceId,
     setRecordedAudio,
@@ -334,6 +351,7 @@ function TabRecorder({
           isRecording={isRecording}
           onStopRecording={stopRecording}
           onPauseStateChange={handlePauseStateChange}
+          onDiscard={() => setIsDialogOpen(true)}
           onGenerate={onGenerate}
         />
       ) : (
@@ -355,6 +373,26 @@ function TabRecorder({
           <AlertDescription>{err}</AlertDescription>
         </Alert>
       )}
+
+      <DiscardConfirmDialog
+        open={isDialogOpen}
+        setOpen={setIsDialogOpen}
+        onClickConfirm={() => {
+          setIsDialogOpen(false)
+          // Mid-recording: stop first; onstop handles cleanup once the recorder flushes.
+          if (isRecording && mediaRecorderRef.current) {
+            discardingRef.current = true
+            stopRecording()
+            return
+          }
+          setRecordedAudio(null)
+          const recordingId = form.getValues('recordingId')
+          if (recordingId) {
+            removeRecording(recordingId)
+          }
+          onDiscard?.()
+        }}
+      />
     </div>
   )
 }

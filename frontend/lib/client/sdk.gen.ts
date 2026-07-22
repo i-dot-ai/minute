@@ -45,6 +45,9 @@ import type {
   GetMinuteMinutesMinutesIdGetData,
   GetMinuteMinutesMinutesIdGetResponses,
   GetMinuteMinutesMinutesIdGetErrors,
+  DeleteMinuteMinutesMinuteIdDeleteData,
+  DeleteMinuteMinutesMinuteIdDeleteResponses,
+  DeleteMinuteMinutesMinuteIdDeleteErrors,
   ListMinuteVersionsMinutesMinuteIdVersionsGetData,
   ListMinuteVersionsMinutesMinuteIdVersionsGetResponses,
   ListMinuteVersionsMinutesMinuteIdVersionsGetErrors,
@@ -399,6 +402,24 @@ export const getMinuteMinutesMinutesIdGet = <
     ThrowOnError
   >({
     url: '/minutes/{minutes_id}',
+    ...options,
+  })
+}
+
+/**
+ * Delete Minute
+ */
+export const deleteMinuteMinutesMinuteIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeleteMinuteMinutesMinuteIdDeleteData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteMinuteMinutesMinuteIdDeleteResponses,
+    DeleteMinuteMinutesMinuteIdDeleteErrors,
+    ThrowOnError
+  >({
+    url: '/minutes/{minute_id}',
     ...options,
   })
 }

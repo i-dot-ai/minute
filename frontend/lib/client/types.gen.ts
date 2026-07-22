@@ -1220,6 +1220,44 @@ export type GetMinuteMinutesMinutesIdGetResponses = {
 export type GetMinuteMinutesMinutesIdGetResponse =
   GetMinuteMinutesMinutesIdGetResponses[keyof GetMinuteMinutesMinutesIdGetResponses]
 
+export type DeleteMinuteMinutesMinuteIdDeleteData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path: {
+    /**
+     * Minute Id
+     */
+    minute_id: string
+  }
+  query?: never
+  url: '/minutes/{minute_id}'
+}
+
+export type DeleteMinuteMinutesMinuteIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type DeleteMinuteMinutesMinuteIdDeleteError =
+  DeleteMinuteMinutesMinuteIdDeleteErrors[keyof DeleteMinuteMinutesMinuteIdDeleteErrors]
+
+export type DeleteMinuteMinutesMinuteIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type DeleteMinuteMinutesMinuteIdDeleteResponse =
+  DeleteMinuteMinutesMinuteIdDeleteResponses[keyof DeleteMinuteMinutesMinuteIdDeleteResponses]
+
 export type ListMinuteVersionsMinutesMinuteIdVersionsGetData = {
   body?: never
   headers?: {
@@ -1607,6 +1645,7 @@ export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError =
 export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses =
   {
     /**
+     * Response Duplicate User Template User Templates  Template Id  Duplicate Post
      * Successful Response
      */
     200: string

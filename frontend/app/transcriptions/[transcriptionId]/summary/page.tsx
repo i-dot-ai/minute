@@ -45,15 +45,8 @@ export default function SummaryIndexPage({
     <div className="govuk-!-padding-top-4 govuk-width-container govuk-width-container--with-secondary-nav">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
-          <div className="govuk-!-margin-bottom-6 govuk-!-padding-bottom-3 border-b border-(--govuk-border-colour)">
-            <NewMinuteDialog
-              transcriptionId={transcriptionId}
-              onCreated={() =>
-                router.push(`/transcriptions/${transcriptionId}/summary`)
-              }
-            />
-          </div>
-          <p className="govuk-body">No summaries generated yet.</p>
+          <h1 className="govuk-heading-m">No summary generated</h1>
+          <p className="govuk-body">Click <strong>New Summary</strong> on the left panel to get started.</p>
         </div>
       </div>
     </div>

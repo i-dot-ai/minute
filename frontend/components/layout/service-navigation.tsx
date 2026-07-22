@@ -4,18 +4,12 @@ import { usePathname } from 'next/navigation'
 import {
   Bookmark,
   LayoutPanelTop,
-  Mic,
-  PanelLeftClose,
-  PanelLeftOpen,
-  ShieldCheck,
-  Mail,
+  Mic
 } from 'lucide-react'
 import { useState } from 'react'
-// import Image from 'next/image'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
-  const [isCollapsed, setIsCollapsed] = useState(false)
   if (pathname === '/unauthorised') {
     return null
   }
@@ -25,9 +19,9 @@ export const ServiceNavigation = () => {
       className="flex h-full shrink-0 flex-col bg-(--govuk-surface-background-colour)"
     >
       <nav aria-label="Menu" className="flex h-full flex-col justify-between">
-        <ul className="flex flex-col" id="navigation">
+        <ul className="flex flex-col w-24" id="navigation">
           <li
-            className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname === '/' || pathname.includes('/new') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
+            className={`govuk-service-navigation__item govuk-!-margin-right-3 w-full !border-l-4 !border-transparent ${pathname === '/' || pathname.includes('/new') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
             <GuardedLink
               href="/"
@@ -36,60 +30,59 @@ export const ServiceNavigation = () => {
                   ? 'page'
                   : undefined
               }
-              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname === '/' || pathname.includes('/new') ? '!text-(--govuk-text-colour)' : ''}`}
+              className={`govuk-service-navigation__link text-[0.875rem] flex flex-col items-center ${pathname === '/' || pathname.includes('/new') ? '!text-(--govuk-text-colour)' : ''}`}
             >
-              {/* <Image src="/logos/minute-logo.svg" alt="" width={24} height={24} /> */}
-              <Mic className="size-4" />
-              {isCollapsed ? '' : 'Record'}
+              <Mic className="size-5" />
+              Record
             </GuardedLink>
           </li>
           <li
-            className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname.includes('/transcriptions') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
+            className={`govuk-service-navigation__item govuk-!-margin-right-3 w-full !border-l-4 !border-transparent ${pathname.includes('/transcriptions') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
             <GuardedLink
               aria-current={
                 pathname.includes('/transcriptions') ? 'page' : undefined
               }
-              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname.includes('/transcriptions') ? '!text-(--govuk-text-colour)' : ''}`}
+              className={`govuk-service-navigation__link  text-[0.875rem] flex flex-col items-center ${pathname.includes('/transcriptions') ? '!text-(--govuk-text-colour)' : ''}`}
               href="/transcriptions"
               data-onboarding="saved-transcriptions-nav"
             >
-              <Bookmark className="size-4" />
-              {isCollapsed ? '' : 'Transcriptions'}
+              <Bookmark className="size-5" />
+              Transcripts
             </GuardedLink>
           </li>
           <li
-            className={`govuk-service-navigation__item w-full !border-l-4 !border-transparent ${pathname.includes('/templates') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
+            className={`govuk-service-navigation__item govuk-!-margin-right-3 w-full !border-l-4 !border-transparent ${pathname.includes('/templates') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
             <GuardedLink
               aria-current={
                 pathname.includes('/templates') ? 'page' : undefined
               }
-              className={`govuk-service-navigation__link ml-4 flex items-center gap-2 ${pathname.includes('/templates') ? '!text-(--govuk-text-colour)' : ''}`}
+              className={`govuk-service-navigation__link  text-[0.875rem] flex  flex-col items-center ${pathname.includes('/templates') ? '!text-(--govuk-text-colour)' : ''}`}
               href="/templates"
               data-onboarding="templates-nav"
             >
-              <LayoutPanelTop className="size-4" />
-              {isCollapsed ? '' : 'Templates'}
+              <LayoutPanelTop className="size-5" />
+              Templates
             </GuardedLink>
           </li>
         </ul>
         <div>
-          <button
-            className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-bottom-2 ml-4 flex items-center gap-2 border-l-4 border-transparent text-(--govuk-link-colour)"
+          {/* <button
+            className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-bottom-2 ${isCollapsed ? 'govuk-!-padding-left-4' : 'govuk-!-padding-left-3'} flex flex-col items-center border-l-4 border-transparent text-(--govuk-link-colour)`}
             onClick={() => setIsCollapsed((prev) => !prev)}
           >
             {isCollapsed ? (
-              <PanelLeftOpen className="size-4" />
+              <PanelLeftOpen className="size-5" />
             ) : (
               <>
-                <PanelLeftClose className="size-4" />
+                <PanelLeftClose className="size-5" />
                 <span className={isCollapsed ? 'sr-only' : ''}>
                   {isCollapsed ? 'Expand' : 'Collapse'}
                 </span>
               </>
             )}
-          </button>
+          </button> */}
           <ul className="flex flex-col border-t border-(--govuk-border-colour)">
             <li
               className={`w-full !border-l-4 ${pathname.includes('/privacy') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
@@ -98,11 +91,11 @@ export const ServiceNavigation = () => {
                 aria-current={
                   pathname.includes('/privacy') ? 'page' : undefined
                 }
-                className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ml-4 flex items-center gap-2 !text-[#484949]"
+                className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link  text-[0.875rem] flex flex-col items-center !text-[#484949]"
                 href="/privacy"
               >
-                <ShieldCheck className="size-4" />
-                {isCollapsed ? '' : 'Privacy'}
+                {/* <ShieldCheck className="size-5" /> */}
+                Privacy
               </GuardedLink>
             </li>
             <li
@@ -112,11 +105,11 @@ export const ServiceNavigation = () => {
                 aria-current={
                   pathname.includes('/support') ? 'page' : undefined
                 }
-                className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link ml-4 flex items-center gap-2 !text-[#484949]"
+                className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link  text-[0.875rem] flex flex-col items-center !text-[#484949]"
                 href="/support"
               >
-                <Mail className="size-4" />
-                {isCollapsed ? '' : 'Contact'}
+                {/* <Mail className="size-5" /> */}
+                Contact
               </GuardedLink>
             </li>
           </ul>

@@ -6,9 +6,8 @@ import {
   MinuteEditor,
   MinuteExportState,
 } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
+import { DeleteMinuteButton } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/delete-minute-button'
 import { ExportSummaryDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/ExportSummaryDialog'
-// import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
-// import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
@@ -17,7 +16,6 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { Eye, EyeOffIcon, Loader2, PencilIcon, Save } from 'lucide-react'
 import Link from 'next/link'
-// import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 
 export default function SummaryPage({
@@ -25,7 +23,6 @@ export default function SummaryPage({
 }: {
   params: { transcriptionId: string; minuteId: string }
 }) {
-  // const router = useRouter()
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId },
@@ -153,6 +150,12 @@ export default function SummaryPage({
                     </button>
                   </>
                 )}
+                {minute && (
+                  <DeleteMinuteButton
+                    minute={minute}
+                    transcriptionId={transcriptionId}
+                  />
+                )}
               </div>
             </div>
           )}
@@ -217,8 +220,8 @@ export default function SummaryPage({
       </div>
       <div
         className={`min-h-0 flex-1 overflow-y-auto ${editState?.isEditable
-          ? 'govuk-!-padding-4 bg-(--govuk-surface-background-colour)'
-          : ''
+            ? 'govuk-!-padding-4 bg-(--govuk-surface-background-colour)'
+            : ''
           }`}
       >
         <div className="govuk-width-container govuk-width-container--with-secondary-nav">

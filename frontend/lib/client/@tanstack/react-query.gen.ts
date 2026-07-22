@@ -15,6 +15,7 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGet,
   createMinuteTranscriptionTranscriptionIdMinutesPost,
   getMinuteMinutesMinutesIdGet,
+  deleteMinuteMinutesMinuteIdDelete,
   listMinuteVersionsMinutesMinuteIdVersionsGet,
   createMinuteVersionMinutesMinuteIdVersionsPost,
   deleteMinuteVersionMinuteVersionsMinuteVersionIdDelete,
@@ -67,6 +68,9 @@ import type {
   CreateMinuteTranscriptionTranscriptionIdMinutesPostData,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostError,
   GetMinuteMinutesMinutesIdGetData,
+  DeleteMinuteMinutesMinuteIdDeleteData,
+  DeleteMinuteMinutesMinuteIdDeleteError,
+  DeleteMinuteMinutesMinuteIdDeleteResponse,
   ListMinuteVersionsMinutesMinuteIdVersionsGetData,
   CreateMinuteVersionMinutesMinuteIdVersionsPostData,
   CreateMinuteVersionMinutesMinuteIdVersionsPostError,
@@ -677,6 +681,33 @@ export const getMinuteMinutesMinutesIdGetOptions = (
     },
     queryKey: getMinuteMinutesMinutesIdGetQueryKey(options),
   })
+}
+
+/**
+ * Delete Minute
+ */
+export const deleteMinuteMinutesMinuteIdDeleteMutation = (
+  options?: Partial<Options<DeleteMinuteMinutesMinuteIdDeleteData>>
+): UseMutationOptions<
+  DeleteMinuteMinutesMinuteIdDeleteResponse,
+  DeleteMinuteMinutesMinuteIdDeleteError,
+  Options<DeleteMinuteMinutesMinuteIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteMinuteMinutesMinuteIdDeleteResponse,
+    DeleteMinuteMinutesMinuteIdDeleteError,
+    Options<DeleteMinuteMinutesMinuteIdDeleteData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await deleteMinuteMinutesMinuteIdDelete({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
 }
 
 export const listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey = (

@@ -49,7 +49,7 @@ export const IncompleteRecordingTableRow = ({
 
   return (
     <tr className="govuk-table__row bg-[#f4d7d7] has-[:checked]:bg-[#f4f8fb]">
-      <td className="govuk-table__cell">
+      <td className="govuk-table__cell govuk-!-padding-left-1">
         <div
           className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle flex relative"
           data-module="govuk-checkboxes"

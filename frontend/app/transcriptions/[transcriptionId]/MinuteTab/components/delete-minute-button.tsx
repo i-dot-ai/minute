@@ -62,16 +62,29 @@ export function DeleteMinuteButton({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="govuk-heading-l">
-              Are you sure you want to delete this summary?
+              Delete this summary?
             </AlertDialogTitle>
-            <AlertDialogDescription className="govuk-body">
-              This will permanently delete this summary and its version history.
-              The transcription will not be deleted.
-            </AlertDialogDescription>
           </AlertDialogHeader>
-          <p className="govuk-body govuk-!-font-weight-bold">
-            {minute.template_name}
-          </p>
+          <AlertDialogDescription>
+            <p className="govuk-body">
+              <span className="govuk-!-font-weight-bold">
+                {minute.template_name}
+              </span>
+              {' '}- {new Date(minute.updated_datetime).toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })}
+            </p>
+            <p className="govuk-body">
+              Only this summary is removed. The recording, its transcript and any
+              other summaries stay.
+            </p>
+            <p className="govuk-body">
+              This cannot be undone.
+            </p>
+          </AlertDialogDescription>
+
           <AlertDialogFooter className="govuk-button-group sm:justify-end">
             <AlertDialogCancel asChild>
               <button

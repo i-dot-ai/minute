@@ -49,7 +49,7 @@ function TranscriptionTableRow({
   return (
     <tr className="govuk-table__row hover:bg-[#f4f8fb] has-[:checked]:bg-[#f4f8fb]">
       <td className="govuk-table__cell">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 govuk-!-padding-left-1">
           <div
             className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle flex relative"
             data-module="govuk-checkboxes"

@@ -42,7 +42,7 @@ export function TranscriptionSidePanel() {
             {transcriptPage || minutes.length <= 1 ? (
               <Link
                 href={`/transcriptions/${transcriptionId}/summary`}
-                className="govuk-link govuk-link--no-visited-state govuk-link--no-underline"
+                className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline ${!transcriptPage ? 'govuk-!-font-weight-bold' : ''}`}
               >
                 {minutes.length > 1 ? 'Summaries' : 'Summary'}
               </Link>
@@ -89,6 +89,16 @@ export function TranscriptionSidePanel() {
                 </ul>
               </>
             )}
+            {transcription && (
+              <>
+                <NewMinuteDialog
+                  transcriptionId={transcriptionId}
+                  onCreated={() =>
+                    router.push(`/transcriptions/${transcriptionId}/summary`)
+                  }
+                />
+              </>
+            )}
           </li>
           <li>
             <Link
@@ -101,19 +111,6 @@ export function TranscriptionSidePanel() {
           </li>
         </ul>
       </nav>
-      <div className="flex flex-col gap-2 govuk-!-margin-bottom-0 govuk-!-margin-top-5">
-        {transcription && (
-          <>
-            <NewMinuteDialog
-              transcriptionId={transcriptionId}
-              onCreated={() =>
-                router.push(`/transcriptions/${transcriptionId}/summary`)
-              }
-            />
-            <DeleteTranscriptionButton transcription={transcription} />
-          </>
-        )}
-      </div>
     </div>
   )
 }

@@ -13,7 +13,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { Search } from 'lucide-react'
+import { Search, FileText } from 'lucide-react'
 
 const PAGE_SIZE = 20
 
@@ -81,13 +81,15 @@ export const PaginatedTranscriptions = () => {
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
     router.replace(
       pathname +
-        buildQueryString(paginatedResponse.total_pages, filterBy, search)
+      buildQueryString(paginatedResponse.total_pages, filterBy, search)
     )
   }
   const transcriptions =
     filterBy === 'incomplete' ? [] : paginatedResponse?.items || []
   const visibleOfflineRecordings =
-    filterBy === 'all' || filterBy === 'incomplete' ? offlineRecordings : []
+    !search && (filterBy === 'all' || filterBy === 'incomplete')
+      ? offlineRecordings
+      : []
   const totalPages = paginatedResponse?.total_pages || 1
   const totalCount = paginatedResponse?.total_count || 0
   const resultsStarting = (currentPage - 1) * PAGE_SIZE + 1
@@ -174,6 +176,7 @@ export const PaginatedTranscriptions = () => {
   }
 
   const selectedCount = selectedIds.size
+  console.log(search)
 
   return (
     <div>
@@ -280,11 +283,33 @@ export const PaginatedTranscriptions = () => {
         </p>
       ) : transcriptions.length === 0 &&
         visibleOfflineRecordings.length === 0 ? (
-        <p className="govuk-body" role="status">
-          {filterBy === 'incomplete'
-            ? 'No incomplete recordings found'
-            : 'No transcriptions found'}
-        </p>
+        <div className="govuk-!-margin-top-9 flex flex-col items-center justify-center gap-2">
+          {search ? (
+            <>
+              <p className="govuk-body">
+                No transcriptions found for <strong>{search}</strong>
+              </p>
+            </>
+          ) : filterBy !== 'all' ? (
+            <>
+              <p className="govuk-body">No transcriptions match that filter</p>
+              <p className="govuk-body">
+                Change or clear the filter to see the full list
+              </p>
+              <Link
+                href={pathname + buildQueryString(undefined, 'all', search)}
+                className="govuk-button govuk-button--secondary"
+              >
+                Clear filter
+              </Link>
+            </>
+          ) : (
+            <>
+              <FileText className="size-10 text-[#cecece]" />
+              No transcriptions found
+            </>
+          )}
+        </div>
       ) : (
         <>
           <TranscriptionsList

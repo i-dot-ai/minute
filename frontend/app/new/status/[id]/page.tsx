@@ -27,7 +27,10 @@ const STALL_FALLBACK_MS = 15 * 60 * 1000
 
 const getStallLimitMs = (durationSec: number | null) =>
   durationSec
-    ? Math.max(STALL_FLOOR_MS, (durationSec / 60) * STALL_MINUTES_PER_AUDIO_MINUTE * 60 * 1000)
+    ? Math.max(
+        STALL_FLOOR_MS,
+        (durationSec / 60) * STALL_MINUTES_PER_AUDIO_MINUTE * 60 * 1000
+      )
     : STALL_FALLBACK_MS
 
 export default function RecordStatusPage({
@@ -41,7 +44,7 @@ export default function RecordStatusPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-        GENERATING_STATUSES.includes(query.state.data.status)
+      GENERATING_STATUSES.includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -66,7 +69,7 @@ export default function RecordStatusPage({
     enabled: !!minuteId && transcriptionDone,
     refetchInterval: (query) =>
       query.state.data?.[0]?.status &&
-        GENERATING_STATUSES.includes(query.state.data[0].status)
+      GENERATING_STATUSES.includes(query.state.data[0].status)
         ? 2000
         : false,
   })
@@ -197,7 +200,7 @@ export default function RecordStatusPage({
           <div className="govuk-!-padding-5 govuk-!-padding-top-8 govuk-!-margin-top-5 bg-(--govuk-surface-background-colour)">
             {isProcessing ? (
               <>
-                <div className="inline-flex items-center gap-2 govuk-!-margin-bottom-6">
+                <div className="govuk-!-margin-bottom-6 inline-flex items-center gap-2">
                   <RefreshCw className="size-4 animate-spin text-(--govuk-text-colour)" />
                   <h2 className="govuk-heading-m govuk-!-margin-bottom-0">
                     {transcriptionDone ? 'Generating summary' : 'Transcribing'}
@@ -206,10 +209,16 @@ export default function RecordStatusPage({
 
                 {isStalled ? (
                   <div className="govuk-warning-text">
-                    <span className="govuk-warning-text__icon" aria-hidden="true">!</span>
+                    <span
+                      className="govuk-warning-text__icon"
+                      aria-hidden="true"
+                    >
+                      !
+                    </span>
                     <strong className="govuk-warning-text__text">
                       <span className="govuk-visually-hidden">Warning</span>
-                      Taking longer than usual. Leave this page if needed, it will continue in the background.
+                      Taking longer than usual. Leave this page if needed, it
+                      will continue in the background.
                     </strong>
                   </div>
                 ) : (
@@ -223,18 +232,23 @@ export default function RecordStatusPage({
               </>
             ) : isFailed ? (
               <>
-                <div className="inline-flex items-center gap-2 govuk-!-margin-bottom-4">
+                <div className="govuk-!-margin-bottom-4 inline-flex items-center gap-2">
                   <X className="size-4 text-(--govuk-error-colour)" />
                   <h2 className="govuk-heading-m govuk-!-margin-bottom-0">
                     Failed to process
                   </h2>
                 </div>
                 <p className="govuk-body">
-                  The recording is safe — only the transcription failed. Try again, or view the details of what happened.
+                  The recording is safe — only the transcription failed. Try
+                  again, or view the details of what happened.
                 </p>
 
                 <p className="govuk-body">
-                  If it continues to fail, <Link href="/support" className="govuk-link">contact support</Link>.
+                  If it continues to fail,{' '}
+                  <Link href="/support" className="govuk-link">
+                    contact support
+                  </Link>
+                  .
                 </p>
               </>
             ) : (

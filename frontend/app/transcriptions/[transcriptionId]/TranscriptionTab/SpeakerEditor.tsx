@@ -93,7 +93,20 @@ export const SpeakerEditor = ({
           await saveTranscription(data)
           if (generateNewSummary) {
             await generateSummary(latestMinuteId)
-            toast.success('New summary is being generated')
+            toast.success(
+              <div className="flex flex-col items-center gap-2">
+                <h2 className="govuk-heading-s">
+                  New summary is being generated
+                </h2>
+                <strong className="govuk-tag govuk-tag--blue">
+                  Processing
+                </strong>
+              </div>,
+              {
+                className: '!w-[420px] !max-w-[calc(100vw-2rem)] !p-5',
+                duration: 6000,
+              }
+            )
           }
           setOpen(false)
           onSaved?.(data)

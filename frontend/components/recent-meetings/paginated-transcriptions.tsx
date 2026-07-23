@@ -55,6 +55,7 @@ export const PaginatedTranscriptions = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const selectAllRef = useRef<HTMLInputElement>(null)
+
   const {
     data: paginatedResponse,
     isLoading,
@@ -87,13 +88,19 @@ export const PaginatedTranscriptions = () => {
   const transcriptions =
     filterBy === 'incomplete' ? [] : paginatedResponse?.items || []
   const visibleOfflineRecordings =
-    !search && (filterBy === 'all' || filterBy === 'incomplete')
+    !search &&
+      (filterBy === 'incomplete' || (filterBy === 'all' && currentPage === 1))
       ? offlineRecordings
       : []
   const totalPages = paginatedResponse?.total_pages || 1
   const totalCount = paginatedResponse?.total_count || 0
-  const resultsStarting = (currentPage - 1) * PAGE_SIZE + 1
-  const resultsEnding = Math.min(currentPage * PAGE_SIZE, totalCount)
+  const offlineCount =
+    !search && filterBy === 'all' ? offlineRecordings.length : 0
+  const combinedTotalCount = totalCount + offlineCount
+  const resultsStarting =
+    (currentPage - 1) * PAGE_SIZE + 1 + (currentPage > 1 ? offlineCount : 0)
+  const resultsEnding =
+    Math.min(currentPage * PAGE_SIZE, totalCount) + offlineCount
   const pageIds = [
     ...visibleOfflineRecordings.map((r) => r.recording_id),
     ...transcriptions.map((t) => t.id),
@@ -176,7 +183,6 @@ export const PaginatedTranscriptions = () => {
   }
 
   const selectedCount = selectedIds.size
-  console.log(search)
 
   return (
     <div>
@@ -202,6 +208,33 @@ export const PaginatedTranscriptions = () => {
           />
         </form>
       </div>
+      <details className="govuk-details">
+        <summary className="govuk-details__summary">
+          <span className="govuk-details__summary-text">
+            Why are some recordings marked &quot;Not uploaded&quot;?
+          </span>
+        </summary>
+        <div className="govuk-details__text">
+          <p className="govuk-body">
+            These recordings are stored <strong> only in this browser</strong> —
+            usually because the connection dropped before they finished
+            uploading. They are not yet saved to your account and will be lost
+            if this browser&apos;s data is cleared.
+          </p>
+          <p className="govuk-body">
+            <strong>Upload</strong> saves a recording to your account and starts
+            its transcription. <strong>Delete</strong> removes it permanently.
+          </p>
+          <p className="govuk-body">
+            <strong>Uplaod failed</strong> means that retrying the upload failed
+            again. Please{' '}
+            <Link href="/support" className="govuk-link">
+              contact support
+            </Link>{' '}
+            if the problem persists.
+          </p>
+        </div>
+      </details>
       <div className="govuk-!-margin-bottom-1 flex items-center justify-between">
         <div className="flex flex-1 items-center gap-2">
           <div
@@ -245,7 +278,8 @@ export const PaginatedTranscriptions = () => {
             <>Showing {visibleOfflineRecordings.length} incomplete recordings</>
           ) : (
             <>
-              Showing {resultsStarting} to {resultsEnding} of {totalCount}
+              Showing {resultsStarting} to {resultsEnding} of{' '}
+              {combinedTotalCount}
               {search && (
                 <span className="govuk-visually-hidden">
                   {` results for “${search}”`}
@@ -306,7 +340,12 @@ export const PaginatedTranscriptions = () => {
           ) : (
             <>
               <FileText className="size-10 text-[#cecece]" />
-              No transcriptions found
+              <p className="govuk-body govuk-!-margin-bottom-1">
+                No transcriptions found
+              </p>
+              <Link href="/transcriptions" className="govuk-button">
+                Start a new recording
+              </Link>
             </>
           )}
         </div>
@@ -401,6 +440,7 @@ export const PaginatedTranscriptions = () => {
         open={deleteDialogOpen}
         setOpen={setDeleteDialogOpen}
         transcriptionIds={selectedTranscriptionIds}
+        count={selectedCount}
         onDeleted={() => {
           selectedOfflineIds.forEach((id) => removeRecording(id))
           if (selectedOfflineIds.length > 0) {

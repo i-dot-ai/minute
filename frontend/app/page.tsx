@@ -227,23 +227,29 @@ export default function Home() {
                         )}
                       </select>
                     </div>
-
                     {micDenied && (
                       <div
-                        className="govuk-error-summary"
-                        data-module="govuk-error-summary"
+                        role="alert"
+                        className="govuk-!-padding-4 govuk-!-margin-bottom-4 bg-[#e59a9a]"
                       >
-                        <div role="alert">
-                          <h2 className="govuk-error-summary__title">
-                            There is a problem
-                          </h2>
-                          <div className="govuk-error-summary__body">
-                            <p className="govuk-error-message">
-                              Microphone access has not been given. Please
-                              enable it in your browser settings and try again.
-                            </p>
-                          </div>
+                        <div className="govuk-warning-text">
+                          <span
+                            className="govuk-warning-text__icon"
+                            aria-hidden="true"
+                          >
+                            !
+                          </span>
+                          <strong className="govuk-warning-text__text">
+                            <span className="govuk-visually-hidden">
+                              Warning
+                            </span>
+                            There is a problem.
+                          </strong>
                         </div>
+                        <p className="govuk-body govuk-!-margin-bottom-0">
+                          Microphone access has not been given. Please enable it
+                          in your browser settings and try again.
+                        </p>
                       </div>
                     )}
                     <button

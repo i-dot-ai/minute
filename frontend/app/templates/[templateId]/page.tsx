@@ -218,121 +218,129 @@ export default function EditTemplatePage({
           </div>
         </div>
       </div>
-      <div className="govuk-width-container">
-        <div className="govuk-grid-row">
-          <div className="govuk-grid-column-full">
-            {template && isEditing && (
-              <FormProvider {...form}>
-                <div className="govuk-!-padding-4 bg-(--govuk-surface-background-colour)">
-                  <form onSubmit={handleSave}>
-                    <div className="text-red-600">
-                      <p className="govuk-body">
-                        {errors.name?.message ?? null}
-                      </p>
-                      <p className="govuk-body">
-                        {errors.description?.message ?? null}
-                      </p>
-                    </div>
-                    <div className="govuk-form-group">
-                      <h1 className="govuk-label-wrapper">
+      <div className={isEditing ? 'bg-[#f3f3f3]' : ''}>
+        <div className="govuk-width-container">
+          <div className="govuk-grid-row">
+            <div className="govuk-grid-column-full">
+              {template && isEditing && (
+                <FormProvider {...form}>
+                  <div className="govuk-!-padding-4">
+                    <form onSubmit={handleSave}>
+                      <div className="text-red-600">
+                        <p className="govuk-body">
+                          {errors.name?.message ?? null}
+                        </p>
+                        <p className="govuk-body">
+                          {errors.description?.message ?? null}
+                        </p>
+                      </div>
+                      <div className="govuk-form-group">
+                        <h1 className="govuk-label-wrapper">
+                          <label
+                            className="govuk-label govuk-label--s"
+                            htmlFor="name"
+                          >
+                            Template name
+                          </label>
+                        </h1>
+                        <input
+                          id="name"
+                          className="govuk-input govuk-!-width-one-half bg-white"
+                          {...register('name', {
+                            required: {
+                              value: true,
+                              message: 'Template name required',
+                            },
+                          })}
+                        />
+                      </div>
+                      <div className="govuk-form-group">
                         <label
                           className="govuk-label govuk-label--s"
-                          htmlFor="name"
+                          htmlFor="description"
                         >
-                          Template name
+                          Description
                         </label>
-                      </h1>
-                      <input
-                        id="name"
-                        className="govuk-input govuk-!-width-one-half bg-white"
-                        {...register('name', {
-                          required: {
-                            value: true,
-                            message: 'Template name required',
-                          },
-                        })}
-                      />
-                    </div>
-                    <div className="govuk-form-group">
-                      <label
-                        className="govuk-label govuk-label--s"
-                        htmlFor="description"
-                      >
-                        Description
-                      </label>
-                      <textarea
-                        id="description"
-                        className="govuk-textarea govuk-!-width-one-half bg-white"
-                        rows={3}
-                        {...register('description', {
-                          required: {
-                            value: true,
-                            message: 'Description required',
-                          },
-                        })}
-                      />
-                    </div>
-                    {template.type === 'document' && <DocumentTemplateEditor />}
-                    {template.type === 'form' && <FormTemplateEditor />}
-                  </form>
-                </div>
-              </FormProvider>
-            )}
-            {template && !isEditing && (
-              <>
-                <h1 className="govuk-heading-l govuk-!-margin-top-4">
-                  {template.name}
-                </h1>
-                <ul className="govuk-list govuk-!-margin-bottom-4 flex gap-2">
-                  <li>
-                    <span className="govuk-tag govuk-tag--green">
-                      {template.type === 'document' ? 'Summary' : 'Q&A'}
-                    </span>
-                  </li>
-                  {template.is_default && (
+                        <textarea
+                          id="description"
+                          className="govuk-textarea govuk-!-width-one-half bg-white"
+                          rows={3}
+                          {...register('description', {
+                            required: {
+                              value: true,
+                              message: 'Description required',
+                            },
+                          })}
+                        />
+                      </div>
+                      {template.type === 'document' && (
+                        <DocumentTemplateEditor />
+                      )}
+                      {template.type === 'form' && <FormTemplateEditor />}
+                    </form>
+                  </div>
+                </FormProvider>
+              )}
+              {template && !isEditing && (
+                <>
+                  <h1 className="govuk-heading-l govuk-!-margin-top-4">
+                    {template.name}
+                  </h1>
+                  <ul className="govuk-list govuk-!-margin-bottom-4 flex gap-2">
                     <li>
-                      <span className="govuk-tag govuk-tag--blue">Default</span>
+                      <span className="govuk-tag govuk-tag--green">
+                        {template.type === 'document' ? 'Summary' : 'Q&A'}
+                      </span>
                     </li>
+                    {template.is_default && (
+                      <li>
+                        <span className="govuk-tag govuk-tag--blue">
+                          Default
+                        </span>
+                      </li>
+                    )}
+                  </ul>
+                  <p className="govuk-body-l">{template.description}</p>
+                  {template.type === 'document' ? (
+                    <>
+                      <h2 className="govuk-heading-s">Template content</h2>
+                      <div
+                        className="editor-content"
+                        dangerouslySetInnerHTML={{ __html: template.content }}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="govuk-heading-m">Style guide</h2>
+                      <div
+                        className="govuk-!-margin-bottom-4"
+                        dangerouslySetInnerHTML={{ __html: template.content }}
+                      />
+                      <h2 className="govuk-heading-m">Questions</h2>
+                      <ol className="govuk-list govuk-list--number">
+                        {template.questions?.map((question) => (
+                          <li key={question.id}>
+                            <div className="">
+                              <h3 className="govuk-heading-s">
+                                {question.title}
+                              </h3>
+                              <p className="govuk-body">
+                                {question.description}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    </>
                   )}
-                </ul>
-                <p className="govuk-body-l">{template.description}</p>
-                {template.type === 'document' ? (
-                  <>
-                    <h2 className="govuk-heading-s">Template content</h2>
-                    <div
-                      className="editor-content"
-                      dangerouslySetInnerHTML={{ __html: template.content }}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <h2 className="govuk-heading-m">Style guide</h2>
-                    <div
-                      className="govuk-!-margin-bottom-4"
-                      dangerouslySetInnerHTML={{ __html: template.content }}
-                    />
-                    <h2 className="govuk-heading-m">Questions</h2>
-                    <ol className="govuk-list govuk-list--number">
-                      {template.questions?.map((question) => (
-                        <li key={question.id}>
-                          <div className="">
-                            <h3 className="govuk-heading-s">
-                              {question.title}
-                            </h3>
-                            <p className="govuk-body">{question.description}</p>
-                          </div>
-                        </li>
-                      ))}
-                    </ol>
-                  </>
-                )}
-              </>
-            )}
-            {!template && (
-              <div className="flex justify-center">
-                <Loader2 className="animate-spin" />
-              </div>
-            )}
+                </>
+              )}
+              {!template && (
+                <div className="flex justify-center">
+                  <Loader2 className="animate-spin" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

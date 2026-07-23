@@ -114,6 +114,14 @@ export default function RecordStatusPage({
     !!stallSince &&
     Date.now() - new Date(stallSince).getTime() > getStallLimitMs(durationSec)
 
+  const getEstimatedTimeToComplete = (durationSec: number | null) => {
+    if (!durationSec) return null
+    const minutes = durationSec / 60
+    return Math.round(minutes)
+  }
+
+  const estimatedTimeToComplete = getEstimatedTimeToComplete(durationSec)
+
   // Land keyboard/screen-reader focus on the page heading after the client-side
   // navigation from the recorder, which otherwise leaves focus on <body>.
   const headingRef = useRef<HTMLHeadingElement>(null)
@@ -223,7 +231,8 @@ export default function RecordStatusPage({
                   </div>
                 ) : (
                   <p className="govuk-body">
-                    Usually takes around 5 - 12 minutes per hour of audio.
+                    Estimated time to complete:{' '}
+                    <strong>{estimatedTimeToComplete} minutes</strong>
                   </p>
                 )}
                 <div className="govuk-!-margin-bottom-7 govuk-!-margin-top-6">
@@ -239,12 +248,11 @@ export default function RecordStatusPage({
                   </h2>
                 </div>
                 <p className="govuk-body">
-                  The recording is safe — only the transcription failed. Try
-                  again, or view the details of what happened.
+                  The recording is safe, only the transcription failed.
                 </p>
 
                 <p className="govuk-body">
-                  If it continues to fail,{' '}
+                  Please try again. If it continues to fail,{' '}
                   <Link href="/support" className="govuk-link">
                     contact support
                   </Link>

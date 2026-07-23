@@ -19,15 +19,16 @@ export const DeleteTranscriptionsDialog = ({
   open,
   setOpen,
   transcriptionIds,
+  count,
   onDeleted,
 }: {
   open: boolean
   setOpen: Dispatch<SetStateAction<boolean>>
   transcriptionIds: string[]
+  count: number
   onDeleted: () => void
 }) => {
   const queryClient = useQueryClient()
-  const count = transcriptionIds.length
   const { mutate: deleteTranscriptions, isPending } = useMutation({
     mutationFn: async (ids: string[]) => {
       await Promise.all(

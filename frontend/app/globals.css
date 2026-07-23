@@ -415,6 +415,12 @@ html body[data-scroll-locked] {
     @apply border-border outline-ring/50;
   }
 
+  /* Restore the summary's inherited border colour so the GOV.UK details
+     arrow (a border triangle on ::before) isn't tinted by the reset above */
+  .govuk-details__summary {
+    border-color: currentColor;
+  }
+
   body {
     @apply bg-background text-foreground;
   }

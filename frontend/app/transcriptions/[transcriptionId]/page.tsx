@@ -6,6 +6,7 @@ import {
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { RetryTranscriptionDialog } from '@/components/audio/retry-transcription-dialog'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, Pencil, Save } from 'lucide-react'
 import { AudioWav } from '@/components/icons/AudioWav'
@@ -24,7 +25,7 @@ export default function TranscriptionPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-      ['awaiting_start', 'in_progress'].includes(query.state.data.status)
+        ['awaiting_start', 'in_progress'].includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -49,6 +50,15 @@ export default function TranscriptionPage({
       }
     ),
     enabled: minutesEnabled,
+  })
+
+  const { data: recordings = [] } = useQuery({
+    ...getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions(
+      {
+        path: { transcription_id: transcriptionId },
+      }
+    ),
+    enabled: transcription?.status === 'failed',
   })
 
   useEffect(() => {
@@ -140,6 +150,22 @@ export default function TranscriptionPage({
   if (transcription.status == 'failed') {
     return (
       <div className="govuk-!-padding-top-4 govuk-width-container govuk-width-container--with-secondary-nav">
+        <div className="govuk-grid-row">
+          <div className="govuk-grid-column-full">
+            <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
+              <ol className="govuk-breadcrumbs__list">
+                <li className="govuk-breadcrumbs__list-item">
+                  <Link
+                    href="/transcriptions"
+                    className="govuk-breadcrumbs__link"
+                  >
+                    Back to transcriptions
+                  </Link>
+                </li>
+              </ol>
+            </nav>
+          </div>
+        </div>
         <div className="govuk-grid-row govuk-!-margin-bottom-2">
           <div className="govuk-grid-column-two-thirds">
             {!isRenaming && (
@@ -216,19 +242,30 @@ export default function TranscriptionPage({
         <div className="govuk-grid-row govuk-!-margin-bottom-2">
           <div className="govuk-grid-column-two-thirds">
             <p className="govuk-body">{date}</p>
-            <p className="govuk-body">
-              <div className="govuk-warning-text">
-                <span className="govuk-warning-text__icon" aria-hidden="true">
-                  !
-                </span>
-                <strong className="govuk-warning-text__text">
-                  <span className="govuk-visually-hidden">Warning</span>
-                  The transcription failed to process. Please try again.
-                </strong>
-              </div>
-            </p>
+            <div className="govuk-warning-text">
+              <span className="govuk-warning-text__icon" aria-hidden="true">
+                !
+              </span>
+              <strong className="govuk-warning-text__text">
+                <span className="govuk-visually-hidden">Warning</span>
+                The transcription failed to process. Try again.{' '}
+                <Link href="/contact" className="govuk-link">
+                  Contact support
+                </Link>{' '}
+                if the issue persists.
+              </strong>
+            </div>
             <h2 className="govuk-heading-m">Audio:</h2>
             <AudioPlayer transcriptionId={transcription.id} />
+            <div className="govuk-button-group govuk-!-margin-top-4">
+              {recordings[0] && (
+                <RetryTranscriptionDialog
+                  recordingId={recordings[0].id}
+                  title={transcription.title ?? undefined}
+                />
+              )}
+              <DownloadButton recordings={recordings} />
+            </div>
           </div>
         </div>
       </div>
@@ -248,7 +285,11 @@ export default function TranscriptionPage({
   )
 }
 
-const AudioPlayer = ({ transcriptionId }: { transcriptionId: string }) => {
+const AudioPlayer = ({
+  transcriptionId,
+}: {
+  transcriptionId: string
+}) => {
   const { data: recordings } = useQuery({
     ...getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions(
       { path: { transcription_id: transcriptionId } }
@@ -257,15 +298,5 @@ const AudioPlayer = ({ transcriptionId }: { transcriptionId: string }) => {
   if (!recordings || recordings.length == 0) {
     return null
   }
-  return (
-    <div>
-      <audio controls src={recordings[0].url} className="w-full" />
-      <div className="govuk-button-group govuk-!-margin-top-2">
-        <DownloadButton recordings={recordings} />
-        <Link href="/transcriptions/" className="govuk-button">
-          Back to transcriptions
-        </Link>
-      </div>
-    </div>
-  )
+  return <audio controls src={recordings[0].url} className="w-full" />
 }

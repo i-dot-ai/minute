@@ -14,7 +14,7 @@ import Fuse from 'fuse.js'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Search } from 'lucide-react'
+import { FileText, Search } from 'lucide-react'
 
 const PAGE_SIZE = 20
 
@@ -323,9 +323,33 @@ export const TemplatesTable = () => {
           ) : isError ? (
             <p className="govuk-body">Error loading templates</p>
           ) : filteredRows.length === 0 ? (
-            <p className="govuk-body" role="status">
-              No templates found
-            </p>
+            <div className="govuk-!-margin-top-9 flex flex-col items-center justify-center gap-2">
+              {search ? (
+                <>
+                  <p className="govuk-body">
+                    No templates found for <strong>{search}</strong>
+                  </p>
+                </>
+              ) : typeFilter !== 'all' ? (
+                <>
+                  <p className="govuk-body">No templates match that filter</p>
+                  <p className="govuk-body">
+                    Change or clear the filter to see the full list
+                  </p>
+                  <Link
+                    href={pathname + buildQueryString({ typeFilter: 'all' })}
+                    className="govuk-button govuk-button--secondary"
+                  >
+                    Clear filter
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <FileText className="size-10 text-[#cecece]" />
+                  No templates found
+                </>
+              )}
+            </div>
           ) : (
             <>
               <TemplatesList

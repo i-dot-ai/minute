@@ -2,13 +2,11 @@
 
 import { GenerateSummaryDialog } from '@/components/audio/generate-summary-dialog'
 import { TranscriptionForm } from '@/components/audio/types'
-import {
-  createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
-  listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
-} from '@/lib/client/@tanstack/react-query.gen'
+import { createTranscriptionTranscriptionsPostMutation } from '@/lib/client/@tanstack/react-query.gen'
 import { useDefaultTemplate } from '@/hooks/useDefaultTemplate'
 import { Template } from '@/types/templates'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
@@ -21,22 +19,17 @@ const GENERAL_TEMPLATE: Template = {
   id: null,
 }
 
-export function NewMinuteDialog({
-  transcriptionId,
+export function RetryTranscriptionDialog({
+  recordingId,
   agenda,
-  disabled,
-  onCreated,
-  buttonLabel = 'New summary',
-  buttonClassName = 'govuk-button govuk-button--secondary govuk-!-font-size-16 govuk-!-margin-bottom-0 govuk-!-margin-top-2',
+  title,
 }: {
-  transcriptionId: string
+  recordingId: string
   agenda?: string
-  disabled?: boolean
-  onCreated?: () => void
-  buttonLabel?: string
-  buttonClassName?: string
+  title?: string
 }) {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
   const defaultTemplate = useDefaultTemplate()
   const form = useForm<TranscriptionForm>({
     defaultValues: {
@@ -54,7 +47,6 @@ export function NewMinuteDialog({
       })
     }
   }, [agenda, form, open, defaultTemplate])
-  const queryClient = useQueryClient()
 
   const selectedTemplate = form.watch('template')
   const agendaValue = form.watch('agenda')
@@ -62,33 +54,29 @@ export function NewMinuteDialog({
     typeof selectedTemplate !== 'string' &&
     selectedTemplate?.agenda_usage === 'required'
 
-  const { mutate: createMinute, isPending } = useMutation({
-    ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
+  const { mutate: createTranscription, isPending } = useMutation({
+    ...createTranscriptionTranscriptionsPostMutation(),
   })
 
   const onSubmit = ({ template, agenda }: TranscriptionForm) => {
-    createMinute(
+    createTranscription(
       {
-        path: { transcription_id: transcriptionId },
         body: {
+          recording_id: recordingId,
           template_name: template.name,
           template_id: template.id,
           agenda: template.agenda_usage != 'not_used' ? agenda : undefined,
+          title,
         },
       },
       {
-        async onSuccess() {
-          await queryClient.invalidateQueries({
-            queryKey:
-              listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey(
-                { path: { transcription_id: transcriptionId } }
-              ),
-          })
-          posthog.capture('generate_ai_minutes_started', {
-            style: !!template.id ? 'User generated' : template.name,
+        onSuccess(transcription) {
+          posthog.capture('transcription_started', {
+            file_type: '',
+            source: 'retry',
           })
           setOpen(false)
-          onCreated?.()
+          router.push(`/new/status/${transcription.id}`)
         },
       }
     )
@@ -98,11 +86,10 @@ export function NewMinuteDialog({
     <>
       <button
         type="button"
-        className={buttonClassName}
-        disabled={disabled}
+        className="govuk-button"
         onClick={() => setOpen(true)}
       >
-        {buttonLabel}
+        Try again
       </button>
       <FormProvider {...form}>
         <GenerateSummaryDialog

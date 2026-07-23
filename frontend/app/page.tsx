@@ -203,7 +203,7 @@ export default function Home() {
                         </ol>
                       </div>
                     )}
-                    <div className="govuk-form-group govuk-!-margin-top-7 flex items-center gap-2 govuk-!-margin-bottom-6">
+                    <div className="govuk-form-group govuk-!-margin-top-7 govuk-!-margin-bottom-6 flex items-center gap-2">
                       <label className="govuk-label" htmlFor="microphone">
                         Select microphone:
                       </label>
@@ -229,15 +229,18 @@ export default function Home() {
                     </div>
 
                     {micDenied && (
-                      <div className="govuk-error-summary" data-module="govuk-error-summary">
+                      <div
+                        className="govuk-error-summary"
+                        data-module="govuk-error-summary"
+                      >
                         <div role="alert">
                           <h2 className="govuk-error-summary__title">
                             There is a problem
                           </h2>
                           <div className="govuk-error-summary__body">
                             <p className="govuk-error-message">
-                              Microphone access has not been given. Please enable
-                              it in your browser settings and try again.
+                              Microphone access has not been given. Please
+                              enable it in your browser settings and try again.
                             </p>
                           </div>
                         </div>

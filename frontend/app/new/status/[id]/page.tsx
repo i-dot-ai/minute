@@ -7,6 +7,8 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { DownloadButton } from '@/components/download-button'
+import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
+import { RetryTranscriptionDialog } from '@/components/audio/retry-transcription-dialog'
 import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, Check, RefreshCw, X } from 'lucide-react'
@@ -27,7 +29,7 @@ export default function RecordStatusPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-      GENERATING_STATUSES.includes(query.state.data.status)
+        GENERATING_STATUSES.includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -52,7 +54,7 @@ export default function RecordStatusPage({
     enabled: !!minuteId && transcriptionDone,
     refetchInterval: (query) =>
       query.state.data?.[0]?.status &&
-      GENERATING_STATUSES.includes(query.state.data[0].status)
+        GENERATING_STATUSES.includes(query.state.data[0].status)
         ? 2000
         : false,
   })
@@ -171,12 +173,21 @@ export default function RecordStatusPage({
                 </div>
               </>
             ) : isFailed ? (
-              <div className="inline-flex items-center gap-2">
-                <X className="size-4 text-(--govuk-error-colour)" />
-                <h2 className="govuk-heading-m govuk-!-margin-bottom-0">
-                  Failed to process
-                </h2>
-              </div>
+              <>
+                <div className="inline-flex items-center gap-2 govuk-!-margin-bottom-4">
+                  <X className="size-4 text-(--govuk-error-colour)" />
+                  <h2 className="govuk-heading-m govuk-!-margin-bottom-0">
+                    Failed to process
+                  </h2>
+                </div>
+                <p className="govuk-body">
+                  The recording is safe — only the transcription failed. Try again, or view the details of what happened.
+                </p>
+
+                <p className="govuk-body">
+                  If it continues to fail, <Link href="/support" className="govuk-link">contact support</Link>.
+                </p>
+              </>
             ) : (
               <>
                 <div className="inline-flex items-center gap-2">
@@ -186,15 +197,6 @@ export default function RecordStatusPage({
                   </h2>
                 </div>
                 <p className="govuk-body govuk-!-margin-top-3">
-                  {/* {meetingLength} -{' '}
-                  {new Date(transcription.created_datetime).toLocaleString(
-                    'en-GB',
-                    {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    }
-                  )} */}
                   View and edit the transcription and summary at any time.
                 </p>
               </>
@@ -202,9 +204,30 @@ export default function RecordStatusPage({
             <div className="govuk-button-group govuk-!-margin-top-6">
               {!isProcessing &&
                 (isFailed ? (
-                  <Link href={`/transcriptions/${id}`} className="govuk-button">
-                    View details
-                  </Link>
+                  <>
+                    {transcriptionDone ? (
+                      <NewMinuteDialog
+                        transcriptionId={id}
+                        agenda={minutes[0]?.agenda ?? undefined}
+                        buttonLabel="Try again"
+                        buttonClassName="govuk-button"
+                      />
+                    ) : (
+                      recordings[0] && (
+                        <RetryTranscriptionDialog
+                          recordingId={recordings[0].id}
+                          agenda={minutes[0]?.agenda ?? undefined}
+                          title={transcription.title ?? undefined}
+                        />
+                      )
+                    )}
+                    <Link
+                      href={`/transcriptions/${id}`}
+                      className="govuk-button govuk-button--secondary"
+                    >
+                      View details
+                    </Link>
+                  </>
                 ) : (
                   <Link href={`/transcriptions/${id}`} className="govuk-button">
                     View transcription

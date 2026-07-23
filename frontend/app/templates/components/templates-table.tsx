@@ -293,7 +293,14 @@ export const TemplatesTable = () => {
               className="govuk-body govuk-!-margin-bottom-0 flex-1"
               role="status"
             >
-              Showing {startNumber} to {endNumber} of {totalCount}
+              {totalCount > 0 ? (
+                <>
+                  Showing {startNumber} to {endNumber} of {totalCount}
+                </>
+              ) : (
+                <>Showing 0 of 0 templates</>
+              )}
+
               {search.trim() && (
                 <span className="govuk-visually-hidden">
                   {` results for “${search.trim()}”`}

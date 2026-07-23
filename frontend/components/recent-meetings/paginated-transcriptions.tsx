@@ -82,14 +82,14 @@ export const PaginatedTranscriptions = () => {
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
     router.replace(
       pathname +
-      buildQueryString(paginatedResponse.total_pages, filterBy, search)
+        buildQueryString(paginatedResponse.total_pages, filterBy, search)
     )
   }
   const transcriptions =
     filterBy === 'incomplete' ? [] : paginatedResponse?.items || []
   const visibleOfflineRecordings =
     !search &&
-      (filterBy === 'incomplete' || (filterBy === 'all' && currentPage === 1))
+    (filterBy === 'incomplete' || (filterBy === 'all' && currentPage === 1))
       ? offlineRecordings
       : []
   const totalPages = paginatedResponse?.total_pages || 1
@@ -208,33 +208,36 @@ export const PaginatedTranscriptions = () => {
           />
         </form>
       </div>
-      <details className="govuk-details">
-        <summary className="govuk-details__summary">
-          <span className="govuk-details__summary-text">
-            Why are some recordings marked &quot;Not uploaded&quot;?
-          </span>
-        </summary>
-        <div className="govuk-details__text">
-          <p className="govuk-body">
-            These recordings are stored <strong> only in this browser</strong> —
-            usually because the connection dropped before they finished
-            uploading. They are not yet saved to your account and will be lost
-            if this browser&apos;s data is cleared.
-          </p>
-          <p className="govuk-body">
-            <strong>Upload</strong> saves a recording to your account and starts
-            its transcription. <strong>Delete</strong> removes it permanently.
-          </p>
-          <p className="govuk-body">
-            <strong>Uplaod failed</strong> means that retrying the upload failed
-            again. Please{' '}
-            <Link href="/support" className="govuk-link">
-              contact support
-            </Link>{' '}
-            if the problem persists.
-          </p>
-        </div>
-      </details>
+      {visibleOfflineRecordings.length > 0 && (
+        <details className="govuk-details">
+          <summary className="govuk-details__summary">
+            <span className="govuk-details__summary-text">
+              Why are some recordings marked &quot;Not uploaded&quot;?
+            </span>
+          </summary>
+          <div className="govuk-details__text">
+            <p className="govuk-body">
+              These recordings are stored <strong> only in this browser</strong>{' '}
+              — usually because the connection dropped before they finished
+              uploading. They are not yet saved to your account and will be lost
+              if this browser&apos;s data is cleared.
+            </p>
+            <p className="govuk-body">
+              <strong>Upload</strong> saves a recording to your account and
+              starts its transcription. <strong>Delete</strong> removes it
+              permanently.
+            </p>
+            <p className="govuk-body">
+              <strong>Uplaod failed</strong> means that retrying the upload
+              failed again. Please{' '}
+              <Link href="/support" className="govuk-link">
+                contact support
+              </Link>{' '}
+              if the problem persists.
+            </p>
+          </div>
+        </details>
+      )}
       <div className="govuk-!-margin-bottom-1 flex items-center justify-between">
         <div className="flex flex-1 items-center gap-2">
           <div
@@ -278,12 +281,18 @@ export const PaginatedTranscriptions = () => {
             <>Showing {visibleOfflineRecordings.length} incomplete recordings</>
           ) : (
             <>
-              Showing {resultsStarting} to {resultsEnding} of{' '}
-              {combinedTotalCount}
-              {search && (
-                <span className="govuk-visually-hidden">
-                  {` results for “${search}”`}
-                </span>
+              {combinedTotalCount > 0 ? (
+                <>
+                  Showing {resultsStarting} to {resultsEnding} of{' '}
+                  {combinedTotalCount}
+                  {search && (
+                    <span className="govuk-visually-hidden">
+                      {` results for “${search}”`}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>Showing 0 of 0 transcriptions</>
               )}
             </>
           )}

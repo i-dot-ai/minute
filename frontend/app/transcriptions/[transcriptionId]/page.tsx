@@ -25,7 +25,7 @@ export default function TranscriptionPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-        ['awaiting_start', 'in_progress'].includes(query.state.data.status)
+      ['awaiting_start', 'in_progress'].includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -285,11 +285,7 @@ export default function TranscriptionPage({
   )
 }
 
-const AudioPlayer = ({
-  transcriptionId,
-}: {
-  transcriptionId: string
-}) => {
+const AudioPlayer = ({ transcriptionId }: { transcriptionId: string }) => {
   const { data: recordings } = useQuery({
     ...getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions(
       { path: { transcription_id: transcriptionId } }

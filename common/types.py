@@ -127,9 +127,13 @@ class MinuteListItem(BaseModel):
 
 
 class MinutesCreateRequest(BaseModel):
-    template_name: str = Field(description="Name of the template to use for the minutes")
-    template_id: uuid.UUID | None = Field(description="Optional id of user template")
+    template_name: str | None = Field(description="Name of the template to use for the minutes", default=None)
+    template_id: uuid.UUID | None = Field(description="Optional id of user template", default=None)
     agenda: str | None = Field(description="The agenda for the meeting", default=None)
+    source_minute_id: uuid.UUID | None = Field(
+        description="If set, copy template_name, user_template_id and agenda from this minute",
+        default=None,
+    )
 
 
 class AiEdit(BaseModel):

@@ -278,7 +278,8 @@ export const PaginatedTranscriptions = () => {
         <p className="govuk-body" role="status">
           Error loading transcriptions
         </p>
-      ) : transcriptions.length === 0 && visibleOfflineRecordings.length === 0 ? (
+      ) : transcriptions.length === 0 &&
+        visibleOfflineRecordings.length === 0 ? (
         <p className="govuk-body" role="status">
           {filterBy === 'incomplete'
             ? 'No incomplete recordings found'

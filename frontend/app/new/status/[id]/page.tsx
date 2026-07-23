@@ -27,7 +27,7 @@ export default function RecordStatusPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-        GENERATING_STATUSES.includes(query.state.data.status)
+      GENERATING_STATUSES.includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -52,7 +52,7 @@ export default function RecordStatusPage({
     enabled: !!minuteId && transcriptionDone,
     refetchInterval: (query) =>
       query.state.data?.[0]?.status &&
-        GENERATING_STATUSES.includes(query.state.data[0].status)
+      GENERATING_STATUSES.includes(query.state.data[0].status)
         ? 2000
         : false,
   })

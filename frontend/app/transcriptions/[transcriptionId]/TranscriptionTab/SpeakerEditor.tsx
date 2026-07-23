@@ -9,11 +9,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { useGenerateSummaryFromMinute } from '@/hooks/use-generate-summary-from-minute'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import { DialogueEntry, Transcription } from '@/lib/client'
-import { Pause, Play, User } from 'lucide-react'
+import { listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+import { useQuery } from '@tanstack/react-query'
+import { Loader2, Pause, Play, User } from 'lucide-react'
+import { toast } from 'sonner'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
+
+export type SpeakerRenames = Record<string, string>
+
+export const applySpeakerRenames = (
+  entries: DialogueEntry[],
+  renames: SpeakerRenames
+): DialogueEntry[] =>
+  entries.map((entry) => {
+    const trimmed = renames[entry.speaker]?.trim()
+    return trimmed && trimmed !== entry.speaker
+      ? { ...entry, speaker: trimmed }
+      : entry
+  })
 
 export const SpeakerEditor = ({
   transcription,
@@ -25,12 +42,142 @@ export const SpeakerEditor = ({
   onSaved?: (data: DialogueEntryForm) => void
 }) => {
   const { saveTranscription } = useSaveTranscription(transcription.id!)
+  const { generateSummary, isGenerating } = useGenerateSummaryFromMinute(
+    transcription.id!
+  )
+  const { data: minutes = [] } = useQuery({
+    ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(
+      { path: { transcription_id: transcription.id! } }
+    ),
+  })
 
   const form = useFormContext<DialogueEntryForm>()
   const entries = form.watch('entries')
   const fieldArray = useFieldArray({ control: form.control, name: 'entries' })
   const [open, setOpen] = useState(false)
-  const [draftNames, setDraftNames] = useState<Record<string, string>>({})
+  const [isSaving, setIsSaving] = useState(false)
+
+  const latestMinuteId = useMemo(
+    () =>
+      minutes.length
+        ? minutes.reduce((latest, minute) =>
+            new Date(minute.created_datetime) >
+            new Date(latest.created_datetime)
+              ? minute
+              : latest
+          ).id
+        : null,
+    [minutes]
+  )
+
+  const handleSave = useCallback(
+    (renames: SpeakerRenames, generateNewSummary: boolean) => {
+      Object.entries(renames).forEach(([originalSpeaker, newSpeaker]) => {
+        const trimmed = newSpeaker.trim()
+        if (!trimmed || trimmed === originalSpeaker) return
+
+        form
+          .getValues('entries')
+          .map((e, i) => ({
+            ...e,
+            i,
+          }))
+          .filter((e) => e.speaker === originalSpeaker)
+          .forEach(({ i, ...entry }) => {
+            fieldArray.update(i, { ...entry, speaker: trimmed })
+          })
+      })
+      form.handleSubmit(async (data) => {
+        setIsSaving(true)
+        try {
+          await saveTranscription(data)
+          if (generateNewSummary) {
+            await generateSummary(latestMinuteId)
+            toast.success('New summary is being generated')
+          }
+          setOpen(false)
+          onSaved?.(data)
+        } catch {
+          // keep dialog open so changes are not lost
+        } finally {
+          setIsSaving(false)
+        }
+      })()
+    },
+    [
+      fieldArray,
+      form,
+      generateSummary,
+      latestMinuteId,
+      onSaved,
+      saveTranscription,
+    ]
+  )
+
+  return (
+    <SpeakerEditorDialog
+      entries={entries ?? []}
+      src={src}
+      open={open}
+      onOpenChange={setOpen}
+      isBusy={isSaving || isGenerating}
+      onSaveTranscriptOnly={(renames) => handleSave(renames, false)}
+      onSaveAndGenerate={(renames) => handleSave(renames, true)}
+      trigger={
+        <DialogTrigger asChild>
+          <button
+            type="button"
+            className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+          >
+            <User className="size-4" />
+            Edit speaker names
+          </button>
+        </DialogTrigger>
+      }
+    />
+  )
+}
+
+export const SpeakerEditorDialog = ({
+  entries,
+  src,
+  open,
+  onOpenChange,
+  description,
+  isBusy,
+  onSaveTranscriptOnly,
+  onSaveAndGenerate,
+  cancelLabel = 'Cancel',
+  trigger,
+}: {
+  entries: DialogueEntry[]
+  src?: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  description?: string
+  isBusy: boolean
+  onSaveTranscriptOnly?: (renames: SpeakerRenames) => void
+  onSaveAndGenerate: (renames: SpeakerRenames) => void
+  cancelLabel?: string
+  trigger?: React.ReactNode
+}) => {
+  const [draftNames, setDraftNames] = useState<SpeakerRenames>({})
+
+  // Reset drafts whenever the dialog opens, whether via the trigger or an
+  // external `open` state change
+  const prevOpen = useRef(false)
+  useEffect(() => {
+    if (open && !prevOpen.current) {
+      const names: Record<string, string> = {}
+      entries?.forEach((entry) => {
+        if (!(entry.speaker in names)) {
+          names[entry.speaker] = entry.speaker
+        }
+      })
+      setDraftNames(names)
+    }
+    prevOpen.current = open
+  }, [entries, open])
 
   const speakers = useMemo(() => {
     const speakerMap: Map<string, DialogueEntry[]> = new Map<
@@ -46,73 +193,22 @@ export const SpeakerEditor = ({
     return speakerMap
   }, [entries])
 
-  const handleOpenChange = useCallback(
-    (nextOpen: boolean) => {
-      if (nextOpen) {
-        const names: Record<string, string> = {}
-        entries?.forEach((entry) => {
-          if (!(entry.speaker in names)) {
-            names[entry.speaker] = entry.speaker
-          }
-        })
-        setDraftNames(names)
-      }
-      setOpen(nextOpen)
-    },
-    [entries]
-  )
-
-  const handleSaveAll = useCallback(() => {
-    Object.entries(draftNames).forEach(([originalSpeaker, newSpeaker]) => {
-      const trimmed = newSpeaker.trim()
-      if (!trimmed || trimmed === originalSpeaker) return
-
-      form
-        .getValues('entries')
-        .map((e, i) => ({
-          ...e,
-          i,
-        }))
-        .filter((e) => e.speaker === originalSpeaker)
-        .forEach(({ i, ...entry }) => {
-          fieldArray.update(i, { ...entry, speaker: trimmed })
-        })
-    })
-    form.handleSubmit(async (data) => {
-      try {
-        await saveTranscription(data)
-        setOpen(false)
-        onSaved?.(data)
-      } catch {
-        // keep dialog open so changes are not lost
-      }
-    })()
-  }, [draftNames, fieldArray, form, onSaved, saveTranscription])
-
   const handleCancel = useCallback(() => {
-    setOpen(false)
-  }, [])
+    onOpenChange(false)
+  }, [onOpenChange])
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <button
-          type="button"
-          className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
-        >
-          <User className="size-4" />
-          Edit all speaker names
-        </button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {trigger}
       <DialogContent>
-        <DialogTitle className="govuk-heading-m">
-          Edit all speaker names
+        <DialogTitle className="govuk-heading-m govuk-!-margin-bottom-0">
+          Edit speaker names
         </DialogTitle>
         <DialogDescription className="govuk-body govuk-!-margin-bottom-0">
-          This will not update existing summaries, generate a new summary to see
-          the changes reflected.
+          {description ??
+            'Choose whether to save the transcript only or save and create a new summary.'}
         </DialogDescription>
-        <div className="max-h-[50vh] overflow-x-hidden overflow-y-auto">
+        <div className="govuk-!-padding-1 max-h-[50vh] overflow-x-hidden overflow-y-auto">
           <ul>
             {Array.from(speakers.entries()).map(
               ([speaker, speakerEntries], index) => (
@@ -147,15 +243,28 @@ export const SpeakerEditor = ({
             type="button"
             className="govuk-button govuk-button--secondary"
             onClick={handleCancel}
+            disabled={isBusy}
           >
-            Cancel
+            {cancelLabel}
           </button>
+          {onSaveTranscriptOnly && (
+            <button
+              type="button"
+              className="govuk-button govuk-button--secondary"
+              onClick={() => onSaveTranscriptOnly(draftNames)}
+              disabled={isBusy}
+            >
+              Save transcript only
+            </button>
+          )}
           <button
             type="button"
             className="govuk-button"
-            onClick={handleSaveAll}
+            onClick={() => onSaveAndGenerate(draftNames)}
+            disabled={isBusy}
           >
-            Save all
+            {isBusy && <Loader2 className="size-4 animate-spin" />}
+            Save and create new summary
           </button>
         </div>
       </DialogContent>
@@ -181,7 +290,7 @@ const SpeakerNameField = ({
       </label>
     </div>
     <input
-      className="govuk-input"
+      className="govuk-input bg-white"
       id={inputId}
       name={inputId}
       type="text"

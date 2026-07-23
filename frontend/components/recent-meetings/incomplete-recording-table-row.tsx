@@ -13,7 +13,6 @@ import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useMemo, useState } from 'react'
 import { FormProvider } from 'react-hook-form'
-import { DownloadIcon, UploadIcon } from 'lucide-react'
 
 export const IncompleteRecordingTableRow = ({
   recording,
@@ -51,7 +50,7 @@ export const IncompleteRecordingTableRow = ({
     <tr className="govuk-table__row bg-[#f4d7d7] has-[:checked]:bg-[#f4f8fb]">
       <td className="govuk-table__cell govuk-!-padding-left-1">
         <div
-          className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle flex relative"
+          className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"
           data-module="govuk-checkboxes"
         >
           <input
@@ -75,7 +74,7 @@ export const IncompleteRecordingTableRow = ({
           </label>
         </div>
       </td>
-      <td className="govuk-table__cell w-full govuk-!-padding-right-4">
+      <td className="govuk-table__cell govuk-!-padding-right-4 w-full">
         <div className="flex items-center justify-between gap-2">
           <span>Incomplete recording</span>
           <audio src={url} controls className="max-h-10 w-52" />

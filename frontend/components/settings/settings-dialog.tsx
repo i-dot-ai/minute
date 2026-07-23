@@ -82,7 +82,9 @@ export function SettingsDialog({ user }: { user: GetUserResponse }) {
         </button>
       </DialogTrigger>
       <DialogContent>
-        <DialogTitle className="govuk-heading-l">Data retention period</DialogTitle>
+        <DialogTitle className="govuk-heading-l">
+          Data retention period
+        </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="govuk-form-group">
             <fieldset

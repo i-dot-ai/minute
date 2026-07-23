@@ -49,9 +49,9 @@ function TranscriptionTableRow({
   return (
     <tr className="govuk-table__row hover:bg-[#f4f8fb] has-[:checked]:bg-[#f4f8fb]">
       <td className="govuk-table__cell">
-        <div className="flex items-center gap-2 govuk-!-padding-left-1">
+        <div className="govuk-!-padding-left-1 flex items-center gap-2">
           <div
-            className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle flex relative"
+            className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"
             data-module="govuk-checkboxes"
           >
             <input
@@ -120,7 +120,7 @@ function TranscriptionTableRow({
         )}
       </td>
       <td className="govuk-table__cell whitespace-nowrap">
-        <div className="flex items-center gap-2 justify-end">
+        <div className="flex items-center justify-end gap-2">
           <RenameButton
             displayTitle={displayTitle}
             disabled={editing || isPending}
@@ -163,11 +163,7 @@ export function TranscriptionsList({
           </th>
           <th scope="col" className="govuk-table__header">
             Title
-            {
-              offlineRecordings.length > 0 && (
-                <>{' '}and audio</>
-              )
-            }
+            {offlineRecordings.length > 0 && <> and audio</>}
           </th>
           <th scope="col" className="govuk-table__header">
             Date

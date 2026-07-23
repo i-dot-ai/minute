@@ -1,12 +1,7 @@
 'use client'
 import { GuardedLink } from '@/components/navigation/guarded-link'
 import { usePathname } from 'next/navigation'
-import {
-  Bookmark,
-  LayoutPanelTop,
-  Mic
-} from 'lucide-react'
-import { useState } from 'react'
+import { Bookmark, LayoutPanelTop, Mic } from 'lucide-react'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
@@ -19,7 +14,7 @@ export const ServiceNavigation = () => {
       className="flex h-full shrink-0 flex-col bg-(--govuk-surface-background-colour)"
     >
       <nav aria-label="Menu" className="flex h-full flex-col justify-between">
-        <ul className="flex flex-col w-24" id="navigation">
+        <ul className="flex w-24 flex-col" id="navigation">
           <li
             className={`govuk-service-navigation__item govuk-!-margin-right-3 w-full !border-l-4 !border-transparent ${pathname === '/' || pathname.includes('/new') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
           >
@@ -30,7 +25,7 @@ export const ServiceNavigation = () => {
                   ? 'page'
                   : undefined
               }
-              className={`govuk-service-navigation__link text-[0.875rem] flex flex-col items-center ${pathname === '/' || pathname.includes('/new') ? '!text-(--govuk-text-colour)' : ''}`}
+              className={`govuk-service-navigation__link flex flex-col items-center text-[0.875rem] ${pathname === '/' || pathname.includes('/new') ? '!text-(--govuk-text-colour)' : ''}`}
             >
               <Mic className="size-5" />
               Record
@@ -43,7 +38,7 @@ export const ServiceNavigation = () => {
               aria-current={
                 pathname.includes('/transcriptions') ? 'page' : undefined
               }
-              className={`govuk-service-navigation__link  text-[0.875rem] flex flex-col items-center ${pathname.includes('/transcriptions') ? '!text-(--govuk-text-colour)' : ''}`}
+              className={`govuk-service-navigation__link flex flex-col items-center text-[0.875rem] ${pathname.includes('/transcriptions') ? '!text-(--govuk-text-colour)' : ''}`}
               href="/transcriptions"
               data-onboarding="saved-transcriptions-nav"
             >
@@ -58,7 +53,7 @@ export const ServiceNavigation = () => {
               aria-current={
                 pathname.includes('/templates') ? 'page' : undefined
               }
-              className={`govuk-service-navigation__link  text-[0.875rem] flex  flex-col items-center ${pathname.includes('/templates') ? '!text-(--govuk-text-colour)' : ''}`}
+              className={`govuk-service-navigation__link flex flex-col items-center text-[0.875rem] ${pathname.includes('/templates') ? '!text-(--govuk-text-colour)' : ''}`}
               href="/templates"
               data-onboarding="templates-nav"
             >
@@ -91,7 +86,7 @@ export const ServiceNavigation = () => {
                 aria-current={
                   pathname.includes('/privacy') ? 'page' : undefined
                 }
-                className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link  text-[0.875rem] flex flex-col items-center !text-[#484949]"
+                className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link flex flex-col items-center text-[0.875rem] !text-[#484949]"
                 href="/privacy"
               >
                 {/* <ShieldCheck className="size-5" /> */}
@@ -105,7 +100,7 @@ export const ServiceNavigation = () => {
                 aria-current={
                   pathname.includes('/support') ? 'page' : undefined
                 }
-                className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link  text-[0.875rem] flex flex-col items-center !text-[#484949]"
+                className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link flex flex-col items-center text-[0.875rem] !text-[#484949]"
                 href="/support"
               >
                 {/* <Mail className="size-5" /> */}

@@ -417,17 +417,22 @@ export type MinutesCreateRequest = {
    * Template Name
    * Name of the template to use for the minutes
    */
-  template_name: string
+  template_name?: string | null
   /**
    * Template Id
    * Optional id of user template
    */
-  template_id: string | null
+  template_id?: string | null
   /**
    * Agenda
    * The agenda for the meeting
    */
   agenda?: string | null
+  /**
+   * Source Minute Id
+   * If set, copy template_name, user_template_id and agenda from this minute
+   */
+  source_minute_id?: string | null
 }
 
 /**
@@ -1179,8 +1184,11 @@ export type CreateMinuteTranscriptionTranscriptionIdMinutesPostResponses = {
   /**
    * Successful Response
    */
-  200: unknown
+  200: MinuteListItem
 }
+
+export type CreateMinuteTranscriptionTranscriptionIdMinutesPostResponse =
+  CreateMinuteTranscriptionTranscriptionIdMinutesPostResponses[keyof CreateMinuteTranscriptionTranscriptionIdMinutesPostResponses]
 
 export type GetMinuteMinutesMinutesIdGetData = {
   body?: never

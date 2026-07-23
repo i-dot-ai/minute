@@ -1,7 +1,6 @@
 'use client'
 
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
-import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,

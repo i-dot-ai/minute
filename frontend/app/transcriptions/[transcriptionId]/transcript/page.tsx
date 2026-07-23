@@ -232,7 +232,7 @@ export default function TranscriptPage({
                 <audio
                   controls
                   src={recordings[0].url}
-                  className="govuk-!-margin-left-4 govuk-!-margin-right-4 hidden flex-1 xl:block max-h-11"
+                  className="govuk-!-margin-left-4 govuk-!-margin-right-4 hidden max-h-11 flex-1 xl:block"
                   ref={registerAudio}
                   {...audioHandlers}
                 />
@@ -288,7 +288,7 @@ export default function TranscriptPage({
                 <audio
                   controls
                   src={recordings[0].url}
-                  className="w-full max-h-11"
+                  className="max-h-11 w-full"
                   ref={registerAudio}
                   {...audioHandlers}
                 />
@@ -296,7 +296,7 @@ export default function TranscriptPage({
                   <button
                     type="button"
                     onClick={scrollToPlaying}
-                    className="govuk-button govuk-button--secondary whitespace-nowrap govuk-!-margin-bottom-0"
+                    className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 whitespace-nowrap"
                   >
                     <ArrowDown className="size-4" /> Scroll to current section
                   </button>

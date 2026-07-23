@@ -8,14 +8,23 @@ import {
 } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
 import { DeleteMinuteButton } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/delete-minute-button'
 import { ExportSummaryDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/ExportSummaryDialog'
-import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
 import {
+  applySpeakerRenames,
+  SpeakerEditorDialog,
+  SpeakerRenames,
+} from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerEditor'
+import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
+import { useGenerateSummaryFromMinute } from '@/hooks/use-generate-summary-from-minute'
+import { useSaveTranscription } from '@/hooks/use-save-transcription'
+import {
+  getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
-import { Eye, EyeOffIcon, Loader2, PencilIcon, Save } from 'lucide-react'
+import { Eye, EyeOffIcon, Loader2, PencilIcon, Save, User } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 
 export default function SummaryPage({
@@ -37,9 +46,22 @@ export default function SummaryPage({
     ),
   })
 
+  const { data: recordings } = useQuery({
+    ...getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions(
+      { path: { transcription_id: transcriptionId } }
+    ),
+  })
+
   const [exportState, setExportState] = useState<MinuteExportState | null>(null)
   const [editState, setEditState] = useState<MinuteEditState | null>(null)
   const [draftTitle, setDraftTitle] = useState('')
+  const [speakerEditorOpen, setSpeakerEditorOpen] = useState(false)
+  const [isSavingSpeakers, setIsSavingSpeakers] = useState(false)
+
+  const router = useRouter()
+  const { saveTranscription } = useSaveTranscription(transcriptionId)
+  const { generateSummary, isGenerating } =
+    useGenerateSummaryFromMinute(transcriptionId)
 
   const { save: saveTitle } = useRenameTranscription({
     id: transcriptionId,
@@ -62,6 +84,35 @@ export default function SummaryPage({
     setDraftTitle(transcription?.title ?? '')
     editState?.onCancel()
   }, [editState, transcription?.title])
+
+  const handleSaveSpeakersAndGenerate = useCallback(
+    async (renames: SpeakerRenames) => {
+      if (!transcription?.dialogue_entries) return
+      setIsSavingSpeakers(true)
+      try {
+        await saveTranscription({
+          entries: applySpeakerRenames(transcription.dialogue_entries, renames),
+        })
+        const newMinute = await generateSummary(minuteId)
+        setSpeakerEditorOpen(false)
+        router.push(
+          `/transcriptions/${transcriptionId}/summary/${newMinute.id}`
+        )
+      } catch {
+        // keep dialog open so changes are not lost
+      } finally {
+        setIsSavingSpeakers(false)
+      }
+    },
+    [
+      generateSummary,
+      minuteId,
+      router,
+      saveTranscription,
+      transcription?.dialogue_entries,
+      transcriptionId,
+    ]
+  )
 
   if (isLoading) {
     return (
@@ -194,6 +245,24 @@ export default function SummaryPage({
                 </select>
               </div>
               <div className="govuk-button-group !items-end">
+                <button
+                  type="button"
+                  className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                  onClick={() => setSpeakerEditorOpen(true)}
+                >
+                  <User className="size-4" />
+                  Edit all speaker names
+                </button>
+                <SpeakerEditorDialog
+                  entries={transcription.dialogue_entries ?? []}
+                  src={recordings?.length ? recordings[0].url : undefined}
+                  open={speakerEditorOpen}
+                  onOpenChange={setSpeakerEditorOpen}
+                  description="This will update the transcript and generate a new summary using this summary's template."
+                  isBusy={isSavingSpeakers || isGenerating}
+                  onSaveAndGenerate={handleSaveSpeakersAndGenerate}
+                  cancelLabel="Close"
+                />
                 <AiEditPopover
                   minuteId={editState.minuteId}
                   minuteVersionId={editState.minuteVersionId}
@@ -219,10 +288,11 @@ export default function SummaryPage({
         </div>
       </div>
       <div
-        className={`min-h-0 flex-1 overflow-y-auto ${editState?.isEditable
+        className={`min-h-0 flex-1 overflow-y-auto ${
+          editState?.isEditable
             ? 'govuk-!-padding-4 bg-(--govuk-surface-background-colour)'
             : ''
-          }`}
+        }`}
       >
         <div className="govuk-width-container govuk-width-container--with-secondary-nav">
           {editState?.isEditable ? (

@@ -69,20 +69,19 @@ export function DeleteMinuteButton({
             <p className="govuk-body">
               <span className="govuk-!-font-weight-bold">
                 {minute.template_name}
-              </span>
-              {' '}- {new Date(minute.updated_datetime).toLocaleDateString('en-GB', {
+              </span>{' '}
+              -{' '}
+              {new Date(minute.updated_datetime).toLocaleDateString('en-GB', {
                 day: 'numeric',
                 month: 'short',
                 year: 'numeric',
               })}
             </p>
             <p className="govuk-body">
-              Only this summary is removed. The recording, its transcript and any
-              other summaries stay.
+              Only this summary is removed. The recording, its transcript and
+              any other summaries stay.
             </p>
-            <p className="govuk-body">
-              This cannot be undone.
-            </p>
+            <p className="govuk-body">This cannot be undone.</p>
           </AlertDialogDescription>
 
           <AlertDialogFooter className="govuk-button-group sm:justify-end">

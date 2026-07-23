@@ -1,6 +1,5 @@
 'use client'
 
-import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
@@ -46,7 +45,9 @@ export default function SummaryIndexPage({
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
           <h1 className="govuk-heading-m">No summary generated</h1>
-          <p className="govuk-body">Click <strong>New Summary</strong> on the left panel to get started.</p>
+          <p className="govuk-body">
+            Click <strong>New Summary</strong> on the left panel to get started.
+          </p>
         </div>
       </div>
     </div>

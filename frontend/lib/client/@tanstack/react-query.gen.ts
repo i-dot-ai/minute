@@ -67,6 +67,7 @@ import type {
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetData,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostData,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostError,
+  CreateMinuteTranscriptionTranscriptionIdMinutesPostResponse,
   GetMinuteMinutesMinutesIdGetData,
   DeleteMinuteMinutesMinuteIdDeleteData,
   DeleteMinuteMinutesMinuteIdDeleteError,
@@ -637,12 +638,12 @@ export const createMinuteTranscriptionTranscriptionIdMinutesPostMutation = (
     Options<CreateMinuteTranscriptionTranscriptionIdMinutesPostData>
   >
 ): UseMutationOptions<
-  unknown,
+  CreateMinuteTranscriptionTranscriptionIdMinutesPostResponse,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostError,
   Options<CreateMinuteTranscriptionTranscriptionIdMinutesPostData>
 > => {
   const mutationOptions: UseMutationOptions<
-    unknown,
+    CreateMinuteTranscriptionTranscriptionIdMinutesPostResponse,
     CreateMinuteTranscriptionTranscriptionIdMinutesPostError,
     Options<CreateMinuteTranscriptionTranscriptionIdMinutesPostData>
   > = {

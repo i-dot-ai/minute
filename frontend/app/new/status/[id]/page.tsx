@@ -35,16 +35,17 @@ export default function RecordStatusPage({
   const transcriptionStatus = transcription?.status
   const transcriptionDone = transcriptionStatus === 'completed'
 
-  const { data: minutes = [] } = useQuery({
+  const minutesQuery = useQuery({
     ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(
       {
         path: { transcription_id: id },
       }
     ),
   })
+  const minutes = minutesQuery.data ?? []
   const minuteId = minutes[0]?.id
 
-  const { data: minuteVersions = [] } = useQuery({
+  const minuteVersionsQuery = useQuery({
     ...listMinuteVersionsMinutesMinuteIdVersionsGetOptions({
       path: { minute_id: minuteId! },
     }),
@@ -55,7 +56,14 @@ export default function RecordStatusPage({
         ? 2000
         : false,
   })
-  const summaryStatus = minuteVersions[0]?.status
+  const summaryStatus = minuteVersionsQuery.data?.[0]?.status
+
+  // Once transcription completes, the summary state is unknown until the
+  // minutes list and the (just-enabled) versions query have returned; keep
+  // showing the processing state to avoid a flash of "Ready".
+  const summaryStatusPending =
+    transcriptionDone &&
+    (minutesQuery.isLoading || (!!minuteId && minuteVersionsQuery.isLoading))
 
   const { data: recordings = [] } = useQuery({
     ...getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions(
@@ -69,7 +77,8 @@ export default function RecordStatusPage({
     transcriptionStatus === 'in_progress' ||
     transcriptionStatus === 'awaiting_start' ||
     summaryStatus === 'in_progress' ||
-    summaryStatus === 'awaiting_start'
+    summaryStatus === 'awaiting_start' ||
+    summaryStatusPending
   const isFailed =
     transcriptionStatus === 'failed' || summaryStatus === 'failed'
 
@@ -79,24 +88,6 @@ export default function RecordStatusPage({
   useEffect(() => {
     headingRef.current?.focus()
   }, [])
-
-  // const lengthSeconds = transcription?.dialogue_entries?.at(-1)?.end_time
-  // function formatLength(seconds: number): string {
-  //   const totalMinutes = Math.round(seconds / 60)
-  //   if (totalMinutes < 1) {
-  //     return '1 min'
-  //   }
-  //   if (totalMinutes < 60) {
-  //     return `${totalMinutes} ${totalMinutes === 1 ? 'min' : 'mins'}`
-  //   }
-  //   const hours = Math.floor(totalMinutes / 60)
-  //   const minutes = totalMinutes % 60
-  //   const hoursLabel = `${hours} ${hours === 1 ? 'hr' : 'hrs'}`
-  //   if (minutes === 0) return hoursLabel
-  //   return `${hoursLabel} ${minutes} ${minutes === 1 ? 'min' : 'mins'}`
-  // }
-
-  // const meetingLength = lengthSeconds ? formatLength(lengthSeconds) : ''
 
   return (
     <div className="govuk-width-container govuk-!-padding-top-4">

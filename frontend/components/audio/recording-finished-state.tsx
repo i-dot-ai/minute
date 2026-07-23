@@ -17,7 +17,6 @@ export function RecordingFinishedState() {
 
   return (
     <div className="govuk-!-margin-top-4" role="status">
-      <p className="govuk-body">Recording finished</p>
       <div className="govuk-!-padding-5 govuk-!-padding-top-8 govuk-!-margin-top-5 bg-(--govuk-surface-background-colour)">
         <div className="inline-flex items-center gap-2">
           <RefreshCw className="size-4 animate-spin text-(--govuk-text-colour)" />

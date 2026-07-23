@@ -46,17 +46,21 @@ def azure_openai_module(monkeypatch):
 @pytest.mark.asyncio
 async def test_structured_chat_returns_parsed_choice(azure_openai_module, monkeypatch) -> None:
     parsed = House(color="red")
-    response = SimpleNamespace(
-        choices=[SimpleNamespace(finish_reason="stop", message=SimpleNamespace(parsed=parsed))]
-    )
+    response = SimpleNamespace(choices=[SimpleNamespace(finish_reason="stop", message=SimpleNamespace(parsed=parsed))])
     completions = FakeParsedCompletions(response)
     azure_client_calls = []
+    incomplete_checks = []
 
     def fake_azure_client(**kwargs: Any) -> Any:
         azure_client_calls.append(kwargs)
         return SimpleNamespace(beta=SimpleNamespace(chat=SimpleNamespace(completions=completions)))
 
     monkeypatch.setattr(azure_openai_module, "AsyncAzureOpenAI", fake_azure_client)
+    monkeypatch.setattr(
+        azure_openai_module.OpenAIModelAdapter,
+        "choice_incomplete",
+        staticmethod(lambda choice, completion: incomplete_checks.append((choice, completion))),
+    )
 
     adapter = azure_openai_module.OpenAIModelAdapter(
         model="deployment-name",
@@ -80,6 +84,7 @@ async def test_structured_chat_returns_parsed_choice(azure_openai_module, monkey
         }
     ]
     assert result == parsed
+    assert incomplete_checks == [(response.choices[0], response)]
     assert completions.calls == [
         {
             "model": "deployment-name",

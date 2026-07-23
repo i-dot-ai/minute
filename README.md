@@ -36,7 +36,7 @@ This will build and run 5 containers:
 2. Backend api available at http://localhost:8080
 3. Worker service, which process transcriptions and does not have a public facing url
 4. Postgres database hosted at http:localhost:5432
-5. Localstack to simulate AWS SQS
+5. MiniStack to simulate AWS SQS
 
 #### Set up your development environment:
 
@@ -45,6 +45,37 @@ We use dev containers to emulate the cloud environment in which Minute is usuall
 ` docker compose up --watch`
 
 ...will sync local file changes to the docker containers and restart them as appropriate. Note that `docker compose down` will revert the containers to their base state. See [this issue](https://github.com/docker/compose/issues/11102)
+
+#### Networks that inspect HTTPS traffic
+
+If your network intercepts outbound HTTPS (TLS inspection), the containers may fail to verify certificates and log `CERTIFICATE_VERIFY_FAILED` errors. To fix this, provide the containers with a CA bundle that includes your network's root certificate via a local, untracked `docker-compose.override.yaml` (Compose merges it automatically):
+
+```yaml
+services:
+  backend: &ca
+    volumes:
+      - ./certs/host-ca-bundle.pem:/etc/ssl/certs/host-ca-bundle.pem:ro
+    environment:
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/host-ca-bundle.pem
+      - SSL_CERT_FILE=/etc/ssl/certs/host-ca-bundle.pem
+      - AWS_CA_BUNDLE=/etc/ssl/certs/host-ca-bundle.pem
+      - GRPC_DEFAULT_SSL_ROOTS_FILE_PATH=/etc/ssl/certs/host-ca-bundle.pem
+  worker: *ca
+  frontend:
+    volumes:
+      - ./certs/host-ca-bundle.pem:/etc/ssl/certs/host-ca-bundle.pem:ro
+    environment:
+      - NODE_EXTRA_CA_CERTS=/etc/ssl/certs/host-ca-bundle.pem
+```
+
+Place your CA bundle at `certs/host-ca-bundle.pem`. On macOS you can export your machine's trusted roots with:
+
+```sh
+security find-certificate -a -p /System/Library/Keychains/SystemRootCertificates.keychain > certs/host-ca-bundle.pem
+security find-certificate -a -p /Library/Keychains/System.keychain >> certs/host-ca-bundle.pem
+```
+
+`docker-compose.override.yaml` and `certs/` are gitignored, so this stays local to your machine.
 
 ## Project structure
 

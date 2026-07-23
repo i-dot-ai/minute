@@ -1,4 +1,6 @@
 # ruff: noqa: S101
+import time
+
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 
 
@@ -73,6 +75,23 @@ def test_mixed_valid_invalid_with_punctuation():
     text = "Is this color xyzabc? The theater has qwerty!"
     expected = "Is this colour xyzabc? The theatre has qwerty!"
     assert convert_american_to_british_spelling(text) == expected
+
+
+def test_markdown_table_with_convertible_words():
+    """Test that words in markdown tables are converted and table syntax is preserved."""
+    text = "| color | theater |\n|---|---|\n| 1.23 | 4,567 |"
+    expected = "| colour | theatre |\n|---|---|\n| 1.23 | 4,567 |"
+    assert convert_american_to_british_spelling(text) == expected
+
+
+def test_large_trailing_non_letter_run_is_fast():
+    """Regression test: a long trailing run of non-letter characters (e.g. a numeric
+    markdown table) caused quadratic regex backtracking that hung the worker."""
+    text = "The color is gray. " + "| 123 | 4.56 | 789 |\n" * 2500  # ~50KB non-letter tail
+    start = time.perf_counter()
+    result = convert_american_to_british_spelling(text)
+    assert time.perf_counter() - start < 5
+    assert result.startswith("The colour is grey. ")
 
 
 def test_markdown_syntax():

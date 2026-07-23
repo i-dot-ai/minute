@@ -19,6 +19,7 @@ export default function Home() {
   const [started, setStarted] = useState(false)
   const [devices, setDevices] = useState<AudioDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const [micDenied, setMicDenied] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -29,6 +30,10 @@ export default function Home() {
             name: 'microphone' as PermissionName,
           })
           granted = status.state === 'granted'
+          if (status.state === 'denied') {
+            setMicDenied(true)
+            return
+          }
         } catch (error) {
           console.error(error)
           console.error(
@@ -52,8 +57,12 @@ export default function Home() {
           }))
         setDevices(audioDevices)
         if (audioDevices.length) setSelectedDeviceId(audioDevices[0].deviceId)
+        setMicDenied(false)
       } catch (error) {
         console.error(error)
+        if (error instanceof DOMException && error.name === 'NotAllowedError') {
+          setMicDenied(true)
+        }
       }
     }
     init()
@@ -194,7 +203,7 @@ export default function Home() {
                         </ol>
                       </div>
                     )}
-                    <div className="govuk-form-group govuk-!-margin-top-7 flex items-center gap-2">
+                    <div className="govuk-form-group govuk-!-margin-top-7 flex items-center gap-2 govuk-!-margin-bottom-6">
                       <label className="govuk-label" htmlFor="microphone">
                         Select microphone:
                       </label>
@@ -219,9 +228,25 @@ export default function Home() {
                       </select>
                     </div>
 
+                    {micDenied && (
+                      <div className="govuk-error-summary" data-module="govuk-error-summary">
+                        <div role="alert">
+                          <h2 className="govuk-error-summary__title">
+                            There is a problem
+                          </h2>
+                          <div className="govuk-error-summary__body">
+                            <p className="govuk-error-message">
+                              Microphone access has not been given. Please enable
+                              it in your browser settings and try again.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <button
-                      className="govuk-button govuk-!-margin-top-6"
+                      className="govuk-button"
                       data-module="govuk-button"
+                      disabled={micDenied}
                       onClick={handleStart}
                     >
                       Start recording

@@ -13,10 +13,22 @@ import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-t
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, Check, RefreshCw, X } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { LoadingBar } from '@/components/ui/loading-bar'
 
 const GENERATING_STATUSES = ['awaiting_start', 'in_progress']
+
+// Processing normally takes 5-12 minutes per hour of audio; flag as stalled
+// at 18 minutes per hour (0.3 min per audio minute), with a floor for short
+// clips and a flat fallback when the audio duration is unknown.
+const STALL_MINUTES_PER_AUDIO_MINUTE = 0.3
+const STALL_FLOOR_MS = 5 * 60 * 1000
+const STALL_FALLBACK_MS = 15 * 60 * 1000
+
+const getStallLimitMs = (durationSec: number | null) =>
+  durationSec
+    ? Math.max(STALL_FLOOR_MS, (durationSec / 60) * STALL_MINUTES_PER_AUDIO_MINUTE * 60 * 1000)
+    : STALL_FALLBACK_MS
 
 export default function RecordStatusPage({
   params: { id },
@@ -75,6 +87,13 @@ export default function RecordStatusPage({
     ),
   })
   const recordingUrl = recordings[0]?.url
+
+  const [audioDurationSec, setAudioDurationSec] = useState<number | null>(null)
+  const durationSec =
+    audioDurationSec ??
+    transcription?.dialogue_entries?.at(-1)?.end_time ??
+    null
+
   const isProcessing =
     transcriptionStatus === 'in_progress' ||
     transcriptionStatus === 'awaiting_start' ||
@@ -83,6 +102,14 @@ export default function RecordStatusPage({
     summaryStatusPending
   const isFailed =
     transcriptionStatus === 'failed' || summaryStatus === 'failed'
+
+  const stallSince = transcriptionDone
+    ? minuteVersionsQuery.data?.[0]?.created_datetime
+    : transcription?.created_datetime
+  const isStalled =
+    isProcessing &&
+    !!stallSince &&
+    Date.now() - new Date(stallSince).getTime() > getStallLimitMs(durationSec)
 
   // Land keyboard/screen-reader focus on the page heading after the client-side
   // navigation from the recorder, which otherwise leaves focus on <body>.
@@ -143,7 +170,15 @@ export default function RecordStatusPage({
             <>
               <div className="govuk-grid-row govuk-!-margin-top-5">
                 <div className="govuk-grid-column-one-half">
-                  <audio controls src={recordingUrl} className="w-full" />
+                  <audio
+                    controls
+                    src={recordingUrl}
+                    className="w-full"
+                    onLoadedMetadata={(e) => {
+                      const d = e.currentTarget.duration
+                      if (Number.isFinite(d)) setAudioDurationSec(d)
+                    }}
+                  />
                 </div>
                 <div className="govuk-grid-column-one-half">
                   <div className="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-top-1">
@@ -162,12 +197,26 @@ export default function RecordStatusPage({
           <div className="govuk-!-padding-5 govuk-!-padding-top-8 govuk-!-margin-top-5 bg-(--govuk-surface-background-colour)">
             {isProcessing ? (
               <>
-                <div className="inline-flex items-center gap-2">
+                <div className="inline-flex items-center gap-2 govuk-!-margin-bottom-6">
                   <RefreshCw className="size-4 animate-spin text-(--govuk-text-colour)" />
                   <h2 className="govuk-heading-m govuk-!-margin-bottom-0">
                     {transcriptionDone ? 'Generating summary' : 'Transcribing'}
                   </h2>
                 </div>
+
+                {isStalled ? (
+                  <div className="govuk-warning-text">
+                    <span className="govuk-warning-text__icon" aria-hidden="true">!</span>
+                    <strong className="govuk-warning-text__text">
+                      <span className="govuk-visually-hidden">Warning</span>
+                      Taking longer than usual. Leave this page if needed, it will continue in the background.
+                    </strong>
+                  </div>
+                ) : (
+                  <p className="govuk-body">
+                    Usually takes around 5 - 12 minutes per hour of audio.
+                  </p>
+                )}
                 <div className="govuk-!-margin-bottom-7 govuk-!-margin-top-6">
                   <LoadingBar />
                 </div>

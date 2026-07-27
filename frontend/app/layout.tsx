@@ -13,6 +13,7 @@ import './globals.css'
 import { Header } from '@/components/layout/header'
 import ServiceNavigation from '@/components/layout/service-navigation'
 import { TranscriptionSidePanel } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/TranscriptionSidePanel'
+import { Footer } from '@/components/layout/footer'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -30,8 +31,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.className} govuk-template h-dvh`}>
-      <body className="govuk-template__body govuk-frontend-supported h-full overflow-hidden">
+    <html lang="en" className={`${inter.className} govuk-template md:h-dvh`}>
+      <body className="govuk-template__body govuk-frontend-supported md:h-full md:overflow-hidden">
         <GovukInit />
         <TanstackQueryProvider>
           <PosthogProvider>
@@ -46,20 +47,24 @@ export default function RootLayout({
                 </Link>
                 {/* <OnboardingTour /> */}
                 <RecordingSessionProvider>
-                  <div className="flex h-dvh flex-col">
+                  <div className="md:flex md:h-dvh md:flex-col">
                     <Header />
-                    <div className="flex min-h-0 flex-1">
+                    <div className="md:flex md:min-h-0 md:flex-1">
                       <ServiceNavigation />
                       <TranscriptionSidePanel />
                       <main
                         id="main-content"
                         tabIndex={-1}
-                        className="relative min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]"
+                        className="md:relative md:min-h-0 md:flex-1 md:overflow-y-auto md:[scrollbar-gutter:stable]"
                       >
                         {children}
                       </main>
+                      <div className="md:hidden">
+                        <Footer />
+                      </div>
                     </div>
                   </div>
+
                 </RecordingSessionProvider>
                 <Toaster />
               </RecordingDbProvider>

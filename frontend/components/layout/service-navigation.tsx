@@ -9,108 +9,60 @@ export const ServiceNavigation = () => {
     return null
   }
   return (
-    <section
-      aria-label="Service information"
-      className="flex h-full shrink-0 flex-col bg-(--govuk-surface-background-colour)"
-    >
-      <nav aria-label="Menu" className="flex h-full flex-col justify-between">
-        <ul className="flex w-24 flex-col" id="navigation">
-          <li
-            className={`govuk-service-navigation__item govuk-!-margin-right-3 w-full !border-l-4 !border-transparent ${pathname === '/' || pathname.includes('/new') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
-          >
-            <GuardedLink
-              href="/"
-              aria-current={
-                pathname === '/' || pathname.includes('/new')
-                  ? 'page'
-                  : undefined
-              }
-              className={`govuk-service-navigation__link flex flex-col items-center text-[0.875rem] ${pathname === '/' || pathname.includes('/new') ? '!text-(--govuk-text-colour)' : ''}`}
-            >
-              <Mic className="size-5" />
-              Record
-            </GuardedLink>
-          </li>
-          <li
-            className={`govuk-service-navigation__item govuk-!-margin-right-3 w-full !border-l-4 !border-transparent ${pathname.includes('/transcriptions') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
-          >
-            <GuardedLink
-              aria-current={
-                pathname.includes('/transcriptions') ? 'page' : undefined
-              }
-              className={`govuk-service-navigation__link flex flex-col items-center text-[0.875rem] ${pathname.includes('/transcriptions') ? '!text-(--govuk-text-colour)' : ''}`}
-              href="/transcriptions"
-              data-onboarding="saved-transcriptions-nav"
-            >
-              <Bookmark className="size-5" />
-              Transcripts
-            </GuardedLink>
-          </li>
-          <li
-            className={`govuk-service-navigation__item govuk-!-margin-right-3 w-full !border-l-4 !border-transparent ${pathname.includes('/templates') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
-          >
-            <GuardedLink
-              aria-current={
-                pathname.includes('/templates') ? 'page' : undefined
-              }
-              className={`govuk-service-navigation__link flex flex-col items-center text-[0.875rem] ${pathname.includes('/templates') ? '!text-(--govuk-text-colour)' : ''}`}
-              href="/templates"
-              data-onboarding="templates-nav"
-            >
-              <LayoutPanelTop className="size-5" />
-              Templates
-            </GuardedLink>
-          </li>
-        </ul>
-        <div>
-          {/* <button
-            className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-bottom-2 ${isCollapsed ? 'govuk-!-padding-left-4' : 'govuk-!-padding-left-3'} flex flex-col items-center border-l-4 border-transparent text-(--govuk-link-colour)`}
-            onClick={() => setIsCollapsed((prev) => !prev)}
-          >
-            {isCollapsed ? (
-              <PanelLeftOpen className="size-5" />
-            ) : (
-              <>
-                <PanelLeftClose className="size-5" />
-                <span className={isCollapsed ? 'sr-only' : ''}>
-                  {isCollapsed ? 'Expand' : 'Collapse'}
-                </span>
-              </>
-            )}
-          </button> */}
-          <ul className="flex flex-col border-t border-(--govuk-border-colour)">
-            <li
-              className={`w-full !border-l-4 ${pathname.includes('/privacy') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
-            >
-              <GuardedLink
-                aria-current={
-                  pathname.includes('/privacy') ? 'page' : undefined
-                }
-                className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link flex flex-col items-center text-[0.875rem] !text-[#484949]"
-                href="/privacy"
-              >
-                {/* <ShieldCheck className="size-5" /> */}
-                Privacy
-              </GuardedLink>
-            </li>
-            <li
-              className={`w-full !border-l-4 ${pathname.includes('/support') ? '!border-l-(--govuk-brand-colour) bg-[#d2e2f1] font-bold' : ''}`}
-            >
-              <GuardedLink
-                aria-current={
-                  pathname.includes('/support') ? 'page' : undefined
-                }
-                className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-service-navigation__link flex flex-col items-center text-[0.875rem] !text-[#484949]"
-                href="/support"
-              >
-                {/* <Mail className="size-5" /> */}
-                Contact
-              </GuardedLink>
-            </li>
-          </ul>
+    <div className="govuk-service-navigation govuk-service-navigation--side-nav"
+      data-module="govuk-service-navigation">
+      <div className="govuk-width-container">
+        <div className="govuk-service-navigation__container">
+          <nav aria-label="Menu" className="govuk-service-navigation__wrapper">
+            <button type="button" className="govuk-service-navigation__toggle govuk-js-service-navigation-toggle" aria-controls="navigation" hidden aria-hidden="true">
+              Menu
+            </button>
+            <ul className="govuk-service-navigation__list" id="navigation">
+              <li className={`govuk-service-navigation__item ${pathname === '/' || pathname.includes('/new') ? 'govuk-service-navigation__item--active' : ''}`}>
+                <GuardedLink
+                  className="govuk-service-navigation__link"
+                  href="/"
+                  aria-current={pathname === '/' || pathname.includes('/new') ? 'page' : undefined}
+                >
+                  <Mic className="size-5" />
+                  Record
+                </GuardedLink>
+              </li>
+              <li className={`govuk-service-navigation__item ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__item--active' : ''}`}>
+                <GuardedLink
+                  className="govuk-service-navigation__link"
+                  href="/transcriptions"
+                  aria-current={pathname.includes('/transcriptions') ? 'page' : undefined}
+                >
+                  <Bookmark className="size-5" />
+                  Transcripts
+                </GuardedLink>
+              </li>
+              <li className={`govuk-service-navigation__item ${pathname.includes('/templates') ? 'govuk-service-navigation__item--active' : ''}`}>
+                <GuardedLink className="govuk-service-navigation__link"
+                  href="/templates"
+                  aria-current={pathname.includes('/templates') ? 'page' : undefined}>
+                  <LayoutPanelTop className="size-5" />
+                  Templates
+                </GuardedLink>
+              </li>
+            </ul>
+            <ul className="govuk-service-navigation__list govuk-service-navigation__list--footer">
+              <li className={`govuk-service-navigation__item ${pathname.includes('/privacy') ? 'govuk-service-navigation__item--active' : ''}`}>
+                <GuardedLink className="govuk-service-navigation__link" href="/privacy">
+                  Privacy
+                </GuardedLink>
+              </li>
+              <li className={`govuk-service-navigation__item ${pathname.includes('/support') ? 'govuk-service-navigation__item--active' : ''}`}>
+                <GuardedLink className="govuk-service-navigation__link" href="/support">
+                  Contact
+                </GuardedLink>
+              </li>
+            </ul>
+          </nav>
         </div>
-      </nav>
-    </section>
+      </div>
+    </div >
   )
 }
 

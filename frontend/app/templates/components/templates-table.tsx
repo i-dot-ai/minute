@@ -248,6 +248,12 @@ export const TemplatesTable = () => {
           </div>
         </div>
       </div>
+      <div className="govuk-!-margin-bottom-2 sm:hidden">
+        <TemplatesFilter
+          typeFilter={typeFilter}
+          handleFilterChange={handleFilterChange}
+        />
+      </div>
       <div className="govuk-!-margin-bottom-1 flex items-center justify-between">
         <div className="flex flex-1 items-center gap-2">
           {selectablePageKeys.length > 0 && (
@@ -305,22 +311,11 @@ export const TemplatesTable = () => {
             </span>
           )}
         </p>
-        <div className="govuk-form-group govuk-!-margin-bottom-0 flex flex-1 items-center justify-end gap-2">
-          <label className="govuk-label" htmlFor="filter">
-            Filter by
-          </label>
-          <select
-            className="govuk-select govuk-select--subtle"
-            id="filter"
-            name="filter"
-            value={typeFilter}
-            onChange={handleFilterChange}
-          >
-            <option value="all">All</option>
-            <option value="summary">Summary</option>
-            <option value="q-and-a">Q &amp; A</option>
-            <option value="system">System</option>
-          </select>
+        <div className="hidden sm:block">
+          <TemplatesFilter
+            typeFilter={typeFilter}
+            handleFilterChange={handleFilterChange}
+          />
         </div>
       </div>
       {isLoading ? (
@@ -458,5 +453,33 @@ export const TemplatesTable = () => {
         onDeleted={() => setSelectedIds(new Set())}
       />
     </>
+  )
+}
+
+const TemplatesFilter = ({
+  typeFilter,
+  handleFilterChange,
+}: {
+  typeFilter: TypeFilter
+  handleFilterChange: (e: React.ChangeEvent<HTMLSelectElement>) => void
+}) => {
+  return (
+    <div className="govuk-form-group govuk-!-margin-bottom-0 flex flex-1 items-center gap-2 sm:justify-end">
+      <label className="govuk-label" htmlFor="filter">
+        Filter by
+      </label>
+      <select
+        className="govuk-select govuk-select--subtle"
+        id="filter"
+        name="filter"
+        value={typeFilter}
+        onChange={handleFilterChange}
+      >
+        <option value="all">All</option>
+        <option value="summary">Summary</option>
+        <option value="q-and-a">Q &amp; A</option>
+        <option value="system">System</option>
+      </select>
+    </div>
   )
 }

@@ -238,7 +238,7 @@ export const PaginatedTranscriptions = () => {
           </div>
         </details>
       )}
-      <div className="sm:hidden">
+      <div className="govuk-!-margin-bottom-2 sm:hidden">
         <TranscriptionsFilter
           filterBy={filterBy}
           handleFilterChange={handleFilterChange}

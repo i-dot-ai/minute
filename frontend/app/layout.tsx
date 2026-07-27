@@ -64,7 +64,6 @@ export default function RootLayout({
                       </div>
                     </div>
                   </div>
-
                 </RecordingSessionProvider>
                 <Toaster />
               </RecordingDbProvider>

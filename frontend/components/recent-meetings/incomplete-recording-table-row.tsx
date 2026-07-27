@@ -80,15 +80,15 @@ export const IncompleteRecordingTableRow = ({
           <audio src={url} controls className="max-h-10 w-52" />
         </div>
       </td>
-      <td className="govuk-table__cell whitespace-nowrap">
+      <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
         <span className="govuk-body-s govuk-!-margin-0">{date}</span>
       </td>
-      <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 whitespace-nowrap">
+      <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 hidden whitespace-nowrap sm:table-cell">
         <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
           Not uploaded
         </strong>
       </td>
-      <td className="govuk-table__cell whitespace-nowrap">
+      <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
         <div className="flex items-center gap-2">
           <button
             type="button"

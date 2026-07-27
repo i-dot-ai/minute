@@ -9,52 +9,86 @@ export const ServiceNavigation = () => {
     return null
   }
   return (
-    <div className="govuk-service-navigation govuk-service-navigation--side-nav"
-      data-module="govuk-service-navigation">
+    <div
+      className="govuk-service-navigation govuk-service-navigation--side-nav"
+      data-module="govuk-service-navigation"
+    >
       <div className="govuk-width-container">
         <div className="govuk-service-navigation__container">
           <nav aria-label="Menu" className="govuk-service-navigation__wrapper">
-            <button type="button" className="govuk-service-navigation__toggle govuk-js-service-navigation-toggle" aria-controls="navigation" hidden aria-hidden="true">
+            <button
+              type="button"
+              className="govuk-service-navigation__toggle govuk-js-service-navigation-toggle"
+              aria-controls="navigation"
+              hidden
+              aria-hidden="true"
+            >
               Menu
             </button>
             <ul className="govuk-service-navigation__list" id="navigation">
-              <li className={`govuk-service-navigation__item ${pathname === '/' || pathname.includes('/new') ? 'govuk-service-navigation__item--active' : ''}`}>
+              <li
+                className={`govuk-service-navigation__item ${pathname === '/' || pathname.includes('/new') ? 'govuk-service-navigation__item--active' : ''}`}
+              >
                 <GuardedLink
                   className="govuk-service-navigation__link"
                   href="/"
-                  aria-current={pathname === '/' || pathname.includes('/new') ? 'page' : undefined}
+                  aria-current={
+                    pathname === '/' || pathname.includes('/new')
+                      ? 'page'
+                      : undefined
+                  }
                 >
                   <Mic className="size-5" />
                   Record
                 </GuardedLink>
               </li>
-              <li className={`govuk-service-navigation__item ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__item--active' : ''}`}>
+              <li
+                className={`govuk-service-navigation__item ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__item--active' : ''}`}
+              >
                 <GuardedLink
                   className="govuk-service-navigation__link"
                   href="/transcriptions"
-                  aria-current={pathname.includes('/transcriptions') ? 'page' : undefined}
+                  aria-current={
+                    pathname.includes('/transcriptions') ? 'page' : undefined
+                  }
                 >
                   <Bookmark className="size-5" />
                   Transcripts
                 </GuardedLink>
               </li>
-              <li className={`govuk-service-navigation__item ${pathname.includes('/templates') ? 'govuk-service-navigation__item--active' : ''}`}>
-                <GuardedLink className="govuk-service-navigation__link"
+              <li
+                className={`govuk-service-navigation__item ${pathname.includes('/templates') ? 'govuk-service-navigation__item--active' : ''}`}
+              >
+                <GuardedLink
+                  className="govuk-service-navigation__link"
                   href="/templates"
-                  aria-current={pathname.includes('/templates') ? 'page' : undefined}>
+                  aria-current={
+                    pathname.includes('/templates') ? 'page' : undefined
+                  }
+                >
                   <LayoutPanelTop className="size-5" />
                   Templates
                 </GuardedLink>
               </li>
             </ul>
             <ul className="govuk-service-navigation__list govuk-service-navigation__list--footer">
-              <li className={`govuk-service-navigation__item ${pathname.includes('/privacy') ? 'govuk-service-navigation__item--active' : ''}`}>
-                <GuardedLink className="govuk-service-navigation__link" href="/privacy">
+              <li
+                className={`govuk-service-navigation__item ${pathname.includes('/privacy') ? 'govuk-service-navigation__item--active' : ''}`}
+              >
+                <GuardedLink
+                  className="govuk-service-navigation__link"
+                  href="/privacy"
+                >
                   Privacy
                 </GuardedLink>
               </li>
-              <li className={`govuk-service-navigation__item ${pathname.includes('/support') ? 'govuk-service-navigation__item--active' : ''}`}>
-                <GuardedLink className="govuk-service-navigation__link" href="/support">
+              <li
+                className={`govuk-service-navigation__item ${pathname.includes('/support') ? 'govuk-service-navigation__item--active' : ''}`}
+              >
+                <GuardedLink
+                  className="govuk-service-navigation__link"
+                  href="/support"
+                >
                   Contact
                 </GuardedLink>
               </li>
@@ -62,7 +96,7 @@ export const ServiceNavigation = () => {
           </nav>
         </div>
       </div>
-    </div >
+    </div>
   )
 }
 

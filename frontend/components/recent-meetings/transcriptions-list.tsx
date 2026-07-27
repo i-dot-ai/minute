@@ -85,41 +85,27 @@ function TranscriptionTableRow({
         ) : (
           <Link
             href={`/transcriptions/${transcription.id}`}
-            className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative flex flex-1 items-center gap-2 !text-(--govuk-link-colour)"
+            className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative flex flex-1 flex-col gap-2 !text-(--govuk-link-colour) sm:flex-row sm:items-center"
           >
-            {displayTitle}
+            <span className="flex items-center gap-2 sm:block">
+              {displayTitle}
+              <div className="govuk-!-margin-top-1 sm:hidden">
+                <StatusTagList transcription={transcription} />
+              </div>
+            </span>
+            <div className="govuk-!-font-size-16 flex justify-between text-(--govuk-secondary-text-colour) sm:hidden">
+              {date}
+            </div>
           </Link>
         )}
       </td>
-      <td className="govuk-table__cell whitespace-nowrap">
+      <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
         <span className="govuk-body-s govuk-!-margin-0">{date}</span>
       </td>
-      <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 whitespace-nowrap">
-        {transcription.expiring && (
-          <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
-            Expiring soon
-          </strong>
-        )}
-        {transcription.status === 'failed' && (
-          <strong className="govuk-tag govuk-tag--red govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
-            Failed
-          </strong>
-        )}
-        {transcription.status === 'awaiting_start' && (
-          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
-            Awaiting start
-          </strong>
-        )}
-        {transcription.status === 'in_progress' && (
-          <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
-            In progress
-          </strong>
-        )}
-        {transcription.status === 'completed' && !transcription.expiring && (
-          <p className="govuk-body-s govuk-!-margin-0 text-center">-</p>
-        )}
+      <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 hidden whitespace-nowrap sm:table-cell">
+        <StatusTagList transcription={transcription} />
       </td>
-      <td className="govuk-table__cell whitespace-nowrap">
+      <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
         <div className="flex items-center justify-end gap-2">
           <RenameButton
             displayTitle={displayTitle}
@@ -165,13 +151,13 @@ export function TranscriptionsList({
             Title
             {offlineRecordings.length > 0 && <> and audio</>}
           </th>
-          <th scope="col" className="govuk-table__header">
+          <th scope="col" className="govuk-table__header hidden sm:table-cell">
             Date
           </th>
-          <th scope="col" className="govuk-table__header">
+          <th scope="col" className="govuk-table__header hidden sm:table-cell">
             Status
           </th>
-          <th scope="col" className="govuk-table__header">
+          <th scope="col" className="govuk-table__header hidden sm:table-cell">
             Actions
           </th>
         </tr>
@@ -195,5 +181,36 @@ export function TranscriptionsList({
         ))}
       </tbody>
     </table>
+  )
+}
+
+const StatusTagList = ({
+  transcription,
+}: {
+  transcription: TranscriptionMetadata
+}) => {
+  return (
+    <>
+      {transcription.expiring && (
+        <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
+          Expiring soon
+        </strong>
+      )}
+      {transcription.status === 'failed' && (
+        <strong className="govuk-tag govuk-tag--red govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
+          Failed
+        </strong>
+      )}
+      {transcription.status === 'awaiting_start' && (
+        <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
+          Awaiting start
+        </strong>
+      )}
+      {transcription.status === 'in_progress' && (
+        <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
+          In progress
+        </strong>
+      )}
+    </>
   )
 }

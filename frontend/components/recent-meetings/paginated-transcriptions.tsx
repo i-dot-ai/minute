@@ -201,7 +201,7 @@ export const PaginatedTranscriptions = () => {
             name="search-transcriptions"
             aria-label="Search transcriptions by title"
             type="search"
-            className="govuk-input govuk-input--subtle govuk-!-padding-left-7"
+            className="govuk-input govuk-input--subtle !pl-10"
             placeholder="Search transcriptions by title"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -238,6 +238,12 @@ export const PaginatedTranscriptions = () => {
           </div>
         </details>
       )}
+      <div className="sm:hidden">
+        <TranscriptionsFilter
+          filterBy={filterBy}
+          handleFilterChange={handleFilterChange}
+        />
+      </div>
       <div className="govuk-!-margin-bottom-1 flex items-center justify-between">
         <div className="flex flex-1 items-center gap-2">
           <div
@@ -276,7 +282,10 @@ export const PaginatedTranscriptions = () => {
         <span className="govuk-visually-hidden" aria-live="polite">
           {selectedCount > 0 ? `${selectedCount} transcriptions selected` : ''}
         </span>
-        <p className="govuk-body govuk-!-margin-bottom-0 flex-1" role="status">
+        <p
+          className="govuk-body govuk-!-margin-bottom-0 hidden flex-1 md:block"
+          role="status"
+        >
           {filterBy === 'incomplete' ? (
             <>Showing {visibleOfflineRecordings.length} incomplete recordings</>
           ) : (
@@ -297,23 +306,11 @@ export const PaginatedTranscriptions = () => {
             </>
           )}
         </p>
-
-        <div className="govuk-form-group govuk-!-margin-bottom-0 flex flex-1 items-center justify-end gap-2">
-          <label className="govuk-label" htmlFor="filter">
-            Filter by
-          </label>
-          <select
-            className="govuk-select govuk-select--subtle"
-            id="filter"
-            name="filter"
-            value={filterBy}
-            onChange={handleFilterChange}
-          >
-            <option value="all">All</option>
-            <option value="expiring-soon">Expiring soon</option>
-            <option value="failed">Failed</option>
-            <option value="incomplete">Incomplete recordings</option>
-          </select>
+        <div className="hidden sm:block">
+          <TranscriptionsFilter
+            filterBy={filterBy}
+            handleFilterChange={handleFilterChange}
+          />
         </div>
       </div>
       {isLoading ? (
@@ -369,7 +366,7 @@ export const PaginatedTranscriptions = () => {
           />
           {filterBy !== 'incomplete' && totalPages > 1 && (
             <nav
-              className="govuk-pagination flex justify-center"
+              className="govuk-pagination sm:flex sm:justify-center"
               aria-label="Pagination"
             >
               {currentPage > 1 && (
@@ -402,7 +399,10 @@ export const PaginatedTranscriptions = () => {
               )}
               <ul className="govuk-pagination__list">
                 {getPageNumbers().map((page) => (
-                  <li key={page} className="govuk-pagination__item">
+                  <li
+                    key={page}
+                    className={`govuk-pagination__item ${page === currentPage ? 'govuk-pagination__item--current' : ''}`}
+                  >
                     <Link
                       className="govuk-link govuk-pagination__link"
                       href={pathname + buildQueryString(page, filterBy, search)}
@@ -460,6 +460,34 @@ export const PaginatedTranscriptions = () => {
           setSelectedIds(new Set())
         }}
       />
+    </div>
+  )
+}
+
+const TranscriptionsFilter = ({
+  filterBy,
+  handleFilterChange,
+}: {
+  filterBy: TranscriptionFilter
+  handleFilterChange: (e: React.ChangeEvent<HTMLSelectElement>) => void
+}) => {
+  return (
+    <div className="govuk-form-group govuk-!-margin-bottom-0 flex flex-1 items-center gap-2 sm:justify-end">
+      <label className="govuk-label" htmlFor="filter">
+        Filter by
+      </label>
+      <select
+        className="govuk-select govuk-select--subtle"
+        id="filter"
+        name="filter"
+        value={filterBy}
+        onChange={handleFilterChange}
+      >
+        <option value="all">All</option>
+        <option value="expiring-soon">Expiring soon</option>
+        <option value="failed">Failed</option>
+        <option value="incomplete">Incomplete recordings</option>
+      </select>
     </div>
   )
 }

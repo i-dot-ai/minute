@@ -220,8 +220,8 @@ export const TemplatesTable = () => {
 
   return (
     <>
-      <div className="govuk-grid-row flex items-end">
-        <div className="govuk-grid-column-one-half">
+      <div className="govuk-grid-row md:flex md:items-end">
+        <div className="govuk-grid-column-one-half-from-desktop">
           <form
             role="search"
             className="govuk-form-group relative"
@@ -235,231 +235,228 @@ export const TemplatesTable = () => {
               id="search-templates"
               name="search-templates"
               type="search"
-              className="govuk-input govuk-input--subtle govuk-!-padding-left-7"
+              className="govuk-input govuk-input--subtle !pl-10"
               placeholder="Search templates"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </form>
         </div>
-        <div className="govuk-grid-column-one-half">
+        <div className="govuk-grid-column-one-half-from-desktop">
           <div className="govuk-button-group">
             <CreateTemplateDialog />
           </div>
         </div>
       </div>
-      <div className="govuk-grid-row">
-        <div className="govuk-grid-column-full">
-          <div className="govuk-!-margin-bottom-1 flex items-center justify-between">
-            <div className="flex flex-1 items-center gap-2">
-              {selectablePageKeys.length > 0 && (
-                <div
-                  className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"
-                  data-module="govuk-checkboxes"
-                >
-                  <input
-                    ref={selectAllRef}
-                    className="govuk-checkboxes__input"
-                    id="select-all-templates"
-                    name="select-all-templates"
-                    type="checkbox"
-                    checked={allOnPageSelected}
-                    onChange={toggleAllOnPage}
-                  />
-                  <label
-                    className="govuk-label govuk-checkboxes__label ml-3 whitespace-nowrap"
-                    htmlFor="select-all-templates"
-                  >
-                    Select all
-                  </label>
-                </div>
-              )}
-              {deleteCount > 0 && (
-                <div className="govuk-button-group govuk-!-margin-bottom-0">
-                  <button
-                    type="button"
-                    className="govuk-link link--warning govuk-!-margin-0 govuk-!-margin-right-1"
-                    onClick={() => setDeleteDialogOpen(true)}
-                  >
-                    Delete {deleteCount} selected
-                  </button>
-                </div>
-              )}
-            </div>
-            <span className="govuk-visually-hidden" aria-live="polite">
-              {deleteCount > 0 ? `${deleteCount} templates selected` : ''}
-            </span>
-            <p
-              className="govuk-body govuk-!-margin-bottom-0 flex-1"
-              role="status"
+      <div className="govuk-!-margin-bottom-1 flex items-center justify-between">
+        <div className="flex flex-1 items-center gap-2">
+          {selectablePageKeys.length > 0 && (
+            <div
+              className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"
+              data-module="govuk-checkboxes"
             >
-              {totalCount > 0 ? (
-                <>
-                  Showing {startNumber} to {endNumber} of {totalCount}
-                </>
-              ) : (
-                <>Showing 0 of 0 templates</>
-              )}
-
-              {search.trim() && (
-                <span className="govuk-visually-hidden">
-                  {` results for “${search.trim()}”`}
-                </span>
-              )}
-            </p>
-            <div className="govuk-form-group govuk-!-margin-bottom-0 flex flex-1 items-center justify-end gap-2">
-              <label className="govuk-label" htmlFor="filter">
-                Filter by
-              </label>
-              <select
-                className="govuk-select govuk-select--subtle"
-                id="filter"
-                name="filter"
-                value={typeFilter}
-                onChange={handleFilterChange}
-              >
-                <option value="all">All</option>
-                <option value="summary">Summary</option>
-                <option value="q-and-a">Q &amp; A</option>
-                <option value="system">System</option>
-              </select>
-            </div>
-          </div>
-          {isLoading ? (
-            <p className="govuk-body">Loading templates...</p>
-          ) : isError ? (
-            <p className="govuk-body">Error loading templates</p>
-          ) : filteredRows.length === 0 ? (
-            <div className="govuk-!-margin-top-9 flex flex-col items-center justify-center gap-2">
-              {search ? (
-                <>
-                  <p className="govuk-body">
-                    No templates found for <strong>{search}</strong>
-                  </p>
-                </>
-              ) : typeFilter !== 'all' ? (
-                <>
-                  <p className="govuk-body">No templates match that filter</p>
-                  <p className="govuk-body">
-                    Change or clear the filter to see the full list
-                  </p>
-                  <Link
-                    href={pathname + buildQueryString({ typeFilter: 'all' })}
-                    className="govuk-button govuk-button--secondary"
-                  >
-                    Clear filter
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <FileText className="size-10 text-[#cecece]" />
-                  No templates found
-                </>
-              )}
-            </div>
-          ) : (
-            <>
-              <TemplatesList
-                templates={pageRows}
-                selectedIds={selectedIds}
-                onToggle={toggleOne}
-                highlightedId={highlightedId}
-                onDuplicated={setHighlightedId}
+              <input
+                ref={selectAllRef}
+                className="govuk-checkboxes__input"
+                id="select-all-templates"
+                name="select-all-templates"
+                type="checkbox"
+                checked={allOnPageSelected}
+                onChange={toggleAllOnPage}
               />
-              {totalPages > 1 && (
-                <nav
-                  className="govuk-pagination flex justify-center"
-                  aria-label="Pagination"
-                >
-                  {currentPage > 1 && (
-                    <div className="govuk-pagination__prev">
-                      <Link
-                        className="govuk-link govuk-pagination__link"
-                        href={
-                          pathname +
-                          buildQueryString({
-                            page: currentPage - 1,
-                            typeFilter,
-                          })
-                        }
-                        rel="prev"
-                      >
-                        <svg
-                          className="govuk-pagination__icon govuk-pagination__icon--prev"
-                          xmlns="http://www.w3.org/2000/svg"
-                          height="13"
-                          width="15"
-                          aria-hidden="true"
-                          focusable="false"
-                          viewBox="0 0 15 13"
-                        >
-                          <path d="m6.5938-0.0078125-6.7266 6.7266 6.7441 6.4062 1.377-1.449-4.1856-3.9768h12.896v-2h-12.984l4.2931-4.293-1.414-1.414z"></path>
-                        </svg>
-                        <span className="govuk-pagination__link-title">
-                          Previous
-                          <span className="govuk-visually-hidden"> page</span>
-                        </span>
-                      </Link>
-                    </div>
-                  )}
-                  <ul className="govuk-pagination__list">
-                    {getPageNumbers().map((page) => (
-                      <li key={page} className="govuk-pagination__item">
-                        <Link
-                          className="govuk-link govuk-pagination__link"
-                          href={
-                            pathname + buildQueryString({ page, typeFilter })
-                          }
-                          aria-label={`Page ${page}`}
-                        >
-                          {page}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                  {currentPage < totalPages && (
-                    <div className="govuk-pagination__next">
-                      <Link
-                        className="govuk-link govuk-pagination__link"
-                        href={
-                          pathname +
-                          buildQueryString({
-                            page: currentPage + 1,
-                            typeFilter,
-                          })
-                        }
-                        rel="next"
-                      >
-                        <span className="govuk-pagination__link-title">
-                          Next
-                          <span className="govuk-visually-hidden"> page</span>
-                        </span>
-                        <svg
-                          className="govuk-pagination__icon govuk-pagination__icon--next"
-                          xmlns="http://www.w3.org/2000/svg"
-                          height="13"
-                          width="15"
-                          aria-hidden="true"
-                          focusable="false"
-                          viewBox="0 0 15 13"
-                        >
-                          <path d="m8.107-0.0078125-1.4136 1.414 4.2926 4.293h-12.986v2h12.896l-4.1855 3.9766 1.377 1.4492 6.7441-6.4062-6.7246-6.7266z"></path>
-                        </svg>
-                      </Link>
-                    </div>
-                  )}
-                </nav>
-              )}
-            </>
+              <label
+                className="govuk-label govuk-checkboxes__label ml-3 whitespace-nowrap"
+                htmlFor="select-all-templates"
+              >
+                Select all
+              </label>
+            </div>
           )}
-          <DeleteTemplatesDialog
-            open={deleteDialogOpen}
-            setOpen={setDeleteDialogOpen}
-            templateIds={deletableIds}
-            onDeleted={() => setSelectedIds(new Set())}
-          />
+          {deleteCount > 0 && (
+            <div className="govuk-button-group govuk-!-margin-bottom-0">
+              <button
+                type="button"
+                className="govuk-link link--warning govuk-!-margin-0 govuk-!-margin-right-1"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                Delete {deleteCount} selected
+              </button>
+            </div>
+          )}
+        </div>
+        <span className="govuk-visually-hidden" aria-live="polite">
+          {deleteCount > 0 ? `${deleteCount} templates selected` : ''}
+        </span>
+        <p
+          className="govuk-body govuk-!-margin-bottom-0 hidden flex-1 sm:block"
+          role="status"
+        >
+          {totalCount > 0 ? (
+            <>
+              Showing {startNumber} to {endNumber} of {totalCount}
+            </>
+          ) : (
+            <>Showing 0 of 0 templates</>
+          )}
+
+          {search.trim() && (
+            <span className="govuk-visually-hidden">
+              {` results for “${search.trim()}”`}
+            </span>
+          )}
+        </p>
+        <div className="govuk-form-group govuk-!-margin-bottom-0 flex flex-1 items-center justify-end gap-2">
+          <label className="govuk-label" htmlFor="filter">
+            Filter by
+          </label>
+          <select
+            className="govuk-select govuk-select--subtle"
+            id="filter"
+            name="filter"
+            value={typeFilter}
+            onChange={handleFilterChange}
+          >
+            <option value="all">All</option>
+            <option value="summary">Summary</option>
+            <option value="q-and-a">Q &amp; A</option>
+            <option value="system">System</option>
+          </select>
         </div>
       </div>
+      {isLoading ? (
+        <p className="govuk-body">Loading templates...</p>
+      ) : isError ? (
+        <p className="govuk-body">Error loading templates</p>
+      ) : filteredRows.length === 0 ? (
+        <div className="govuk-!-margin-top-9 flex flex-col items-center justify-center gap-2">
+          {search ? (
+            <>
+              <p className="govuk-body">
+                No templates found for <strong>{search}</strong>
+              </p>
+            </>
+          ) : typeFilter !== 'all' ? (
+            <>
+              <p className="govuk-body">No templates match that filter</p>
+              <p className="govuk-body">
+                Change or clear the filter to see the full list
+              </p>
+              <Link
+                href={pathname + buildQueryString({ typeFilter: 'all' })}
+                className="govuk-button govuk-button--secondary"
+              >
+                Clear filter
+              </Link>
+            </>
+          ) : (
+            <>
+              <FileText className="size-10 text-[#cecece]" />
+              No templates found
+            </>
+          )}
+        </div>
+      ) : (
+        <>
+          <TemplatesList
+            templates={pageRows}
+            selectedIds={selectedIds}
+            onToggle={toggleOne}
+            highlightedId={highlightedId}
+            onDuplicated={setHighlightedId}
+          />
+          {totalPages > 1 && (
+            <nav
+              className="govuk-pagination flex justify-center"
+              aria-label="Pagination"
+            >
+              {currentPage > 1 && (
+                <div className="govuk-pagination__prev">
+                  <Link
+                    className="govuk-link govuk-pagination__link"
+                    href={
+                      pathname +
+                      buildQueryString({
+                        page: currentPage - 1,
+                        typeFilter,
+                      })
+                    }
+                    rel="prev"
+                  >
+                    <svg
+                      className="govuk-pagination__icon govuk-pagination__icon--prev"
+                      xmlns="http://www.w3.org/2000/svg"
+                      height="13"
+                      width="15"
+                      aria-hidden="true"
+                      focusable="false"
+                      viewBox="0 0 15 13"
+                    >
+                      <path d="m6.5938-0.0078125-6.7266 6.7266 6.7441 6.4062 1.377-1.449-4.1856-3.9768h12.896v-2h-12.984l4.2931-4.293-1.414-1.414z"></path>
+                    </svg>
+                    <span className="govuk-pagination__link-title">
+                      Previous
+                      <span className="govuk-visually-hidden"> page</span>
+                    </span>
+                  </Link>
+                </div>
+              )}
+              <ul className="govuk-pagination__list">
+                {getPageNumbers().map((page) => (
+                  <li
+                    key={page}
+                    className={`govuk-pagination__item ${page === currentPage ? 'govuk-pagination__item--current' : ''}`}
+                  >
+                    <Link
+                      className="govuk-link govuk-pagination__link"
+                      href={pathname + buildQueryString({ page, typeFilter })}
+                      aria-label={`Page ${page}`}
+                    >
+                      {page}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {currentPage < totalPages && (
+                <div className="govuk-pagination__next">
+                  <Link
+                    className="govuk-link govuk-pagination__link"
+                    href={
+                      pathname +
+                      buildQueryString({
+                        page: currentPage + 1,
+                        typeFilter,
+                      })
+                    }
+                    rel="next"
+                  >
+                    <span className="govuk-pagination__link-title">
+                      Next
+                      <span className="govuk-visually-hidden"> page</span>
+                    </span>
+                    <svg
+                      className="govuk-pagination__icon govuk-pagination__icon--next"
+                      xmlns="http://www.w3.org/2000/svg"
+                      height="13"
+                      width="15"
+                      aria-hidden="true"
+                      focusable="false"
+                      viewBox="0 0 15 13"
+                    >
+                      <path d="m8.107-0.0078125-1.4136 1.414 4.2926 4.293h-12.986v2h12.896l-4.1855 3.9766 1.377 1.4492 6.7441-6.4062-6.7246-6.7266z"></path>
+                    </svg>
+                  </Link>
+                </div>
+              )}
+            </nav>
+          )}
+        </>
+      )}
+      <DeleteTemplatesDialog
+        open={deleteDialogOpen}
+        setOpen={setDeleteDialogOpen}
+        templateIds={deletableIds}
+        onDeleted={() => setSelectedIds(new Set())}
+      />
     </>
   )
 }

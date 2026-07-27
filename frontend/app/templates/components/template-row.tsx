@@ -107,31 +107,23 @@ export function TemplateTableRow({
           }
           className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-right-1 inline-block w-full group-has-[a:hover]:text-[var(--govuk-link-hover-colour,#0f385c)]! group-has-[a:hover]:underline! group-has-[a:hover]:decoration-[max(3px,.1875rem,.12em)]! group-has-[a:hover]:[text-decoration-skip-ink:none]!"
         >
-          <span className="block">{name}</span>
+          <span className="flex items-center gap-2 sm:block">
+            {name}
+            <span className="sm:hidden">
+              <TemplateTypeTag template={template} />
+            </span>
+          </span>
           <span className="govuk-!-font-size-16 block !text-(--govuk-text-colour)">
             {template.description}
           </span>
         </Link>
       </td>
-      <td className="govuk-table__cell whitespace-nowrap">
+      <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
         <div className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-!-padding-right-4 flex items-center">
-          {template.isSystem ? (
-            <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-margin-left-1 govuk-!-font-size-16">
-              System
-            </strong>
-          ) : (
-            <strong className="govuk-tag govuk-tag--teal govuk-!-margin-right-1 govuk-!-margin-left-1 govuk-!-font-size-16">
-              {template.format === 'document' ? 'Summary' : 'Q & A'}
-            </strong>
-          )}
-          {template.is_default && (
-            <strong className="govuk-tag govuk-tag--purple govuk-!-margin-right-1 govuk-!-margin-left-1 govuk-!-font-size-16">
-              Default
-            </strong>
-          )}
+          <TemplateTypeTag template={template} />
         </div>
       </td>
-      <td className="govuk-table__cell whitespace-nowrap">
+      <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
         {template.isSystem ? (
           <div className="text-center">-</div>
         ) : (
@@ -158,5 +150,26 @@ export function TemplateTableRow({
         )}
       </td>
     </tr>
+  )
+}
+
+const TemplateTypeTag = ({ template }: { template: TemplateRowData }) => {
+  return (
+    <>
+      {template.isSystem ? (
+        <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-margin-left-1 govuk-!-font-size-16">
+          System
+        </strong>
+      ) : (
+        <strong className="govuk-tag govuk-tag--teal govuk-!-margin-right-1 govuk-!-margin-left-1 govuk-!-font-size-16">
+          {template.format === 'document' ? 'Summary' : 'Q & A'}
+        </strong>
+      )}
+      {template.is_default && (
+        <strong className="govuk-tag govuk-tag--purple govuk-!-margin-right-1 govuk-!-margin-left-1 govuk-!-font-size-16">
+          Default
+        </strong>
+      )}
+    </>
   )
 }

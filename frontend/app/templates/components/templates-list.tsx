@@ -32,10 +32,10 @@ export function TemplatesList({
           <th scope="col" className="govuk-table__header">
             Name and description
           </th>
-          <th scope="col" className="govuk-table__header">
+          <th scope="col" className="govuk-table__header hidden sm:table-cell">
             Template type
           </th>
-          <th scope="col" className="govuk-table__header">
+          <th scope="col" className="govuk-table__header hidden sm:table-cell">
             Actions
           </th>
         </tr>

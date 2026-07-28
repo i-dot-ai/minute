@@ -1,31 +1,23 @@
 const UrlMigrationBanner = () => {
   return (
     <div
-      className="govuk-notification-banner m-4"
+      className="bg-(--govuk-brand-colour) text-white govuk-!-padding-4 govuk-!-margin-bottom-4"
       role="region"
-      aria-labelledby="govuk-notification-banner-title"
-      data-module="govuk-notification-banner"
+      aria-labelledby="notification-banner-title"
     >
-      <div className="govuk-notification-banner__header">
-        <h2
-          className="govuk-notification-banner__title"
-          id="govuk-notification-banner-title"
-        >
-          Important
-        </h2>
-      </div>
-      <div className="govuk-notification-banner__content">
-        <p className="govuk-notification-banner__heading">
-          Minute has a new home at{' '}
-          <a href="https://minute.ai.gov.uk/" className="govuk-link">
-            minute.ai.gov.uk
-          </a>
-        </p>
-        <p className="govuk-body">
-          The new address has fewer access errors and works from any network
-          without a government VPN.
-        </p>
-      </div>
+      <h2
+        className="govuk-heading-s !text-white"
+        id="notification-banner-title"
+      >
+        Minute has a new home at{' '}
+        <a href="https://minute.ai.gov.uk/" className="govuk-link !text-white">
+          minute.ai.gov.uk
+        </a>
+      </h2>
+      <p className="govuk-body !text-white govuk-!-margin-bottom-0">
+        The new address has fewer access errors and works from any network
+        without a government VPN.
+      </p>
     </div>
   )
 }

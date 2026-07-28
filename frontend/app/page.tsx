@@ -1,18 +1,19 @@
 'use client'
 
 import { AudioUploadForm } from '@/components/audio/AudioUploadForm'
-// import { PosthogBanner } from '@/components/posthog-banner'
-// import { useIsOldUrl } from '@/hooks/use-is-old-url'
+import { PosthogBanner } from '@/components/posthog-banner'
+import { useIsOldUrl } from '@/hooks/use-is-old-url'
 import { AudioDevice } from '@/components/audio/microphone-permission'
 import { useRecordingSession } from '@/providers/recording-session-provider'
 import { Mic, Video, Upload } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import UrlMigrationBanner from '@/components/url-migration-banner'
 
 type RecordingMode = 'in-person' | 'virtual-meeting' | 'upload-file'
 
 export default function Home() {
-  // const isOldUrl = useIsOldUrl()
+  const isOldUrl = useIsOldUrl()
   const router = useRouter()
   const session = useRecordingSession()
   const [mode, setMode] = useState<RecordingMode>('in-person')
@@ -95,7 +96,7 @@ export default function Home() {
 
   return (
     <div className="govuk-width-container govuk-!-padding-top-4">
-      {/* {isOldUrl ? <UrlMigrationBanner /> : <PosthogBanner />} */}
+      {isOldUrl ? <UrlMigrationBanner /> : <PosthogBanner />}
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
           <h1 className="govuk-heading-l govuk-!-margin-bottom-3">

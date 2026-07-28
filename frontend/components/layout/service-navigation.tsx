@@ -2,6 +2,7 @@
 import { GuardedLink } from '@/components/navigation/guarded-link'
 import { usePathname } from 'next/navigation'
 import { Bookmark, LayoutPanelTop, Mic } from 'lucide-react'
+import { requestOnboardingTourRestart } from '@/hooks/use-onboarding-tour'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
@@ -72,6 +73,19 @@ export const ServiceNavigation = () => {
               </li>
             </ul>
             <ul className="govuk-service-navigation__list govuk-service-navigation__list--footer">
+              {
+                pathname !== '/privacy' && pathname !== '/support' && (
+                  <li className="govuk-service-navigation__item">
+                    <button
+                      type="button"
+                      className="govuk-service-navigation__link mx-auto cursor-pointer"
+                      onClick={requestOnboardingTourRestart}
+                    >
+                      Tour this page
+                    </button>
+                  </li>
+                )
+              }
               <li
                 className={`govuk-service-navigation__item ${pathname.includes('/privacy') ? 'govuk-service-navigation__item--active' : ''}`}
               >

@@ -134,7 +134,10 @@ export default function EditTemplatePage({
 
   return (
     <div>
-      <div className="govuk-!-padding-top-4 govuk-!-padding-bottom-4 sticky top-0 z-10 bg-white">
+      <div
+        className="govuk-!-padding-top-4 govuk-!-padding-bottom-4 sticky top-0 z-10 bg-white"
+        data-onboarding="template-detail"
+      >
         <div className="govuk-width-container">
           <div className="govuk-grid-row">
             <div className="govuk-grid-column-one-third">

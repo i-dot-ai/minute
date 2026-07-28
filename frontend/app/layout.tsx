@@ -1,4 +1,4 @@
-// import { OnboardingTour } from '@/components/onboarding/onboarding-tour'
+import { OnboardingTour } from '@/components/onboarding/onboarding-tour'
 import { GovukInit } from '@/components/layout/govuk-init'
 import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { TanstackQueryProvider } from '@/providers/TanstackQueryProvider'
@@ -45,7 +45,7 @@ export default function RootLayout({
                 >
                   Skip to main content
                 </Link>
-                {/* <OnboardingTour /> */}
+                <OnboardingTour />
                 <RecordingSessionProvider>
                   <div className="md:flex md:h-dvh md:flex-col">
                     <Header />

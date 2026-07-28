@@ -1,107 +1,79 @@
 'use client'
 
 import {
-  NEW_TRANSCRIPTION_NAV_STEP_INDEX,
+  getPageTour,
   ONBOARDING_STORAGE_KEY,
-  onboardingSteps,
   RESTART_ONBOARDING_TOUR_EVENT,
-  SAVED_TRANSCRIPTIONS_NAV_STEP_INDEX,
-  SETTINGS_NAV_STEP_INDEX,
-  TEMPLATES_NAV_STEP_INDEX,
   useOnboardingTour,
-  WELCOME_STEP_INDEX,
 } from '@/hooks/use-onboarding-tour'
-import { ACTIONS, EVENTS, STATUS } from 'react-joyride'
-import { usePathname, useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-
-const NAV_STEP_ADVANCES: Record<string, number> = {
-  '/new': NEW_TRANSCRIPTION_NAV_STEP_INDEX,
-  '/transcriptions': SAVED_TRANSCRIPTIONS_NAV_STEP_INDEX,
-  '/templates': TEMPLATES_NAV_STEP_INDEX,
-  '/settings': SETTINGS_NAV_STEP_INDEX,
-}
+import { EVENTS, STATUS } from 'react-joyride'
+import { usePathname } from 'next/navigation'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 const UNAUTHORISED_PATH = '/unauthorised'
 
-function getInitialRun() {
-  if (typeof window === 'undefined') return false
-  return localStorage.getItem(ONBOARDING_STORAGE_KEY) !== 'done'
+type SeenMap = Record<string, boolean>
+
+function readSeen(): SeenMap {
+  if (typeof window === 'undefined') return {}
+  try {
+    const stored = localStorage.getItem(ONBOARDING_STORAGE_KEY)
+    if (!stored) return {}
+    const parsed = JSON.parse(stored)
+    return parsed && typeof parsed === 'object' ? (parsed as SeenMap) : {}
+  } catch {
+    return {}
+  }
 }
 
-function getInitialStepIndex() {
-  if (typeof window === 'undefined') return 0
-  const stored = localStorage.getItem(ONBOARDING_STORAGE_KEY)
-  if (!stored || stored === 'done') return 0
-  const index = Number(stored)
-  return Number.isFinite(index) ? index : 0
+function writeSeen(seen: SeenMap) {
+  localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(seen))
 }
 
 export function OnboardingTour() {
   const pathname = usePathname()
-  const router = useRouter()
-  const [run, setRun] = useState(getInitialRun)
-  const [stepIndex, setStepIndex] = useState(getInitialStepIndex)
+  const [run, setRun] = useState(false)
   const [targetMissing, setTargetMissing] = useState(false)
-  const prevPathnameRef = useRef(pathname)
-  const originPathRef = useRef<string | null>(null)
-  const tourActive = run && pathname !== UNAUTHORISED_PATH
 
-  const steps = useMemo(() => {
-    if (pathname !== '/') return onboardingSteps
-    return onboardingSteps.map((step, index) => {
-      if (index !== WELCOME_STEP_INDEX) return step
-      return {
-        target: step.target,
-        placement: step.placement,
-        skipScroll: step.skipScroll,
-        content: step.content,
-        title: step.title,
-      }
-    })
-  }, [pathname])
+  const tour = useMemo(
+    () => (pathname === UNAUTHORISED_PATH ? undefined : getPageTour(pathname)),
+    [pathname]
+  )
+  const steps = useMemo(() => tour?.steps ?? [], [tour])
+  const tourKey = tour?.key
+  const hasTour = steps.length > 0
+  const tourActive = run && hasTour
+
+  const markSeen = useCallback(() => {
+    if (!tourKey) return
+    const seen = readSeen()
+    seen[tourKey] = true
+    writeSeen(seen)
+  }, [tourKey])
 
   const finishTour = useCallback(() => {
-    localStorage.setItem(ONBOARDING_STORAGE_KEY, 'done')
+    markSeen()
     setRun(false)
-    const origin = originPathRef.current
-    originPathRef.current = null
-    if (origin && origin !== pathname) {
-      router.push(origin)
-    }
-  }, [pathname, router])
+  }, [markSeen])
 
+  // Auto-run a tour the first time the user visits a matching page.
+  useEffect(() => {
+    if (!hasTour || !tourKey) {
+      setRun(false)
+      return
+    }
+    setRun(!readSeen()[tourKey])
+  }, [hasTour, tourKey])
+
+  // Restart replays the tour for the current page.
   const restartTour = useCallback(() => {
-    originPathRef.current = null
-    localStorage.removeItem(ONBOARDING_STORAGE_KEY)
-    setStepIndex(0)
+    if (!hasTour || !tourKey) return
+    const seen = readSeen()
+    delete seen[tourKey]
+    writeSeen(seen)
     setRun(false)
     queueMicrotask(() => setRun(true))
-  }, [])
-
-  // When the tour is resumed on a page that doesn't contain the current
-  // step's target (e.g. the page is reloaded with a mid-tour step index in
-  // local storage), react-joyride renders its grey overlay but never renders
-  // the tooltip - leaving the user with a grey screen and no close button.
-  // Detect that case so we can let them click the overlay to close the tour.
-  useEffect(() => {
-    setTargetMissing(false)
-
-    if (!tourActive) return
-
-    const currentStep = steps[stepIndex]
-    const target = currentStep?.target
-    if (typeof target !== 'string') return
-
-    // Give react-joyride's own target polling (targetWaitTimeout) a chance to
-    // find the element first, so we don't fire during normal navigation when
-    // the target appears a moment after the route changes.
-    const timeout = setTimeout(() => {
-      setTargetMissing(!document.querySelector(target))
-    }, 1200)
-
-    return () => clearTimeout(timeout)
-  }, [tourActive, steps, stepIndex, pathname])
+  }, [hasTour, tourKey])
 
   useEffect(() => {
     window.addEventListener(RESTART_ONBOARDING_TOUR_EVENT, restartTour)
@@ -109,61 +81,26 @@ export function OnboardingTour() {
       window.removeEventListener(RESTART_ONBOARDING_TOUR_EVENT, restartTour)
   }, [restartTour])
 
+  // If a tour is running but its target element isn't present, react-joyride
+  // renders its grey overlay with no tooltip. Detect that so the user can
+  // click the overlay to close the tour.
   useEffect(() => {
-    if (
-      run &&
-      originPathRef.current === null &&
-      pathname !== UNAUTHORISED_PATH
-    ) {
-      originPathRef.current = pathname
-    }
-    if (!run) {
-      originPathRef.current = null
-    }
-  }, [run, pathname])
+    setTargetMissing(false)
 
-  useEffect(() => {
-    if (pathname !== UNAUTHORISED_PATH) return
+    if (!tourActive) return
 
-    setStepIndex(0)
+    const target = steps[0]?.target
+    if (typeof target !== 'string') return
 
-    if (localStorage.getItem(ONBOARDING_STORAGE_KEY) !== 'done') {
-      localStorage.removeItem(ONBOARDING_STORAGE_KEY)
-    }
-  }, [pathname])
+    const timeout = setTimeout(() => {
+      setTargetMissing(!document.querySelector(target))
+    }, 1200)
 
-  useEffect(() => {
-    if (!run || pathname === UNAUTHORISED_PATH) return
-    if (stepIndex >= onboardingSteps.length) {
-      finishTour()
-      return
-    }
-    localStorage.setItem(ONBOARDING_STORAGE_KEY, String(stepIndex))
-  }, [finishTour, run, stepIndex, pathname])
-
-  useEffect(() => {
-    const prevPathname = prevPathnameRef.current
-    prevPathnameRef.current = pathname
-
-    const navStepIndex = NAV_STEP_ADVANCES[pathname]
-    if (navStepIndex !== undefined && stepIndex === navStepIndex) {
-      setStepIndex(navStepIndex + 1)
-      return
-    }
-
-    if (
-      pathname === '/' &&
-      stepIndex === WELCOME_STEP_INDEX &&
-      prevPathname !== '/' &&
-      prevPathname !== UNAUTHORISED_PATH
-    ) {
-      setStepIndex(WELCOME_STEP_INDEX + 1)
-    }
-  }, [pathname, stepIndex])
+    return () => clearTimeout(timeout)
+  }, [tourActive, steps])
 
   const { Tour } = useOnboardingTour({
     run: tourActive,
-    stepIndex,
     steps,
     onEvent: (data) => {
       if (
@@ -172,23 +109,6 @@ export function OnboardingTour() {
         data.status === STATUS.FINISHED
       ) {
         finishTour()
-        return
-      }
-
-      if (data.type !== EVENTS.STEP_AFTER) return
-
-      if (data.action === ACTIONS.NEXT || data.action === ACTIONS.CLOSE) {
-        const nextIndex = data.index + 1
-        if (nextIndex >= onboardingSteps.length) {
-          finishTour()
-        } else {
-          setStepIndex(nextIndex)
-        }
-        return
-      }
-
-      if (data.action === ACTIONS.PREV) {
-        setStepIndex(data.index - 1)
       }
     },
   })

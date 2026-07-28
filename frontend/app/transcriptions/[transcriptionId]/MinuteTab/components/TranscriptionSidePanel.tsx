@@ -32,7 +32,10 @@ export function TranscriptionSidePanel() {
   if (!transcriptionId) return null
 
   return (
-    <div className="govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 overflow-y-auto border-r border-(--govuk-border-colour) bg-white">
+    <div
+      className="govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 overflow-y-auto border-r border-(--govuk-border-colour) bg-white"
+      data-onboarding="transcription-detail"
+    >
       <nav aria-label="Summaries and transcript" className="secondary-nav">
         <ul className="govuk-list govuk-list--spaced">
           <li

@@ -24,7 +24,7 @@ export default function TranscriptionsPage() {
               Transcriptions
             </h1>
             {user && (
-              <p className="govuk-body">
+              <p className="govuk-body" id="tour-data-retention">
                 Transcriptions will be{' '}
                 {user.data_retention_days ? (
                   <>

@@ -204,7 +204,7 @@ export default function Home() {
                         </ol>
                       </div>
                     )}
-                    <div className="govuk-form-group govuk-!-margin-top-7 govuk-!-margin-bottom-6 flex items-center gap-2">
+                    <div className="govuk-form-group govuk-!-margin-top-7 govuk-!-margin-bottom-6 flex items-center gap-2" id="tour-select-microphone">
                       <label className="govuk-label" htmlFor="microphone">
                         Select microphone:
                       </label>

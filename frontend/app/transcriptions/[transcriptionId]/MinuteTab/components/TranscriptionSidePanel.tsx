@@ -32,13 +32,11 @@ export function TranscriptionSidePanel() {
   if (!transcriptionId) return null
 
   return (
-    <div
-      className="govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 overflow-y-auto border-r border-(--govuk-border-colour) bg-white"
-      data-onboarding="transcription-detail"
-    >
+    <div className="govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 overflow-y-auto border-r border-(--govuk-border-colour) bg-white">
       <nav aria-label="Summaries and transcript" className="secondary-nav">
         <ul className="govuk-list govuk-list--spaced">
           <li
+            id="tour-summaries"
             className={`w-50 border-l-4 border-[transparent] pl-4 ${!transcriptPage ? '!border-(--govuk-link-colour)' : ''}`}
           >
             {transcriptPage || minutes.length <= 1 ? (
@@ -102,7 +100,7 @@ export function TranscriptionSidePanel() {
               </>
             )}
           </li>
-          <li>
+          <li id="tour-transcript">
             <Link
               href={`/transcriptions/${transcriptionId}/transcript`}
               className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline border-l-4 border-[transparent] pl-4 ${transcriptPage ? '!border-(--govuk-link-colour) font-bold' : ''}`}

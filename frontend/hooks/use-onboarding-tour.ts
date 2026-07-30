@@ -24,12 +24,35 @@ export const pageTours: PageTour[] = [
       {
         target: 'body',
         placement: 'center',
-        skipScroll: true,
-        buttons: ['close'],
         content:
-          'We have recently updated the styling of the app. Everything is in the same place, just with a new look.',
+          'Each page has a new guide to help you get started. Click the "Tour this page" button in the left-hand navigation to get a tour of that page.',
         title: 'Welcome to Minute',
       },
+      {
+        target: '.govuk-radios--cards',
+        content:
+          'Record in the room, capture a virtual call, or upload audio you already have.',
+        title: 'Choose how to capture',
+      },
+      {
+        target: '#tour-select-microphone',
+        content:
+          'The current input device is shown here. Run a quick check before a real meeting to make sure sound is coming through.',
+        title: 'Check your microphone',
+      },
+      {
+        target: '.govuk-button',
+        content:
+          'When you’re ready, start here.',
+        title: 'Start recording',
+      },
+      {
+        target: '.govuk-service-navigation',
+        placement: 'right',
+        content:
+          'Your transcriptions, templates are here. You can always restart a tour by clicking the "Tour this page" button in the left-hand navigation.',
+        title: 'Everything else lives here',
+      }
     ],
   },
   {
@@ -37,11 +60,36 @@ export const pageTours: PageTour[] = [
     match: (pathname) => pathname === '/transcriptions',
     steps: [
       {
-        target: '[data-onboarding="saved-transcriptions-page"]',
-        content:
-          'All your saved transcriptions will be listed here. From this page you can view, edit, delete and generate new summaries.',
-        placement: 'right',
+        target: 'table',
+        placement: 'center',
+        content: 'All your saved transcriptions and recordings will be listed here.',
+        title: 'Transcriptions'
       },
+      {
+        target: '#tour-data-retention',
+        content: 'All transcriptions and recordings will be deleted after your data retention period. You can change this in the link here.',
+        title: 'Data retention',
+      },
+      {
+        target: '#search-transcriptions',
+        content: 'Search for transcriptions by meeting title.',
+        title: 'Search for transcriptions',
+      },
+      {
+        target: '.govuk-checkboxes',
+        content: 'Select one or more transcriptions to bulk delete meetings.',
+        title: 'Select transcriptions',
+      },
+      {
+        target: '#tour-filter',
+        content: 'Filter transcriptions by expiring soon, failed or incomplete recordings.',
+        title: 'Filter',
+      },
+      {
+        target: '.govuk-table',
+        content: 'If you have recorded or uploaded any meetings, they will be listed here. You can click through to view and edit the full transcriptions or summaries.',
+        title: 'Transcriptions',
+      }
     ],
   },
   {
@@ -49,30 +97,91 @@ export const pageTours: PageTour[] = [
     match: (pathname) => pathname === '/templates',
     steps: [
       {
-        target: '[data-onboarding="templates-page"]',
-        content:
-          'Templates are used to customise the structure and style of your summaries. There are document templates and form templates.',
-        placement: 'left',
+        target: 'table',
+        placement: 'center',
+        content: 'All the system templates and your custom templates are listed here.',
+        title: 'Templates'
       },
+      {
+        target: '#search-templates',
+        content: 'Search for templates by title.',
+        title: 'Search for templates',
+      },
+      {
+        target: '.govuk-button',
+        content: 'Create a new template by clicking the button here. You can either start with a blank template or use an example template as a starting point.',
+        title: 'Create a new template',
+      },
+      {
+        target: '.govuk-checkboxes',
+        content: 'Select one or more templates to bulk delete them. (Only custom templates can be deleted)',
+        title: 'Select templates',
+      },
+      {
+        target: '#tour-filter',
+        content: 'Filter templates by type (system, Q & A or Summary).',
+        title: 'Filter',
+      },
+      {
+        target: '.govuk-table',
+        content: 'Templates are listed here. You can click through to set defaults, or view and edit the custom templates.',
+        title: 'Templates',
+      }
     ],
   },
   {
-    // Shown once you are inside a transcription, on either the summary or the
-    // transcript view (both share the same secondary navigation panel).
-    key: 'transcription-detail',
+    key: 'transcription-summary',
     match: (pathname) =>
-      /^\/transcriptions\/[^/]+\/(summary|transcript)/.test(pathname),
+      pathname.startsWith('/transcriptions/') && pathname.includes('/summary'),
     steps: [
       {
-        target: '[data-onboarding="transcription-detail"]',
+        target: '#tour-summary',
+        placement: 'center',
+        content: 'The summary is displayed here.',
+        title: 'Summary',
+      },
+      {
+        target: '#tour-show-references',
+        content: 'Show references to easily view where in the transcript the summary is referencing. Or hide them for easier reading.',
+        title: 'Show references',
+      },
+      {
+        target: '#tour-export-summary',
+        content: 'Export the summary to a Word document or copy the text to your clipboard.',
+        title: 'Export',
+      },
+      {
+        target: '#tour-edit-summary',
+        content: 'You can edit the text manually or with AI, update the speaker names, or go through the version history.',
+        title: 'Edit',
+      },
+      {
+        target: '#tour-delete-summary',
+        content: 'Delete the summary here. This will only delete this summary, all other summaries, transcriptions and recordings will remain.',
+        title: 'Delete summary',
+      },
+      {
+        target: '#tour-summaries',
+        content: 'Click "new summary" to generate a new summary. All generated summaries will be listed here to easily switch between them.',
+        title: 'Summaries',
+      }
+    ],
+  },
+  {
+    key: 'transcription-transcript',
+    match: (pathname) =>
+      pathname.startsWith('/transcriptions/') &&
+      !pathname.includes('/summary'),
+    steps: [
+      {
+        target: '.secondary-nav',
         content:
-          'Switch between the transcript and any generated summaries here. You can also create a new summary from a different template.',
-        placement: 'right',
+          'This is the full transcript. You can edit the text, rename speakers, and switch back to your summaries here.',
+        title: 'Transcript',
       },
     ],
   },
   {
-    // Template detail / edit page.
     key: 'template-detail',
     match: (pathname) => /^\/templates\/[^/]+$/.test(pathname),
     steps: [
@@ -112,6 +221,7 @@ export function useOnboardingTour({
     tooltipComponent: GovukJoyrideTooltip,
     options: {
       skipBeacon: true,
+      skipScroll: true,
       closeButtonAction: 'skip',
       ...options,
     },

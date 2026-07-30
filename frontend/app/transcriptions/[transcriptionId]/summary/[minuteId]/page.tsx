@@ -174,6 +174,7 @@ export default function SummaryPage({
                         className="govuk-button govuk-button--secondary min-w-48"
                         onClick={editState.toggleHideCitations}
                         disabled={editState.isEditable}
+                        id="tour-show-references"
                       >
                         {editState.hideCitations ? (
                           <Eye className="size-4" />
@@ -196,6 +197,7 @@ export default function SummaryPage({
                       onClick={() => editState.setIsEditable(true)}
                       type="button"
                       disabled={editState.isEditable}
+                      id="tour-edit-summary"
                     >
                       <PencilIcon className="size-4" /> Edit
                     </button>
@@ -288,13 +290,12 @@ export default function SummaryPage({
         </div>
       </div>
       <div
-        className={`min-h-0 flex-1 overflow-y-auto ${
-          editState?.isEditable
-            ? 'govuk-!-padding-4 bg-(--govuk-surface-background-colour)'
-            : ''
-        }`}
+        className={`min-h-0 flex-1 overflow-y-auto ${editState?.isEditable
+          ? 'govuk-!-padding-4 bg-(--govuk-surface-background-colour)'
+          : ''
+          }`}
       >
-        <div className="govuk-width-container govuk-width-container--with-secondary-nav">
+        <div className="govuk-width-container govuk-width-container--with-secondary-nav" id="tour-summary">
           {editState?.isEditable ? (
             <form
               className="govuk-form-group govuk-!-margin-bottom-6 govuk-!-margin-top-4"

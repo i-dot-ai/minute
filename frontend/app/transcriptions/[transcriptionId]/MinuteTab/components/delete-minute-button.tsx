@@ -55,6 +55,7 @@ export function DeleteMinuteButton({
         className="govuk-link link--warning govuk-!-font-size-16"
         onClick={() => setOpen(true)}
         disabled={disabled}
+        id="tour-delete-summary"
       >
         Delete summary
       </button>

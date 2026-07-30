@@ -311,7 +311,7 @@ export const TemplatesTable = () => {
             </span>
           )}
         </p>
-        <div className="hidden sm:block">
+        <div className="hidden sm:block" id="tour-filter">
           <TemplatesFilter
             typeFilter={typeFilter}
             handleFilterChange={handleFilterChange}

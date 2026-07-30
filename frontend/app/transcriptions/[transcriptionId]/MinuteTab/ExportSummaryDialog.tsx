@@ -49,6 +49,7 @@ export const ExportSummaryDialog = ({
         className="govuk-button govuk-button--secondary"
         disabled={disabled || !exportState}
         onClick={() => setOpen(true)}
+        id="tour-export-summary"
       >
         <DownloadIcon className="size-4" />
         Export

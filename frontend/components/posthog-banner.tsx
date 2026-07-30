@@ -6,7 +6,7 @@ import { useFeatureFlagPayload } from 'posthog-js/react'
 
 export function PosthogBanner() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let payload: any = useFeatureFlagPayload(FeatureFlags.ShowIssueBanner)
+  const payload: any = useFeatureFlagPayload(FeatureFlags.ShowIssueBanner)
 
 
   if (!payload) {

@@ -97,7 +97,7 @@ module "frontend" {
   # checkov:skip=CKV_SECRET_4:Skip secret check as these have to be used within the Github Action
   name = "${local.name}-frontend"
   # source = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
-  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v7.0.1-ecs"
+  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v7.1.0-ecs"
   image_tag                    = var.image_tag
   ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-frontend"
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
@@ -122,6 +122,7 @@ module "frontend" {
     "BACKEND_HOST" : "http://${aws_service_discovery_service.service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}:${local.backend_port}"
     "AUTH_PROVIDER_PUBLIC_KEY" : data.aws_ssm_parameter.auth_provider_public_key.value,
     "AUTH_API_URL" : data.aws_ssm_parameter.auth_api_invoke_url.value,
+    "OIDC_CLIENT_ID" : aws_ssm_parameter.oidc_secrets["client_id"].value,
   }
 
   secrets = [
@@ -149,6 +150,7 @@ module "frontend" {
     enabled : true,
     client_id : aws_ssm_parameter.oidc_secrets["client_id"].value,
     client_secret : aws_ssm_parameter.oidc_secrets["client_secret"].value,
+    api_version : "v2", # migrate to OIDC-standard /oauth2/* endpoints
   }
 
   user_session_timeout = 604800 # 7 days in seconds

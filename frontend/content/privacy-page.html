@@ -117,19 +117,19 @@
 <p class="govuk-body">We use the following processors to deliver Minute:</p>
 <ul class="govuk-list govuk-list--bullet">
   <li>
-    Microsoft (Azure Speech-to-Text) - to perform speech-to-text transcription
-    of audio you upload
+    Microsoft (Azure Speech-to-Text): used to perform speech-to-text
+    transcription of audio you upload
   </li>
-  <li>ElevenLabs Speech-to-text</li>
   <li>
-    Google (Gemini API via Google Cloud `[CONFIRM: Vertex AI / region]`) - to
-    generate structured meeting minutes from transcripts
+    Google (Gemini 2.5 Flash via Google Cloud Vertex AI): used to generate
+    structured meeting minutes from transcripts. Our Google Cloud credentials
+    are configured to the europe-west9 (Paris) region.
   </li>
 </ul>
-<p class="govuk-body">Hosting provider: AWS UK region</p>
+<p class="govuk-body">Hosting provider: AWS, UK region.</p>
 <p class="govuk-body">
-  Each of these is bound by a contract that requires them to keep your data
-  secure and to process it only on our instructions.
+  Each of these processors is bound by a contract that requires them to keep
+  your data secure and to process it only on our instructions.
 </p>
 
 <h2 class="govuk-heading-l">
@@ -176,7 +176,7 @@
   organisation sets a retention policy when it onboards Minute, and you can
   configure your own retention within the limits your organisation has set. When
   the retention period expires, recordings, transcripts and minutes are deleted
-  automatically.
+  automatically. The default retention period is 30 days.
 </p>
 <p class="govuk-body">Other data we hold is kept as follows:</p>
 <ul class="govuk-list govuk-list--bullet">

@@ -48,11 +48,8 @@ function Unauthorised(): React.JSX.Element {
           </p>
           <p className="govuk-body">
             If you believe this is an error, please contact us at{' '}
-            <a
-              className="govuk-link"
-              href="mailto:minute-support@cabinetoffice.gov.uk"
-            >
-              minute-support@cabinetoffice.gov.uk
+            <a className="govuk-link" href="mailto:minute-support@dsit.gov.uk">
+              minute-support@dsit.gov.uk
             </a>
             .
           </p>

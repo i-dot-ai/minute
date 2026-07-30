@@ -60,11 +60,11 @@ class MinuteHandlerService:
                 err_msg = f"MinuteVersion not found for id: {minute_version_id}"
                 raise ValueError(err_msg)
 
-            if html_content:
+            if html_content is not None:
                 minute_version.html_content = html_content
             if status:
                 minute_version.status = status
-            if error:
+            if error is not None:
                 minute_version.error = error
             if hallucinations:
                 minute_version.hallucinations = [
@@ -73,6 +73,16 @@ class MinuteHandlerService:
                 ]
             session.add(minute_version)
             session.commit()
+
+    @classmethod
+    def record_minute_version_failure(cls, minute_version_id: UUID, error: str) -> None:
+        # A failure here must not mask the original error, otherwise the caller raises
+        # something other than MinuteGenerationFailedError and the queue message is
+        # never completed, causing endless redelivery
+        try:
+            cls.update_minute_version(minute_version_id, status=JobStatus.FAILED, error=error)
+        except Exception:
+            logger.exception("Failed to record FAILED status for MinuteVersion %s", minute_version_id)
 
     @classmethod
     async def get_minute_version(cls, minute_version_id: UUID) -> MinuteVersion:
@@ -131,7 +141,8 @@ class MinuteHandlerService:
                 status=JobStatus.COMPLETED,
             )
         except Exception as e:
-            cls.update_minute_version(minute_version.id, status=JobStatus.FAILED, error=str(e))
+            logger.exception("%s: Minute generation failed", minute_version.minute_id)
+            cls.record_minute_version_failure(minute_version.id, error=str(e))
             raise MinuteGenerationFailedError from e
 
     @classmethod
@@ -164,7 +175,8 @@ class MinuteHandlerService:
             )
 
         except Exception as e:
-            cls.update_minute_version(target_minute_version.id, status=JobStatus.FAILED, error=str(e))
+            logger.exception("%s: Minute edit failed", target_minute_version.minute_id)
+            cls.record_minute_version_failure(target_minute_version.id, error=str(e))
             raise MinuteGenerationFailedError from e
 
     @classmethod

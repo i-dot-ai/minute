@@ -13,12 +13,10 @@ import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { AudioWav } from '@/components/icons/AudioWav'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
 
-export default function TranscriptionPage({
-  params: { transcriptionId },
-}: {
-  params: { transcriptionId: string }
-}) {
+export default function TranscriptionPage() {
+  const { transcriptionId } = useParams<{ transcriptionId: string }>()
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId },

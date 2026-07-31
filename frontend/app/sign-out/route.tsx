@@ -7,7 +7,7 @@ export async function GET() {
     console.error('OIDC_CLIENT_ID environment variable is not set')
   }
 
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   cookieStore.delete('X-Amzn-Oidc-Data-0')
   cookieStore.delete('AWSALBAuthNonce')
 

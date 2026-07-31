@@ -152,8 +152,15 @@ tf_auto_apply:  ## Auto apply terraform
 	terraform -chdir=./terraform/ apply  ${tf_build_args} ${args} -auto-approve
 
 ## Release app
+# Note: `env` falls back to `default` above for the terraform targets (that is a real
+# terraform workspace). A release has no such fallback -- deploying needs an explicit
+# environment, otherwise you tag `release-default-*`, which no workflow matches.
 .PHONY: release
-release: 
+release:
+	@if [ "$(env)" = "default" ]; then \
+		printf '\033[0;31mrelease needs an explicit environment, e.g. `make release env=dev`\033[0m\n'; \
+		exit 1; \
+	fi
 	chmod +x ./release.sh && ./release.sh $(env)
 
 generate_api_types:

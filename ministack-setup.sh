@@ -77,5 +77,32 @@ $AWS sqs set-queue-attributes \
     \"RedrivePolicy\": \"{\\\"deadLetterTargetArn\\\":\\\"$LLM_DEADLETTER_ARN\\\",\\\"maxReceiveCount\\\":\\\"4\\\"}\"
 }"
 
+##############################
+## DATA BUCKET
+##############################
+
+# Mirrors the real bucket in terraform/s3.tf so local dev and the e2e tests never
+# touch dev AWS. create-bucket is not idempotent, so tolerate an existing bucket.
+echo "Creating S3 bucket $DATA_S3_BUCKET"
+$AWS s3api create-bucket \
+  --bucket "$DATA_S3_BUCKET" \
+  --create-bucket-configuration "LocationConstraint=$AWS_DEFAULT_REGION" \
+  >/dev/null 2>&1 || echo "Bucket $DATA_S3_BUCKET already exists"
+
+# The browser PUTs straight to a presigned URL, so the local bucket needs CORS
+# rules like the real one. Origins are wide open here — local only.
+$AWS s3api put-bucket-cors --bucket "$DATA_S3_BUCKET" --cors-configuration '{
+  "CORSRules": [
+    {
+      "AllowedHeaders": ["*"],
+      "AllowedMethods": ["PUT", "GET", "POST"],
+      "AllowedOrigins": ["*"],
+      "MaxAgeSeconds": 3000
+    }
+  ]
+}'
+
+echo "S3 bucket ready: $DATA_S3_BUCKET"
+
 # docker-compose healthcheck waits for this file
 touch "/ready.txt"

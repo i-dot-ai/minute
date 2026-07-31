@@ -19,6 +19,12 @@ from common.types import LLMHallucination
 settings = get_settings()
 T = TypeVar("T", bound=BaseModel)
 
+# Gemini 3 models are tuned to run at their default temperature of 1.0. Google warns that
+# lowering it can cause looping and degraded reasoning, particularly on the long transcripts
+# we send for minute generation. Callers that genuinely need determinism can still pass an
+# explicit temperature to create_chatbot.
+DEFAULT_TEMPERATURE = 1.0
+
 
 class ChatBot:
     """
@@ -61,7 +67,7 @@ class ChatBot:
         return response
 
 
-def create_chatbot(model_type: str, model_name: str, temperature: float) -> ChatBot:
+def create_chatbot(model_type: str, model_name: str, temperature: float = DEFAULT_TEMPERATURE) -> ChatBot:
     """
     Creates and returns a chatbot instance based on the specified model type and name.
 
@@ -74,7 +80,8 @@ def create_chatbot(model_type: str, model_name: str, temperature: float) -> Chat
         model_type: A string specifying the type of the model. Supported values are "openai"
             and "gemini".
         model_name: A string indicating the name of the model to be used.
-        **kwargs: Additional keyword arguments to be passed to the model api call, if required.
+        temperature: Sampling temperature for the model. Defaults to DEFAULT_TEMPERATURE, which
+            is what Gemini 3 expects; only override it if a caller genuinely needs determinism.
 
     Returns:
         ChatBot: An instance of the ChatBot class configured with the appropriate model adapter.
@@ -117,6 +124,6 @@ def create_default_chatbot(fast_or_best: FastOrBestLLM) -> ChatBot:
     """Helper function to create an OpenAI client. Let's replace when we have something like OmegaConf/Hydra.cc to
     instantiate chatbot"""
     if fast_or_best == FastOrBestLLM.BEST:
-        return create_chatbot(settings.BEST_LLM_PROVIDER, settings.BEST_LLM_MODEL_NAME, temperature=0.0)
+        return create_chatbot(settings.BEST_LLM_PROVIDER, settings.BEST_LLM_MODEL_NAME)
     else:
-        return create_chatbot(settings.FAST_LLM_PROVIDER, settings.FAST_LLM_MODEL_NAME, temperature=0.0)
+        return create_chatbot(settings.FAST_LLM_PROVIDER, settings.FAST_LLM_MODEL_NAME)

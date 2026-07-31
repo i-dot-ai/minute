@@ -9,8 +9,17 @@ on:
   push:
     paths:
       - backend/**
-      - Makefile
+      - common/**
+      - worker/**
+      - tests/**
+      - alembic/**
       - frontend/**
+      - conftest.py
+      - pyproject.toml
+      - uv.lock
+      - .env.example
+      - Makefile
+      - .github/workflows/checks.yml
     branches:
       - "main"
       - "feature/**"

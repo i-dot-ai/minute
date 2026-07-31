@@ -12,4 +12,4 @@ We use SQLAlchemy for database connections, and alembic for tracking migrations.
 
 *When adding new models, import each model into `alembic/env.py` so that alembic reads it into the config.*
 
-Run `poetry run alembic revision --autogenerate` to generate a new migration, and `poetry run alembic upgrade head` to run the upgrade to apply the new migration.
+Run `uv run alembic revision --autogenerate` to generate a new migration, and `uv run alembic upgrade head` to run the upgrade to apply the new migration.

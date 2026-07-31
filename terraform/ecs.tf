@@ -26,9 +26,9 @@ locals {
     "MAX_LLM_PROCESSES" : local.MAX_LLM_PROCESSES
     "AZURE_TRANSCRIPTION_CONTAINER_NAME" : "transcriptions"
     "FAST_LLM_PROVIDER"   = "gemini"
-    "FAST_LLM_MODEL_NAME" = "gemini-2.5-flash-lite"
+    "FAST_LLM_MODEL_NAME" = "gemini-3.5-flash"
     "BEST_LLM_PROVIDER"   = "gemini"
-    "BEST_LLM_MODEL_NAME" = "gemini-2.5-flash"
+    "BEST_LLM_MODEL_NAME" = "gemini-3.5-flash"
   }
 
 }

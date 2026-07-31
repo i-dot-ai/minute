@@ -116,7 +116,7 @@ class MinuteListItem(BaseModel):
 
 class MinutesCreateRequest(BaseModel):
     template_name: str = Field(description="Name of the template to use for the minutes")
-    template_id: uuid.UUID | None = Field(description="Optional id of user template")
+    template_id: uuid.UUID | None = Field(description="Optional id of user template", default=None)
     agenda: str | None = Field(description="The agenda for the meeting", default=None)
 
 

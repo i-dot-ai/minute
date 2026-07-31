@@ -4,6 +4,7 @@ from pathlib import Path
 
 import aioboto3
 import aiofiles
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 from common.services.storage_services.base import StorageService
@@ -16,9 +17,23 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def _create_boto3_s3_client():
     async_session = aioboto3.Session()
-    async with (
-        async_session.client("s3", region_name=settings.AWS_REGION) as s3,
-    ):
+    if settings.USE_MINISTACK and settings.ENVIRONMENT == "local":
+        # MiniStack does not validate credentials, so pass dummies rather than the
+        # (often expired) real session in .env. Path-style addressing keeps presigned
+        # URLs as <endpoint>/<bucket>/<key>; the default virtual-host style would
+        # produce <bucket>.localhost, which does not resolve.
+        client = async_session.client(
+            "s3",
+            aws_access_key_id="YOUR_ACCESS_KEY_ID",
+            aws_secret_access_key="YOUR_SECRET_ACCESS_KEY",  # noqa: S106
+            region_name="eu-west-2",
+            endpoint_url=settings.MINISTACK_URL,
+            config=Config(s3={"addressing_style": "path"}),
+        )
+    else:
+        client = async_session.client("s3", region_name=settings.AWS_REGION)
+
+    async with client as s3:
         yield s3
 
 

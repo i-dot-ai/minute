@@ -10,7 +10,10 @@ pytestmark = [requires_audio_data]
 
 
 def get_normal_data():
-    return list(Path(".data").joinpath("test_audio").joinpath(FileTypeTests.NORMAL).iterdir())
+    normal_dir = Path(".data").joinpath("test_audio").joinpath(FileTypeTests.NORMAL)
+    if not normal_dir.is_dir():
+        return []
+    return list(normal_dir.iterdir())
 
 
 @pytest.fixture

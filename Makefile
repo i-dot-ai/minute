@@ -17,9 +17,21 @@ install:
 run-pre-commit:
 	uv run pre-commit run --all-files
 
+# If your network intercepts outbound HTTPS, Python's bundled certifi roots won't
+# include your network's root certificate and verification fails.
+# docker-compose.override.yaml injects a CA bundle into the containers; host-run
+# tests need it too. Generate the bundle with: ./certs/gen-ca-bundle.sh
+# (certs/ is gitignored, so this is a no-op in CI and where it does not apply).
+CA_BUNDLE = $(CURDIR)/certs/host-ca-bundle.pem
+CA_SH = if [ -f "$(CA_BUNDLE)" ]; then \
+	REQUESTS_CA_BUNDLE="$(CA_BUNDLE)"; SSL_CERT_FILE="$(CA_BUNDLE)"; \
+	AWS_CA_BUNDLE="$(CA_BUNDLE)"; CURL_CA_BUNDLE="$(CA_BUNDLE)"; \
+	GRPC_DEFAULT_SSL_ROOTS_FILE_PATH="$(CA_BUNDLE)"; \
+	fi;
+
 # Source .env via the shell (not make's `export`, which keeps the literal quotes
 # around values like TRANSCRIPTION_SERVICES='[...]' and breaks pydantic parsing).
-ENV_SH = set -a; if [ -f .env ]; then . ./.env; fi; set +a;
+ENV_SH = set -a; if [ -f .env ]; then . ./.env; fi; $(CA_SH) set +a;
 
 # Fast, offline unit tests. Paid-API / e2e tests are skipped here (run `make test_e2e`).
 test:

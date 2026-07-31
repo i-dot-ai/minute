@@ -1,10 +1,10 @@
-import { ReactElement } from 'react'
+import { ReactNode } from 'react'
 import Link from 'next/link'
 
 export default function TranscriptionLayout({
   children,
 }: {
-  children: ReactElement
+  children: ReactNode
 }) {
   return (
     <div className="govuk-main-wrapper">

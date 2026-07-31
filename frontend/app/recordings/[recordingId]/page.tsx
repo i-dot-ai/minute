@@ -11,16 +11,13 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Loader2, TriangleAlert } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useState } from 'react'
 import { FormProvider } from 'react-hook-form'
 
-export default function RecordingPage({
-  params: { recordingId },
-}: {
-  params: { recordingId: string }
-}) {
+export default function RecordingPage() {
+  const { recordingId } = useParams<{ recordingId: string }>()
   const { getRecording } = useRecordingDb()
   const {
     data: recording,

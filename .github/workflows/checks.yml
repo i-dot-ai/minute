@@ -69,8 +69,25 @@ jobs:
         run: |
           cp .env.example .env
 
+      # backend.main builds a queue service and resolves the SQS queue URL at
+      # import time, and the auth dependency hits postgres, so the suite cannot
+      # be collected without these two running.
+      - name: Start postgres and MiniStack
+        run: |
+          docker compose up -d --wait db ministack
+
+      - name: Run database migrations
+        run: |
+          uv run alembic upgrade head
+
       - name: Run tests
         run: |
           make test
+
+      - name: Stop postgres and MiniStack
+        if: always()
+        run: |
+          docker compose logs db ministack
+          docker compose down -v
 
 #

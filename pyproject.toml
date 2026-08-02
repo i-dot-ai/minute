@@ -10,7 +10,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "cryptography>=44.0.2,<45",
+    "cryptography>=49.0.0,<50",
     "pydantic-settings>=2.5.2,<3",
     "alembic>=1.13.3,<2",
     "sqlmodel>=0.0.27,<0.0.28",
@@ -21,7 +21,7 @@ dependencies = [
     "httpx>=0.28.1,<0.29",
     "psycopg2-binary>=2.9.9,<3",
     "boto3>=1.35.3,<2",
-    "fastapi>=0.112.0",
+    "fastapi>=0.133.0",
     "sentry-sdk[fastapi]>=2.18.0,<3",
     "sqlalchemy[asyncio]>=2.0.42,<3",
     "asyncpg>=0.30.0,<0.31",

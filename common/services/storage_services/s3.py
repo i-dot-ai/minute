@@ -19,7 +19,7 @@ async def _create_boto3_s3_client():
     async_session = aioboto3.Session()
     if settings.USE_MINISTACK and settings.ENVIRONMENT == "local":
         # MiniStack does not validate credentials, so pass dummies rather than the
-        # (often expired) real session in .env. Path-style addressing keeps presigned
+        # real session in .env. Path-style addressing keeps presigned
         # URLs as <endpoint>/<bucket>/<key>; the default virtual-host style would
         # produce <bucket>.localhost, which does not resolve.
         client = async_session.client(
@@ -43,7 +43,10 @@ class S3StorageService(StorageService):
 
     @classmethod
     async def upload(cls, key: str, path: Path) -> None:
-        async with aiofiles.open(path, "rb") as file, _create_boto3_s3_client() as session:
+        async with (
+            aiofiles.open(path, "rb") as file,
+            _create_boto3_s3_client() as session,
+        ):
             file_content = await file.read()
 
             await session.put_object(Bucket=settings.DATA_S3_BUCKET, Key=key, Body=file_content)

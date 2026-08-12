@@ -2,6 +2,10 @@ import { withSentryConfig } from '@sentry/nextjs'
 
 let nextConfig = {
   output: 'standalone',
+  experimental: {
+    // 5GB matches limits on deployed environments
+    middlewareClientMaxBodySize: 5 * 1024 * 1024 * 1024,
+  },
   webpack: (config) => {
     config.module.rules.push({
       test: /\.html$/,

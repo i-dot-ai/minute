@@ -69,6 +69,15 @@ class WorkerService:
 
 def create_worker_service() -> WorkerService:
     settings = get_settings()
+    # log the configured providers so it is obvious from the startup logs which services a running worker talks to
+    logger.info(
+        "Worker configured with transcription services: %s. LLM providers: fast=%s (%s), best=%s (%s)",
+        ", ".join(settings.TRANSCRIPTION_SERVICES) or "none",
+        settings.FAST_LLM_PROVIDER,
+        settings.FAST_LLM_MODEL_NAME,
+        settings.BEST_LLM_PROVIDER,
+        settings.BEST_LLM_MODEL_NAME,
+    )
     transcription_sqs_service = get_queue_service(
         settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
     )

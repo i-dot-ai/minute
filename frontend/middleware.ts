@@ -1,4 +1,4 @@
-import { API_PROXY_PATH } from '@/providers/TanstackQueryProvider'
+import { API_PROXY_PATH } from '@/lib/api-proxy-path'
 import { NextRequest, NextResponse } from 'next/server'
 import { type UserAuthorisationResult } from '@i-dot-ai-npm/utilities-auth'
 import { parseAuthToken } from './utils/auth'

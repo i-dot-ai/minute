@@ -9,8 +9,17 @@ on:
   push:
     paths:
       - backend/**
-      - Makefile
+      - common/**
+      - worker/**
+      - tests/**
+      - alembic/**
       - frontend/**
+      - conftest.py
+      - pyproject.toml
+      - uv.lock
+      - .env.example
+      - Makefile
+      - .github/workflows/checks.yml
     branches:
       - "main"
       - "feature/**"
@@ -28,24 +37,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v3
+      - name: Set up uv
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
         with:
           python-version: "3.12"
 
-      - name: Set up Poetry
-        uses: abatilo/actions-poetry@v2
-        with:
-          poetry-version: 2.1.3
-
       - name: Install dependencies
         run: |
-          poetry install --no-root --no-ansi --only dev
+          uv sync --no-install-project --no-default-groups --group dev
 
       - name: Format code
         run: |
-          poetry run ruff format . --check
-          poetry run ruff check .
+          uv run ruff format . --check
+          uv run ruff check .
 
   run_tests:
     name: Run tests
@@ -56,12 +60,34 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
       - name: Copy env file
         run: |
           cp .env.example .env
 
+      # backend.main builds a queue service and resolves the SQS queue URL at
+      # import time, and the auth dependency hits postgres, so the suite cannot
+      # be collected without these two running.
+      - name: Start postgres and MiniStack
+        run: |
+          docker compose up -d --wait db ministack
+
+      - name: Run database migrations
+        run: |
+          uv run alembic upgrade head
+
       - name: Run tests
         run: |
           make test
+
+      - name: Stop postgres and MiniStack
+        if: always()
+        run: |
+          docker compose logs db ministack
+          docker compose down -v
 
 #

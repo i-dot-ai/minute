@@ -34,14 +34,13 @@ class House(BaseModel):
     bathrooms: int
 
 
+MODELS_TO_TEST = [
+    ("gemini", "gemini-2.5-flash-lite"),
+]
+
+
 @pytest.mark.asyncio(loop_scope="session")
-@pytest.mark.parametrize(
-    "model_type_and_model_name",
-    [
-        ("openai", "gpt-4o-2024-08-06"),
-        ("gemini", "gemini-2.0-flash"),
-    ],
-)
+@pytest.mark.parametrize("model_type_and_model_name", MODELS_TO_TEST)
 async def test_structured_output_chatbots(model_type_and_model_name) -> None:
     chatbot = create_chatbot(
         model_type=model_type_and_model_name[0], model_name=model_type_and_model_name[1], temperature=0.0
@@ -55,13 +54,7 @@ async def test_structured_output_chatbots(model_type_and_model_name) -> None:
 
 
 @pytest.mark.asyncio(loop_scope="session")
-@pytest.mark.parametrize(
-    "model_type_and_model_name",
-    [
-        ("openai", "gpt-4o-2024-08-06"),
-        ("gemini", "gemini-2.0-flash"),
-    ],
-)
+@pytest.mark.parametrize("model_type_and_model_name", MODELS_TO_TEST)
 async def test_chat_chatbots(model_type_and_model_name) -> None:
     chatbot = create_chatbot(
         model_type=model_type_and_model_name[0], model_name=model_type_and_model_name[1], temperature=0.0

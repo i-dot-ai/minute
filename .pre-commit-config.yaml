@@ -12,7 +12,7 @@ repos:
   #   rev: v1.4.0
   #   hooks:
   #     - id: detect-secrets
-  #       exclude: (poetry.lock|.env.example|.env.test|^.github/workflows/|.cruft.json|aws_architecture)
+  #       exclude: (uv.lock|.env.example|.env.test|^.github/workflows/|.cruft.json|aws_architecture)
 
   - repo: local
     hooks:
@@ -33,7 +33,7 @@ repos:
 
       # - id: python-tests
       #   name: Run Python tests
-      #   entry: poetry run pytest
+      #   entry: uv run pytest
       #   language: system
       #   types: [python]
       #   pass_filenames: false

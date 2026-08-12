@@ -35,7 +35,7 @@ services:
         - path: ./common
           target: /app/common
           action: sync+restart
-        - path: ./poetry.lock
+        - path: ./uv.lock
           action: rebuild
 
   worker:
@@ -69,7 +69,9 @@ services:
       ministack:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "poetry run python worker/healthcheck.py"]
+      # Direct interpreter call (venv is on PATH); avoids `uv run` touching
+      # /app/.venv on a timer while Ray is running off the same venv.
+      test: ["CMD-SHELL", "python worker/healthcheck.py"]
       interval: 60s
       retries: 3
       start_period: 60s
@@ -82,7 +84,7 @@ services:
         - path: ./common
           target: /app/common
           action: sync+restart
-        - path: ./poetry.lock
+        - path: ./uv.lock
           action: rebuild
 
   frontend:

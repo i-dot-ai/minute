@@ -6,29 +6,38 @@ PY_VERSION := $(shell cat .python-version)
 .PHONY: build-pyenv install pre-commit-setup test test_e2e run_frontend run_backend run stop
 
 build-pyenv:
-	pyenv install -s ${PY_VERSION}
-	poetry env use ${PY_VERSION}
+	uv python install ${PY_VERSION}
 
 install:
 	cd frontend && npm install
 	brew install ffmpeg
-	poetry install --with fastapi --no-root
-	poetry run pre-commit install
+	uv sync
+	uv run pre-commit install
 
 run-pre-commit:
-	poetry run pre-commit run --all-files
+	uv run pre-commit run --all-files
 
+# Source .env via the shell (not make's `export`, which keeps the literal quotes
+# around values like TRANSCRIPTION_SERVICES='[...]' and breaks pydantic parsing).
+ENV_SH = set -a; if [ -f .env ]; then . ./.env; fi; set +a;
+
+# Fast, offline unit tests. Paid-API / e2e tests are skipped here (run `make test_e2e`).
 test:
-	poetry run pytest tests/
+	$(ENV_SH) ALLOW_TESTS_TO_ACCESS_PAID_APIS=0 uv run pytest tests/
+
+# Full suite including tests that hit paid APIs and external services (ministack,
+# audio data in .data/test_audio/). Requires valid credentials in .env.
+test_e2e:
+	$(ENV_SH) uv run pytest tests/
 
 run_frontend:
 	cd frontend && npm run dev
 
 run_backend:
-	poetry run uvicorn backend.main:app --reload --port 8080
+	uv run uvicorn backend.main:app --reload --port 8080
 
 run_worker:
-	poetry run python backend/services/queue_service.py
+	uv run python backend/services/queue_service.py
 
 run:
 	docker compose up -d --wait
@@ -42,8 +51,8 @@ stop:
 
 .PHONY: generate_aws_diagram
 generate_aws_diagram:
-	poetry install --with dev
-	poetry run python terraform/diagram_script.py
+	uv sync --group dev
+	uv run python terraform/diagram_script.py
 
 # Docker
 
@@ -143,8 +152,15 @@ tf_auto_apply:  ## Auto apply terraform
 	terraform -chdir=./terraform/ apply  ${tf_build_args} ${args} -auto-approve
 
 ## Release app
+# Note: `env` falls back to `default` above for the terraform targets (that is a real
+# terraform workspace). A release has no such fallback -- deploying needs an explicit
+# environment, otherwise you tag `release-default-*`, which no workflow matches.
 .PHONY: release
-release: 
+release:
+	@if [ "$(env)" = "default" ]; then \
+		printf '\033[0;31mrelease needs an explicit environment, e.g. `make release env=dev`\033[0m\n'; \
+		exit 1; \
+	fi
 	chmod +x ./release.sh && ./release.sh $(env)
 
 generate_api_types:

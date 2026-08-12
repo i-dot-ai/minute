@@ -11,21 +11,18 @@ import { useQuery } from '@tanstack/react-query'
 import { Loader2, Pencil, Save } from 'lucide-react'
 import { AudioWav } from '@/components/icons/AudioWav'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-export default function TranscriptionPage({
-  params: { transcriptionId },
-}: {
-  params: { transcriptionId: string }
-}) {
+export default function TranscriptionPage() {
+  const { transcriptionId } = useParams<{ transcriptionId: string }>()
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId },
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-      ['awaiting_start', 'in_progress'].includes(query.state.data.status)
+        ['awaiting_start', 'in_progress'].includes(query.state.data.status)
         ? 2000
         : false,
   })

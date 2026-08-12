@@ -1,14 +1,23 @@
 import logging
 import sys
 import time
+from os import getenv
 from pathlib import Path
 
 logger = logging.getLogger()
 
 
-HEARTBEAT_DIR = Path("/healthcheck")
+HEARTBEAT_DIR = Path(getenv("HEARTBEAT_DIR", "/healthcheck"))
 HEARTBEAT_TIMEOUT = 1200  # 20 minutes
-HEARTBEAT_DIR.mkdir(exist_ok=True)
+
+
+def ensure_heartbeat_dir() -> None:
+    """Create the heartbeat directory if it does not already exist.
+
+    Done lazily rather than at import time so that importing this module has no
+    filesystem side effects (e.g. when running tests outside the worker container).
+    """
+    HEARTBEAT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def healthcheck() -> tuple[bool, str]:

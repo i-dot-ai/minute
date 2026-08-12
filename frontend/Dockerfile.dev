@@ -2,9 +2,10 @@ FROM node:23-alpine
 
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
+# Install dependencies based on the preferred package manager.
+# `npm ci` installs exactly the lockfile, so the image can't drift from it.
 COPY frontend/package.json frontend/package-lock.json ./
-RUN npm install
+RUN npm ci
 
 COPY frontend .
 

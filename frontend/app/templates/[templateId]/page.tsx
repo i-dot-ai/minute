@@ -20,18 +20,15 @@ import {
 } from '@tanstack/react-query'
 import { Loader2, Pencil, Star, StarOff } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useCallback, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { DeleteConfirmDialog } from '../components/delete-single-template-dialog'
 
-export default function EditTemplatePage({
-  params: { templateId },
-}: {
-  params: { templateId: string }
-}) {
+export default function EditTemplatePage() {
+  const { templateId } = useParams<{ templateId: string }>()
   const { data: template } = useQuery({
     ...getUserTemplateUserTemplatesTemplateIdGetOptions({
       path: { template_id: templateId },

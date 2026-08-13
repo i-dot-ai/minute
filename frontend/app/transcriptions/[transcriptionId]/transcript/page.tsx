@@ -25,14 +25,15 @@ import {
 import Link from 'next/link'
 // import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { use, useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 
 export default function TranscriptPage({
-  params: { transcriptionId },
+  params,
 }: {
-  params: { transcriptionId: string }
+  params: Promise<{ transcriptionId: string }>
 }) {
+  const { transcriptionId } = use(params)
   // const router = useRouter()
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
@@ -199,10 +200,10 @@ export default function TranscriptPage({
       <div className="flex h-full flex-col">
         <div className="govuk-!-padding-bottom-4 govuk-!-padding-top-4 shrink-0 border-b border-(--govuk-border-colour) bg-white">
           <div className="govuk-width-container govuk-width-container--with-secondary-nav">
-            <div className="flex items-center justify-between">
+            <div className="sm:flex sm:items-center sm:justify-between">
               {!isEditing ? (
                 <nav
-                  className="govuk-breadcrumbs govuk-!-margin-bottom-0 govuk-!-margin-top-2"
+                  className="govuk-breadcrumbs sm:mb-0 govuk-!-margin-top-2"
                   aria-label="Breadcrumb"
                 >
                   <ol className="govuk-breadcrumbs__list">
@@ -240,13 +241,15 @@ export default function TranscriptPage({
               {!isEditing ? (
                 <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
                   {hasRecordings && (
-                    <button
-                      type="button"
-                      onClick={scrollToPlaying}
-                      className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 hidden xl:block"
-                    >
-                      <ArrowDown className="size-4" /> Scroll to current section
-                    </button>
+                    <div className="hidden xl:block">
+                      <button
+                        type="button"
+                        onClick={scrollToPlaying}
+                        className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                      >
+                        <ArrowDown className="size-4" /> Scroll to current section
+                      </button>
+                    </div>
                   )}
                   <ExportTranscriptDialog
                     transcriptionString={transcriptionString}
@@ -254,7 +257,7 @@ export default function TranscriptPage({
                   />
                   <button
                     type="button"
-                    className="govuk-button govuk-!-margin-bottom-0"
+                    className="govuk-button sm:mb-0"
                     onClick={() => {
                       setDraftTitle(transcription.title ?? '')
                       setIsEditing(true)
@@ -292,7 +295,7 @@ export default function TranscriptPage({
                   ref={registerAudio}
                   {...audioHandlers}
                 />
-                <div className="govuk-button-group govuk-!-margin-top-1 govuk-!-margin-left-3 govuk-!-margin-bottom-0">
+                <div className="govuk-!-margin-top-1 govuk-!-margin-left-3 hidden sm:block">
                   <button
                     type="button"
                     onClick={scrollToPlaying}

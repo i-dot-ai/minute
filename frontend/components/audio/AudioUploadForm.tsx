@@ -85,7 +85,7 @@ export const AudioUploadForm = () => {
         {file && (
           <button
             type="button"
-            className="govuk-button govuk-!-margin-top-4"
+            className="govuk-button govuk-button--start govuk-!-margin-top-4"
             onClick={() => setOpen(true)}
           >
             Upload file

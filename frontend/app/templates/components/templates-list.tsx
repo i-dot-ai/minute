@@ -26,13 +26,13 @@ export function TemplatesList({
     >
       <thead className="govuk-table__head sticky top-0 z-10 bg-white">
         <tr className="govuk-table__row">
-          <th scope="col" className="govuk-table__header">
+          <th scope="col" className="govuk-table__header hidden sm:table-cell">
             Select
           </th>
           <th scope="col" className="govuk-table__header">
             Name and description
           </th>
-          <th scope="col" className="govuk-table__header hidden sm:table-cell">
+          <th scope="col" className="govuk-table__header">
             Template type
           </th>
           <th scope="col" className="govuk-table__header hidden sm:table-cell">

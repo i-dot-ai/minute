@@ -245,7 +245,7 @@ export const PaginatedTranscriptions = () => {
         />
       </div>
       <div className="govuk-!-margin-bottom-1 flex items-center justify-between">
-        <div className="flex flex-1 items-center gap-2">
+        <div className="flex-1 items-center gap-2 hidden sm:flex">
           <div
             className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"
             data-module="govuk-checkboxes"

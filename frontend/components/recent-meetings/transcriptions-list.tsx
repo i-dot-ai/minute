@@ -48,7 +48,7 @@ function TranscriptionTableRow({
 
   return (
     <tr className="govuk-table__row hover:bg-[#f4f8fb] has-[:checked]:bg-[#f4f8fb]">
-      <td className="govuk-table__cell">
+      <td className="govuk-table__cell hidden sm:table-cell">
         <div className="govuk-!-padding-left-1 flex items-center gap-2">
           <div
             className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"
@@ -93,13 +93,10 @@ function TranscriptionTableRow({
                 <StatusTagList transcription={transcription} />
               </div>
             </span>
-            <div className="govuk-!-font-size-16 flex justify-between text-(--govuk-secondary-text-colour) sm:hidden">
-              {date}
-            </div>
           </Link>
         )}
       </td>
-      <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
+      <td className="govuk-table__cell whitespace-nowrap">
         <span className="govuk-body-s govuk-!-margin-0">{date}</span>
       </td>
       <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 hidden whitespace-nowrap sm:table-cell">
@@ -144,14 +141,14 @@ export function TranscriptionsList({
     >
       <thead className="govuk-table__head sticky top-0 z-10 bg-white">
         <tr className="govuk-table__row">
-          <th scope="col" className="govuk-table__header">
+          <th scope="col" className="govuk-table__header hidden sm:table-cell">
             Select
           </th>
           <th scope="col" className="govuk-table__header">
             Title
             {offlineRecordings.length > 0 && <> and audio</>}
           </th>
-          <th scope="col" className="govuk-table__header hidden sm:table-cell">
+          <th scope="col" className="govuk-table__header">
             Date
           </th>
           <th scope="col" className="govuk-table__header hidden sm:table-cell">

@@ -4,13 +4,14 @@ import { listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOption
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { use, useEffect } from 'react'
 
 export default function SummaryIndexPage({
-  params: { transcriptionId },
+  params,
 }: {
-  params: { transcriptionId: string }
+  params: Promise<{ transcriptionId: string }>
 }) {
+  const { transcriptionId } = use(params)
   const router = useRouter()
 
   const { data: minutes = [], isSuccess: minutesLoaded } = useQuery({

@@ -25,13 +25,14 @@ import { useQuery } from '@tanstack/react-query'
 import { Eye, EyeOffIcon, Loader2, PencilIcon, Save, User } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { use, useCallback, useEffect, useState } from 'react'
 
 export default function SummaryPage({
-  params: { transcriptionId, minuteId },
+  params,
 }: {
-  params: { transcriptionId: string; minuteId: string }
+  params: Promise<{ transcriptionId: string; minuteId: string }>
 }) {
+  const { transcriptionId, minuteId } = use(params)
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId },
@@ -150,9 +151,9 @@ export default function SummaryPage({
       <div className="govuk-!-padding-top-4 shrink-0 border-b border-(--govuk-border-colour) bg-white">
         <div className="govuk-width-container govuk-width-container--with-secondary-nav">
           {!editState?.isEditable && (
-            <div className="flex justify-between">
+            <div className="sm:flex sm:justify-between">
               <nav
-                className="govuk-breadcrumbs govuk-!-margin-bottom-0 govuk-!-margin-top-2"
+                className="govuk-breadcrumbs sm:mb-0 govuk-!-margin-top-2"
                 aria-label="Breadcrumb"
               >
                 <ol className="govuk-breadcrumbs__list">
@@ -249,7 +250,7 @@ export default function SummaryPage({
               <div className="govuk-button-group !items-end">
                 <button
                   type="button"
-                  className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                  className="govuk-button govuk-button--secondary sm:mb-0"
                   onClick={() => setSpeakerEditorOpen(true)}
                 >
                   <User className="size-4" />
@@ -272,14 +273,14 @@ export default function SummaryPage({
                 />
                 <button
                   type="button"
-                  className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                  className="govuk-button govuk-button--secondary sm:mb-0"
                   onClick={handleDiscard}
                 >
                   Discard
                 </button>
                 <button
                   type="button"
-                  className="govuk-button govuk-!-margin-bottom-0"
+                  className="govuk-button sm:mb-0"
                   onClick={handleSave}
                 >
                   <Save className="size-4" /> Save

@@ -11,13 +11,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Loader2, Star, StarOff } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { use } from 'react'
 import { toast } from 'sonner'
 
 export default function SystemTemplatePage({
-  params: { name },
+  params,
 }: {
-  params: { name: string }
+  params: Promise<{ name: string }>
 }) {
+  const { name } = use(params)
   const templateName = decodeURIComponent(name)
   const { data: templates, isLoading } = useQuery(
     getTemplatesTemplatesGetOptions()

@@ -20,7 +20,7 @@ export const ExportTranscriptDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <button
         type="button"
-        className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+        className="govuk-button govuk-button--secondary sm:mb-0"
         onClick={() => setOpen(true)}
       >
         <Download className="size-4" />

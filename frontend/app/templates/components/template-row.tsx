@@ -70,7 +70,7 @@ export function TemplateTableRow({
         isHighlighted && 'template-row--just-duplicated'
       )}
     >
-      <td className="govuk-table__cell">
+      <td className="govuk-table__cell hidden sm:table-cell">
         {template.isSystem ? (
           <div className="govuk-!-margin-left-2">-</div>
         ) : (
@@ -107,18 +107,13 @@ export function TemplateTableRow({
           }
           className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-right-1 inline-block w-full group-has-[a:hover]:text-[var(--govuk-link-hover-colour,#0f385c)]! group-has-[a:hover]:underline! group-has-[a:hover]:decoration-[max(3px,.1875rem,.12em)]! group-has-[a:hover]:[text-decoration-skip-ink:none]!"
         >
-          <span className="flex items-center gap-2 sm:block">
-            {name}
-            <span className="sm:hidden">
-              <TemplateTypeTag template={template} />
-            </span>
-          </span>
+          {name}
           <span className="govuk-!-font-size-16 block !text-(--govuk-text-colour)">
             {template.description}
           </span>
         </Link>
       </td>
-      <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
+      <td className="govuk-table__cell whitespace-nowrap">
         <div className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-!-padding-right-4 flex items-center">
           <TemplateTypeTag template={template} />
         </div>

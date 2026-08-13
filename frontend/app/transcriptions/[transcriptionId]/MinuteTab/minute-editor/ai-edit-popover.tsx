@@ -64,7 +64,7 @@ export const AiEditPopover = ({
     >
       <DialogTrigger asChild>
         <button
-          className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+          className="govuk-button govuk-button--secondary sm:mb-0"
           type="button"
         >
           <Wand2Icon className="size-4" /> AI edit

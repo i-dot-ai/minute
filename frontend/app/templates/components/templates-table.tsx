@@ -255,7 +255,7 @@ export const TemplatesTable = () => {
         />
       </div>
       <div className="govuk-!-margin-bottom-1 flex items-center justify-between">
-        <div className="flex flex-1 items-center gap-2">
+        <div className="flex-1 items-center gap-2 hidden sm:flex">
           {selectablePageKeys.length > 0 && (
             <div
               className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"

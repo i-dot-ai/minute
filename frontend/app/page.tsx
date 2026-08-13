@@ -102,8 +102,12 @@ export default function Home() {
           <h1 className="govuk-heading-l govuk-!-margin-bottom-3">
             Record a meeting
           </h1>
+          <p className="govuk-body govuk-!-margin-bottom-2">
+            Choose how to capture this meeting.
+          </p>
           <p className="govuk-body govuk-!-margin-bottom-5">
-            Choose how to capture this meeting
+            Please ensure that all participants are aware that they have
+            been recorded. Suitable up to <strong>OFFICIAL SENSITIVE</strong>.
           </p>
           {started ? (
             <AudioUploadForm />
@@ -204,7 +208,7 @@ export default function Home() {
                         </ol>
                       </div>
                     )}
-                    <div className="govuk-form-group govuk-!-margin-top-7 govuk-!-margin-bottom-6 flex items-center gap-2" id="tour-select-microphone">
+                    <div className="govuk-form-group govuk-!-margin-top-7 govuk-!-margin-bottom-6 sm:flex ms:items-center sm:gap-2" id="tour-select-microphone">
                       <label className="govuk-label" htmlFor="microphone">
                         Select microphone:
                       </label>
@@ -254,7 +258,7 @@ export default function Home() {
                       </div>
                     )}
                     <button
-                      className="govuk-button"
+                      className="govuk-button govuk-button--start"
                       data-module="govuk-button"
                       disabled={micDenied}
                       onClick={handleStart}
@@ -294,13 +298,6 @@ export default function Home() {
                     )}
                   </>
                 )}
-                <p className="govuk-body govuk-body-s govuk-!-margin-top-6 govuk-!-margin-bottom-2">
-                  Please ensure that all participants are aware that they have
-                  been recorded.{' '}
-                  {/* </p>
-                    <p className="govuk-body govuk-body-s"> */}
-                  Suitable up to <strong>OFFICIAL SENSITIVE</strong>.
-                </p>
               </div>
             </>
           )}

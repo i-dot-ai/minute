@@ -28,7 +28,7 @@ export const DownloadButton = ({
         download
         role="button"
         onClick={onClick(recordings[0])}
-        className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+        className="govuk-button govuk-button--secondary sm:mb-0"
       >
         <Download className="size-4" /> Download audio
       </a>
@@ -37,7 +37,7 @@ export const DownloadButton = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0">
+        <button className="govuk-button govuk-button--secondary sm:mb-0">
           <Download className="size-4" /> Download audio
         </button>
       </DialogTrigger>
@@ -53,7 +53,7 @@ export const DownloadButton = ({
               download
               role="button"
               onClick={onClick(recording)}
-              className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+              className="govuk-button govuk-button--secondary sm:mb-0"
             >
               <Download className="size-4" /> Download {recording.extension}{' '}
               file

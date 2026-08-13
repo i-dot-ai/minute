@@ -1,7 +1,7 @@
 const UrlMigrationBanner = () => {
   return (
     <div
-      className="bg-(--govuk-brand-colour) text-white govuk-!-padding-4 govuk-!-margin-bottom-4"
+      className="bg-[#16548a] text-white govuk-!-padding-4 govuk-!-margin-bottom-4"
       role="region"
       aria-labelledby="notification-banner-title"
     >

@@ -13,7 +13,7 @@ import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-t
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, Check, RefreshCw, X } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
+import { use, useEffect, useRef, useState } from 'react'
 import { LoadingBar } from '@/components/ui/loading-bar'
 
 const GENERATING_STATUSES = ['awaiting_start', 'in_progress']
@@ -28,23 +28,24 @@ const STALL_FALLBACK_MS = 15 * 60 * 1000
 const getStallLimitMs = (durationSec: number | null) =>
   durationSec
     ? Math.max(
-        STALL_FLOOR_MS,
-        (durationSec / 60) * STALL_MINUTES_PER_AUDIO_MINUTE * 60 * 1000
-      )
+      STALL_FLOOR_MS,
+      (durationSec / 60) * STALL_MINUTES_PER_AUDIO_MINUTE * 60 * 1000
+    )
     : STALL_FALLBACK_MS
 
 export default function RecordStatusPage({
-  params: { id },
+  params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = use(params)
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: id },
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-      GENERATING_STATUSES.includes(query.state.data.status)
+        GENERATING_STATUSES.includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -69,7 +70,7 @@ export default function RecordStatusPage({
     enabled: !!minuteId && transcriptionDone,
     refetchInterval: (query) =>
       query.state.data?.[0]?.status &&
-      GENERATING_STATUSES.includes(query.state.data[0].status)
+        GENERATING_STATUSES.includes(query.state.data[0].status)
         ? 2000
         : false,
   })

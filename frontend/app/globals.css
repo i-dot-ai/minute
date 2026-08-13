@@ -26,6 +26,11 @@
   color: #fff;
 }
 
+.govuk-button--start {
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
 .govuk-button--secondary:focus:not(:active):not(:hover),
 .govuk-button--secondary:focus,
 .govuk-button--secondary {
@@ -117,18 +122,23 @@
   border-color: #484949;
 }
 
-.govuk-table--subtle .govuk-table__cell {
-  padding: 0;
-  vertical-align: middle;
+
+
+@media screen and (min-width: 768px) {
+  .govuk-table--subtle .govuk-table__cell {
+    padding: 0;
+    vertical-align: middle;
+  }
 }
 
 .govuk-radios--cards {
+  display: flex;
   align-items: stretch;
   flex-direction: column;
   gap: 1rem;
 }
 
-@media (width > 48rem) {
+@media screen and (min-width: 768px) {
   .govuk-radios--cards {
     flex-direction: row;
     gap: 0.5rem;

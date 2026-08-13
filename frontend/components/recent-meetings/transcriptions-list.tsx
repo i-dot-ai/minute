@@ -87,9 +87,9 @@ function TranscriptionTableRow({
             href={`/transcriptions/${transcription.id}`}
             className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative flex flex-1 flex-col gap-2 !text-(--govuk-link-colour) sm:flex-row sm:items-center"
           >
-            <span className="flex items-center gap-2 sm:block">
+            <span className="flex items-center gap-2 md:block">
               {displayTitle}
-              <div className="govuk-!-margin-top-1 sm:hidden">
+              <div className="govuk-!-margin-top-1 md:hidden">
                 <StatusTagList transcription={transcription} />
               </div>
             </span>
@@ -99,7 +99,7 @@ function TranscriptionTableRow({
       <td className="govuk-table__cell whitespace-nowrap">
         <span className="govuk-body-s govuk-!-margin-0">{date}</span>
       </td>
-      <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 hidden whitespace-nowrap sm:table-cell">
+      <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 hidden whitespace-nowrap md:table-cell">
         <StatusTagList transcription={transcription} />
       </td>
       <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
@@ -151,7 +151,7 @@ export function TranscriptionsList({
           <th scope="col" className="govuk-table__header">
             Date
           </th>
-          <th scope="col" className="govuk-table__header hidden sm:table-cell">
+          <th scope="col" className="govuk-table__header hidden md:table-cell">
             Status
           </th>
           <th scope="col" className="govuk-table__header hidden sm:table-cell">

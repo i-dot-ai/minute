@@ -82,14 +82,14 @@ export const PaginatedTranscriptions = () => {
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
     router.replace(
       pathname +
-        buildQueryString(paginatedResponse.total_pages, filterBy, search)
+      buildQueryString(paginatedResponse.total_pages, filterBy, search)
     )
   }
   const transcriptions =
     filterBy === 'incomplete' ? [] : paginatedResponse?.items || []
   const visibleOfflineRecordings =
     !search &&
-    (filterBy === 'incomplete' || (filterBy === 'all' && currentPage === 1))
+      (filterBy === 'incomplete' || (filterBy === 'all' && currentPage === 1))
       ? offlineRecordings
       : []
   const totalPages = paginatedResponse?.total_pages || 1
@@ -209,7 +209,7 @@ export const PaginatedTranscriptions = () => {
         </form>
       </div>
       {visibleOfflineRecordings.length > 0 && (
-        <details className="govuk-details">
+        <details className="govuk-details !hidden sm:!block">
           <summary className="govuk-details__summary">
             <span className="govuk-details__summary-text">
               Why are some recordings marked &quot;Not uploaded&quot;?
@@ -283,7 +283,7 @@ export const PaginatedTranscriptions = () => {
           {selectedCount > 0 ? `${selectedCount} transcriptions selected` : ''}
         </span>
         <p
-          className="govuk-body govuk-!-margin-bottom-0 hidden flex-1 md:block"
+          className="govuk-body govuk-!-margin-bottom-0 hidden flex-1 lg:block"
           role="status"
         >
           {filterBy === 'incomplete' ? (

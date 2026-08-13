@@ -14,7 +14,7 @@ export function GovukJoyrideTooltip({
 
   return (
     <div
-      className="react-joyride__tooltip joyride-govuk-tooltip govuk-!-padding-top-6 border border-2"
+      className="react-joyride__tooltip joyride-govuk-tooltip govuk-!-padding-top-6 !bg-[#5694ca]"
       data-joyride-step={index}
       {...tooltipProps}
       aria-describedby={
@@ -25,7 +25,7 @@ export function GovukJoyrideTooltip({
       {buttons.includes('close') && (
         <button
           type="button"
-          className="joyride-govuk-tooltip__close"
+          className="joyride-govuk-tooltip__close !text-white"
           data-testid="button-close"
           {...closeProps}
         >
@@ -44,11 +44,11 @@ export function GovukJoyrideTooltip({
         </button>
       )}
       {title && (
-        <h4 className="govuk-heading-m" id={`joyride-step-${index}-title`}>
+        <h4 className="govuk-heading-m !text-white" id={`joyride-step-${index}-title`}>
           {title}
         </h4>
       )}
-      <p className="govuk-body" id={`joyride-step-${index}-content`}>
+      <p className="govuk-body !text-white" id={`joyride-step-${index}-content`}>
         {content}
       </p>
       <div className="govuk-button-group govuk-!-margin-bottom-0">
@@ -60,7 +60,7 @@ export function GovukJoyrideTooltip({
           />
         )}
         {buttons.includes('primary') && (
-          <button type="button" className="govuk-button" {...primaryProps} />
+          <button type="button" className="govuk-button govuk-button--inverse" {...primaryProps} />
         )}
       </div>
     </div>

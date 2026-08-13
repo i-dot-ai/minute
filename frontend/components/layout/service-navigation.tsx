@@ -9,6 +9,8 @@ export const ServiceNavigation = () => {
   if (pathname === '/unauthorised') {
     return null
   }
+  const pagesWithTour = ['/transcriptions', '/templates']
+  const showTour = pathname === '/' || pagesWithTour.some((page) => pathname.includes(page))
   return (
     <div
       className="govuk-service-navigation govuk-service-navigation--side-nav"
@@ -16,7 +18,7 @@ export const ServiceNavigation = () => {
     >
       <div className="govuk-width-container">
         <div className="govuk-service-navigation__container">
-          <nav aria-label="Menu" className="govuk-service-navigation__wrapper">
+          <nav aria-label="Menu" className="govuk-service-navigation__wrapper sm:flex sm:justify-between sm:items-center md:block">
             <button
               type="button"
               className="govuk-service-navigation__toggle govuk-js-service-navigation-toggle"
@@ -72,9 +74,9 @@ export const ServiceNavigation = () => {
                 </GuardedLink>
               </li>
             </ul>
-            <ul className="govuk-service-navigation__list govuk-service-navigation__list--footer">
-              {pathname !== '/privacy' && pathname !== '/support' && (
-                <li className="govuk-service-navigation__item">
+            <div>
+              {showTour && (
+                <div className="govuk-!-padding-top-2 govuk-!-padding-bottom-2">
                   <button
                     type="button"
                     className="govuk-service-navigation__link mx-auto cursor-pointer"
@@ -82,29 +84,31 @@ export const ServiceNavigation = () => {
                   >
                     Tour this page
                   </button>
-                </li>
+                </div>
               )}
-              <li
-                className={`govuk-service-navigation__item ${pathname.includes('/privacy') ? 'govuk-service-navigation__item--active' : ''}`}
-              >
-                <GuardedLink
-                  className="govuk-service-navigation__link"
-                  href="/privacy"
+              <ul className="govuk-service-navigation__list govuk-service-navigation__list--footer">
+                <li
+                  className={`govuk-service-navigation__item ${pathname.includes('/privacy') ? 'govuk-service-navigation__item--active' : ''}`}
                 >
-                  Privacy
-                </GuardedLink>
-              </li>
-              <li
-                className={`govuk-service-navigation__item ${pathname.includes('/support') ? 'govuk-service-navigation__item--active' : ''}`}
-              >
-                <GuardedLink
-                  className="govuk-service-navigation__link"
-                  href="/support"
+                  <GuardedLink
+                    className="govuk-service-navigation__link"
+                    href="/privacy"
+                  >
+                    Privacy
+                  </GuardedLink>
+                </li>
+                <li
+                  className={`govuk-service-navigation__item ${pathname.includes('/support') ? 'govuk-service-navigation__item--active' : ''}`}
                 >
-                  Contact
-                </GuardedLink>
-              </li>
-            </ul>
+                  <GuardedLink
+                    className="govuk-service-navigation__link"
+                    href="/support"
+                  >
+                    Contact
+                  </GuardedLink>
+                </li>
+              </ul>
+            </div>
           </nav>
         </div>
       </div>

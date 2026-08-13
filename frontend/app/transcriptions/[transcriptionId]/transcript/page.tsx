@@ -401,7 +401,7 @@ export default function TranscriptPage({
                       </div>
                       {isEditing ? (
                         <textarea
-                          className="govuk-textarea govuk-!-margin-bottom-0 field-sizing-content bg-white"
+                          className="govuk-textarea govuk-!-margin-bottom-0 bg-white"
                           id={`transcript-entry-${index}`}
                           aria-label={`Transcript text for entry ${index + 1}`}
                           {...register(`entries.${index}.text`)}

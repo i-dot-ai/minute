@@ -48,7 +48,7 @@ export const FormTemplateEditor = () => {
               key={field.id}
               className="govuk-!-padding-4 govuk-!-margin-top-6 border-l-4 border-(--govuk-brand-colour) bg-[#d2e2f1]"
             >
-              <div className="govuk-!-margin-bottom-4 flex items-center gap-2">
+              <div className="govuk-!-margin-bottom-4 flex flex-col sm:flex-row sm:items-center gap-2">
                 <div className="govuk-form-group flex-1">
                   <label
                     className="govuk-label"

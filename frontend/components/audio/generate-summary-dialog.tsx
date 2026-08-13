@@ -48,7 +48,7 @@ export const GenerateSummaryDialog = ({
           </p>
         )}
         <StartTranscriptionSection />
-        <DialogFooter className="govuk-button-group ml-auto sm:justify-end">
+        <DialogFooter className="govuk-button-group sm:ml-auto sm:justify-end">
           <button
             type="button"
             className="govuk-button govuk-button--secondary"

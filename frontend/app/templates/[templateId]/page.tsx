@@ -139,7 +139,7 @@ export default function EditTemplatePage() {
           <div className="govuk-grid-row">
             <div className="govuk-grid-column-one-third">
               <nav
-                className="govuk-breadcrumbs govuk-!-margin-bottom-0"
+                className="govuk-breadcrumbs sm:mb-0"
                 aria-label="Breadcrumb"
               >
                 <ol className="govuk-breadcrumbs__list">
@@ -155,7 +155,7 @@ export default function EditTemplatePage() {
               {!isEditing && (
                 <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
                   <button
-                    className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                    className="govuk-button govuk-button--secondary sm:mb-0"
                     disabled={isSettingDefault}
                     onClick={() =>
                       setDefault({
@@ -178,7 +178,7 @@ export default function EditTemplatePage() {
                     )}
                   </button>
                   <button
-                    className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                    className="govuk-button govuk-button--secondary sm:mb-0"
                     onClick={() => {
                       resetToTemplate()
                       setIsEditing(true)
@@ -199,14 +199,14 @@ export default function EditTemplatePage() {
                 <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
                   <button
                     type="button"
-                    className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                    className="govuk-button govuk-button--secondary sm:mb-0"
                     onClick={handleDiscard}
                   >
                     Discard
                   </button>
                   <button
                     type="button"
-                    className="govuk-button govuk-!-margin-bottom-0"
+                    className="govuk-button sm:mb-0"
                     onClick={handleSave}
                     disabled={isSaving}
                   >

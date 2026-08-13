@@ -131,7 +131,7 @@ export default function RecordStatusPage({
   }, [])
 
   return (
-    <div className="govuk-width-container govuk-!-padding-top-4">
+    <div className="govuk-width-container govuk-!-padding-top-4 govuk-!-padding-bottom-4">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-three-quarters">
           <h1 ref={headingRef} tabIndex={-1} className="govuk-heading-l">

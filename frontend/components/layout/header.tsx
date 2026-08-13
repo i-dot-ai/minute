@@ -3,7 +3,7 @@ import Link from 'next/link'
 export const Header = async () => {
   return (
     <header>
-      <div className="govuk-generic-header">
+      <div className="govuk-generic-header !bg-[#1d70b8]">
         <div className="govuk-generic-header__container govuk-width-container">
           <div className="govuk-generic-header__logo">
             <Link href="/" className="govuk-generic-header__homepage-link">

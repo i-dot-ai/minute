@@ -8,9 +8,11 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams, usePathname, useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 export function TranscriptionSidePanel() {
   const { transcriptionId } = useParams<{ transcriptionId?: string }>()
+  const [menuOpen, setMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const { data: minutes = [] } = useQuery({
@@ -34,10 +36,10 @@ export function TranscriptionSidePanel() {
   return (
     <div className="govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 overflow-y-auto border-r border-(--govuk-border-colour) bg-white">
       <nav aria-label="Summaries and transcript" className="secondary-nav">
-        <ul className="govuk-list govuk-list--spaced">
+        <ul className="flex flex-row  md:block govuk-list govuk-list--spaced">
           <li
             id="tour-summaries"
-            className={`w-50 border-l-4 border-[transparent] pl-4 ${!transcriptPage ? '!border-(--govuk-link-colour)' : ''}`}
+            className={`flex-1 md:w-50 border-l-4 border-[transparent] pl-4 ${!transcriptPage ? '!border-(--govuk-link-colour)' : ''}`}
           >
             {transcriptPage || minutes.length <= 1 ? (
               <Link
@@ -51,7 +53,16 @@ export function TranscriptionSidePanel() {
                 <h2 className="govuk-caption-s font-normal text-(--govuk-link-colour)">
                   Summaries
                 </h2>
-                <ul className="govuk-list !pl-[20px]">
+                <button
+                  type="button"
+                  className="govuk-service-navigation__toggle md:!hidden"
+                  aria-controls="summaries-nav"
+                  aria-expanded={menuOpen}
+                  onClick={() => setMenuOpen((open) => !open)}
+                >
+                  {menuOpen ? 'Hide' : 'Show'} all
+                </button>
+                <ul className={`govuk-list !pl-[20px] ${menuOpen ? '' : 'max-md:hidden'}`}>
                   {minutes.map((minute) => {
                     const date = new Date(
                       minute.updated_datetime
@@ -100,7 +111,7 @@ export function TranscriptionSidePanel() {
               </>
             )}
           </li>
-          <li id="tour-transcript">
+          <li id="tour-transcript" className="flex-1">
             <Link
               href={`/transcriptions/${transcriptionId}/transcript`}
               className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline border-l-4 border-[transparent] pl-4 ${transcriptPage ? '!border-(--govuk-link-colour) font-bold' : ''}`}

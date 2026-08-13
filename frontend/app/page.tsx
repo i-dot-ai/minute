@@ -95,7 +95,7 @@ export default function Home() {
   }
 
   return (
-    <div className="govuk-width-container govuk-!-padding-top-4 govuk-!-padding-bottom-4">
+    <div className="govuk-width-container govuk-main-wrapper">
       {isOldUrl ? <UrlMigrationBanner /> : <PosthogBanner />}
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">

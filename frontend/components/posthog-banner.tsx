@@ -8,12 +8,12 @@ export function PosthogBanner() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = useFeatureFlagPayload(FeatureFlags.ShowIssueBanner)
 
-
   if (!payload) {
     return null
   }
 
-  const isDismissed = localStorage.getItem('posthog-banner-dismissed') === payload.title
+  const isDismissed =
+    localStorage.getItem('posthog-banner-dismissed') === payload.title
 
   if (isDismissed) {
     return null
@@ -26,18 +26,20 @@ export function PosthogBanner() {
 
   return (
     <div
-      className="bg-(--govuk-brand-colour) text-white govuk-!-padding-4 govuk-!-margin-bottom-4"
+      className="govuk-!-padding-4 govuk-!-margin-bottom-4 bg-(--govuk-brand-colour) text-white"
       role="region"
       aria-labelledby="notification-banner-title"
     >
-      <div className="flex justify-between items-start">
+      <div className="flex items-start justify-between">
         <h2
           className="govuk-heading-s !text-white"
           id="notification-banner-title"
         >
           {payload.title || 'Important'}
         </h2>
-        <button className="govuk-link !text-white" onClick={handleDismiss}>Dismiss</button>
+        <button className="govuk-link !text-white" onClick={handleDismiss}>
+          Dismiss
+        </button>
       </div>
       <details className="govuk-details govuk-!-margin-bottom-0">
         <summary className="govuk-details__summary before:!text-white">
@@ -47,15 +49,15 @@ export function PosthogBanner() {
         </summary>
         <div className="govuk-details__text !text-white">
           {payload.message || ''}
-          {
-            payload.messageItems && (
-              <ul className="govuk-list govuk-list--bullet">
-                {payload.messageItems.map((item: string) => (
-                  <li key={item} className="text-white">{item}</li>
-                ))}
-              </ul>
-            )
-          }
+          {payload.messageItems && (
+            <ul className="govuk-list govuk-list--bullet">
+              {payload.messageItems.map((item: string) => (
+                <li key={item} className="text-white">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          )}
           {payload.linkHref && payload.linkText && (
             <Link href={payload.linkHref} className="govuk-link !text-white">
               {payload.linkText}

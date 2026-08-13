@@ -153,7 +153,7 @@ export default function SummaryPage({
           {!editState?.isEditable && (
             <div className="sm:flex sm:justify-between">
               <nav
-                className="govuk-breadcrumbs sm:mb-0 govuk-!-margin-top-2"
+                className="govuk-breadcrumbs govuk-!-margin-top-2 sm:mb-0"
                 aria-label="Breadcrumb"
               >
                 <ol className="govuk-breadcrumbs__list">
@@ -291,12 +291,16 @@ export default function SummaryPage({
         </div>
       </div>
       <div
-        className={`min-h-0 flex-1 overflow-y-auto ${editState?.isEditable
-          ? 'govuk-!-padding-4 bg-(--govuk-surface-background-colour)'
-          : ''
-          }`}
+        className={`min-h-0 flex-1 overflow-y-auto ${
+          editState?.isEditable
+            ? 'govuk-!-padding-4 bg-(--govuk-surface-background-colour)'
+            : ''
+        }`}
       >
-        <div className="govuk-width-container govuk-width-container--with-secondary-nav" id="tour-summary">
+        <div
+          className="govuk-width-container govuk-width-container--with-secondary-nav"
+          id="tour-summary"
+        >
           {editState?.isEditable ? (
             <form
               className="govuk-form-group govuk-!-margin-bottom-6 govuk-!-margin-top-4"

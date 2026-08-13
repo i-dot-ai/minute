@@ -203,7 +203,7 @@ export default function TranscriptPage({
             <div className="sm:flex sm:items-center sm:justify-between">
               {!isEditing ? (
                 <nav
-                  className="govuk-breadcrumbs sm:mb-0 govuk-!-margin-top-2"
+                  className="govuk-breadcrumbs govuk-!-margin-top-2 sm:mb-0"
                   aria-label="Breadcrumb"
                 >
                   <ol className="govuk-breadcrumbs__list">
@@ -247,7 +247,8 @@ export default function TranscriptPage({
                         onClick={scrollToPlaying}
                         className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
                       >
-                        <ArrowDown className="size-4" /> Scroll to current section
+                        <ArrowDown className="size-4" /> Scroll to current
+                        section
                       </button>
                     </div>
                   )}

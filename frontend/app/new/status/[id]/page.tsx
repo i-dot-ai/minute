@@ -28,9 +28,9 @@ const STALL_FALLBACK_MS = 15 * 60 * 1000
 const getStallLimitMs = (durationSec: number | null) =>
   durationSec
     ? Math.max(
-      STALL_FLOOR_MS,
-      (durationSec / 60) * STALL_MINUTES_PER_AUDIO_MINUTE * 60 * 1000
-    )
+        STALL_FLOOR_MS,
+        (durationSec / 60) * STALL_MINUTES_PER_AUDIO_MINUTE * 60 * 1000
+      )
     : STALL_FALLBACK_MS
 
 export default function RecordStatusPage({
@@ -45,7 +45,7 @@ export default function RecordStatusPage({
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-        GENERATING_STATUSES.includes(query.state.data.status)
+      GENERATING_STATUSES.includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -70,7 +70,7 @@ export default function RecordStatusPage({
     enabled: !!minuteId && transcriptionDone,
     refetchInterval: (query) =>
       query.state.data?.[0]?.status &&
-        GENERATING_STATUSES.includes(query.state.data[0].status)
+      GENERATING_STATUSES.includes(query.state.data[0].status)
         ? 2000
         : false,
   })

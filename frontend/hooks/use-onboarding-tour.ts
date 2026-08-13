@@ -42,8 +42,7 @@ export const pageTours: PageTour[] = [
       },
       {
         target: '.govuk-button',
-        content:
-          'When you’re ready, start here.',
+        content: 'When you’re ready, start here.',
         title: 'Start recording',
       },
       {
@@ -52,7 +51,7 @@ export const pageTours: PageTour[] = [
         content:
           'Your transcriptions, templates are here. You can always restart a tour by clicking the "Tour this page" button in the left-hand navigation.',
         title: 'Everything else lives here',
-      }
+      },
     ],
   },
   {
@@ -62,12 +61,14 @@ export const pageTours: PageTour[] = [
       {
         target: 'table',
         placement: 'center',
-        content: 'All your saved transcriptions and recordings will be listed here.',
-        title: 'Transcriptions'
+        content:
+          'All your saved transcriptions and recordings will be listed here.',
+        title: 'Transcriptions',
       },
       {
         target: '#tour-data-retention',
-        content: 'All transcriptions and recordings will be deleted after your data retention period. You can change this in the link here.',
+        content:
+          'All transcriptions and recordings will be deleted after your data retention period. You can change this in the link here.',
         title: 'Data retention',
       },
       {
@@ -82,14 +83,16 @@ export const pageTours: PageTour[] = [
       },
       {
         target: '#tour-filter',
-        content: 'Filter transcriptions by expiring soon, failed or incomplete recordings.',
+        content:
+          'Filter transcriptions by expiring soon, failed or incomplete recordings.',
         title: 'Filter',
       },
       {
         target: '.govuk-table',
-        content: 'If you have recorded or uploaded any meetings, they will be listed here. You can click through to view and edit the full transcriptions or summaries.',
+        content:
+          'If you have recorded or uploaded any meetings, they will be listed here. You can click through to view and edit the full transcriptions or summaries.',
         title: 'Transcriptions',
-      }
+      },
     ],
   },
   {
@@ -99,8 +102,9 @@ export const pageTours: PageTour[] = [
       {
         target: 'table',
         placement: 'center',
-        content: 'All the system templates and your custom templates are listed here.',
-        title: 'Templates'
+        content:
+          'All the system templates and your custom templates are listed here.',
+        title: 'Templates',
       },
       {
         target: '#search-templates',
@@ -109,12 +113,14 @@ export const pageTours: PageTour[] = [
       },
       {
         target: '.govuk-button',
-        content: 'Create a new template by clicking the button here. You can either start with a blank template or use an example template as a starting point.',
+        content:
+          'Create a new template by clicking the button here. You can either start with a blank template or use an example template as a starting point.',
         title: 'Create a new template',
       },
       {
         target: '.govuk-checkboxes',
-        content: 'Select one or more templates to bulk delete them. (Only custom templates can be deleted)',
+        content:
+          'Select one or more templates to bulk delete them. (Only custom templates can be deleted)',
         title: 'Select templates',
       },
       {
@@ -124,9 +130,10 @@ export const pageTours: PageTour[] = [
       },
       {
         target: '.govuk-table',
-        content: 'Templates are listed here. You can click through to set defaults, or view and edit the custom templates.',
+        content:
+          'Templates are listed here. You can click through to set defaults, or view and edit the custom templates.',
         title: 'Templates',
-      }
+      },
     ],
   },
   {
@@ -142,36 +149,40 @@ export const pageTours: PageTour[] = [
       },
       {
         target: '#tour-show-references',
-        content: 'Show references to easily view where in the transcript the summary is referencing. Or hide them for easier reading.',
+        content:
+          'Show references to easily view where in the transcript the summary is referencing. Or hide them for easier reading.',
         title: 'Show references',
       },
       {
         target: '#tour-export-summary',
-        content: 'Export the summary to a Word document or copy the text to your clipboard.',
+        content:
+          'Export the summary to a Word document or copy the text to your clipboard.',
         title: 'Export',
       },
       {
         target: '#tour-edit-summary',
-        content: 'You can edit the text manually or with AI, update the speaker names, or go through the version history.',
+        content:
+          'You can edit the text manually or with AI, update the speaker names, or go through the version history.',
         title: 'Edit',
       },
       {
         target: '#tour-delete-summary',
-        content: 'Delete the summary here. This will only delete this summary, all other summaries, transcriptions and recordings will remain.',
+        content:
+          'Delete the summary here. This will only delete this summary, all other summaries, transcriptions and recordings will remain.',
         title: 'Delete summary',
       },
       {
         target: '#tour-summaries',
-        content: 'Click "new summary" to generate a new summary. All generated summaries will be listed here to easily switch between them.',
+        content:
+          'Click "new summary" to generate a new summary. All generated summaries will be listed here to easily switch between them.',
         title: 'Summaries',
-      }
+      },
     ],
   },
   {
     key: 'transcription-transcript',
     match: (pathname) =>
-      pathname.startsWith('/transcriptions/') &&
-      !pathname.includes('/summary'),
+      pathname.startsWith('/transcriptions/') && !pathname.includes('/summary'),
     steps: [
       {
         target: '.secondary-nav',

@@ -36,10 +36,10 @@ export function TranscriptionSidePanel() {
   return (
     <div className="govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 overflow-y-auto border-r border-(--govuk-border-colour) bg-white">
       <nav aria-label="Summaries and transcript" className="secondary-nav">
-        <ul className="flex flex-row  md:block govuk-list govuk-list--spaced">
+        <ul className="govuk-list govuk-list--spaced flex flex-row md:block">
           <li
             id="tour-summaries"
-            className={`flex-1 md:w-50 border-l-4 border-[transparent] pl-4 ${!transcriptPage ? '!border-(--govuk-link-colour)' : ''}`}
+            className={`flex-1 border-l-4 border-[transparent] pl-4 md:w-50 ${!transcriptPage ? '!border-(--govuk-link-colour)' : ''}`}
           >
             {transcriptPage || minutes.length <= 1 ? (
               <Link
@@ -62,7 +62,9 @@ export function TranscriptionSidePanel() {
                 >
                   {menuOpen ? 'Hide' : 'Show'} all
                 </button>
-                <ul className={`govuk-list !pl-[20px] ${menuOpen ? '' : 'max-md:hidden'}`}>
+                <ul
+                  className={`govuk-list !pl-[20px] ${menuOpen ? '' : 'max-md:hidden'}`}
+                >
                   {minutes.map((minute) => {
                     const date = new Date(
                       minute.updated_datetime

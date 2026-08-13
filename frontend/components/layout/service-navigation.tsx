@@ -73,19 +73,17 @@ export const ServiceNavigation = () => {
               </li>
             </ul>
             <ul className="govuk-service-navigation__list govuk-service-navigation__list--footer">
-              {
-                pathname !== '/privacy' && pathname !== '/support' && (
-                  <li className="govuk-service-navigation__item">
-                    <button
-                      type="button"
-                      className="govuk-service-navigation__link mx-auto cursor-pointer"
-                      onClick={requestOnboardingTourRestart}
-                    >
-                      Tour this page
-                    </button>
-                  </li>
-                )
-              }
+              {pathname !== '/privacy' && pathname !== '/support' && (
+                <li className="govuk-service-navigation__item">
+                  <button
+                    type="button"
+                    className="govuk-service-navigation__link mx-auto cursor-pointer"
+                    onClick={requestOnboardingTourRestart}
+                  >
+                    Tour this page
+                  </button>
+                </li>
+              )}
               <li
                 className={`govuk-service-navigation__item ${pathname.includes('/privacy') ? 'govuk-service-navigation__item--active' : ''}`}
               >

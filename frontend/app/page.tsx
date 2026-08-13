@@ -106,8 +106,8 @@ export default function Home() {
             Choose how to capture this meeting.
           </p>
           <p className="govuk-body govuk-!-margin-bottom-5">
-            Please ensure that all participants are aware that they have
-            been recorded. Suitable up to <strong>OFFICIAL SENSITIVE</strong>.
+            Please ensure that all participants are aware that they have been
+            recorded. Suitable up to <strong>OFFICIAL SENSITIVE</strong>.
           </p>
           {started ? (
             <AudioUploadForm />
@@ -208,7 +208,10 @@ export default function Home() {
                         </ol>
                       </div>
                     )}
-                    <div className="govuk-form-group govuk-!-margin-top-7 govuk-!-margin-bottom-6 sm:flex ms:items-center sm:gap-2" id="tour-select-microphone">
+                    <div
+                      className="govuk-form-group govuk-!-margin-top-7 govuk-!-margin-bottom-6 ms:items-center sm:flex sm:gap-2"
+                      id="tour-select-microphone"
+                    >
                       <label className="govuk-label" htmlFor="microphone">
                         Select microphone:
                       </label>

@@ -122,8 +122,6 @@
   border-color: #484949;
 }
 
-
-
 @media screen and (min-width: 768px) {
   .govuk-table--subtle .govuk-table__cell {
     padding: 0;
@@ -162,7 +160,7 @@
   background-color: #d2e2f1;
 }
 
-.govuk-radios--cards .govuk-radios__input:checked+.govuk-radios__label:after {
+.govuk-radios--cards .govuk-radios__input:checked + .govuk-radios__label:after {
   right: 22px;
   left: auto;
 }
@@ -183,7 +181,8 @@
   box-shadow: none;
 }
 
-.govuk-service-navigation--side-nav .govuk-service-navigation__link:focus-visible {
+.govuk-service-navigation--side-nav
+  .govuk-service-navigation__link:focus-visible {
   background-color: var(--govuk-focus-colour, #fd0);
   box-shadow:
     0 -2px var(--govuk-focus-colour, #fd0),
@@ -227,12 +226,16 @@
     display: block;
   }
 
-  .govuk-service-navigation--side-nav .govuk-service-navigation__list--footer .govuk-service-navigation__item {
+  .govuk-service-navigation--side-nav
+    .govuk-service-navigation__list--footer
+    .govuk-service-navigation__item {
     padding: 10px 0;
     height: auto;
   }
 
-  .govuk-service-navigation--side-nav .govuk-service-navigation__list--footer .govuk-service-navigation__link {
+  .govuk-service-navigation--side-nav
+    .govuk-service-navigation__list--footer
+    .govuk-service-navigation__link {
     color: #484949;
   }
 
@@ -258,7 +261,9 @@
     gap: 0;
   }
 
-  .govuk-service-navigation--side-nav .govuk-service-navigation__item--active .govuk-service-navigation__link {
+  .govuk-service-navigation--side-nav
+    .govuk-service-navigation__item--active
+    .govuk-service-navigation__link {
     color: var(--govuk-text-colour);
   }
 }
@@ -597,7 +602,7 @@ html body[data-scroll-locked] {
   list-style-type: none;
 }
 
-.editor-content ul>li::before {
+.editor-content ul > li::before {
   content: '•';
 }
 
@@ -606,11 +611,11 @@ html body[data-scroll-locked] {
   counter-reset: list-counter;
 }
 
-.editor-content ol>li {
+.editor-content ol > li {
   counter-increment: list-counter;
 }
 
-.editor-content ol>li::before {
+.editor-content ol > li::before {
   content: counter(list-counter) '.';
 }
 
@@ -659,12 +664,12 @@ html body[data-scroll-locked] {
   margin-bottom: 2.33em;
 }
 
-.editor-content p+p {
+.editor-content p + p {
   margin-top: 1em;
   /* Add margin only between consecutive paragraphs */
 }
 
-.editor-content pre>code {
+.editor-content pre > code {
   background-color: #444;
   color: white;
   width: 100% !;

@@ -10,81 +10,53 @@ interface MinuteVisualizerProps {
   onSilenceChange?: (silent: boolean) => void
 }
 
-// Bar geometry in real pixels, matching public/images/minute-icon-waveform.svg
-// (3px bars on a 12px pitch). The viewBox is sized to the container so these
-// stay the same width at any screen size — a wider container gets more bars
-// rather than wider ones.
+// Bar geometry in real pixels (3px bars on a 12px pitch). The viewBox is sized
+// to the container so these stay the same width at any screen size — a wider
+// container gets more bars rather than wider ones.
 const PITCH = 12
 const BAR_WIDTH = 3
 const BAR_RADIUS = 1.5
 
 const VIEW_HEIGHT = 200
 const CENTER_Y = VIEW_HEIGHT / 2
-// Height profile. Exaggerated relative to the reference mark so the tall/short
-// contrast reads as the minute silhouette rather than a flat spectrum.
-const PEAK_HEIGHT = VIEW_HEIGHT * 0.9
-// A high floor keeps the outer bars substantial so the waveform reads fairly
-// evenly across its width, still peaking in the middle but not collapsing.
-const MIN_HEIGHT = VIEW_HEIGHT * 0.3
+// Bars rest as short stubs rather than collapsing away, so the row stays
+// readable as a row when a band drops out.
+const MIN_HEIGHT = 4
 const MAX_HEIGHT = VIEW_HEIGHT * 0.95
-// Envelope shape. A super-Gaussian keeps the whole middle section standing tall
-// and drops away sharply toward the edges, rather than tapering evenly.
-// Higher = middle section stands further above the outer bars.
-const CENTRE_FOCUS = 1.6
-// Higher = flatter, broader middle with a sharper falloff at the edges.
-const FOCUS_POWER = 2.5
-// Every other bar out from the centre dips, as in the reference mark. This is
-// surface texture only — the tall/short contrast comes from the envelope above.
-const ZIGZAG_DIP = 0.72
+// Speech rarely fills a band to full scale, so lift levels to use the height
+// available. Matches the multiplier the previous canvas visualiser used.
+const GAIN = 1.2
 
 // Below this average byte value we treat the mic as quiet and show the dot.
 const SILENCE_LEVEL = 8
 // Sustained quiet before we flag silence, so natural speech pauses don't trip it.
 const SILENCE_MS = 3000
-
-interface Bar {
-  x: number
-  /** Resting height — the shape the waveform settles into when idle. */
-  h: number
-  opacity: number
-}
+// Both of these damp single-frame flicker. Keep them low: the point of the
+// visualiser is to show the user their voice is being picked up, which it can
+// only do if the bars track the audio closely.
+const SMOOTHING = 0.5
+const TWEEN = 0.5
 
 const lerp = (from: number, to: number, t: number) => from + (to - from) * t
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v))
 
-/**
- * Builds a symmetric, centre-peaked bar set to fill `width`, reproducing the
- * reference mark's profile: a smooth falloff from the centre, a zigzag where
- * every other bar dips, and opacity fading outward.
- */
-function buildBars(width: number): Bar[] {
+/** Evenly spaced bar positions filling `width`, centred as a block. */
+function buildBars(width: number): number[] {
   if (width <= 0) return []
 
-  // Odd count so there's a true centre bar to peak on.
-  let count = Math.max(5, Math.floor(width / PITCH))
-  if (count % 2 === 0) count -= 1
-
-  const mid = (count - 1) / 2
+  const count = Math.max(5, Math.floor(width / PITCH))
   const span = count * PITCH - (PITCH - BAR_WIDTH)
   const startX = (width - span) / 2
 
-  return Array.from({ length: count }, (_, i) => {
-    const d = Math.abs(i - mid)
-    const t = mid === 0 ? 0 : d / mid
-    const envelope = Math.exp(-CENTRE_FOCUS * t ** FOCUS_POWER)
-    let h = MIN_HEIGHT + (PEAK_HEIGHT - MIN_HEIGHT) * envelope
-    // Every other bar out from the centre dips, as in the reference mark.
-    if (d >= 2 && d % 2 === 0) h *= ZIGZAG_DIP
-    return { x: startX + i * PITCH, h, opacity: 1 - 0.88 * t }
-  })
+  return Array.from({ length: count }, (_, i) => startX + i * PITCH)
 }
 
 /**
- * Audio visualiser styled like the minute waveform mark: thin bars, symmetric
- * with a dominant centre peak, driven by the mic's frequency data. When there's
- * no sound (quiet, paused, or no stream) the bars fade out and a single pulsing
- * dot takes their place.
+ * Audio visualiser: thin bars whose heights track the microphone's frequency
+ * spectrum, bass on the left through treble on the right. When there's no sound
+ * (quiet, paused, or no stream) the bars fade out and a single pulsing dot takes
+ * their place.
  *
  * Decorative only (aria-hidden) — the recording UI owns status announcements.
  */
@@ -107,7 +79,7 @@ export default function MinuteVisualizer({
   const bars = useMemo(() => buildBars(width), [width])
 
   // Mirrored for the rAF loop, which must not restart when the bars change.
-  const barsRef = useRef<Bar[]>(bars)
+  const barsRef = useRef<number[]>(bars)
   barsRef.current = bars
 
   // Current animated heights, tweened toward their targets each frame.
@@ -160,7 +132,7 @@ export default function MinuteVisualizer({
         // 1024 gives 512 bins (256 usable), enough resolution that each bar
         // covers a distinct band even at wide container widths.
         analyser.fftSize = 1024
-        analyser.smoothingTimeConstant = 0.7
+        analyser.smoothingTimeConstant = SMOOTHING
 
         dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount)
         audioContext.createMediaStreamSource(stream).connect(analyser)
@@ -184,7 +156,7 @@ export default function MinuteVisualizer({
 
       // Re-seed the tween buffer when the bar count changes on resize.
       if (heightsRef.current.length !== barCount) {
-        heightsRef.current = currentBars.map((bar) => bar.h)
+        heightsRef.current = new Array(barCount).fill(MIN_HEIGHT)
       }
 
       const analyser = analyserRef.current
@@ -223,29 +195,26 @@ export default function MinuteVisualizer({
             for (let j = from; j < to; j += 1) sum += dataArray[j] ?? 0
             const level = sum / (to - from) / 255
 
-            const rest = currentBars[i].h
-            // Keep the silhouette (taller bars stay taller) but let audio push
-            // each bar up and down around its resting height.
             const target = clamp(
-              rest * (0.5 + level * 1.2),
-              rest * 0.45,
-              Math.min(MAX_HEIGHT, rest * 1.7)
+              level * GAIN * MAX_HEIGHT,
+              MIN_HEIGHT,
+              MAX_HEIGHT
             )
             heightsRef.current[i] = prefersReducedMotion
               ? target
-              : lerp(heightsRef.current[i], target, 0.35)
+              : lerp(heightsRef.current[i], target, TWEEN)
           }
         }
       } else {
         silenceStartRef.current = null
       }
 
-      // Ease heights back to the resting waveform silhouette when idle.
+      // Ease heights back down to stubs when idle.
       if (!showBars) {
         for (let i = 0; i < barCount; i += 1) {
           heightsRef.current[i] = prefersReducedMotion
-            ? currentBars[i].h
-            : lerp(heightsRef.current[i], currentBars[i].h, 0.2)
+            ? MIN_HEIGHT
+            : lerp(heightsRef.current[i], MIN_HEIGHT, 0.2)
         }
       }
 
@@ -284,6 +253,9 @@ export default function MinuteVisualizer({
         cancelAnimationFrame(animationRef.current)
         animationRef.current = null
       }
+      // Stopping or pausing isn't silence worth announcing — clear any flag so
+      // the next run starts clean.
+      setSilent(false)
       teardownAudio()
     }
   }, [stream, isRecording, isPaused])
@@ -309,19 +281,19 @@ export default function MinuteVisualizer({
               stroke="rgba(29,112,184,0.15)"
               strokeWidth={0.75}
             />
-            {bars.map((bar, i) => (
+            {bars.map((x, i) => (
               <rect
                 // eslint-disable-next-line react/no-array-index-key
                 key={i}
                 ref={(el) => {
                   rectsRef.current[i] = el
                 }}
-                x={bar.x}
+                x={x}
                 width={BAR_WIDTH}
                 rx={BAR_RADIUS}
-                y={CENTER_Y - bar.h / 2}
-                height={bar.h}
-                fill={`rgba(29,112,184,${bar.opacity.toFixed(3)})`}
+                y={CENTER_Y - MIN_HEIGHT / 2}
+                height={MIN_HEIGHT}
+                fill="#1d70b8"
               />
             ))}
           </g>

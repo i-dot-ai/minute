@@ -59,9 +59,12 @@ export function PosthogBanner() {
             </ul>
           )}
           {payload.linkHref && payload.linkText && (
-            <Link href={payload.linkHref} className="govuk-link !text-white">
-              {payload.linkText}
-            </Link>
+            <>
+              {' '}
+              <Link href={payload.linkHref} className="govuk-link !text-white">
+                {payload.linkText}
+              </Link>
+            </>
           )}
         </div>
       </details>

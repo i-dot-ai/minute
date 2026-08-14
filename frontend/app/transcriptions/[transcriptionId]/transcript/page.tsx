@@ -21,12 +21,14 @@ import {
   Play,
   Save,
   CircleUserRound,
+  CircleArrowRight,
 } from 'lucide-react'
 import Link from 'next/link'
-// import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { use, useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
+import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 
 export default function TranscriptPage({
   params,
@@ -34,7 +36,7 @@ export default function TranscriptPage({
   params: Promise<{ transcriptionId: string }>
 }) {
   const { transcriptionId } = use(params)
-  // const router = useRouter()
+  const router = useRouter()
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId },
@@ -252,13 +254,39 @@ export default function TranscriptPage({
                       </button>
                     </div>
                   )}
+                  <Link
+                    href={`/transcriptions/${transcriptionId}/summary`}
+                    className="govuk-button sm:!hidden"
+                  >
+                    <CircleArrowRight className="size-4" /> Go to summary
+                  </Link>
+                  <NewMinuteDialog
+                    transcriptionId={transcriptionId}
+                    icon
+                    buttonClassName="govuk-button govuk-button--secondary sm:!hidden"
+                    onCreated={() =>
+                      router.push(
+                        `/transcriptions/${transcriptionId}/transcript`
+                      )
+                    }
+                  />
                   <ExportTranscriptDialog
                     transcriptionString={transcriptionString}
                     recordings={recordings}
                   />
                   <button
                     type="button"
-                    className="govuk-button sm:mb-0"
+                    className="govuk-button govuk-!-margin-bottom-0 !hidden sm:!flex"
+                    onClick={() => {
+                      setDraftTitle(transcription.title ?? '')
+                      setIsEditing(true)
+                    }}
+                  >
+                    <Pencil className="size-4" /> Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="govuk-button govuk-button--secondary sm:!hidden"
                     onClick={() => {
                       setDraftTitle(transcription.title ?? '')
                       setIsEditing(true)

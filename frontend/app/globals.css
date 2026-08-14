@@ -200,7 +200,7 @@
   display: none;
 }
 
-@media screen and (min-width: 768px) {
+@media screen and (min-width: 640px) {
   .govuk-service-navigation--side-nav {
     display: flex;
     flex-direction: column;

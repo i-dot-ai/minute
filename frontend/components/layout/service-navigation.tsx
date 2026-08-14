@@ -1,17 +1,21 @@
 'use client'
 import { GuardedLink } from '@/components/navigation/guarded-link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useParams } from 'next/navigation'
 import { Bookmark, LayoutPanelTop, Mic } from 'lucide-react'
 import { requestOnboardingTourRestart } from '@/hooks/use-onboarding-tour'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
+  const params = useParams()
   if (pathname === '/unauthorised') {
     return null
   }
   const pagesWithTour = ['/transcriptions', '/templates']
   const showTour =
     pathname === '/' || pagesWithTour.some((page) => pathname.includes(page))
+
+  const isTranscriptionPage =
+    pathname.includes('/transcriptions') && params.transcriptionId
   return (
     <div
       className="govuk-service-navigation govuk-service-navigation--side-nav"
@@ -83,7 +87,7 @@ export const ServiceNavigation = () => {
                 <div className="govuk-!-padding-top-2 govuk-!-padding-bottom-2">
                   <button
                     type="button"
-                    className="govuk-service-navigation__link mx-auto cursor-pointer"
+                    className="govuk-service-navigation__link cursor-pointer sm:mx-auto"
                     onClick={requestOnboardingTourRestart}
                   >
                     Tour this page

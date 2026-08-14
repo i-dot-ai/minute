@@ -31,8 +31,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.className} govuk-template md:h-dvh`}>
-      <body className="govuk-template__body govuk-frontend-supported md:h-full md:overflow-hidden">
+    <html lang="en" className={`${inter.className} govuk-template sm:h-dvh`}>
+      <body className="govuk-template__body govuk-frontend-supported sm:h-full sm:overflow-hidden">
         <GovukInit />
         <TanstackQueryProvider>
           <PosthogProvider>
@@ -47,19 +47,19 @@ export default function RootLayout({
                 </Link>
                 <OnboardingTour />
                 <RecordingSessionProvider>
-                  <div className="md:flex md:h-dvh md:flex-col">
+                  <div className="sm:flex sm:h-dvh sm:flex-col">
                     <Header />
-                    <div className="md:flex md:min-h-0 md:flex-1">
+                    <div className="sm:flex sm:min-h-0 sm:flex-1">
                       <ServiceNavigation />
                       <TranscriptionSidePanel />
                       <main
                         id="main-content"
                         tabIndex={-1}
-                        className="md:relative md:min-h-0 md:flex-1 md:overflow-y-auto md:[scrollbar-gutter:stable]"
+                        className="sm:relative sm:min-h-0 sm:flex-1 sm:overflow-y-auto sm:[scrollbar-gutter:stable]"
                       >
                         {children}
                       </main>
-                      <div className="md:hidden">
+                      <div className="sm:hidden">
                         <Footer />
                       </div>
                     </div>

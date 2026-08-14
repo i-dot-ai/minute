@@ -13,7 +13,6 @@ import { PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 
 export function TranscriptionSidePanel() {
   const { transcriptionId } = useParams<{ transcriptionId?: string }>()
-  const [menuOpen, setMenuOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
@@ -37,11 +36,11 @@ export function TranscriptionSidePanel() {
 
   return (
     <div
-      className={`govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 flex flex-col justify-between overflow-y-auto border-r border-(--govuk-border-colour) bg-white ${isCollapsed ? 'md:!px-4 lg:!px-8' : ''}`}
+      className={`govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 hidden flex-col justify-between overflow-y-auto border-r border-(--govuk-border-colour) sm:flex ${isCollapsed ? '!px-4 lg:!px-8' : ''}`}
     >
       <nav aria-label="Summaries and transcript" className="secondary-nav">
         <ul
-          className={`govuk-list govuk-list--spaced ${isCollapsed ? 'md:!hidden lg:!block' : ''}`}
+          className={`govuk-list govuk-list--spaced ${isCollapsed ? '!hidden lg:!block' : ''}`}
         >
           <li
             id="tour-summaries"
@@ -59,18 +58,7 @@ export function TranscriptionSidePanel() {
                 <h2 className="govuk-caption-s font-normal text-(--govuk-link-colour)">
                   Summaries
                 </h2>
-                <button
-                  type="button"
-                  className="govuk-service-navigation__toggle md:!hidden"
-                  aria-controls="summaries-nav"
-                  aria-expanded={menuOpen}
-                  onClick={() => setMenuOpen((open) => !open)}
-                >
-                  {menuOpen ? 'Hide' : 'Show'} all
-                </button>
-                <ul
-                  className={`govuk-list !pl-[20px] ${menuOpen ? '' : 'max-md:hidden'}`}
-                >
+                <ul className="govuk-list !pl-[20px]">
                   {minutes.map((minute) => {
                     const date = new Date(
                       minute.updated_datetime
@@ -132,7 +120,7 @@ export function TranscriptionSidePanel() {
       </nav>
       <button
         type="button"
-        className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-bottom-4 hidden items-center gap-2 text-(--govuk-link-colour) md:flex lg:hidden"
+        className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-bottom-4 flex items-center gap-2 text-(--govuk-link-colour) lg:hidden"
         onClick={() => setIsCollapsed((collapsed) => !collapsed)}
       >
         {isCollapsed ? (

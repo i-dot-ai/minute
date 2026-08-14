@@ -22,10 +22,20 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
-import { Eye, EyeOffIcon, Loader2, PencilIcon, Save, User } from 'lucide-react'
+import {
+  Eye,
+  EyeOffIcon,
+  Loader2,
+  PencilIcon,
+  PlusIcon,
+  Save,
+  User,
+  CircleArrowRight,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { use, useCallback, useEffect, useState } from 'react'
+import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 
 export default function SummaryPage({
   params,
@@ -168,6 +178,20 @@ export default function SummaryPage({
                 </ol>
               </nav>
               <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
+                <Link
+                  href={`/transcriptions/${transcriptionId}/transcript`}
+                  className="govuk-button sm:!hidden"
+                >
+                  <CircleArrowRight className="size-4" /> Go to transcript
+                </Link>
+                <NewMinuteDialog
+                  transcriptionId={transcriptionId}
+                  icon
+                  buttonClassName="govuk-button govuk-button--secondary sm:!hidden"
+                  onCreated={() =>
+                    router.push(`/transcriptions/${transcriptionId}/summary`)
+                  }
+                />
                 {editState && (
                   <>
                     {editState.hasCitations && (
@@ -194,7 +218,16 @@ export default function SummaryPage({
                       disabled={editState.isEditable}
                     />
                     <button
-                      className="govuk-button"
+                      className="govuk-button !hidden sm:!flex"
+                      onClick={() => editState.setIsEditable(true)}
+                      type="button"
+                      disabled={editState.isEditable}
+                      id="tour-edit-summary"
+                    >
+                      <PencilIcon className="size-4" /> Edit
+                    </button>
+                    <button
+                      className="govuk-button govuk-button--secondary sm:!hidden"
                       onClick={() => editState.setIsEditable(true)}
                       type="button"
                       disabled={editState.isEditable}

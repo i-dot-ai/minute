@@ -39,7 +39,7 @@ export function TranscriptionSidePanel() {
         <ul className="govuk-list govuk-list--spaced flex flex-row md:block">
           <li
             id="tour-summaries"
-            className={`flex-1 border-l-4 border-[transparent] pl-4  ${!transcriptPage ? '!border-(--govuk-link-colour)' : ''}`}
+            className={`flex-1 border-l-4 border-[transparent] pl-4 ${!transcriptPage ? '!border-(--govuk-link-colour)' : ''}`}
           >
             {transcriptPage || minutes.length <= 1 ? (
               <Link

@@ -1,0 +1,51 @@
+<svg viewBox="0 0 260 160" width="260" height="160" xmlns="http://www.w3.org/2000/svg" style="background:#1d70b8; border-radius:8px;">
+
+  <!-- Baseline — hairline -->
+  <line x1="10" y1="80" x2="250" y2="80" stroke="rgba(255,255,255,0.15)" stroke-width="0.75"/>
+
+  <!-- Waveform bars — 21 bars, symmetrical, centre peak, opacity fade outward -->
+
+  <!-- Pair 1 — outermost, very faint -->
+  <rect x="10"  y="70" width="3" height="20" rx="1.5" fill="rgba(255,255,255,0.12)"/>
+  <rect x="247" y="70" width="3" height="20" rx="1.5" fill="rgba(255,255,255,0.12)"/>
+
+  <!-- Pair 2 -->
+  <rect x="22"  y="65" width="3" height="30" rx="1.5" fill="rgba(255,255,255,0.18)"/>
+  <rect x="235" y="65" width="3" height="30" rx="1.5" fill="rgba(255,255,255,0.18)"/>
+
+  <!-- Pair 3 -->
+  <rect x="34"  y="58" width="3" height="44" rx="1.5" fill="rgba(255,255,255,0.25)"/>
+  <rect x="223" y="58" width="3" height="44" rx="1.5" fill="rgba(255,255,255,0.25)"/>
+
+  <!-- Pair 4 -->
+  <rect x="46"  y="52" width="3" height="56" rx="1.5" fill="rgba(255,255,255,0.32)"/>
+  <rect x="211" y="52" width="3" height="56" rx="1.5" fill="rgba(255,255,255,0.32)"/>
+
+  <!-- Pair 5 -->
+  <rect x="58"  y="60" width="3" height="40" rx="1.5" fill="rgba(255,255,255,0.38)"/>
+  <rect x="199" y="60" width="3" height="40" rx="1.5" fill="rgba(255,255,255,0.38)"/>
+
+  <!-- Pair 6 -->
+  <rect x="70"  y="44" width="3" height="72" rx="1.5" fill="rgba(255,255,255,0.48)"/>
+  <rect x="187" y="44" width="3" height="72" rx="1.5" fill="rgba(255,255,255,0.48)"/>
+
+  <!-- Pair 7 -->
+  <rect x="82"  y="55" width="3" height="50" rx="1.5" fill="rgba(255,255,255,0.55)"/>
+  <rect x="175" y="55" width="3" height="50" rx="1.5" fill="rgba(255,255,255,0.55)"/>
+
+  <!-- Pair 8 -->
+  <rect x="94"  y="36" width="3" height="88" rx="1.5" fill="rgba(255,255,255,0.65)"/>
+  <rect x="163" y="36" width="3" height="88" rx="1.5" fill="rgba(255,255,255,0.65)"/>
+
+  <!-- Pair 9 -->
+  <rect x="106" y="48" width="3" height="64" rx="1.5" fill="rgba(255,255,255,0.75)"/>
+  <rect x="151" y="48" width="3" height="64" rx="1.5" fill="rgba(255,255,255,0.75)"/>
+
+  <!-- Pair 10 -->
+  <rect x="118" y="22" width="3" height="116" rx="1.5" fill="rgba(255,255,255,0.88)"/>
+  <rect x="139" y="22" width="3" height="116" rx="1.5" fill="rgba(255,255,255,0.88)"/>
+
+  <!-- Centre peak — full opacity, dominant -->
+  <rect x="128.5" y="12" width="3" height="136" rx="1.5" fill="rgba(255,255,255,1)"/>
+
+</svg>

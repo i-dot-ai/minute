@@ -10,7 +10,8 @@ export const ServiceNavigation = () => {
     return null
   }
   const pagesWithTour = ['/transcriptions', '/templates']
-  const showTour = pathname === '/' || pagesWithTour.some((page) => pathname.includes(page))
+  const showTour =
+    pathname === '/' || pagesWithTour.some((page) => pathname.includes(page))
   return (
     <div
       className="govuk-service-navigation govuk-service-navigation--side-nav"
@@ -18,7 +19,10 @@ export const ServiceNavigation = () => {
     >
       <div className="govuk-width-container">
         <div className="govuk-service-navigation__container">
-          <nav aria-label="Menu" className="govuk-service-navigation__wrapper sm:flex sm:justify-between sm:items-center md:block">
+          <nav
+            aria-label="Menu"
+            className="govuk-service-navigation__wrapper sm:flex sm:items-center sm:justify-between md:block"
+          >
             <button
               type="button"
               className="govuk-service-navigation__toggle govuk-js-service-navigation-toggle"

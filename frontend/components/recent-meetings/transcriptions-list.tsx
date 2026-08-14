@@ -102,7 +102,7 @@ function TranscriptionTableRow({
       <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 hidden whitespace-nowrap md:table-cell">
         <StatusTagList transcription={transcription} />
       </td>
-      <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
+      <td className="govuk-table__cell govuk-!-padding-right-1 hidden whitespace-nowrap sm:table-cell">
         <div className="flex items-center justify-end gap-2">
           <RenameButton
             displayTitle={displayTitle}

@@ -82,14 +82,14 @@ export const PaginatedTranscriptions = () => {
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
     router.replace(
       pathname +
-      buildQueryString(paginatedResponse.total_pages, filterBy, search)
+        buildQueryString(paginatedResponse.total_pages, filterBy, search)
     )
   }
   const transcriptions =
     filterBy === 'incomplete' ? [] : paginatedResponse?.items || []
   const visibleOfflineRecordings =
     !search &&
-      (filterBy === 'incomplete' || (filterBy === 'all' && currentPage === 1))
+    (filterBy === 'incomplete' || (filterBy === 'all' && currentPage === 1))
       ? offlineRecordings
       : []
   const totalPages = paginatedResponse?.total_pages || 1

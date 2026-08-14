@@ -4,14 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "npm run build:css && next dev",
+    "build": "npm run build:css && next build",
+    "build:css": "sass --load-path=node_modules --style=compressed --no-source-map styles/govuk.scss styles/govuk.css",
     "start": "next start",
     "lint": "next lint",
     "openapi-ts": "openapi-ts",
     "prettier:fix": "prettier --write .",
     "public-site": "npm run public-site:build && npx --yes serve dist -p 5000",
-    "public-site:build": "node scripts/build-public-site.mjs"
+    "public-site:build": "npm run build:css && node scripts/build-public-site.mjs"
   },
   "dependencies": {
     "@hey-api/client-next": "^0.5.1",
@@ -75,6 +76,7 @@
     "eslint-config-prettier": "^10.1.5",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.12",
+    "sass": "^1.102.0",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.4",
     "typescript": "^5"

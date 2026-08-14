@@ -112,9 +112,6 @@ mkdirSync(assetsDist, { recursive: true })
 cpSync(join(govukDist, 'assets/images'), join(assetsDist, 'images'), {
   recursive: true,
 })
-cpSync(join(govukDist, 'assets/fonts'), join(assetsDist, 'fonts'), {
-  recursive: true,
-})
 cpSync(
   join(govukDist, 'assets/manifest.json'),
   join(assetsDist, 'manifest.json')
@@ -122,10 +119,7 @@ cpSync(
 cpSync(join(publicSiteRoot, 'assets/images'), join(assetsDist, 'images'), {
   recursive: true,
 })
-cpSync(
-  join(govukDist, 'govuk-frontend.min.css'),
-  join(assetsDist, 'govuk-frontend.min.css')
-)
+cpSync(join(frontendRoot, 'styles/govuk.css'), join(assetsDist, 'govuk.css'))
 cpSync(
   join(govukDist, 'govuk-frontend.min.js'),
   join(assetsDist, 'govuk-frontend.min.js')

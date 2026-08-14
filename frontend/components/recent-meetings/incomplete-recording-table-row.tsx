@@ -48,7 +48,7 @@ export const IncompleteRecordingTableRow = ({
 
   return (
     <>
-      <tr className="govuk-table__row bg-[#f4d7d7] has-[:checked]:bg-[#f4f8fb] hidden sm:table-row">
+      <tr className="govuk-table__row hidden bg-[#f4d7d7] has-[:checked]:bg-[#f4f8fb] sm:table-row">
         <td className="govuk-table__cell govuk-!-padding-left-1 hidden sm:table-cell">
           <div
             className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"
@@ -78,8 +78,10 @@ export const IncompleteRecordingTableRow = ({
         <td className="govuk-table__cell govuk-!-padding-right-4 w-full">
           <div className="flex items-center justify-between gap-2">
             <span className="hidden lg:block">Incomplete recording</span>
-            <span className="block lg:hidden govuk-visually-hidden">Incomplete recording</span>
-            <audio src={url} controls className="max-h-10 w-40 lg:w-52" />
+            <span className="govuk-visually-hidden block lg:hidden">
+              Incomplete recording
+            </span>
+            <audio src={url} controls className="max-h-8 w-40 lg:w-52" />
           </div>
         </td>
         <td className="govuk-table__cell whitespace-nowrap">
@@ -90,7 +92,7 @@ export const IncompleteRecordingTableRow = ({
             Not uploaded
           </strong>
         </td>
-        <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
+        <td className="govuk-table__cell govuk-!-padding-right-1 hidden whitespace-nowrap sm:table-cell">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -148,7 +150,6 @@ export const IncompleteRecordingTableRow = ({
           }}
         />
       </tr>
-
     </>
   )
 }

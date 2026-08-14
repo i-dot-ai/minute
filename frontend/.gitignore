@@ -21,6 +21,9 @@
 /build
 /dist
 
+# compiled from styles/govuk.scss by `npm run build:css`
+/styles/govuk.css
+
 # misc
 .DS_Store
 *.pem

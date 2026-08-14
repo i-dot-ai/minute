@@ -20,20 +20,42 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
+def _user_columns() -> set[str]:
+    return {col["name"] for col in sa.inspect(op.get_bind()).get_columns("user")}
+
+
+def _user_foreign_keys() -> set[str]:
+    return {fk["name"] for fk in sa.inspect(op.get_bind()).get_foreign_keys("user")}
+
+
 def upgrade() -> None:
-    op.add_column("user", sa.Column("default_template_id", sa.Uuid(), nullable=True))
-    op.add_column("user", sa.Column("default_template_name", sqlmodel.sql.sqltypes.AutoString(), nullable=True))
-    op.create_foreign_key(
-        "fk_user_default_template",
-        "user",
-        "user_template",
-        ["default_template_id"],
-        ["id"],
-        ondelete="SET NULL",
-    )
+    # Guarded so this replays cleanly on environments where an earlier deploy of
+    # this revision already created the columns but the stamp was later rolled back.
+    existing_columns = _user_columns()
+
+    if "default_template_id" not in existing_columns:
+        op.add_column("user", sa.Column("default_template_id", sa.Uuid(), nullable=True))
+    if "default_template_name" not in existing_columns:
+        op.add_column("user", sa.Column("default_template_name", sqlmodel.sql.sqltypes.AutoString(), nullable=True))
+
+    if "fk_user_default_template" not in _user_foreign_keys():
+        op.create_foreign_key(
+            "fk_user_default_template",
+            "user",
+            "user_template",
+            ["default_template_id"],
+            ["id"],
+            ondelete="SET NULL",
+        )
 
 
 def downgrade() -> None:
-    op.drop_constraint("fk_user_default_template", "user", type_="foreignkey")
-    op.drop_column("user", "default_template_name")
-    op.drop_column("user", "default_template_id")
+    if "fk_user_default_template" in _user_foreign_keys():
+        op.drop_constraint("fk_user_default_template", "user", type_="foreignkey")
+
+    existing_columns = _user_columns()
+
+    if "default_template_name" in existing_columns:
+        op.drop_column("user", "default_template_name")
+    if "default_template_id" in existing_columns:
+        op.drop_column("user", "default_template_id")

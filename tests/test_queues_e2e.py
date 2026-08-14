@@ -1,3 +1,23 @@
+"""End-to-end tests for the transcription and minute generation queues.
+
+Storage and queues are served by MiniStack, so these never touch dev AWS. That covers
+the synchronous Azure speech-to-text path only, and it is worth knowing why:
+
+  - `azure_stt_synchronous` works because the worker downloads the recording from
+    MiniStack to a local temp file and POSTs the bytes to Azure itself. Nothing outside
+    this machine ever needs to reach the storage endpoint.
+  - `azure_stt_batch` works the other way round. It presigns a GET URL and hands it to
+    Azure in `contentUrls` for Azure's own servers to fetch. Against MiniStack that URL
+    is http://localhost:4566/..., which Azure cannot reach, so the batch path cannot
+    work locally without exposing MiniStack publicly.
+
+`TranscriptionServiceManager.select_adaptor` picks the first service whose
+`max_audio_length` covers the recording, and `azure_stt_synchronous` caps at 7200s. The
+fixture in .data/test_audio/normal is ~1950s, so these tests stay on the synchronous
+side of that threshold. Swapping in a fixture longer than two hours would select the
+batch adapter and fail for reasons unrelated to the code under test.
+"""
+
 import asyncio
 from collections.abc import Generator
 from pathlib import Path
@@ -61,7 +81,9 @@ async def llm_queue_service():
 
 
 async def load_db_test_instance(file_type: FileTypeTests) -> set[UUID]:
-    # Note, needs MP3 files at the specified location
+    # Note, needs MP3 files at the specified location. Keep them under the 7200s
+    # `azure_stt_synchronous` limit -- see the module docstring on why the batch
+    # adapter cannot work against MiniStack.
     async with get_test_client() as ac:
         test_audio_dir = Path(".data").joinpath("test_audio").joinpath(file_type.value)
         test_ids = set()

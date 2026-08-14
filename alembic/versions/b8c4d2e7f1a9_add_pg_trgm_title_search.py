@@ -19,15 +19,11 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
-    op.create_index(
-        "ix_transcription_title_trgm",
-        "transcription",
-        ["title"],
-        postgresql_using="gin",
-        postgresql_ops={"title": "gin_trgm_ops"},
-    )
+    # Raw SQL rather than op.create_index so the IF NOT EXISTS guard makes this
+    # replayable on environments that already have the index from an earlier deploy.
+    op.execute("CREATE INDEX IF NOT EXISTS ix_transcription_title_trgm ON transcription USING gin (title gin_trgm_ops)")
 
 
 def downgrade() -> None:
-    op.drop_index("ix_transcription_title_trgm", table_name="transcription")
+    op.execute("DROP INDEX IF EXISTS ix_transcription_title_trgm")
     # Extension left in place: other objects may depend on it.

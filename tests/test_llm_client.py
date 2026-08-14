@@ -35,7 +35,7 @@ class House(BaseModel):
 
 
 MODELS_TO_TEST = [
-    ("gemini", "gemini-2.5-flash-lite"),
+    ("gemini", "gemini-3.5-flash"),
 ]
 
 

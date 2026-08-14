@@ -13,6 +13,10 @@
   box-shadow: none;
   border-radius: 0.25rem;
   border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
 }
 
 .govuk-button[disabled],
@@ -271,6 +275,10 @@
   }
 }
 
+.react-joyride__arrow {
+  color: #16548a !important;
+}
+
 /* Override the margin-right: from the modal dialog */
 html body[data-scroll-locked] {
   margin-right: 0 !important;
@@ -312,13 +320,6 @@ html body[data-scroll-locked] {
     position: sticky;
     top: 15px;
   }
-}
-
-.govuk-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  justify-content: center;
 }
 
 .side-panel__sticky-container .govuk-button,

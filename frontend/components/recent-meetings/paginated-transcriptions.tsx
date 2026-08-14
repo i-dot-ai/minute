@@ -209,7 +209,7 @@ export const PaginatedTranscriptions = () => {
         </form>
       </div>
       {visibleOfflineRecordings.length > 0 && (
-        <details className="govuk-details !hidden sm:!block">
+        <details className="govuk-details">
           <summary className="govuk-details__summary">
             <span className="govuk-details__summary-text">
               Why are some recordings marked &quot;Not uploaded&quot;?

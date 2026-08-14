@@ -28,15 +28,15 @@ function TranscriptionTableRow({
     transcription.title,
     transcription.status
   )
-  const date = new Date(transcription.created_datetime).toLocaleString(
-    'en-GB',
-    {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }
-  )
+  const created = new Date(transcription.created_datetime)
+  const isEarlierYear = created.getFullYear() < new Date().getFullYear()
+  const date = created.toLocaleString('en-GB', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    year: isEarlierYear ? '2-digit' : undefined,
+  })
 
   const handleSubmit = useCallback(
     (title: string) => {
@@ -85,7 +85,7 @@ function TranscriptionTableRow({
         ) : (
           <Link
             href={`/transcriptions/${transcription.id}`}
-            className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative flex flex-1 flex-col gap-2 !text-(--govuk-link-colour) sm:flex-row sm:items-center"
+            className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative flex flex-1 flex-col gap-2 pl-1 !text-(--govuk-link-colour) sm:flex-row sm:items-center sm:pl-0"
           >
             <span className="flex items-center gap-2 md:block">
               {displayTitle}
@@ -93,16 +93,19 @@ function TranscriptionTableRow({
                 <StatusTagList transcription={transcription} />
               </div>
             </span>
+            <span className="govuk-body-s govuk-!-margin-0 sm:hidden">
+              {date}
+            </span>
           </Link>
         )}
       </td>
-      <td className="govuk-table__cell whitespace-nowrap">
+      <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
         <span className="govuk-body-s govuk-!-margin-0">{date}</span>
       </td>
       <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 hidden whitespace-nowrap md:table-cell">
         <StatusTagList transcription={transcription} />
       </td>
-      <td className="govuk-table__cell govuk-!-padding-right-1 hidden whitespace-nowrap sm:table-cell">
+      <td className="govuk-table__cell govuk-!-padding-right-1 whitespace-nowrap">
         <div className="flex items-center justify-end gap-2">
           <RenameButton
             displayTitle={displayTitle}
@@ -145,16 +148,19 @@ export function TranscriptionsList({
             Select
           </th>
           <th scope="col" className="govuk-table__header">
-            Title
-            {offlineRecordings.length > 0 && <> and audio</>}
+            <span className="hidden sm:inline">
+              Title
+              {offlineRecordings.length > 0 && <> and audio</>}
+            </span>
+            <span className="sm:hidden">Transcription</span>
           </th>
-          <th scope="col" className="govuk-table__header">
+          <th scope="col" className="govuk-table__header hidden sm:table-cell">
             Date
           </th>
           <th scope="col" className="govuk-table__header hidden md:table-cell">
             Status
           </th>
-          <th scope="col" className="govuk-table__header hidden sm:table-cell">
+          <th scope="col" className="govuk-table__header">
             Actions
           </th>
         </tr>

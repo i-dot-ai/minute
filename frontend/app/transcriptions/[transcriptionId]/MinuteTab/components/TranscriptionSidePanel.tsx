@@ -9,10 +9,12 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams, usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 
 export function TranscriptionSidePanel() {
   const { transcriptionId } = useParams<{ transcriptionId?: string }>()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const { data: minutes = [] } = useQuery({
@@ -34,9 +36,13 @@ export function TranscriptionSidePanel() {
   if (!transcriptionId) return null
 
   return (
-    <div className="govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 overflow-y-auto border-r border-(--govuk-border-colour) bg-white">
+    <div
+      className={`govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 flex flex-col justify-between overflow-y-auto border-r border-(--govuk-border-colour) bg-white ${isCollapsed ? 'md:!px-4 lg:!px-8' : ''}`}
+    >
       <nav aria-label="Summaries and transcript" className="secondary-nav">
-        <ul className="govuk-list govuk-list--spaced flex flex-row md:block">
+        <ul
+          className={`govuk-list govuk-list--spaced ${isCollapsed ? 'md:!hidden lg:!block' : ''}`}
+        >
           <li
             id="tour-summaries"
             className={`flex-1 border-l-4 border-[transparent] pl-4 ${!transcriptPage ? '!border-(--govuk-link-colour)' : ''}`}
@@ -124,6 +130,23 @@ export function TranscriptionSidePanel() {
           </li>
         </ul>
       </nav>
+      <button
+        type="button"
+        className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-bottom-4 hidden items-center gap-2 text-(--govuk-link-colour) md:flex lg:hidden"
+        onClick={() => setIsCollapsed((collapsed) => !collapsed)}
+      >
+        {isCollapsed ? (
+          <>
+            <PanelLeftOpen className="size-4" />
+            <span className="govuk-visually-hidden">Open panel</span>
+          </>
+        ) : (
+          <>
+            <PanelLeftClose className="size-4" />
+            Collapse panel
+          </>
+        )}
+      </button>
     </div>
   )
 }

@@ -26,7 +26,7 @@ export function PosthogBanner() {
 
   return (
     <div
-      className="govuk-!-padding-4 govuk-!-margin-bottom-4 bg-[#1d70b8] text-white"
+      className="govuk-!-padding-4 govuk-!-margin-bottom-4 bg-[#16548a] text-white"
       role="region"
       aria-labelledby="notification-banner-title"
     >

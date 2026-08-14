@@ -10,6 +10,12 @@ export function requestOnboardingTourRestart() {
   window.dispatchEvent(new Event(RESTART_ONBOARDING_TOUR_EVENT))
 }
 
+function selectRadioCard(
+  mode: 'in-person' | 'virtual-meeting' | 'upload-file'
+) {
+  document.getElementById(mode)?.click()
+}
+
 export type PageTour = {
   key: string
   match: (pathname: string) => boolean
@@ -33,6 +39,9 @@ export const pageTours: PageTour[] = [
         content:
           'Record in the room, capture a virtual call, or upload audio you already have.',
         title: 'Choose how to capture',
+        before: async () => {
+          selectRadioCard('in-person')
+        },
       },
       {
         target: '#tour-select-microphone',
@@ -44,6 +53,57 @@ export const pageTours: PageTour[] = [
         target: '.govuk-button',
         content: 'When you’re ready, start here.',
         title: 'Start recording',
+        before: async () => {
+          selectRadioCard('in-person')
+        },
+      },
+      {
+        target: '#virtual-meeting-card',
+        content:
+          'Select this option to record virtual meetings such as Zoom, Microsoft Teams, or Google Meet.',
+        title: 'Virtual meetings',
+        before: async () => {
+          selectRadioCard('virtual-meeting')
+        },
+      },
+      {
+        target: '#virtual-meeting-before-start',
+        content:
+          'Read the instructions here carefully before starting your meeting.',
+        title: 'Before you start',
+      },
+      {
+        target: '#tour-select-microphone',
+        content:
+          'Choose your microphone, this will be used to capture your voice.',
+        title: 'Microphone',
+      },
+      {
+        target: '#virtual-meeting-audio-not-picking-up',
+        content:
+          'If you are having audio or screen share issues, check the further instructions here.',
+        title: 'Audio or screen share not picking up?',
+        before: async () => {
+          selectRadioCard('virtual-meeting')
+        },
+      },
+      {
+        target: '#upload-file-card',
+        content:
+          'Select this option to generate a transcript and summary from an audio file on your computer.',
+        title: 'Upload a file',
+        before: async () => {
+          selectRadioCard('upload-file')
+        },
+      },
+      {
+        target: '.govuk-file-upload-wrapper',
+        content:
+          'Drag your audio file here or click to browse your files to upload it.',
+        title: 'Choose file to upload',
+        before: async () => {
+          selectRadioCard('upload-file')
+        },
       },
       {
         target: '.govuk-service-navigation',
@@ -233,7 +293,6 @@ export function useOnboardingTour({
     options: {
       skipBeacon: true,
       showProgress: true,
-      skipScroll: true,
       closeButtonAction: 'skip',
       ...options,
     },

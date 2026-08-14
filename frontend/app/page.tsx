@@ -143,7 +143,10 @@ export default function Home() {
                         </p>
                       </label>
                     </div>
-                    <div className="govuk-radios__item">
+                    <div
+                      className="govuk-radios__item"
+                      id="virtual-meeting-card"
+                    >
                       <input
                         className="govuk-radios__input"
                         id="virtual-meeting"
@@ -164,7 +167,7 @@ export default function Home() {
                         </p>
                       </label>
                     </div>
-                    <div className="govuk-radios__item">
+                    <div className="govuk-radios__item" id="upload-file-card">
                       <input
                         className="govuk-radios__input"
                         id="upload-file"
@@ -192,7 +195,10 @@ export default function Home() {
                 ) : (
                   <>
                     {mode === 'virtual-meeting' && (
-                      <div className="govuk-!-padding-5 govuk-!-margin-bottom-2 govuk-!-margin-top-4 bg-[#f3f3f3]">
+                      <div
+                        className="govuk-!-padding-5 govuk-!-margin-bottom-2 govuk-!-margin-top-4 bg-[#f3f3f3]"
+                        id="virtual-meeting-before-start"
+                      >
                         <h2 className="govuk-heading-s">Before you start</h2>
                         <ol className="govuk-list govuk-list--number govuk-!-margin-bottom-0">
                           <li>Start Minute</li>
@@ -269,7 +275,10 @@ export default function Home() {
                       Start recording
                     </button>
                     {mode === 'virtual-meeting' && (
-                      <details className="govuk-details">
+                      <details
+                        className="govuk-details"
+                        id="virtual-meeting-audio-not-picking-up"
+                      >
                         <summary className="govuk-details__summary">
                           <span className="govuk-details__summary-text">
                             Audio or screen share not picking up? Check system

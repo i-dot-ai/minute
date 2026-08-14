@@ -27,6 +27,9 @@ import type {
   DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteData,
   DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteErrors,
   DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteResponses,
+  DeleteMinuteMinutesMinuteIdDeleteData,
+  DeleteMinuteMinutesMinuteIdDeleteErrors,
+  DeleteMinuteMinutesMinuteIdDeleteResponses,
   DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteData,
   DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteErrors,
   DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteResponses,
@@ -89,6 +92,9 @@ import type {
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchErrors,
   UpdateDataRetentionUsersDataRetentionPatchResponses,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchData,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchErrors,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchResponses,
 } from './types.gen'
 
 export type Options<
@@ -302,6 +308,7 @@ export const updateDataRetentionUsersDataRetentionPatch = <
 
 /**
  * Update Default Template
+ *
  * Set the current user's default template.
  *
  * Exactly one of template_id (a custom template owned by the user) or template_name (a
@@ -315,8 +322,8 @@ export const updateDefaultTemplateUsersDefaultTemplatePatch = <
     UpdateDefaultTemplateUsersDefaultTemplatePatchData,
     ThrowOnError
   >
-) => {
-  return (options.client ?? _heyApiClient).patch<
+) =>
+  (options.client ?? client).patch<
     UpdateDefaultTemplateUsersDefaultTemplatePatchResponses,
     UpdateDefaultTemplateUsersDefaultTemplatePatchErrors,
     ThrowOnError
@@ -328,7 +335,6 @@ export const updateDefaultTemplateUsersDefaultTemplatePatch = <
       ...options.headers,
     },
   })
-}
 
 /**
  * List Minutes For Transcription
@@ -391,16 +397,12 @@ export const deleteMinuteMinutesMinuteIdDelete = <
   ThrowOnError extends boolean = false,
 >(
   options: Options<DeleteMinuteMinutesMinuteIdDeleteData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).delete<
+) =>
+  (options.client ?? client).delete<
     DeleteMinuteMinutesMinuteIdDeleteResponses,
     DeleteMinuteMinutesMinuteIdDeleteErrors,
     ThrowOnError
-  >({
-    url: '/minutes/{minute_id}',
-    ...options,
-  })
-}
+  >({ url: '/minutes/{minute_id}', ...options })
 
 /**
  * List Minute Versions

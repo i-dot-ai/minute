@@ -182,6 +182,14 @@ export type GetUserResponse = {
    * Data Retention Days
    */
   data_retention_days: number | null
+  /**
+   * Default Template Id
+   */
+  default_template_id?: string | null
+  /**
+   * Default Template Name
+   */
+  default_template_name?: string | null
 }
 
 /**
@@ -361,7 +369,7 @@ export type MinutesCreateRequest = {
    *
    * Name of the template to use for the minutes
    */
-  template_name: string
+  template_name?: string | null
   /**
    * Template Id
    *
@@ -374,6 +382,12 @@ export type MinutesCreateRequest = {
    * The agenda for the meeting
    */
   agenda?: string | null
+  /**
+   * Source Minute Id
+   *
+   * If set, copy template_name, user_template_id and agenda from this minute
+   */
+  source_minute_id?: string | null
 }
 
 /**
@@ -473,6 +487,20 @@ export type RecordingCreateResponse = {
 }
 
 /**
+ * SetDefaultTemplateRequest
+ */
+export type SetDefaultTemplateRequest = {
+  /**
+   * Template Id
+   */
+  template_id?: string | null
+  /**
+   * Template Name
+   */
+  template_name?: string | null
+}
+
+/**
  * SingleRecording
  */
 export type SingleRecording = {
@@ -507,6 +535,10 @@ export type TemplateMetadata = {
    */
   category: string
   agenda_usage: AgendaUsage
+  /**
+   * Is Default
+   */
+  is_default?: boolean
 }
 
 /**
@@ -538,6 +570,10 @@ export type TemplateResponse = {
    * Questions
    */
   questions: Array<Question> | null
+  /**
+   * Is Default
+   */
+  is_default?: boolean
 }
 
 /**
@@ -597,7 +633,7 @@ export type TranscriptionCreateRequest = {
   /**
    * Template Name
    */
-  template_name?: string | null
+  template_name: string
   /**
    * Template Id
    */
@@ -644,6 +680,11 @@ export type TranscriptionGetResponse = {
    */
   created_datetime: string
 }
+
+/**
+ * TranscriptionListFilter
+ */
+export type TranscriptionListFilter = 'expiring-soon' | 'failed'
 
 /**
  * TranscriptionMetadata
@@ -748,6 +789,7 @@ export type ListTranscriptionsTranscriptionsGetData = {
     filter_by?: TranscriptionListFilter | null
     /**
      * Search
+     *
      * Match against transcription title
      */
     search?: string | null
@@ -1645,6 +1687,7 @@ export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses =
   {
     /**
      * Response Duplicate User Template User Templates  Template Id  Duplicate Post
+     *
      * Successful Response
      */
     200: string

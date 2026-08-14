@@ -119,6 +119,10 @@ cpSync(
 cpSync(join(publicSiteRoot, 'assets/images'), join(assetsDist, 'images'), {
   recursive: true,
 })
+cpSync(
+  join(frontendRoot, 'public/favicon.svg'),
+  join(assetsDist, 'images/favicon.svg')
+)
 cpSync(join(frontendRoot, 'styles/govuk.css'), join(assetsDist, 'govuk.css'))
 cpSync(
   join(govukDist, 'govuk-frontend.min.js'),

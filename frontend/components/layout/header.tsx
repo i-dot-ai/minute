@@ -8,8 +8,8 @@ export const Header = async () => {
         <div className="govuk-generic-header__container govuk-!-margin-left-6">
           <div className="govuk-!-padding-bottom-2">
             <Image
-              src="/logos/iAI-logo.png"
-              alt="Minute"
+              src="/logos/iAI-logo.svg"
+              alt="i.AI"
               className="govuk-!-margin-right-2 inline-block"
               width={40}
               height={42.5}

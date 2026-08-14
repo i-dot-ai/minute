@@ -215,7 +215,7 @@ export default function Home() {
                       </div>
                     )}
                     <div
-                      className="govuk-form-group govuk-!-margin-top-7 govuk-!-margin-bottom-6 ms:items-center sm:flex sm:gap-2"
+                      className="govuk-form-group govuk-!-margin-top-7 govuk-!-margin-bottom-6 sm:flex sm:items-center sm:gap-2"
                       id="tour-select-microphone"
                     >
                       <label className="govuk-label" htmlFor="microphone">

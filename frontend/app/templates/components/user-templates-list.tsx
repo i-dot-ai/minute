@@ -164,7 +164,7 @@ const TemplateListItem = ({ template }: { template: TemplateResponse }) => {
       key={template.id}
       className="transcriptions__list-item govuk-!-padding-top-3 govuk-!-padding-bottom-3 flex items-start justify-between"
     >
-      <div>
+      <div className="flex-1">
         <h4 className="govuk-heading-s govuk-!-margin-bottom-1">
           <Link className="govuk-link" href={`/templates/${template.id}`}>
             {template.name || 'Untitled template'}

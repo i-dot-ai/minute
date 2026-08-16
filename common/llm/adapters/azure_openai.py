@@ -37,7 +37,8 @@ class OpenAIModelAdapter(ModelAdapter):
         response = await self.async_azure_client.beta.chat.completions.parse(
             model=self._model, messages=messages, response_format=response_format, **self._kwargs
         )
-        choice = self.handle_response(response)
+        choice = response.choices[0]
+        self.choice_incomplete(choice, response)
 
         return choice.message.parsed
 

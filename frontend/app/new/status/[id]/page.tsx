@@ -11,10 +11,10 @@ import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTa
 import { RetryTranscriptionDialog } from '@/components/audio/retry-transcription-dialog'
 import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
 import { useQuery } from '@tanstack/react-query'
-import { Loader2, Check, RefreshCw, X } from 'lucide-react'
+import { Loader2, Check, X } from 'lucide-react'
 import Link from 'next/link'
 import { use, useEffect, useRef, useState } from 'react'
-import { LoadingBar } from '@/components/ui/loading-bar'
+import { ProcessingCard } from '@/components/processing-card'
 
 const GENERATING_STATUSES = ['awaiting_start', 'in_progress']
 
@@ -206,76 +206,52 @@ export default function RecordStatusPage({
               </div>
             </>
           )}
-          <div className="govuk-!-padding-5 govuk-!-padding-top-8 govuk-!-margin-top-5 bg-(--govuk-surface-background-colour)">
-            {isProcessing ? (
-              <>
-                <div className="govuk-!-margin-bottom-6 inline-flex items-center gap-2">
-                  <RefreshCw className="size-4 animate-spin text-(--govuk-text-colour)" />
-                  <h2 className="govuk-heading-m govuk-!-margin-bottom-0">
-                    {transcriptionDone ? 'Generating summary' : 'Transcribing'}
-                  </h2>
-                </div>
-
-                {isStalled ? (
-                  <div className="govuk-warning-text">
-                    <span
-                      className="govuk-warning-text__icon"
-                      aria-hidden="true"
-                    >
-                      !
-                    </span>
-                    <strong className="govuk-warning-text__text">
-                      <span className="govuk-visually-hidden">Warning</span>
-                      Taking longer than usual. Leave this page if needed, it
-                      will continue in the background.
-                    </strong>
+          {isProcessing ? (
+            <ProcessingCard
+              className="govuk-!-margin-top-5"
+              heading={
+                transcriptionDone ? 'Generating summary' : 'Transcribing'
+              }
+              estimatedMinutes={estimatedTimeToComplete}
+              isStalled={isStalled}
+            />
+          ) : (
+            <div className="govuk-!-padding-5 govuk-!-padding-top-8 govuk-!-margin-top-5 bg-(--govuk-surface-background-colour)">
+              {isFailed ? (
+                <>
+                  <div className="govuk-!-margin-bottom-4 inline-flex items-center gap-2">
+                    <X className="size-4 text-(--govuk-error-colour)" />
+                    <h2 className="govuk-heading-m govuk-!-margin-bottom-0">
+                      Failed to process
+                    </h2>
                   </div>
-                ) : (
                   <p className="govuk-body">
-                    Estimated time to complete:{' '}
-                    <strong>{estimatedTimeToComplete} minutes</strong>
+                    The recording is safe, only the transcription failed.
                   </p>
-                )}
-                <div className="govuk-!-margin-bottom-7 govuk-!-margin-top-6">
-                  <LoadingBar />
-                </div>
-              </>
-            ) : isFailed ? (
-              <>
-                <div className="govuk-!-margin-bottom-4 inline-flex items-center gap-2">
-                  <X className="size-4 text-(--govuk-error-colour)" />
-                  <h2 className="govuk-heading-m govuk-!-margin-bottom-0">
-                    Failed to process
-                  </h2>
-                </div>
-                <p className="govuk-body">
-                  The recording is safe, only the transcription failed.
-                </p>
 
-                <p className="govuk-body">
-                  Please try again. If it continues to fail,{' '}
-                  <Link href="/support" className="govuk-link">
-                    contact support
-                  </Link>
-                  .
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="inline-flex items-center gap-2">
-                  <Check className="size-4 text-[#0f7a52]" />
-                  <h2 className="govuk-heading-m govuk-!-margin-bottom-0">
-                    Ready
-                  </h2>
-                </div>
-                <p className="govuk-body govuk-!-margin-top-3">
-                  View and edit the transcription and summary at any time.
-                </p>
-              </>
-            )}
-            <div className="govuk-button-group govuk-!-margin-top-6">
-              {!isProcessing &&
-                (isFailed ? (
+                  <p className="govuk-body">
+                    Please try again. If it continues to fail,{' '}
+                    <Link href="/support" className="govuk-link">
+                      contact support
+                    </Link>
+                    .
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="inline-flex items-center gap-2">
+                    <Check className="size-4 text-[#0f7a52]" />
+                    <h2 className="govuk-heading-m govuk-!-margin-bottom-0">
+                      Ready
+                    </h2>
+                  </div>
+                  <p className="govuk-body govuk-!-margin-top-3">
+                    View and edit the transcription and summary at any time.
+                  </p>
+                </>
+              )}
+              <div className="govuk-button-group govuk-!-margin-top-6">
+                {isFailed ? (
                   <>
                     {transcriptionDone ? (
                       <NewMinuteDialog
@@ -304,9 +280,10 @@ export default function RecordStatusPage({
                   <Link href={`/transcriptions/${id}`} className="govuk-button">
                     View transcription
                   </Link>
-                ))}
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </>
       )}
     </div>

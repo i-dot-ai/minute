@@ -1,7 +1,7 @@
 'use client'
 
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
-import { AudioWav } from '@/components/icons/AudioWav'
+import { ProcessingCard } from '@/components/processing-card'
 import { Button } from '@/components/ui/button'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import {
@@ -31,6 +31,19 @@ import { Controller, useForm } from 'react-hook-form'
 type MinuteEditorForm = {
   html: string
 }
+
+// Generating a summary is a single pass over an existing transcript, so it is
+// far quicker than transcribing the audio in the first place.
+const SUMMARY_MINUTES_PER_AUDIO_MINUTE = 0.05
+const SUMMARY_MINIMUM_ESTIMATE_MINUTES = 1
+
+const getSummaryEstimateMinutes = (durationSec: number | undefined) =>
+  durationSec
+    ? Math.max(
+        SUMMARY_MINIMUM_ESTIMATE_MINUTES,
+        Math.round((durationSec / 60) * SUMMARY_MINUTES_PER_AUDIO_MINUTE)
+      )
+    : null
 
 export type MinuteExportState = {
   htmlContent: string
@@ -314,14 +327,13 @@ export function MinuteEditor({
   }
   if (isGenerating) {
     return (
-      <div className="govuk-!-padding-top-6 flex w-full flex-col items-center justify-center gap-2">
-        <div className="flex w-full justify-center">
-          <AudioWav />
-        </div>
-        <p className="govuk-body govuk-!-margin-bottom-0">
-          Minute generating...
-        </p>
-      </div>
+      <ProcessingCard
+        className="govuk-!-margin-top-2"
+        heading="Generating summary"
+        estimatedMinutes={getSummaryEstimateMinutes(
+          transcription.dialogue_entries?.at(-1)?.end_time
+        )}
+      />
     )
   }
   if (isError) {

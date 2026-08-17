@@ -162,6 +162,10 @@
     0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
 }
 
+.govuk-radios--cards .govuk-radios__item:last-of-type {
+  margin-right: 0;
+}
+
 .govuk-radios--cards .govuk-radios__item:has(.govuk-radios__input:checked) {
   border-color: var(--govuk-brand-colour);
   background-color: #d2e2f1;

@@ -87,7 +87,7 @@ export const ServiceNavigation = () => {
                 <div className="govuk-!-padding-top-2 govuk-!-padding-bottom-2">
                   <button
                     type="button"
-                    className="govuk-service-navigation__link cursor-pointer sm:mx-auto"
+                    className="govuk-service-navigation__link cursor-pointer text-(--govuk-link-colour) sm:mx-auto"
                     onClick={requestOnboardingTourRestart}
                   >
                     Tour this page

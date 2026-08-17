@@ -84,7 +84,7 @@ export function TranscriptionSidePanel() {
                         >
                           {minute.template_name}
                         </Link>
-                        <p className="govuk-body-s govuk-!-font-size-16 ml-2">
+                        <p className="govuk-body-s ml-2 !text-[0.875rem]">
                           {date}
                         </p>
                       </li>

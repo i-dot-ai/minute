@@ -15,23 +15,16 @@ import { Loader2, Check, X } from 'lucide-react'
 import Link from 'next/link'
 import { use, useEffect, useRef, useState } from 'react'
 import { ProcessingCard } from '@/components/processing-card'
+import { useNow } from '@/hooks/use-now'
+import {
+  getIsStalled,
+  getRemainingMinutes,
+  getSummaryEstimateMinutes,
+  getTotalEstimateMinutes,
+  ProcessingPhase,
+} from '@/lib/processing-estimate'
 
 const GENERATING_STATUSES = ['awaiting_start', 'in_progress']
-
-// Processing normally takes 5-12 minutes per hour of audio; flag as stalled
-// at 18 minutes per hour (0.3 min per audio minute), with a floor for short
-// clips and a flat fallback when the audio duration is unknown.
-const STALL_MINUTES_PER_AUDIO_MINUTE = 0.3
-const STALL_FLOOR_MS = 5 * 60 * 1000
-const STALL_FALLBACK_MS = 15 * 60 * 1000
-
-const getStallLimitMs = (durationSec: number | null) =>
-  durationSec
-    ? Math.max(
-        STALL_FLOOR_MS,
-        (durationSec / 60) * STALL_MINUTES_PER_AUDIO_MINUTE * 60 * 1000
-      )
-    : STALL_FALLBACK_MS
 
 export default function RecordStatusPage({
   params,
@@ -107,21 +100,31 @@ export default function RecordStatusPage({
   const isFailed =
     transcriptionStatus === 'failed' || summaryStatus === 'failed'
 
-  const stallSince = transcriptionDone
+  const now = useNow({ enabled: isProcessing })
+
+  // The summary phase re-anchors on the version being generated, so both the
+  // countdown and the stall check restart when transcription hands over.
+  const phase: ProcessingPhase = transcriptionDone ? 'summary' : 'transcription'
+  const phaseStartedAt = transcriptionDone
     ? minuteVersionsQuery.data?.[0]?.created_datetime
     : transcription?.created_datetime
+
   const isStalled =
     isProcessing &&
-    !!stallSince &&
-    Date.now() - new Date(stallSince).getTime() > getStallLimitMs(durationSec)
+    getIsStalled({ startedAt: phaseStartedAt, durationSec, phase, now })
 
-  const getEstimatedTimeToComplete = (durationSec: number | null) => {
-    if (!durationSec) return null
-    const minutes = durationSec / 60
-    return Math.round(minutes)
-  }
-
-  const estimatedTimeToComplete = getEstimatedTimeToComplete(durationSec)
+  // While transcribing, the countdown covers the whole job but is held back at
+  // the summary estimate, so it never reaches zero with the summary still to
+  // run. Once the summary starts it counts that estimate down on its own.
+  const summaryEstimateMinutes = getSummaryEstimateMinutes(durationSec)
+  const remainingMinutes = getRemainingMinutes({
+    startedAt: phaseStartedAt,
+    estimateMinutes: transcriptionDone
+      ? summaryEstimateMinutes
+      : getTotalEstimateMinutes(durationSec),
+    minimumMinutes: transcriptionDone ? 0 : summaryEstimateMinutes,
+    now,
+  })
 
   // Land keyboard/screen-reader focus on the page heading after the client-side
   // navigation from the recorder, which otherwise leaves focus on <body>.
@@ -212,7 +215,7 @@ export default function RecordStatusPage({
               heading={
                 transcriptionDone ? 'Generating summary' : 'Transcribing'
               }
-              estimatedMinutes={estimatedTimeToComplete}
+              remainingMinutes={remainingMinutes}
               isStalled={isStalled}
             />
           ) : (

@@ -4,24 +4,26 @@ import { RefreshCw } from 'lucide-react'
 
 export function ProcessingCard({
   heading,
-  estimatedMinutes,
+  remainingMinutes,
   isStalled = false,
   className,
 }: {
   heading: string
-  estimatedMinutes?: number | null
+  remainingMinutes?: number | null
   isStalled?: boolean
   className?: string
 }) {
   return (
     <div
-      role="status"
       className={cn(
         'govuk-!-padding-5 govuk-!-padding-top-8 bg-(--govuk-surface-background-colour)',
         className
       )}
     >
-      <div className="govuk-!-margin-bottom-6 inline-flex items-center gap-2">
+      <div
+        role="status"
+        className="govuk-!-margin-bottom-6 inline-flex items-center gap-2"
+      >
         <RefreshCw className="size-4 animate-spin text-(--govuk-text-colour)" />
         <h2 className="govuk-heading-m govuk-!-margin-bottom-0">{heading}</h2>
       </div>
@@ -38,12 +40,20 @@ export function ProcessingCard({
           </strong>
         </div>
       ) : (
-        !!estimatedMinutes && (
+        remainingMinutes !== null &&
+        remainingMinutes !== undefined && (
           <p className="govuk-body">
-            Estimated time to complete:{' '}
-            <strong>
-              {estimatedMinutes} {estimatedMinutes === 1 ? 'minute' : 'minutes'}
-            </strong>
+            {remainingMinutes > 0 ? (
+              <>
+                Estimated time left:{' '}
+                <strong>
+                  {remainingMinutes}{' '}
+                  {remainingMinutes === 1 ? 'minute' : 'minutes'}
+                </strong>
+              </>
+            ) : (
+              'Should complete shortly.'
+            )}
           </p>
         )
       )}

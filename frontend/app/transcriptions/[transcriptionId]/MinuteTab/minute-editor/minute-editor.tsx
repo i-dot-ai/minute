@@ -3,7 +3,13 @@
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
 import { ProcessingCard } from '@/components/processing-card'
 import { Button } from '@/components/ui/button'
+import { useNow } from '@/hooks/use-now'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
+import {
+  getIsStalled,
+  getRemainingMinutes,
+  getSummaryEstimateMinutes,
+} from '@/lib/processing-estimate'
 import {
   MinuteListItem,
   MinuteVersionResponse,
@@ -31,19 +37,6 @@ import { Controller, useForm } from 'react-hook-form'
 type MinuteEditorForm = {
   html: string
 }
-
-// Generating a summary is a single pass over an existing transcript, so it is
-// far quicker than transcribing the audio in the first place.
-const SUMMARY_MINUTES_PER_AUDIO_MINUTE = 0.05
-const SUMMARY_MINIMUM_ESTIMATE_MINUTES = 1
-
-const getSummaryEstimateMinutes = (durationSec: number | undefined) =>
-  durationSec
-    ? Math.max(
-        SUMMARY_MINIMUM_ESTIMATE_MINUTES,
-        Math.round((durationSec / 60) * SUMMARY_MINUTES_PER_AUDIO_MINUTE)
-      )
-    : null
 
 export type MinuteExportState = {
   htmlContent: string
@@ -116,6 +109,7 @@ export function MinuteEditor({
     () => minuteVersion?.status == 'failed',
     [minuteVersion?.status]
   )
+  const now = useNow({ enabled: isGenerating })
 
   const queryClient = useQueryClient()
   const [isEditable, setIsEditable] = useState(false)
@@ -326,13 +320,22 @@ export function MinuteEditor({
     )
   }
   if (isGenerating) {
+    const durationSec = transcription.dialogue_entries?.at(-1)?.end_time ?? null
     return (
       <ProcessingCard
         className="govuk-!-margin-top-2"
         heading="Generating summary"
-        estimatedMinutes={getSummaryEstimateMinutes(
-          transcription.dialogue_entries?.at(-1)?.end_time
-        )}
+        remainingMinutes={getRemainingMinutes({
+          startedAt: minuteVersion.created_datetime,
+          estimateMinutes: getSummaryEstimateMinutes(durationSec),
+          now,
+        })}
+        isStalled={getIsStalled({
+          startedAt: minuteVersion.created_datetime,
+          durationSec,
+          phase: 'summary',
+          now,
+        })}
       />
     )
   }

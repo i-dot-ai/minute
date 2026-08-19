@@ -250,7 +250,7 @@ export default function Home() {
                                 />
                               </li>
                               <li>
-                                Check the microphone toggle switch to "on"
+                                Check the microphone toggle switch to &#34;on`&#34;
                                 <Image
                                   src="/images/chrome-permissions-step-2.webp"
                                   className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"

@@ -14,8 +14,6 @@ export const ServiceNavigation = () => {
   const showTour =
     pathname === '/' || pagesWithTour.some((page) => pathname.includes(page))
 
-  const isTranscriptionPage =
-    pathname.includes('/transcriptions') && params.transcriptionId
   return (
     <div
       className="govuk-service-navigation govuk-service-navigation--side-nav"

@@ -22,7 +22,7 @@ export default function TranscriptionPage() {
     }),
     refetchInterval: (query) =>
       query.state.data?.status &&
-        ['awaiting_start', 'in_progress'].includes(query.state.data.status)
+      ['awaiting_start', 'in_progress'].includes(query.state.data.status)
         ? 2000
         : false,
   })
@@ -149,7 +149,6 @@ export default function TranscriptionPage() {
       <div>
         <div className="govuk-!-padding-top-4 border-b border-(--govuk-border-colour)">
           <div className="govuk-width-container govuk-width-container--with-secondary-nav">
-
             <div className="sm:flex sm:justify-between">
               <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
                 <ol className="govuk-breadcrumbs__list">
@@ -194,8 +193,7 @@ export default function TranscriptionPage() {
                   ? 'govuk-grid-column-full'
                   : 'govuk-grid-column-one-third'
               }
-            >
-            </div>
+            ></div>
           </div>
           {isRenaming && (
             <form

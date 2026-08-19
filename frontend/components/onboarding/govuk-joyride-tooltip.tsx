@@ -44,7 +44,9 @@ export function GovukJoyrideTooltip({
           </svg>
         </button>
       )}
-      <p className="govuk-body-s !text-white govuk-!-margin-bottom-0">{index + 1} of {size}</p>
+      <p className="govuk-body-s govuk-!-margin-bottom-0 !text-white">
+        {index + 1} of {size}
+      </p>
       {title && (
         <h4
           className="govuk-heading-m !text-white"

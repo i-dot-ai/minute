@@ -223,7 +223,8 @@ export default function Home() {
                         <details className="govuk-details">
                           <summary className="govuk-details__summary">
                             <span className="govuk-details__summary-text">
-                              Instructions to enable microphone access if problem persists
+                              Instructions to enable microphone access if
+                              problem persists
                             </span>
                           </summary>
                           <div className="govuk-details__text">
@@ -234,7 +235,8 @@ export default function Home() {
                                 <Info className="inline-block size-5" />
                                 <span className="govuk-visually-hidden">
                                   i
-                                </span>{' '}or <Settings2 className="inline-block size-5" />
+                                </span>{' '}
+                                or <Settings2 className="inline-block size-5" />
                                 <span className="govuk-visually-hidden">
                                   settings
                                 </span>{' '}
@@ -247,7 +249,8 @@ export default function Home() {
                                   height={500}
                                 />
                               </li>
-                              <li>Check the microphone toggle switch to "on"
+                              <li>
+                                Check the microphone toggle switch to "on"
                                 <Image
                                   src="/images/chrome-permissions-step-2.webp"
                                   className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
@@ -260,10 +263,14 @@ export default function Home() {
                             </ol>
                             <h2 className="govuk-heading-s">Firefox</h2>
                             <ol className="govuk-list govuk-list--number">
-                              <li>Click on the <Settings2 className="inline-block size-5" />
+                              <li>
+                                Click on the{' '}
+                                <Settings2 className="inline-block size-5" />
                                 <span className="govuk-visually-hidden">
                                   settings
-                                </span>{' '}icon immediately to the left of the url bar</li>
+                                </span>{' '}
+                                icon immediately to the left of the url bar
+                              </li>
                               <Image
                                 src="/images/firefox-permissions-step-1.webp"
                                 className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
@@ -271,7 +278,10 @@ export default function Home() {
                                 width={500}
                                 height={500}
                               />
-                              <li>Next to <strong>Use the microphone</strong> click the <strong>Blocked temporarily</strong> button
+                              <li>
+                                Next to <strong>Use the microphone</strong>{' '}
+                                click the <strong>Blocked temporarily</strong>{' '}
+                                button
                                 <Image
                                   src="/images/firefox-permissions-step-2.webp"
                                   className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
@@ -285,7 +295,8 @@ export default function Home() {
 
                             <h2 className="govuk-heading-s">Safari</h2>
                             <ol className="govuk-list govuk-list--number">
-                              <li>Open safari settings
+                              <li>
+                                Open safari settings
                                 <Image
                                   src="/images/safari-permissions-step-1.webp"
                                   className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
@@ -295,7 +306,10 @@ export default function Home() {
                                 />
                               </li>
                               <li>
-                                Go to <strong>Websites</strong> &gt; <strong>Microphone</strong> and make sure that <strong>minute.i.ai.gov.uk</strong> is set to <strong>Allow</strong>
+                                Go to <strong>Websites</strong> &gt;{' '}
+                                <strong>Microphone</strong> and make sure that{' '}
+                                <strong>minute.i.ai.gov.uk</strong> is set to{' '}
+                                <strong>Allow</strong>
                                 <Image
                                   src="/images/safari-permissions-step-2.webp"
                                   className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"

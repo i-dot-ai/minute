@@ -2,7 +2,6 @@
 
 import {
   getPageTour,
-  ONBOARDING_STORAGE_KEY,
   RESTART_ONBOARDING_TOUR_EVENT,
   useOnboardingTour,
 } from '@/hooks/use-onboarding-tour'
@@ -11,24 +10,6 @@ import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 const UNAUTHORISED_PATH = '/unauthorised'
-
-type SeenMap = Record<string, boolean>
-
-function readSeen(): SeenMap {
-  if (typeof window === 'undefined') return {}
-  try {
-    const stored = localStorage.getItem(ONBOARDING_STORAGE_KEY)
-    if (!stored) return {}
-    const parsed = JSON.parse(stored)
-    return parsed && typeof parsed === 'object' ? (parsed as SeenMap) : {}
-  } catch {
-    return {}
-  }
-}
-
-function writeSeen(seen: SeenMap) {
-  localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(seen))
-}
 
 export function OnboardingTour() {
   const pathname = usePathname()
@@ -44,42 +25,26 @@ export function OnboardingTour() {
   const hasTour = steps.length > 0
   const tourActive = run && hasTour
 
-  const markSeen = useCallback(() => {
-    if (!tourKey) return
-    const seen = readSeen()
-    seen[tourKey] = true
-    writeSeen(seen)
+  const finishTour = useCallback(() => {
+    setRun(false)
+  }, [])
+
+  // Stop the tour when navigating to a different page.
+  useEffect(() => {
+    setRun(false)
   }, [tourKey])
 
-  const finishTour = useCallback(() => {
-    markSeen()
-    setRun(false)
-  }, [markSeen])
-
-  // Auto-run a tour the first time the user visits a matching page.
-  useEffect(() => {
-    if (!hasTour || !tourKey) {
-      setRun(false)
-      return
-    }
-    setRun(!readSeen()[tourKey])
-  }, [hasTour, tourKey])
-
-  // Restart replays the tour for the current page.
-  const restartTour = useCallback(() => {
-    if (!hasTour || !tourKey) return
-    const seen = readSeen()
-    delete seen[tourKey]
-    writeSeen(seen)
+  const startTour = useCallback(() => {
+    if (!hasTour) return
     setRun(false)
     queueMicrotask(() => setRun(true))
-  }, [hasTour, tourKey])
+  }, [hasTour])
 
   useEffect(() => {
-    window.addEventListener(RESTART_ONBOARDING_TOUR_EVENT, restartTour)
+    window.addEventListener(RESTART_ONBOARDING_TOUR_EVENT, startTour)
     return () =>
-      window.removeEventListener(RESTART_ONBOARDING_TOUR_EVENT, restartTour)
-  }, [restartTour])
+      window.removeEventListener(RESTART_ONBOARDING_TOUR_EVENT, startTour)
+  }, [startTour])
 
   // If a tour is running but its target element isn't present, react-joyride
   // renders its grey overlay with no tooltip. Detect that so the user can

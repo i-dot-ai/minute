@@ -3,7 +3,6 @@
 import { GovukJoyrideTooltip } from '@/components/onboarding/govuk-joyride-tooltip'
 import { ORIGIN, useJoyride, type Props, type Step } from 'react-joyride'
 
-export const ONBOARDING_STORAGE_KEY = 'minute-onboarding-tour'
 export const RESTART_ONBOARDING_TOUR_EVENT = 'restart-onboarding-tour'
 
 export function requestOnboardingTourRestart() {
@@ -280,7 +279,7 @@ type UseOnboardingTourOptions = Omit<
 export function useOnboardingTour({
   options,
   onEvent,
-  run = true,
+  run = false,
   steps = [],
   ...props
 }: UseOnboardingTourOptions = {}) {

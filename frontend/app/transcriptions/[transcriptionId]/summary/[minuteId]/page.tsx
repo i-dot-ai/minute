@@ -323,10 +323,11 @@ export default function SummaryPage({
         </div>
       </div>
       <div
-        className={`min-h-0 flex-1 overflow-y-auto ${editState?.isEditable
+        className={`min-h-0 flex-1 overflow-y-auto ${
+          editState?.isEditable
             ? 'govuk-!-padding-4 bg-(--govuk-surface-background-colour)'
             : ''
-          }`}
+        }`}
       >
         <div
           className="govuk-width-container govuk-width-container--with-secondary-nav"

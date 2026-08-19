@@ -223,7 +223,7 @@ export default function Home() {
                         <details className="govuk-details">
                           <summary className="govuk-details__summary">
                             <span className="govuk-details__summary-text">
-                              Instructions if refreshing the page doesn't work
+                              Instructions to enable microphone access if problem persists
                             </span>
                           </summary>
                           <div className="govuk-details__text">

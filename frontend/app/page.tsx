@@ -5,10 +5,11 @@ import { PosthogBanner } from '@/components/posthog-banner'
 import { useIsOldUrl } from '@/hooks/use-is-old-url'
 import { AudioDevice } from '@/components/audio/microphone-permission'
 import { useRecordingSession } from '@/providers/recording-session-provider'
-import { Mic, Video, Upload } from 'lucide-react'
+import { Mic, Video, Upload, Info, Settings2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import UrlMigrationBanner from '@/components/url-migration-banner'
+import Image from 'next/image'
 
 type RecordingMode = 'in-person' | 'virtual-meeting' | 'upload-file'
 
@@ -194,119 +195,216 @@ export default function Home() {
                   <AudioUploadForm />
                 ) : (
                   <>
-                    {mode === 'virtual-meeting' && (
-                      <div
-                        className="govuk-!-padding-5 govuk-!-margin-bottom-2 govuk-!-margin-top-4 bg-[#f3f3f3]"
-                        id="virtual-meeting-before-start"
-                      >
-                        <h2 className="govuk-heading-s">Before you start</h2>
-                        <ol className="govuk-list govuk-list--number govuk-!-margin-bottom-0">
-                          <li>Start Minute</li>
-                          <li>
-                            Join your meeting (Teams, Zoom, or Google Meet).
-                          </li>
-                          <li>
-                            When the browser asks to share: Share your{' '}
-                            <strong>Tab</strong> (Mac) or{' '}
-                            <strong>Entire Screen</strong> (Windows), then tick{' '}
-                            <strong>Share audio</strong>.
-                          </li>
-                        </ol>
-                      </div>
-                    )}
-                    <div
-                      className="govuk-form-group govuk-!-margin-top-7 govuk-!-margin-bottom-6 sm:flex sm:items-center sm:gap-2"
-                      id="tour-select-microphone"
-                    >
-                      <label className="govuk-label" htmlFor="microphone">
-                        Select microphone:
-                      </label>
-                      <select
-                        className="govuk-select govuk-select--subtle"
-                        id="microphone"
-                        name="microphone"
-                        value={selectedDeviceId}
-                        onChange={(e) => setSelectedDeviceId(e.target.value)}
-                      >
-                        {devices.length > 0 ? (
-                          devices.map((d) => (
-                            <option key={d.deviceId} value={d.deviceId}>
-                              {d.label}
-                            </option>
-                          ))
-                        ) : (
-                          <option value="">
-                            Requesting microphone access...
-                          </option>
-                        )}
-                      </select>
-                    </div>
-                    {micDenied && (
-                      <div
-                        role="alert"
-                        className="govuk-!-padding-4 govuk-!-margin-bottom-4 bg-[#e59a9a]"
-                      >
-                        <div className="govuk-warning-text">
-                          <span
-                            className="govuk-warning-text__icon"
-                            aria-hidden="true"
-                          >
-                            !
-                          </span>
-                          <strong className="govuk-warning-text__text">
-                            <span className="govuk-visually-hidden">
-                              Warning
+                    {micDenied ? (
+                      <>
+                        <div
+                          role="alert"
+                          className="govuk-!-padding-4 govuk-!-margin-bottom-4 govuk-!-margin-top-4 bg-[#e59a9a]"
+                        >
+                          <div className="govuk-warning-text">
+                            <span
+                              className="govuk-warning-text__icon"
+                              aria-hidden="true"
+                            >
+                              !
                             </span>
-                            There is a problem.
-                          </strong>
-                        </div>
-                        <p className="govuk-body govuk-!-margin-bottom-0">
-                          Microphone access has not been given. Please enable it
-                          in your browser settings and try again.
-                        </p>
-                      </div>
-                    )}
-                    <button
-                      className="govuk-button govuk-button--start"
-                      data-module="govuk-button"
-                      disabled={micDenied}
-                      onClick={handleStart}
-                    >
-                      Start recording
-                    </button>
-                    {mode === 'virtual-meeting' && (
-                      <details
-                        className="govuk-details"
-                        id="virtual-meeting-audio-not-picking-up"
-                      >
-                        <summary className="govuk-details__summary">
-                          <span className="govuk-details__summary-text">
-                            Audio or screen share not picking up? Check system
-                            settings
-                          </span>
-                        </summary>
-                        <div className="govuk-details__text">
-                          <h2 className="govuk-heading-s">MacOS</h2>
-                          <p className="govuk-body">
-                            Go to{' '}
-                            <strong>
-                              System Settings → Privacy & Security → Screen
-                              Recording
-                            </strong>{' '}
-                            and ensure your browser is listed and enabled. Then
-                            check <strong>Sound → Input</strong> and confirm the
-                            correct microphone is selected.
-                          </p>
-                          <h2 className="govuk-heading-s">Windows</h2>
-                          <p className="govuk-body">
-                            Go to{' '}
-                            <strong>Settings → Privacy → Microphone</strong> and
-                            confirm your browser has access. Check{' '}
-                            <strong>Sound → Input</strong> to confirm the
-                            correct device is selected.
+                            <strong className="govuk-warning-text__text">
+                              <span className="govuk-visually-hidden">
+                                Warning
+                              </span>
+                              There is a problem.
+                            </strong>
+                          </div>
+                          <p className="govuk-body govuk-!-margin-bottom-0">
+                            Microphone access has not been given. Please refresh
+                            the page and allow access to the microphone.
                           </p>
                         </div>
-                      </details>
+                        <details className="govuk-details">
+                          <summary className="govuk-details__summary">
+                            <span className="govuk-details__summary-text">
+                              Instructions if refreshing the page doesn't work
+                            </span>
+                          </summary>
+                          <div className="govuk-details__text">
+                            <h2 className="govuk-heading-s">Chrome and Edge</h2>
+                            <ol className="govuk-list govuk-list--number">
+                              <li>
+                                Click the{' '}
+                                <Info className="inline-block size-5" />
+                                <span className="govuk-visually-hidden">
+                                  i
+                                </span>{' '}or <Settings2 className="inline-block size-5" />
+                                <span className="govuk-visually-hidden">
+                                  settings
+                                </span>{' '}
+                                icon immediately to the left of the url bar
+                                <Image
+                                  src="/images/chrome-permissions-step-1.webp"
+                                  className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
+                                  alt="screenshot showing the information icon next to the url toolbar in chrome"
+                                  width={500}
+                                  height={500}
+                                />
+                              </li>
+                              <li>Check the microphone toggle switch to "on"
+                                <Image
+                                  src="/images/chrome-permissions-step-2.webp"
+                                  className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
+                                  alt="screenshot showing the microphone icon in chrome permissions"
+                                  width={300}
+                                  height={500}
+                                />
+                              </li>
+                              <li>Refresh the page</li>
+                            </ol>
+                            <h2 className="govuk-heading-s">Firefox</h2>
+                            <ol className="govuk-list govuk-list--number">
+                              <li>Click on the <Settings2 className="inline-block size-5" />
+                                <span className="govuk-visually-hidden">
+                                  settings
+                                </span>{' '}icon immediately to the left of the url bar</li>
+                              <Image
+                                src="/images/firefox-permissions-step-1.webp"
+                                className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
+                                alt="screenshot showing the settings icon immediately to the left of the url bar in firefox"
+                                width={500}
+                                height={500}
+                              />
+                              <li>Next to <strong>Use the microphone</strong> click the <strong>Blocked temporarily</strong> button
+                                <Image
+                                  src="/images/firefox-permissions-step-2.webp"
+                                  className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
+                                  alt="screenshot showing the blocked temporarily button in firefox permissions"
+                                  width={300}
+                                  height={500}
+                                />
+                              </li>
+                              <li>Refresh the page</li>
+                            </ol>
+
+                            <h2 className="govuk-heading-s">Safari</h2>
+                            <ol className="govuk-list govuk-list--number">
+                              <li>Open safari settings
+                                <Image
+                                  src="/images/safari-permissions-step-1.webp"
+                                  className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
+                                  alt="screenshot showing the safari settings open"
+                                  width={300}
+                                  height={500}
+                                />
+                              </li>
+                              <li>
+                                Go to <strong>Websites</strong> &gt; <strong>Microphone</strong> and make sure that <strong>minute.i.ai.gov.uk</strong> is set to <strong>Allow</strong>
+                                <Image
+                                  src="/images/safari-permissions-step-2.webp"
+                                  className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
+                                  alt="screenshot showing the microphone permissions in safari settings"
+                                  width={400}
+                                  height={500}
+                                />
+                              </li>
+                              <li>Refresh the page</li>
+                            </ol>
+                          </div>
+                        </details>
+                      </>
+                    ) : (
+                      <>
+                        {mode === 'virtual-meeting' && (
+                          <div
+                            className="govuk-!-padding-5 govuk-!-margin-bottom-2 govuk-!-margin-top-4 bg-[#f3f3f3]"
+                            id="virtual-meeting-before-start"
+                          >
+                            <h2 className="govuk-heading-s">
+                              Before you start
+                            </h2>
+                            <ol className="govuk-list govuk-list--number govuk-!-margin-bottom-0">
+                              <li>Start Minute</li>
+                              <li>
+                                Join your meeting (Teams, Zoom, or Google Meet).
+                              </li>
+                              <li>
+                                When the browser asks to share: Share your{' '}
+                                <strong>Tab</strong> (Mac) or{' '}
+                                <strong>Entire Screen</strong> (Windows), then
+                                tick <strong>Share audio</strong>.
+                              </li>
+                            </ol>
+                          </div>
+                        )}
+                        <div
+                          className="govuk-form-group govuk-!-margin-top-7 govuk-!-margin-bottom-6 sm:flex sm:items-center sm:gap-2"
+                          id="tour-select-microphone"
+                        >
+                          <label className="govuk-label" htmlFor="microphone">
+                            Select microphone:
+                          </label>
+                          <select
+                            className="govuk-select govuk-select--subtle"
+                            id="microphone"
+                            name="microphone"
+                            value={selectedDeviceId}
+                            onChange={(e) =>
+                              setSelectedDeviceId(e.target.value)
+                            }
+                          >
+                            {devices.length > 0 ? (
+                              devices.map((d) => (
+                                <option key={d.deviceId} value={d.deviceId}>
+                                  {d.label}
+                                </option>
+                              ))
+                            ) : (
+                              <option value="">
+                                Requesting microphone access...
+                              </option>
+                            )}
+                          </select>
+                        </div>
+                        <button
+                          className="govuk-button govuk-button--start"
+                          data-module="govuk-button"
+                          disabled={micDenied}
+                          onClick={handleStart}
+                        >
+                          Start recording
+                        </button>
+                        {mode === 'virtual-meeting' && (
+                          <details
+                            className="govuk-details"
+                            id="virtual-meeting-audio-not-picking-up"
+                          >
+                            <summary className="govuk-details__summary">
+                              <span className="govuk-details__summary-text">
+                                Audio or screen share not picking up? Check
+                                system settings
+                              </span>
+                            </summary>
+                            <div className="govuk-details__text">
+                              <h2 className="govuk-heading-s">MacOS</h2>
+                              <p className="govuk-body">
+                                Go to{' '}
+                                <strong>
+                                  System Settings → Privacy & Security → Screen
+                                  Recording
+                                </strong>{' '}
+                                and ensure your browser is listed and enabled.
+                                Then check <strong>Sound → Input</strong> and
+                                confirm the correct microphone is selected.
+                              </p>
+                              <h2 className="govuk-heading-s">Windows</h2>
+                              <p className="govuk-body">
+                                Go to{' '}
+                                <strong>Settings → Privacy → Microphone</strong>{' '}
+                                and confirm your browser has access. Check{' '}
+                                <strong>Sound → Input</strong> to confirm the
+                                correct device is selected.
+                              </p>
+                            </div>
+                          </details>
+                        )}
+                      </>
                     )}
                   </>
                 )}

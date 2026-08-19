@@ -8,6 +8,7 @@ export function GovukJoyrideTooltip({
   primaryProps,
   index,
   step,
+  size,
   tooltipProps,
 }: TooltipRenderProps) {
   const { buttons, content, title } = step
@@ -43,6 +44,7 @@ export function GovukJoyrideTooltip({
           </svg>
         </button>
       )}
+      <p className="govuk-body-s !text-white govuk-!-margin-bottom-0">{index + 1} of {size}</p>
       {title && (
         <h4
           className="govuk-heading-m !text-white"
@@ -57,7 +59,7 @@ export function GovukJoyrideTooltip({
       >
         {content}
       </p>
-      <div className="govuk-button-group govuk-!-margin-bottom-0">
+      <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
         {buttons.includes('back') && index > 0 && (
           <button
             type="button"

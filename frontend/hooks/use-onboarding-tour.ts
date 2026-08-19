@@ -291,7 +291,6 @@ export function useOnboardingTour({
     tooltipComponent: GovukJoyrideTooltip,
     options: {
       skipBeacon: true,
-      showProgress: true,
       closeButtonAction: 'skip',
       ...options,
     },

@@ -120,8 +120,8 @@ cpSync(join(publicSiteRoot, 'assets/images'), join(assetsDist, 'images'), {
   recursive: true,
 })
 cpSync(
-  join(frontendRoot, 'public/favicon.svg'),
-  join(assetsDist, 'images/favicon.svg')
+  join(frontendRoot, 'public/logos/minute-logo.svg'),
+  join(assetsDist, 'logos/minute-logo.svg')
 )
 cpSync(join(frontendRoot, 'styles/govuk.css'), join(assetsDist, 'govuk.css'))
 cpSync(

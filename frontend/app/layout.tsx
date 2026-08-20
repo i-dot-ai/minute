@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   title: 'Minute',
   description: 'Minutes and transcriptions',
   icons: {
-    icon: '/favicon.svg',
+    icon: '/logos/minute-logo.svg',
   },
 }
 

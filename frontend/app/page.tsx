@@ -9,7 +9,6 @@ import { Mic, Video, Upload, Info, Settings2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import UrlMigrationBanner from '@/components/url-migration-banner'
-import Image from 'next/image'
 
 type RecordingMode = 'in-person' | 'virtual-meeting' | 'upload-file'
 
@@ -241,7 +240,7 @@ export default function Home() {
                                   settings
                                 </span>{' '}
                                 icon immediately to the left of the url bar
-                                <Image
+                                <img
                                   src="/images/chrome-permissions-step-1.webp"
                                   className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
                                   alt="screenshot showing the information icon next to the url toolbar in chrome"
@@ -252,7 +251,7 @@ export default function Home() {
                               <li>
                                 Check the microphone toggle switch to
                                 &#34;on`&#34;
-                                <Image
+                                <img
                                   src="/images/chrome-permissions-step-2.webp"
                                   className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
                                   alt="screenshot showing the microphone icon in chrome permissions"
@@ -272,7 +271,7 @@ export default function Home() {
                                 </span>{' '}
                                 icon immediately to the left of the url bar
                               </li>
-                              <Image
+                              <img
                                 src="/images/firefox-permissions-step-1.webp"
                                 className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
                                 alt="screenshot showing the settings icon immediately to the left of the url bar in firefox"
@@ -283,7 +282,7 @@ export default function Home() {
                                 Next to <strong>Use the microphone</strong>{' '}
                                 click the <strong>Blocked temporarily</strong>{' '}
                                 button
-                                <Image
+                                <img
                                   src="/images/firefox-permissions-step-2.webp"
                                   className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
                                   alt="screenshot showing the blocked temporarily button in firefox permissions"
@@ -298,7 +297,7 @@ export default function Home() {
                             <ol className="govuk-list govuk-list--number">
                               <li>
                                 Open safari settings
-                                <Image
+                                <img
                                   src="/images/safari-permissions-step-1.webp"
                                   className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
                                   alt="screenshot showing the safari settings open"
@@ -311,7 +310,7 @@ export default function Home() {
                                 <strong>Microphone</strong> and make sure that{' '}
                                 <strong>minute.i.ai.gov.uk</strong> is set to{' '}
                                 <strong>Allow</strong>
-                                <Image
+                                <img
                                   src="/images/safari-permissions-step-2.webp"
                                   className="govuk-!-margin-top-2 govuk-!-margin-bottom-2"
                                   alt="screenshot showing the microphone permissions in safari settings"

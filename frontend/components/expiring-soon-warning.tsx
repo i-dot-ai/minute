@@ -7,7 +7,7 @@ const ExpiringSoonWarning = () => {
   const { data: expiringTranscriptions } = useTranscriptions({
     page: 1,
     pageSize: 1,
-    expiring: true,
+    filterBy: 'expiring-soon',
   })
 
   if (!expiringTranscriptions?.total_count) return null
@@ -23,7 +23,7 @@ const ExpiringSoonWarning = () => {
         {expiringTranscriptions.total_count > 1 ? 's' : ''} that will be deleted
         tonight.{' '}
         <Link
-          href={`/transcriptions?expiring=true`}
+          href="/transcriptions?filterBy=expiring-soon"
           className="govuk-link govuk-link--no-visited-state"
         >
           View your expiring transcriptions

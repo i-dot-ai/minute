@@ -1,5 +1,7 @@
 import { TemplateData } from '@/types/templates'
 
+export type ExampleTemplate = TemplateData & { id: string }
+
 const GENERAL_TEMPLATE = `<h2>1. Meeting Overview</h2>
 <ul>
   <li>
@@ -55,9 +57,10 @@ const GENERAL_TEMPLATE = `<h2>1. Meeting Overview</h2>
   <li><p>List any pending items for future discussion</p></li>
 </ul>`
 
-export const exampleDocumentTemplates: TemplateData[] = [
+export const exampleDocumentTemplates: ExampleTemplate[] = [
   {
-    name: 'Meeting Minutes',
+    id: 'meeting-minutes',
+    name: 'Meeting minutes',
     type: 'document',
     description: 'Standard template for recording meeting minutes',
     content:
@@ -65,7 +68,8 @@ export const exampleDocumentTemplates: TemplateData[] = [
     questions: null,
   },
   {
-    name: 'Project Kickoff',
+    id: 'project-kickoff',
+    name: 'Project kickoff',
     type: 'document',
     description: 'Template for project kickoff meetings',
     content:
@@ -73,7 +77,8 @@ export const exampleDocumentTemplates: TemplateData[] = [
     questions: null,
   },
   {
-    name: 'Weekly Standup',
+    id: 'weekly-standup',
+    name: 'Weekly standup',
     type: 'document',
     description: 'Template for weekly team standup meetings',
     content:
@@ -81,7 +86,8 @@ export const exampleDocumentTemplates: TemplateData[] = [
     questions: null,
   },
   {
-    name: 'My General',
+    id: 'my-general',
+    name: 'My general',
     type: 'document',
     description: 'The General template from Minute which you can customise.',
     content: GENERAL_TEMPLATE,
@@ -89,9 +95,10 @@ export const exampleDocumentTemplates: TemplateData[] = [
   },
 ]
 
-export const exampleFormTemplates: TemplateData[] = [
+export const exampleFormTemplates: ExampleTemplate[] = [
   {
-    name: 'My Care Assessment',
+    id: 'my-care-assessment',
+    name: 'My care assessment',
     type: 'form',
     description: 'A care assessment form',
     content: `You are an experienced social care worker in the UK. You are helping to complete a Care Assessment for a service user. The service user is a person who may be in need of care. You are helping to compile the information required to write a Care Assessment for the service user based on the transcript of the meeting.
@@ -222,4 +229,9 @@ Provide as much detail as possible.
       },
     ],
   },
+]
+
+export const allExampleTemplates: ExampleTemplate[] = [
+  ...exampleDocumentTemplates,
+  ...exampleFormTemplates,
 ]

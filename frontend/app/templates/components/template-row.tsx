@@ -1,0 +1,170 @@
+'use client'
+
+import { DeleteConfirmDialog } from '@/app/templates/components/delete-single-template-dialog'
+import {
+  deleteUserTemplateUserTemplatesTemplateIdDeleteMutation,
+  duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation,
+  getUserTemplatesUserTemplatesGetQueryKey,
+} from '@/lib/client/@tanstack/react-query.gen'
+import { cn } from '@/lib/utils'
+import { TemplateRowData } from '@/types/templates'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import Link from 'next/link'
+import posthog from 'posthog-js'
+import { toast } from 'sonner'
+
+export const templateRowKey = (template: TemplateRowData) =>
+  template.id ?? `default:${template.name}`
+
+export function TemplateTableRow({
+  template,
+  selectedIds,
+  onToggle,
+  isHighlighted,
+  onDuplicated,
+}: {
+  template: TemplateRowData
+  selectedIds?: Set<string>
+  onToggle?: (id: string, checked: boolean) => void
+  isHighlighted?: boolean
+  onDuplicated?: (id: string) => void
+}) {
+  const queryClient = useQueryClient()
+  const name = template.name || 'Untitled template'
+  const rowKey = templateRowKey(template)
+  const inputId = `template-${rowKey}`.replace(/\s+/g, '-')
+
+  const duplicateMutation = useMutation({
+    ...duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation(),
+    onSuccess: (id) => {
+      queryClient.invalidateQueries({
+        queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
+      })
+      onDuplicated?.(id)
+      posthog.capture('template_duplicated')
+    },
+  })
+
+  const { mutate: deleteTemplate, isPending: isDeleting } = useMutation({
+    ...deleteUserTemplateUserTemplatesTemplateIdDeleteMutation(),
+    onSuccess: () => {
+      toast.success('Template deleted')
+      queryClient.invalidateQueries({
+        queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
+      })
+      posthog.capture('template_deleted')
+    },
+  })
+
+  const handleDuplicate = () => {
+    // Default templates have no id yet; duplication will be wired to a backend
+    // endpoint later.
+    if (!template.id) return
+    duplicateMutation.mutate({ path: { template_id: template.id } })
+  }
+
+  return (
+    <tr
+      className={cn(
+        'govuk-table__row group relative hover:bg-[#f4f8fb] has-[:checked]:bg-[#f4f8fb]',
+        isHighlighted && 'template-row--just-duplicated'
+      )}
+    >
+      <td className="govuk-table__cell hidden sm:table-cell">
+        {template.isSystem ? (
+          <div className="govuk-!-margin-left-2">-</div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div
+              className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle"
+              data-module="govuk-checkboxes"
+            >
+              <input
+                className="govuk-checkboxes__input"
+                id={inputId}
+                name="template"
+                disabled={template.isSystem}
+                type="checkbox"
+                checked={selectedIds?.has(rowKey) ?? false}
+                onChange={(e) => onToggle?.(rowKey, e.target.checked)}
+              />
+              <label
+                className="govuk-label govuk-checkboxes__label govuk-!-padding-0"
+                htmlFor={inputId}
+              >
+                <span className="govuk-visually-hidden">Select {name}</span>
+              </label>
+            </div>
+          </div>
+        )}
+      </td>
+      <td className="govuk-table__cell govuk-!-padding-top-1 govuk-!-padding-bottom-1 w-full">
+        <Link
+          href={
+            template.isSystem
+              ? `/templates/system/${encodeURIComponent(template.name)}`
+              : `/templates/${template.id}`
+          }
+          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-right-1 inline-block w-full group-has-[a:hover]:text-[var(--govuk-link-hover-colour,#0f385c)]! group-has-[a:hover]:underline! group-has-[a:hover]:decoration-[max(3px,.1875rem,.12em)]! group-has-[a:hover]:[text-decoration-skip-ink:none]!"
+        >
+          {name}
+          <span className="govuk-!-font-size-16 block !text-(--govuk-text-colour)">
+            {template.description}
+          </span>
+        </Link>
+      </td>
+      <td className="govuk-table__cell whitespace-nowrap">
+        <div className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 govuk-!-padding-right-4 flex items-center">
+          <TemplateTypeTag template={template} />
+        </div>
+      </td>
+      <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
+        {template.isSystem ? (
+          <div className="text-center">-</div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="govuk-link govuk-link--no-underline govuk-link--no-visited-state govuk-!-margin-0 govuk-!-font-size-16 text-(--govuk-link-colour) hover:cursor-pointer"
+              onClick={handleDuplicate}
+              disabled={duplicateMutation.isPending || isDeleting}
+            >
+              Duplicate
+              <span className="govuk-visually-hidden">{name}</span>
+            </button>
+            <DeleteConfirmDialog
+              name={name}
+              disabled={
+                isDeleting || duplicateMutation.isPending || !template.id
+              }
+              onConfirm={() =>
+                deleteTemplate({ path: { template_id: template.id! } })
+              }
+            />
+          </div>
+        )}
+      </td>
+    </tr>
+  )
+}
+
+const TemplateTypeTag = ({ template }: { template: TemplateRowData }) => {
+  return (
+    <>
+      {template.isSystem ? (
+        <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-margin-left-1 govuk-!-font-size-16">
+          System
+        </strong>
+      ) : (
+        <strong className="govuk-tag govuk-tag--teal govuk-!-margin-right-1 govuk-!-margin-left-1 govuk-!-font-size-16">
+          {template.format === 'document' ? 'Summary' : 'Q & A'}
+        </strong>
+      )}
+      {template.is_default && (
+        <strong className="govuk-tag govuk-tag--purple govuk-!-margin-right-1 govuk-!-margin-left-1 govuk-!-font-size-16">
+          Default
+        </strong>
+      )}
+    </>
+  )
+}

@@ -1,9 +1,15 @@
 'use client'
 
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
-import { AudioWav } from '@/components/icons/AudioWav'
+import { ProcessingCard } from '@/components/processing-card'
 import { Button } from '@/components/ui/button'
+import { useNow } from '@/hooks/use-now'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
+import {
+  getIsStalled,
+  getRemainingMinutes,
+  getSummaryEstimateMinutes,
+} from '@/lib/processing-estimate'
 import {
   MinuteListItem,
   MinuteVersionResponse,
@@ -52,6 +58,8 @@ export type MinuteEditState = {
   hideCitations: boolean
   toggleHideCitations: () => void
   onSuccess: () => void
+  onSave: () => void
+  onCancel: () => void
 }
 
 export function MinuteEditor({
@@ -68,6 +76,13 @@ export function MinuteEditor({
   const [version, setVersion] = useState(0)
   const [hideCitations, setHideCitations] = useState(false)
   const [editorResetKey, setEditorResetKey] = useState(0)
+  // Snapshot of the version history taken when edit mode starts, so Discard
+  // can remove any versions created during the session and restore the
+  // previous selection.
+  const [editBaseline, setEditBaseline] = useState<{
+    versionIds: string[]
+    selectedVersionId: string
+  } | null>(null)
   const { data: minuteVersions = [], isLoading } = useQuery({
     ...listMinuteVersionsMinutesMinuteIdVersionsGetOptions({
       path: { minute_id: minute.id! },
@@ -94,6 +109,7 @@ export function MinuteEditor({
     () => minuteVersion?.status == 'failed',
     [minuteVersion?.status]
   )
+  const now = useNow({ enabled: isGenerating })
 
   const queryClient = useQueryClient()
   const [isEditable, setIsEditable] = useState(false)
@@ -116,6 +132,22 @@ export function MinuteEditor({
   const { mutate: saveEdit } = useMutation({
     ...createMinuteVersionMinutesMinuteIdVersionsPostMutation(),
   })
+  const { mutateAsync: deleteVersion } = useMutation({
+    ...deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation(),
+  })
+
+  const startEditing = useCallback(
+    (editable: boolean) => {
+      if (editable && minuteVersion) {
+        setEditBaseline({
+          versionIds: minuteVersions.map((v) => v.id!),
+          selectedVersionId: minuteVersion.id!,
+        })
+      }
+      setIsEditable(editable)
+    },
+    [minuteVersion, minuteVersions]
+  )
 
   const onSuccess = useCallback(() => {
     setIsEditable(false)
@@ -129,6 +161,7 @@ export function MinuteEditor({
 
   const onSubmit = useCallback(
     (data: MinuteEditorForm) => {
+      setEditBaseline(null)
       if (data.html != minuteVersion?.html_content) {
         saveEdit(
           {
@@ -146,11 +179,47 @@ export function MinuteEditor({
     },
     [minute.id, minuteVersion?.html_content, onSuccess, saveEdit]
   )
-  const onCancel = useCallback(() => {
-    form.setValue('html', minuteVersion?.html_content || '')
+  const onCancel = useCallback(async () => {
+    const baseline = editBaseline
+    setEditBaseline(null)
     setIsEditable(false)
     setEditorResetKey((key) => key + 1)
-  }, [form, minuteVersion?.html_content])
+    if (!baseline) {
+      form.setValue('html', minuteVersion?.html_content || '')
+      return
+    }
+    // Restore the selection made before editing started. Versions created
+    // during the session are all newer than the baseline, so once they are
+    // deleted the baseline indices are valid again.
+    setVersion(
+      Math.max(0, baseline.versionIds.indexOf(baseline.selectedVersionId))
+    )
+    const createdDuringEdit = minuteVersions.filter(
+      (v) => !baseline.versionIds.includes(v.id!)
+    )
+    if (createdDuringEdit.length > 0) {
+      await Promise.allSettled(
+        createdDuringEdit.map((v) =>
+          deleteVersion({ path: { minute_version_id: v.id! } })
+        )
+      )
+      queryClient.invalidateQueries({
+        queryKey: listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey({
+          path: { minute_id: minute.id! },
+        }),
+      })
+    } else {
+      form.setValue('html', minuteVersion?.html_content || '')
+    }
+  }, [
+    deleteVersion,
+    editBaseline,
+    form,
+    minute.id,
+    minuteVersion?.html_content,
+    minuteVersions,
+    queryClient,
+  ])
   useEffect(() => {
     if (!onExportStateChange) return
     if (!minuteVersion || isGenerating || isError) {
@@ -191,6 +260,8 @@ export function MinuteEditor({
         hideCitations: false,
         toggleHideCitations: () => {},
         onSuccess,
+        onSave: () => {},
+        onCancel: () => {},
       })
       return
     }
@@ -203,11 +274,13 @@ export function MinuteEditor({
       minuteVersionHtml: minuteVersion.html_content || '',
       showEditActions: true,
       isEditable,
-      setIsEditable,
+      setIsEditable: startEditing,
       hasCitations,
       hideCitations,
       toggleHideCitations,
       onSuccess,
+      onSave: form.handleSubmit(onSubmit),
+      onCancel,
     })
   }, [
     form,
@@ -219,9 +292,11 @@ export function MinuteEditor({
     minute.id,
     minuteVersion,
     minuteVersions,
+    onCancel,
     onEditStateChange,
     onSubmit,
     onSuccess,
+    startEditing,
     toggleHideCitations,
     version,
   ])
@@ -245,15 +320,23 @@ export function MinuteEditor({
     )
   }
   if (isGenerating) {
+    const durationSec = transcription.dialogue_entries?.at(-1)?.end_time ?? null
     return (
-      <div className="govuk-!-padding-top-6 flex w-full flex-col items-center justify-center gap-2">
-        <div className="flex w-full justify-center">
-          <AudioWav />
-        </div>
-        <p className="govuk-body govuk-!-margin-bottom-0">
-          Minute generating...
-        </p>
-      </div>
+      <ProcessingCard
+        className="govuk-!-margin-top-2"
+        heading="Generating summary"
+        remainingMinutes={getRemainingMinutes({
+          startedAt: minuteVersion.created_datetime,
+          estimateMinutes: getSummaryEstimateMinutes(durationSec),
+          now,
+        })}
+        isStalled={getIsStalled({
+          startedAt: minuteVersion.created_datetime,
+          durationSec,
+          phase: 'summary',
+          now,
+        })}
+      />
     )
   }
   if (isError) {
@@ -292,8 +375,6 @@ export function MinuteEditor({
               isEditing={isEditable}
               onContentChange={onChange}
               hideCitations={hideCitations && !isEditable}
-              onSave={form.handleSubmit(onSubmit)}
-              onCancel={onCancel}
             />
           )}
         />

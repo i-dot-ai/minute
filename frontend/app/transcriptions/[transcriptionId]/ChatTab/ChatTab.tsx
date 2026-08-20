@@ -304,10 +304,10 @@ export function ChatTab({ transcription }: { transcription: Transcription }) {
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>
+              <AlertDialogTitle className="govuk-heading-l">
                 Are you sure you want to clear your chat?
               </AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogDescription className="govuk-body">
                 Your chat history will be permenantly deleted.
               </AlertDialogDescription>
             </AlertDialogHeader>

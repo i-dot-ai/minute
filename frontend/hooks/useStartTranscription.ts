@@ -8,15 +8,18 @@ import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useDefaultTemplate } from '@/hooks/useDefaultTemplate'
 
 export const useStartTranscription = (
-  defaultValues?: Partial<TranscriptionForm>
+  defaultValues?: Partial<TranscriptionForm>,
+  onStarted?: (transcriptionId: string) => void
 ) => {
   const router = useRouter()
   const { removeRecording } = useRecordingDb()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isError, setIsError] = useState(false)
   const { mutateAsync: createTranscription } = useMutation({
     ...createTranscriptionTranscriptionsPostMutation(),
   })
@@ -50,6 +53,7 @@ export const useStartTranscription = (
         return
       }
       setIsSubmitting(true)
+      setIsError(false)
       try {
         const isFile = file instanceof File
         const source = !!defaultValues?.recordingId
@@ -78,15 +82,21 @@ export const useStartTranscription = (
         if (recordingId) {
           await removeRecording(recordingId)
         }
-        router.push(`/transcriptions/${transcriptionData.id}`)
+        if (onStarted) {
+          onStarted(transcriptionData.id)
+        } else {
+          router.push(`/transcriptions/${transcriptionData.id}`)
+        }
       } catch {
         setIsSubmitting(false)
+        setIsError(true)
       }
     },
     [
       createRecording,
       createTranscription,
       defaultValues?.recordingId,
+      onStarted,
       removeRecording,
       router,
       uploadBlob,
@@ -105,8 +115,17 @@ export const useStartTranscription = (
       ...defaultValues,
     },
   })
+
+  const defaultTemplate = useDefaultTemplate()
+  useEffect(() => {
+    if (defaultTemplate && !form.formState.dirtyFields.template) {
+      form.setValue('template', defaultTemplate)
+    }
+  }, [defaultTemplate, form])
+
   return {
     isPending: isSubmitting,
+    isError,
     onSubmit,
     form,
   }

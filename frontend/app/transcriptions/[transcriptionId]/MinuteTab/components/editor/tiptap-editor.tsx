@@ -10,25 +10,31 @@ import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorState, Plugin, PluginKey } from 'prosemirror-state'
 import { Decoration, DecorationSet } from 'prosemirror-view'
-import { useCallback, useEffect } from 'react'
+import { useEffect } from 'react'
 
+import {
+  EditorToolbar,
+  ToolbarItem,
+  toolbarItems,
+} from '@/components/editor/editor-toolbar'
 import { CitationPopoverWrapper } from '@/components/ui/citation-popover-wrapper'
 import { useCitationPopover } from '@/hooks/use-citation-popover'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import { Transcription } from '@/lib/client'
 import { cn } from '@/lib/utils'
 import posthog from 'posthog-js'
-import {
-  Bold as BoldIcon,
-  Code as CodeIcon,
-  Italic as ItalicIcon,
-  ListOrdered as OrderedListIcon,
-  RotateLeft,
-  RotateRight,
-  Strikethrough as StrikethroughIcon,
-  List as UnorderedListIcon,
-} from './Icons'
-import { Save } from 'lucide-react'
+
+const MINUTE_TOOLBAR_ITEMS: ToolbarItem[] = [
+  toolbarItems.undo,
+  toolbarItems.redo,
+  { ...toolbarItems.bold, startsGroup: true },
+  toolbarItems.italic,
+  toolbarItems.strikethrough,
+  { ...toolbarItems.code, startsGroup: true },
+  { ...toolbarItems.bulletList, startsGroup: true },
+  toolbarItems.orderedList,
+  toolbarItems.heading(3),
+]
 
 function SimpleEditor({
   initialContent,
@@ -36,16 +42,12 @@ function SimpleEditor({
   isEditing,
   currentTranscription,
   hideCitations,
-  onSave,
-  onCancel,
 }: {
   initialContent: string
   onContentChange: (newContent: string) => void
   isEditing: boolean
   currentTranscription: Transcription
   hideCitations: boolean
-  onSave?: () => void
-  onCancel?: () => void
 }) {
   const {
     citationPopover,
@@ -151,30 +153,6 @@ function SimpleEditor({
     }
   }, [editorObject, initialContent])
 
-  const toggleBold = useCallback(() => {
-    editorObject.chain().focus().toggleBold().run()
-  }, [editorObject])
-
-  const toggleItalic = useCallback(() => {
-    editorObject.chain().focus().toggleItalic().run()
-  }, [editorObject])
-
-  const toggleStrike = useCallback(() => {
-    editorObject.chain().focus().toggleStrike().run()
-  }, [editorObject])
-
-  const toggleCode = useCallback(() => {
-    editorObject.chain().focus().toggleCode().run()
-  }, [editorObject])
-
-  const toggleBulletList = useCallback(() => {
-    editorObject.chain().focus().toggleBulletList().run()
-  }, [editorObject])
-
-  const toggleOrderedList = useCallback(() => {
-    editorObject.chain().focus().toggleOrderedList().run()
-  }, [editorObject])
-
   if (!editorObject) {
     return null
   }
@@ -182,127 +160,29 @@ function SimpleEditor({
   return (
     <div>
       {isEditing && (
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-300 bg-gray-50 p-2">
-          <div className="flex items-center">
-            <div className="mr-4 flex space-x-1">
-              <button
-                className="rounded p-1 hover:bg-gray-200 disabled:opacity-50"
-                onClick={() => editorObject.chain().focus().undo().run()}
-                disabled={!editorObject.can().undo()}
-                type="button"
-              >
-                <RotateLeft className="size-4" />
-              </button>
-              <button
-                className="rounded p-1 hover:bg-gray-200 disabled:opacity-50"
-                onClick={() => editorObject.chain().focus().redo().run()}
-                disabled={!editorObject.can().redo()}
-                type="button"
-              >
-                <RotateRight className="size-4" />
-              </button>
-            </div>
-            <div className="mr-4 flex space-x-1">
-              <button
-                className={cn('rounded p-1 hover:bg-gray-200', {
-                  'bg-gray-300': editorObject.isActive('bold'),
-                })}
-                onClick={toggleBold}
-                type="button"
-              >
-                <BoldIcon className="size-4" />
-              </button>
-              <button
-                className={cn('rounded p-1 hover:bg-gray-200', {
-                  'bg-gray-300': editorObject.isActive('italic'),
-                })}
-                onClick={toggleItalic}
-                type="button"
-              >
-                <ItalicIcon className="size-4" />
-              </button>
-
-              <button
-                className={cn('rounded p-1 hover:bg-gray-200', {
-                  'bg-gray-300': editorObject.isActive('strike'),
-                })}
-                onClick={toggleStrike}
-                type="button"
-              >
-                <StrikethroughIcon className="size-4" />
-              </button>
-            </div>
-            <div className="mr-4 flex space-x-1">
-              <button
-                className={cn('rounded p-1 hover:bg-gray-200', {
-                  'bg-gray-300': editorObject.isActive('code'),
-                })}
-                onClick={toggleCode}
-                type="button"
-              >
-                <CodeIcon className="size-4" />
-              </button>
-            </div>
-            <div className="flex space-x-1">
-              <button
-                className={cn('rounded p-1 hover:bg-gray-200', {
-                  'bg-gray-300': editorObject.isActive('bulletList'),
-                })}
-                onClick={toggleBulletList}
-                type="button"
-              >
-                <UnorderedListIcon className="size-4" />
-              </button>
-              <button
-                className={cn('rounded p-1 hover:bg-gray-200', {
-                  'bg-gray-300': editorObject.isActive('orderedList'),
-                })}
-                onClick={toggleOrderedList}
-                type="button"
-              >
-                <OrderedListIcon className="size-4" />
-              </button>
-              <button
-                className={cn('rounded p-1 hover:bg-gray-200', {
-                  'bg-gray-300': editorObject.isActive('heading', { level: 3 }),
-                })}
-                onClick={() =>
-                  editorObject.chain().focus().toggleHeading({ level: 3 }).run()
-                }
-                type="button"
-              >
-                H3
-              </button>
-            </div>
-          </div>
-          <div className="govuk-button-group govuk-!-margin-bottom-0">
-            <button
-              type="button"
-              className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
-              onClick={onCancel}
-            >
-              Discard
-            </button>
-            <button
-              type="button"
-              className="govuk-button govuk-!-margin-bottom-0"
-              onClick={onSave}
-            >
-              <Save className="size-4" /> Save changes
-            </button>
-          </div>
-        </div>
+        <EditorToolbar
+          editor={editorObject}
+          items={MINUTE_TOOLBAR_ITEMS}
+          className="sticky top-[75px] z-10"
+        />
       )}
 
-      <EditorContent
-        editor={editorObject}
-        className={cn('editor-content')}
-        style={
-          {
-            '--citation-display': hideCitations ? 'none' : 'unset',
-          } as React.CSSProperties
-        }
-      />
+      <div
+        className={cn(
+          isEditing &&
+            'govuk-!-padding-2 border border-2 border-t-0 border-(--govuk-input-border-colour) bg-white'
+        )}
+      >
+        <EditorContent
+          editor={editorObject}
+          className={cn('editor-content')}
+          style={
+            {
+              '--citation-display': hideCitations ? 'none' : 'unset',
+            } as React.CSSProperties
+          }
+        />
+      </div>
 
       {citationPopover && (
         <CitationPopoverWrapper

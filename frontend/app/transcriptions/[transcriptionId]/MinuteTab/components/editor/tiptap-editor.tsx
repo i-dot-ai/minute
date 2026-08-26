@@ -163,14 +163,14 @@ function SimpleEditor({
         <EditorToolbar
           editor={editorObject}
           items={MINUTE_TOOLBAR_ITEMS}
-          className="sticky top-[75px] z-10"
+          className="sticky top-[-24px] z-10"
         />
       )}
 
       <div
         className={cn(
           isEditing &&
-            'govuk-!-padding-2 border border-2 border-t-0 border-(--govuk-input-border-colour) bg-white'
+          'govuk-!-padding-2 border border-2 border-t-0 border-(--govuk-input-border-colour) bg-white'
         )}
       >
         <EditorContent

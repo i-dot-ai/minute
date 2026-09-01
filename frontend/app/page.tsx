@@ -8,6 +8,7 @@ import { useRecordingSession } from '@/providers/recording-session-provider'
 import { Mic, Video, Upload, Info, Settings2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { useOfflineRecordings } from '@/components/recent-meetings/use-offline-recordings'
 import UrlMigrationBanner from '@/components/url-migration-banner'
 
 type RecordingMode = 'in-person' | 'virtual-meeting' | 'upload-file'
@@ -21,6 +22,8 @@ export default function Home() {
   const [devices, setDevices] = useState<AudioDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [micDenied, setMicDenied] = useState(false)
+  const { data: offlineRecordings } = useOfflineRecordings()
+  const hasIncompleteRecordings = (offlineRecordings?.length ?? 0) > 0
 
   useEffect(() => {
     const init = async () => {
@@ -96,7 +99,37 @@ export default function Home() {
 
   return (
     <div className="govuk-width-container govuk-main-wrapper">
-      {isOldUrl ? <UrlMigrationBanner /> : <PosthogBanner />}
+      {hasIncompleteRecordings ? (
+        <>
+          <div
+            role="alert"
+            className="govuk-!-padding-4 govuk-!-margin-bottom-4 govuk-!-margin-top-4 bg-[#e59a9a]"
+          >
+            <div className="govuk-warning-text govuk-!-margin-bottom-2">
+              <span className="govuk-warning-text__icon" aria-hidden="true">
+                !
+              </span>
+              <strong className="govuk-warning-text__text">
+                <span className="govuk-visually-hidden">Warning</span>
+                Recording stopped unexpectedly
+              </strong>
+            </div>
+            <p className="govuk-body govuk-!-margin-bottom-0">
+              A recording was interrupted before it could be uploaded and
+              transcribed. The recording is stored in the browser but please{' '}
+              <a
+                className="govuk-link govuk-link--inverse"
+                href="/transcriptions"
+              >
+                go to the transcriptions page
+              </a>{' '}
+              to securely upload or delete it.
+            </p>
+          </div>
+        </>
+      ) : (
+        <>{isOldUrl ? <UrlMigrationBanner /> : <PosthogBanner />}</>
+      )}
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
           <h1 className="govuk-heading-l govuk-!-margin-bottom-3">

@@ -82,7 +82,7 @@ export const ServiceNavigation = () => {
             </ul>
             <div>
               {showTour && (
-                <div className="govuk-!-padding-top-2 govuk-!-padding-bottom-2">
+                <div className="govuk-!-padding-top-3 govuk-!-padding-bottom-3">
                   <button
                     type="button"
                     className="govuk-service-navigation__link cursor-pointer text-(--govuk-link-colour) sm:mx-auto"

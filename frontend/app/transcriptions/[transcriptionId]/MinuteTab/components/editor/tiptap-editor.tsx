@@ -170,7 +170,7 @@ function SimpleEditor({
       <div
         className={cn(
           isEditing &&
-          'govuk-!-padding-2 border border-2 border-t-0 border-(--govuk-input-border-colour) bg-white'
+            'govuk-!-padding-2 border border-2 border-t-0 border-(--govuk-input-border-colour) bg-white'
         )}
       >
         <EditorContent

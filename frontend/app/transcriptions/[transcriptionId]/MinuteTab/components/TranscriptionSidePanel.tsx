@@ -46,7 +46,7 @@ export function TranscriptionSidePanel() {
             id="tour-summaries"
             className={`flex-1 border-l-4 border-[transparent] pl-4 ${!transcriptPage ? '!border-(--govuk-link-colour)' : ''}`}
           >
-            {transcriptPage || minutes.length <= 1 ? (
+            {transcriptPage ? (
               <Link
                 href={`/transcriptions/${transcriptionId}/summary`}
                 className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline ${!transcriptPage ? 'govuk-!-font-weight-bold' : ''}`}
@@ -56,7 +56,7 @@ export function TranscriptionSidePanel() {
             ) : (
               <>
                 <h2 className="govuk-caption-s font-normal text-(--govuk-link-colour)">
-                  Summaries
+                  {minutes.length > 1 ? 'Summaries' : 'Summary'}
                 </h2>
                 <ul className="govuk-list !pl-[20px]">
                   {minutes.map((minute) => {

@@ -182,9 +182,11 @@ export const StartTranscriptionSection = () => {
   return (
     <div>
       <div className="govuk-form-group flex items-center gap-2">
-        <label className="govuk-label" htmlFor="template">
-          Select a template:
-        </label>
+        <div>
+          <label className="govuk-label" htmlFor="template">
+            Choose a template:
+          </label>
+        </div>
         <select
           className="govuk-select govuk-select--subtle"
           id="template"

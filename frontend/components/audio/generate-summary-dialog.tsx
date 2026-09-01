@@ -44,7 +44,7 @@ export const GenerateSummaryDialog = ({
         </DialogHeader>
         {warningText && (
           <p className="govuk-body govuk-!-margin-bottom-0">
-            Transcribe the recording and summarise the meeting.
+            You can select a new template later if needed
           </p>
         )}
         <StartTranscriptionSection />

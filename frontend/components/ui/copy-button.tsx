@@ -1,6 +1,6 @@
 import posthog from 'posthog-js'
-import { useState } from 'react'
 import { Copy } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface CopyButtonProps {
   textToCopy: string
@@ -19,8 +19,6 @@ function CopyButton({
   posthogProperties,
   onCopied,
 }: CopyButtonProps) {
-  const [isCopied, setIsCopied] = useState(false)
-
   const stripHtmlTags = (html: string) => {
     const tmp = document.createElement('DIV')
     tmp.innerHTML = html
@@ -48,24 +46,18 @@ function CopyButton({
       ...posthogProperties,
     })
     onCopied?.()
-    setIsCopied(true)
-    setTimeout(() => {
-      setIsCopied(false)
-    }, 2000)
+    toast.success('Copied to clipboard')
   }
 
   return (
-    <>
-      <button
-        className="govuk-button govuk-button--secondary flex items-center gap-2"
-        onClick={handleCopy}
-        disabled={disabled}
-      >
-        <Copy className="size-4" />
-        {label}
-      </button>
-      {isCopied && <p className="govuk-tag govuk-tag--green">Copied</p>}
-    </>
+    <button
+      className="govuk-button govuk-button--secondary flex items-center gap-2"
+      onClick={handleCopy}
+      disabled={disabled}
+    >
+      <Copy className="size-4" />
+      {label}
+    </button>
   )
 }
 

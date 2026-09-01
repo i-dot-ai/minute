@@ -1,12 +1,11 @@
 'use client'
 import { GuardedLink } from '@/components/navigation/guarded-link'
-import { usePathname, useParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { Bookmark, LayoutPanelTop, Mic } from 'lucide-react'
 import { requestOnboardingTourRestart } from '@/hooks/use-onboarding-tour'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
-  const params = useParams()
   if (pathname === '/unauthorised') {
     return null
   }

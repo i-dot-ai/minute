@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useOfflineRecordings } from '@/components/recent-meetings/use-offline-recordings'
 import UrlMigrationBanner from '@/components/url-migration-banner'
+import Link from 'next/link'
 
 type RecordingMode = 'in-person' | 'virtual-meeting' | 'upload-file'
 
@@ -117,12 +118,12 @@ export default function Home() {
             <p className="govuk-body govuk-!-margin-bottom-0">
               A recording was interrupted before it could be uploaded and
               transcribed. The recording is stored in the browser but please{' '}
-              <a
+              <Link
                 className="govuk-link govuk-link--inverse"
                 href="/transcriptions"
               >
                 go to the transcriptions page
-              </a>{' '}
+              </Link>{' '}
               to securely upload or delete it.
             </p>
           </div>

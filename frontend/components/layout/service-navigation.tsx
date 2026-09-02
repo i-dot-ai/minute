@@ -113,6 +113,7 @@ export const ServiceNavigation = () => {
                   </GuardedLink>
                 </li>
               </ul>
+              <img src="/images/govuk-crest.svg" alt="" className="size-10 mx-auto mb-4" />
             </div>
           </nav>
         </div>

@@ -1,8 +1,8 @@
-// Processing normally takes 5-12 minutes per hour of audio. Transcription is
-// the bulk of that; generating the summary is a single pass over the finished
-// transcript. The two together come to 12 minutes per hour of audio.
-const TRANSCRIPTION_MINUTES_PER_AUDIO_MINUTE = 0.15
-const SUMMARY_MINUTES_PER_AUDIO_MINUTE = 0.05
+// Processing normally takes 1.5 minutes per hour of audio.
+// Generating the summary takes about as long as the transcription.
+// The two together come to 2 minutes per hour of audio.
+const TRANSCRIPTION_MINUTES_PER_AUDIO_MINUTE = 0.017
+const SUMMARY_MINUTES_PER_AUDIO_MINUTE = 0.017
 
 // Short recordings still carry fixed overheads, so never estimate below this.
 const MINIMUM_ESTIMATE_MINUTES = 1
@@ -11,9 +11,9 @@ const MINIMUM_ESTIMATE_MINUTES = 1
 // Short clips get a floor so a quick job is not flagged seconds after its
 // estimate lapses, and an unknown duration falls back to a flat limit.
 const STALL_ESTIMATE_MULTIPLIER = 1.5
-const TRANSCRIPTION_STALL_FLOOR_MINUTES = 5
+const TRANSCRIPTION_STALL_FLOOR_MINUTES = 3
 const SUMMARY_STALL_FLOOR_MINUTES = 3
-const STALL_FALLBACK_MINUTES = 15
+const STALL_FALLBACK_MINUTES = 10
 
 const MS_PER_MINUTE = 60 * 1000
 

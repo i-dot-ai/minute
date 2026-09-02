@@ -4,6 +4,10 @@ import {
   createTranscriptionTranscriptionsPostMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { getFileExtension } from '@/lib/getFileExtension'
+import {
+  measureAudioDurationSec,
+  storeRecordingDurationSec,
+} from '@/lib/recording-duration'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
@@ -70,7 +74,12 @@ export const useStartTranscription = (
         const recordingData = await createRecording({
           body: { file_extension },
         })
-        await uploadBlob({ file, uploadUrl: recordingData.upload_url })
+        // Measured alongside the upload so the status page can show an estimate
+        // while transcribing, before the transcript or audio URL exists.
+        const [durationSec] = await Promise.all([
+          measureAudioDurationSec(file),
+          uploadBlob({ file, uploadUrl: recordingData.upload_url }),
+        ])
         const transcriptionData = await createTranscription({
           body: {
             recording_id: recordingData.id,
@@ -79,6 +88,7 @@ export const useStartTranscription = (
             agenda,
           },
         })
+        storeRecordingDurationSec(transcriptionData.id, durationSec)
         if (recordingId) {
           await removeRecording(recordingId)
         }

@@ -23,6 +23,7 @@ import {
   getTotalEstimateMinutes,
   ProcessingPhase,
 } from '@/lib/processing-estimate'
+import { readRecordingDurationSec } from '@/lib/recording-duration'
 
 const GENERATING_STATUSES = ['awaiting_start', 'in_progress']
 
@@ -86,9 +87,18 @@ export default function RecordStatusPage({
   const recordingUrl = recordings[0]?.url
 
   const [audioDurationSec, setAudioDurationSec] = useState<number | null>(null)
+  // The recorder stashes the measured length keyed by this id, so the estimate
+  // can show while transcribing — before the transcript or audio URL exists.
+  const [storedDurationSec, setStoredDurationSec] = useState<number | null>(
+    null
+  )
+  useEffect(() => {
+    setStoredDurationSec(readRecordingDurationSec(id))
+  }, [id])
   const durationSec =
     audioDurationSec ??
     transcription?.dialogue_entries?.at(-1)?.end_time ??
+    storedDurationSec ??
     null
 
   const isProcessing =

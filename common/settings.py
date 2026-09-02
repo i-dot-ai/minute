@@ -166,6 +166,16 @@ class Settings(BaseSettings):
         ),
     )
 
+    MCP_ENABLED: bool = Field(
+        description="Whether to serve the MCP endpoint at /mcp, which lets AI assistants read a user's own "
+        "transcripts. Set false to switch it off.",
+        default=True,
+    )
+    MCP_SERVER_URL: str = Field(
+        description="The public address of the /mcp endpoint.",
+        default="http://localhost:8080/mcp",
+    )
+
     LOCAL_STORAGE_PATH: str = Field(
         default="/tmp",  # noqa: S108
         description="The folder where the data directory is mounted for the local storage service.",

@@ -26,9 +26,10 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.42,<3",
     "asyncpg>=0.30.0,<0.31",
     "markdownify>=1.2.0,<2",
-    "python-multipart>=0.0.20,<0.0.21",
+    "python-multipart>=0.0.26,<0.1",
     "i-dot-ai-utilities>=0.4.4,<0.5",
     "azure-servicebus>=7.14.2,<8",
+    "tzdata>=2025.3",
 ]
 
 [tool.ruff]
@@ -40,8 +41,9 @@ fix = true
 backend = [
     "pyjwt>=2.9.0,<3",
     "posthog>=6.6.1,<7",
-    "uvicorn>=0.31.0,<0.32",
+    "uvicorn>=0.35.0,<0.40",
     "apscheduler>=3.11.0,<4",
+    "fastmcp>=4.0.1,<5",
 ]
 worker = [
     "google-genai>=1.10.0,<2",

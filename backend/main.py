@@ -1,3 +1,4 @@
+import contextlib
 import logging
 from contextlib import asynccontextmanager
 
@@ -9,10 +10,13 @@ from fastapi.security import OAuth2PasswordBearer
 
 from backend.api.routes import router as api_router
 from backend.cleanup_job import init_cleanup_scheduler
+from backend.mcp_server import build_mcp_app
 from common.settings import get_settings
 
 settings = get_settings()
 log = logging.getLogger("uvicorn")
+
+mcp_app = build_mcp_app() if settings.MCP_ENABLED else None
 
 
 @asynccontextmanager
@@ -21,7 +25,13 @@ async def lifespan(app_: FastAPI):  # noqa: ARG001
 
     await init_cleanup_scheduler()
 
-    yield
+    async with contextlib.AsyncExitStack() as stack:
+        # the exit stack guaranees an orderly cleanup when fastapi shuts down
+        if mcp_app:
+            await stack.enter_async_context(mcp_app.lifespan(mcp_app))
+            log.info("MCP server mounted at /mcp")
+
+        yield
 
     log.info("Shutting down...")
 
@@ -57,6 +67,9 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+
+if mcp_app:
+    app.mount("/mcp", mcp_app)
 
 if settings.STORAGE_SERVICE_NAME == "local":
     from common.services.storage_services.local.mock_storage_service import mock_storage_app

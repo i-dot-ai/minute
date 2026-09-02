@@ -15,6 +15,28 @@ settings = get_settings()
 logger = get_structured_logger()
 
 
+async def get_or_create_user(session: SQLSessionDep, email: str) -> User:
+    """Look up a user by email, creating them if this is their first request.
+
+    Emails are normalised here so the MCP server and the API agree: different
+    auth providers return different casing, and we look users up by exact
+    match, so a casing change would orphan someone's data.
+    """
+    stmt = (
+        insert(User)
+        .values(email=email.lower())
+        .on_conflict_do_update(
+            index_elements=[func.lower(User.email)],
+            set_={User.email: User.email},  # no-op, just so RETURNING fires
+        )
+        .returning(User)
+    )
+    result = await session.execute(stmt)
+    await session.commit()
+
+    return result.scalar_one()
+
+
 async def get_current_user(
     session: SQLSessionDep,
     x_amzn_oidc_data: Annotated[str | None, Header()] = None,
@@ -31,31 +53,16 @@ async def get_current_user(
 
     try:
         user_auth_info = get_user_info(authorization)
-        # Normalise email — different auth providers return different casing,
-        # and we look users up by exact match, so a casing change orphans their data.
-        email = user_auth_info.email.lower()
 
         if not user_auth_info.is_authorised:
-            logger.info("User {email} does not have the required permissions", email=email)
+            logger.info("User {email} does not have the required permissions", email=user_auth_info.email.lower())
             raise HTTPException(
                 status_code=401,
                 detail="User does not have the required permissions to access this resource",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        stmt = (
-            insert(User)
-            .values(email=email)
-            .on_conflict_do_update(
-                index_elements=[func.lower(User.email)],
-                set_={User.email: User.email},  # no-op, just so RETURNING fires
-            )
-            .returning(User)
-        )
-        result = await session.execute(stmt)
-        await session.commit()
-
-        return result.scalar_one()
+        return await get_or_create_user(session, user_auth_info.email)
     except MissingAuthTokenError as e:
         logger.warning("No authorization header provided")
         raise HTTPException(

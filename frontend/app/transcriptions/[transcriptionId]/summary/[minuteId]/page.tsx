@@ -161,21 +161,31 @@ export default function SummaryPage({
         <div className="govuk-width-container govuk-width-container--with-secondary-nav">
           {!editState?.isEditable && (
             <div className="sm:flex sm:justify-between">
-              <nav
-                className="govuk-breadcrumbs govuk-!-margin-top-2 sm:mb-0"
-                aria-label="Breadcrumb"
-              >
-                <ol className="govuk-breadcrumbs__list">
-                  <li className="govuk-breadcrumbs__list-item">
-                    <Link
-                      className="govuk-breadcrumbs__link"
-                      href="/transcriptions"
-                    >
-                      Back
-                    </Link>
-                  </li>
-                </ol>
-              </nav>
+              <div className="flex items-start gap-6">
+                <nav
+                  className="govuk-breadcrumbs govuk-!-margin-top-2 sm:mb-0"
+                  aria-label="Breadcrumb"
+                >
+                  <ol className="govuk-breadcrumbs__list">
+                    <li className="govuk-breadcrumbs__list-item">
+                      <Link
+                        className="govuk-breadcrumbs__link"
+                        href="/transcriptions"
+                      >
+                        Back
+                      </Link>
+                    </li>
+                  </ol>
+                </nav>
+                <NewMinuteDialog
+                  transcriptionId={transcriptionId}
+                  icon
+                  buttonClassName="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 whitespace-nowrap"
+                  onCreated={() =>
+                    router.push(`/transcriptions/${transcriptionId}/summary`)
+                  }
+                />
+              </div>
               <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
                 <Link
                   href={`/transcriptions/${transcriptionId}/transcript`}
@@ -183,14 +193,6 @@ export default function SummaryPage({
                 >
                   <CircleArrowRight className="size-4" /> Go to transcript
                 </Link>
-                <NewMinuteDialog
-                  transcriptionId={transcriptionId}
-                  icon
-                  buttonClassName="govuk-button govuk-button--secondary sm:!hidden"
-                  onCreated={() =>
-                    router.push(`/transcriptions/${transcriptionId}/summary`)
-                  }
-                />
                 {editState && (
                   <>
                     {editState.hasCitations && (

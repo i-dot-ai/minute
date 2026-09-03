@@ -1,6 +1,6 @@
 'use client'
 
-import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
+// import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
@@ -36,11 +36,11 @@ export function TranscriptionSidePanel() {
 
   return (
     <div
-      className={`govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 hidden flex-col justify-between overflow-y-auto border-r border-(--govuk-border-colour) sm:flex ${isCollapsed ? '!px-4 lg:!px-8' : ''}`}
+      className={`govuk-!-padding-top-4 govuk-!-padding-right-6 govuk-!-padding-left-6 hidden flex-col justify-between overflow-y-auto border-r border-(--govuk-border-colour) sm:flex ${isCollapsed ? '!px-4 xl:!px-8' : ''}`}
     >
       <nav aria-label="Summaries and transcript" className="secondary-nav">
         <ul
-          className={`govuk-list govuk-list--spaced ${isCollapsed ? '!hidden lg:!block' : ''}`}
+          className={`govuk-list govuk-list--spaced ${isCollapsed ? '!hidden xl:!block' : ''}`}
         >
           <li
             id="tour-summaries"
@@ -96,7 +96,7 @@ export function TranscriptionSidePanel() {
                 </ul>
               </>
             )}
-            {transcription && (
+            {/* {transcription && (
               <>
                 <NewMinuteDialog
                   transcriptionId={transcriptionId}
@@ -105,7 +105,7 @@ export function TranscriptionSidePanel() {
                   }
                 />
               </>
-            )}
+            )} */}
           </li>
           <li id="tour-transcript" className="flex-1">
             <Link
@@ -120,7 +120,7 @@ export function TranscriptionSidePanel() {
       </nav>
       <button
         type="button"
-        className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-bottom-4 flex items-center gap-2 text-(--govuk-link-colour) lg:hidden"
+        className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-bottom-4 flex items-center gap-2 text-(--govuk-link-colour) xl:hidden"
         onClick={() => setIsCollapsed((collapsed) => !collapsed)}
       >
         {isCollapsed ? (

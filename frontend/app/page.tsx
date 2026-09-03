@@ -7,15 +7,17 @@ import { AudioDevice } from '@/components/audio/microphone-permission'
 import { useRecordingSession } from '@/providers/recording-session-provider'
 import { Mic, Video, Upload, Info, Settings2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useOfflineRecordings } from '@/components/recent-meetings/use-offline-recordings'
 import UrlMigrationBanner from '@/components/url-migration-banner'
+import { useGovukModule } from '@/hooks/use-govuk-module'
 import Link from 'next/link'
 
 type RecordingMode = 'in-person' | 'virtual-meeting' | 'upload-file'
 
 export default function Home() {
   const isOldUrl = useIsOldUrl()
+  const tabsRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const session = useRecordingSession()
   const [mode, setMode] = useState<RecordingMode>('in-person')
@@ -25,6 +27,8 @@ export default function Home() {
   const [micDenied, setMicDenied] = useState(false)
   const { data: offlineRecordings } = useOfflineRecordings()
   const hasIncompleteRecordings = (offlineRecordings?.length ?? 0) > 0
+
+  useGovukModule(tabsRef, 'Tabs', mode === 'virtual-meeting')
 
   useEffect(() => {
     const init = async () => {
@@ -370,7 +374,8 @@ export default function Home() {
                             <ol className="govuk-list govuk-list--number govuk-!-margin-bottom-0">
                               <li>Start Minute</li>
                               <li>
-                                Join your meeting (Teams, Zoom, or Google Meet).
+                                Join your meeting (for Macs, start in same
+                                window as Minute)
                               </li>
                               <li>
                                 When the browser asks to share: Share your{' '}
@@ -425,30 +430,80 @@ export default function Home() {
                           >
                             <summary className="govuk-details__summary">
                               <span className="govuk-details__summary-text">
-                                Audio or screen share not picking up? Check
-                                system settings
+                                Audio or screen share not picking up?
                               </span>
                             </summary>
                             <div className="govuk-details__text">
-                              <h2 className="govuk-heading-s">MacOS</h2>
-                              <p className="govuk-body">
-                                Go to{' '}
-                                <strong>
-                                  System Settings → Privacy & Security → Screen
-                                  Recording
-                                </strong>{' '}
-                                and ensure your browser is listed and enabled.
-                                Then check <strong>Sound → Input</strong> and
-                                confirm the correct microphone is selected.
-                              </p>
-                              <h2 className="govuk-heading-s">Windows</h2>
-                              <p className="govuk-body">
-                                Go to{' '}
-                                <strong>Settings → Privacy → Microphone</strong>{' '}
-                                and confirm your browser has access. Check{' '}
-                                <strong>Sound → Input</strong> to confirm the
-                                correct device is selected.
-                              </p>
+                              <div
+                                className="govuk-tabs"
+                                data-module="govuk-tabs"
+                                ref={tabsRef}
+                              >
+                                <h3 className="govuk-tabs__title">Contents</h3>
+                                <ul className="govuk-tabs__list">
+                                  <li className="govuk-tabs__list-item govuk-tabs__list-item--selected">
+                                    <a
+                                      className="govuk-tabs__tab"
+                                      href="#windows"
+                                    >
+                                      Windows
+                                    </a>
+                                  </li>
+                                  <li className="govuk-tabs__list-item">
+                                    <a
+                                      className="govuk-tabs__tab"
+                                      href="#macos"
+                                    >
+                                      MacOS
+                                    </a>
+                                  </li>
+                                </ul>
+                                <div className="govuk-tabs__panel" id="windows">
+                                  <h2 className="govuk-heading-m">Windows</h2>
+                                  <h3 className="govuk-heading-s">
+                                    System Settings
+                                  </h3>
+                                  <p className="govuk-body">
+                                    Go to{' '}
+                                    <strong>
+                                      Settings → Privacy → Microphone
+                                    </strong>{' '}
+                                    and confirm your browser has access. Check{' '}
+                                    <strong>Sound → Input</strong> to confirm
+                                    the correct device is selected.
+                                  </p>
+                                </div>
+                                <div
+                                  className="govuk-tabs__panel govuk-tabs__panel--hidden"
+                                  id="macos"
+                                >
+                                  <h2 className="govuk-heading-m">MacOS</h2>
+                                  <h3 className="govuk-heading-s">
+                                    Recording from the Teams or Zoom App?
+                                  </h3>
+                                  <p className="govuk-body">
+                                    MacOS does not allow audio sharing from
+                                    outside the browser. To record in the Teams
+                                    or Zoom app, you will need to run the
+                                    meeting in the browser and have Minute
+                                    running from the same window.
+                                  </p>
+                                  <h3 className="govuk-heading-s">
+                                    No sound from the same window?
+                                  </h3>
+                                  <p className="govuk-body">
+                                    Go to{' '}
+                                    <strong>
+                                      System Settings → Privacy & Security →
+                                      Screen Recording
+                                    </strong>{' '}
+                                    and ensure your browser is listed and
+                                    enabled. Then check{' '}
+                                    <strong>Sound → Input</strong> and confirm
+                                    the correct microphone is selected.
+                                  </p>
+                                </div>
+                              </div>
                             </div>
                           </details>
                         )}

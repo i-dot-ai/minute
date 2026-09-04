@@ -3,7 +3,6 @@
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog'
 import * as React from 'react'
 
-import { buttonVariants } from '@/components/ui/button'
 import { handleModalOpenAutoFocus } from '@/components/ui/modal-focus'
 import { cn } from '@/lib/utils'
 
@@ -129,18 +128,6 @@ function AlertDialogDescription({
   )
 }
 
-function AlertDialogAction({
-  className,
-  ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Action>) {
-  return (
-    <AlertDialogPrimitive.Action
-      className={cn(buttonVariants(), className)}
-      {...props}
-    />
-  )
-}
-
 function AlertDialogCancel({
   className,
   ...props
@@ -155,7 +142,6 @@ function AlertDialogCancel({
 
 export {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,

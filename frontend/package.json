@@ -41,6 +41,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "file-saver": "^2.0.5",
+    "fuse.js": "^7.5.0",
     "govuk-frontend": "^6.2.0",
     "html-docx-js-typescript": "^0.1.5",
     "jose": "^6.0.11",

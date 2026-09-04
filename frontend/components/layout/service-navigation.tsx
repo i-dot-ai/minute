@@ -116,7 +116,7 @@ export const ServiceNavigation = () => {
               <img
                 src="/images/govuk-crest.svg"
                 alt=""
-                className="mx-auto mb-4 size-10"
+                className="mx-auto mb-4 hidden size-10 sm:block"
               />
             </div>
           </nav>

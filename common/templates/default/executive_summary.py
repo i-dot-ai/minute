@@ -6,7 +6,7 @@ from common.types import AgendaUsage
 
 
 class ExecutiveSummary(SimpleTemplate):
-    name = "Short 'n' Sweet"
+    name = "Executive summary"
     category = "Common"
     description = "Executive summary of the meeting + action items"
     citations_required = False

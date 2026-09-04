@@ -3,13 +3,15 @@ import math
 import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
-from sqlmodel import col, func, select
+from sqlmodel import col, func, or_, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.get_file_s3_key import get_file_s3_key
 from common.database.postgres_models import (
+    JobStatus,
     Minute,
     MinuteVersion,
     Recording,
@@ -27,6 +29,7 @@ from common.types import (
     TranscriptionCreateRequest,
     TranscriptionCreateResponse,
     TranscriptionGetResponse,
+    TranscriptionListFilter,
     TranscriptionMetadata,
     TranscriptionPatchRequest,
     WorkerMessage,
@@ -44,6 +47,9 @@ transcription_queue_service = get_queue_service(
 
 logger = logging.getLogger(__name__)
 
+# Minimum pg_trgm similarity for a title to count as a fuzzy search match.
+SEARCH_SIMILARITY_THRESHOLD = 0.3
+
 
 def _next_cleanup_cutoff(retention_days: int) -> datetime:
     """Records created before this instant get deleted at the next cleanup run (23:00 UTC daily)."""
@@ -58,9 +64,10 @@ def _next_cleanup_cutoff(retention_days: int) -> datetime:
 async def list_transcriptions(
     session: SQLSessionDep,
     current_user: UserDep,
-    page: int = Query(1, ge=1, description="Page number (starts from 1)"),
-    page_size: int = Query(20, ge=1, le=100, description="Number of items per page"),
-    expiring: bool = Query(False),
+    page: Annotated[int, Query(ge=1, description="Page number (starts from 1)")] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100, description="Number of items per page")] = 20,
+    filter_by: Annotated[TranscriptionListFilter | None, Query()] = None,
+    search: Annotated[str | None, Query(max_length=100, description="Match against transcription title")] = None,
 ) -> PaginatedTranscriptionsResponse:
     """Get paginated metadata for transcriptions for the current user."""
 
@@ -71,12 +78,25 @@ async def list_transcriptions(
     )
 
     # Retention disabled but caller wants only-expiring -> nothing qualifies.
-    if expiring and expiry_cutoff is None:
+    if filter_by == TranscriptionListFilter.EXPIRING_SOON and expiry_cutoff is None:
         return PaginatedTranscriptionsResponse(items=[], total_count=0, page=page, page_size=page_size, total_pages=1)
 
     filters = [Transcription.user_id == current_user.id]
-    if expiring:  # expiry_cutoff is not None here
+    if filter_by == TranscriptionListFilter.EXPIRING_SOON:  # expiry_cutoff is not None here
         filters.append(Transcription.created_datetime < expiry_cutoff)
+    elif filter_by == TranscriptionListFilter.FAILED:
+        filters.append(Transcription.status == JobStatus.FAILED)
+
+    search_term = search.strip() if search else None
+    if search_term:
+        escaped = search_term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        filters.append(
+            or_(
+                col(Transcription.title).ilike(f"%{escaped}%"),
+                # pg_trgm similarity gives typo tolerance, e.g. "budjet" still matches "Budget review"
+                func.similarity(col(Transcription.title), search_term) >= SEARCH_SIMILARITY_THRESHOLD,
+            )
+        )
 
     count_statement = select(func.count(col(Transcription.id))).where(*filters)
     statement = (

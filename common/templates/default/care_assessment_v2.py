@@ -20,7 +20,7 @@ settings = get_settings()
 
 
 class CareAssessmentV2(SimpleTemplate):
-    name = "Care Assessment V2"
+    name = "Care assessment"
     category = "Social Care"
     description = "Enhanced Social care assessment template based on Care Act Eligibility Criteria"
     citations_required = True

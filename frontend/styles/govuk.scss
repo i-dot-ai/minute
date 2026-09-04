@@ -1,0 +1,15 @@
+// Compiled to styles/govuk.css by `npm run build:css`. Edit this file, not the CSS.
+//
+// GDS Transport is licensed for use on gov.uk domains only, so this service must
+// not load it. Overriding $govuk-font-family also flips
+// $govuk-include-default-font-face to false, which stops GOV.UK Frontend
+// emitting the @font-face rules for it at all.
+// https://frontend.design-system.service.gov.uk/using-govuk-frontend-without-govuk-branding/
+@use 'govuk-frontend/dist/govuk' with (
+  $govuk-font-family: (
+    'Helvetica Neue',
+    Helvetica,
+    arial,
+    sans-serif,
+  )
+);

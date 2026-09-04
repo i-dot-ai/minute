@@ -16,12 +16,10 @@ import { useForm } from 'react-hook-form'
 type AIEditFormData = { instruction: string }
 
 export const AiEditPopover = ({
-  disabled,
   minuteId,
   minuteVersionId,
   onSuccess,
 }: {
-  disabled: boolean
   minuteId: string
   minuteVersionId: string
   onSuccess: () => void
@@ -66,9 +64,8 @@ export const AiEditPopover = ({
     >
       <DialogTrigger asChild>
         <button
-          className="govuk-button govuk-button--inverse govuk-!-margin-bottom-3"
+          className="govuk-button govuk-button--secondary sm:mb-0"
           type="button"
-          disabled={disabled}
         >
           <Wand2Icon className="size-4" /> AI edit
         </button>
@@ -92,20 +89,20 @@ export const AiEditPopover = ({
               {...form.register('instruction')}
             />
           </div>
-          <div className="govuk-button-group">
-            <button
-              type="submit"
-              className="govuk-button"
-              disabled={!form.watch('instruction')}
-            >
-              <Wand2Icon className="size-4" /> Apply AI edit
-            </button>
+          <div className="govuk-button-group justify-end">
             <button
               type="button"
               className="govuk-button govuk-button--secondary"
               onClick={() => setOpen(false)}
             >
               Cancel
+            </button>
+            <button
+              type="submit"
+              className="govuk-button"
+              disabled={!form.watch('instruction')}
+            >
+              Apply AI edit
             </button>
           </div>
         </form>

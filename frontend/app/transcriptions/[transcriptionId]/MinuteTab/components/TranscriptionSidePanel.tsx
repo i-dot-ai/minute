@@ -1,6 +1,5 @@
 'use client'
 
-// import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
@@ -96,16 +95,6 @@ export function TranscriptionSidePanel() {
                 </ul>
               </>
             )}
-            {/* {transcription && (
-              <>
-                <NewMinuteDialog
-                  transcriptionId={transcriptionId}
-                  onCreated={() =>
-                    router.push(`/transcriptions/${transcriptionId}/summary`)
-                  }
-                />
-              </>
-            )} */}
           </li>
           <li id="tour-transcript" className="flex-1">
             <Link

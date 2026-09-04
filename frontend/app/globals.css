@@ -541,25 +541,6 @@ html body[data-scroll-locked] {
 }
 
 @theme {
-  --animate-updown: updown 1s infinite;
-
-  @keyframes updown {
-    0% {
-      transform: scaleY(1);
-      transform-origin: 50% 50%;
-    }
-
-    50% {
-      transform: scaleY(0.7);
-      transform-origin: 50% 50%;
-    }
-
-    100% {
-      transform: scaleY(1);
-      transform-origin: 50% 50%;
-    }
-  }
-
   --animate-indeterminate: indeterminate 1.5s infinite ease-in-out;
 
   @keyframes indeterminate {

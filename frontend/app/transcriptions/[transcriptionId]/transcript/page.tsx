@@ -3,9 +3,9 @@
 import { SpeakerEditor } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerEditor'
 import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNamePopover'
 import { DialogueEntryForm } from '@/types/transcriptions'
-// import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { ExportTranscriptDialog } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/ExportTranscriptDialog'
 import { formatTime } from '@/components/audio/audio-player'
+import { ProcessingCard } from '@/components/processing-card'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import {
@@ -41,6 +41,11 @@ export default function TranscriptPage({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId },
     }),
+    refetchInterval: (query) =>
+      query.state.data?.status &&
+      ['awaiting_start', 'in_progress'].includes(query.state.data.status)
+        ? 2000
+        : false,
   })
 
   const [isEditing, setIsEditing] = useState(false)
@@ -74,6 +79,14 @@ export default function TranscriptPage({
   useEffect(() => {
     reset({ entries: transcription?.dialogue_entries || [] })
   }, [reset, transcription?.dialogue_entries])
+
+  // A failed transcription has no transcript to show; the index page owns the
+  // failure UI (retry / download), so send the user there.
+  useEffect(() => {
+    if (transcription?.status === 'failed') {
+      router.replace(`/transcriptions/${transcriptionId}`)
+    }
+  }, [transcription?.status, router, transcriptionId])
 
   const { saveTranscription } = useSaveTranscription(transcriptionId)
 
@@ -191,6 +204,49 @@ export default function TranscriptPage({
                 Back to transcriptions
               </Link>
             </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (
+    transcription.status &&
+    ['awaiting_start', 'in_progress'].includes(transcription.status)
+  ) {
+    return (
+      <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
+        <div className="govuk-grid-row">
+          <div className="govuk-grid-column-three-quarters">
+            <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
+              <ol className="govuk-breadcrumbs__list">
+                <li className="govuk-breadcrumbs__list-item">
+                  <Link
+                    className="govuk-breadcrumbs__link"
+                    href="/transcriptions"
+                  >
+                    Back
+                  </Link>
+                </li>
+              </ol>
+            </nav>
+            <h1 className="govuk-heading-l govuk-!-margin-bottom-2 govuk-!-margin-top-4">
+              Generating transcript
+            </h1>
+            <p className="govuk-body">
+              The transcription is being processed. Return later to view the
+              transcript.
+            </p>
+            <ProcessingCard
+              className="govuk-!-margin-top-5"
+              heading="Transcribing"
+            />
+            {hasRecordings && (
+              <>
+                <h2 className="govuk-heading-m govuk-!-margin-top-6">Audio</h2>
+                <audio controls src={recordings[0].url} className="w-full" />
+              </>
+            )}
           </div>
         </div>
       </div>

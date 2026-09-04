@@ -28,8 +28,6 @@ export default function RecordingControl({
   onDiscard,
   onGenerate,
 }: RecordingControlProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
   const animationRef = useRef<number | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const dataArrayRef = useRef<Uint8Array | null>(null)
@@ -89,28 +87,6 @@ export default function RecordingControl({
       }
       analyserRef.current = null
       dataArrayRef.current = null
-
-      // Clear canvas if it exists
-      const canvas = canvasRef.current
-      if (canvas) {
-        const ctx = canvas.getContext('2d')
-        if (ctx) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-          // Draw a placeholder message
-          if (canvas.width > 0 && canvas.height > 0) {
-            ctx.fillStyle = '#666'
-            ctx.font = '14px sans-serif'
-            ctx.textAlign = 'center'
-            ctx.textBaseline = 'middle'
-            ctx.fillText(
-              'Waiting for audio...',
-              canvas.width / 2,
-              canvas.height / 2
-            )
-          }
-        }
-      }
       return
     }
 
@@ -138,58 +114,15 @@ export default function RecordingControl({
       console.error('Error setting up audio context', error)
     }
 
-    const draw = () => {
-      try {
-        const canvas = canvasRef.current
-        if (!canvas) return
+    // Sample the analyser on each frame purely to detect sustained silence.
+    // The visual rendering is handled separately by <MinuteVisualizer />.
+    const detectSilence = () => {
+      const analyser = analyserRef.current
+      const dataArray = dataArrayRef.current
 
-        const ctx = canvas.getContext('2d')
-        if (!ctx) return
-
-        const { width, height } = canvas
-        if (width === 0 || height === 0) return
-
-        // If not recording or missing the analyzer/data array, show a placeholder
-        if (!isRecording || !analyserRef.current || !dataArrayRef.current) {
-          // Clear the canvas
-          ctx.clearRect(0, 0, width, height)
-
-          // Draw a pulsing placeholder
-          const time = Date.now() / 1000
-          const pulseSize = Math.sin(time * 2) * 0.1 + 0.9
-
-          ctx.fillStyle = '#3b82f6'
-          ctx.beginPath()
-          ctx.arc(
-            width / 2,
-            height / 2,
-            (Math.min(width, height) / 10) * pulseSize,
-            0,
-            Math.PI * 2
-          )
-          ctx.fill()
-
-          // Show waiting text
-          ctx.fillStyle = '#fff'
-          ctx.font = '14px sans-serif'
-          ctx.textAlign = 'center'
-          ctx.textBaseline = 'middle'
-          ctx.fillText('Waiting for audio...', width / 2, height / 2)
-
-          animationRef.current = requestAnimationFrame(draw)
-          return
-        }
-
-        const analyser = analyserRef.current
-        const dataArray = dataArrayRef.current
-
-        // Clear the canvas completely instead of fade effect
-        ctx.clearRect(0, 0, width, height)
-
-        // Get frequency data
+      if (isRecording && analyser && dataArray) {
         analyser.getByteFrequencyData(dataArray)
 
-        // Calculate average frequency
         const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length
         const hasAudioData = average > 5
 
@@ -209,132 +142,17 @@ export default function RecordingControl({
             setAudioSilent(true)
           }
         }
-
-        if (!hasAudioData || isPaused) {
-          // Draw a pulsing placeholder
-          const time = Date.now() / 1000
-          const pulseSize = Math.sin(time * 2) * 0.1 + 0.9
-
-          ctx.fillStyle = isPaused ? '#6b7280' : '#3b82f6'
-          ctx.beginPath()
-          ctx.arc(
-            width / 2,
-            height / 2,
-            (Math.min(width, height) / 10) * pulseSize,
-            0,
-            Math.PI * 2
-          )
-          ctx.fill()
-        } else {
-          // Draw frequency bars
-          const barCount = Math.min(dataArray.length / 2, 64)
-          const barWidth = (width / barCount) * 0.8
-          const barSpacing = 2
-          const totalBarWidth = barCount * (barWidth + barSpacing)
-          const startX = (width - totalBarWidth) / 2
-
-          for (let i = 0; i < barCount; i += 1) {
-            const value = dataArray[i]
-            const multiplier = 1.2
-            const barHeight = Math.min(
-              (value / 255) * height * multiplier * 0.8,
-              height * 0.8
-            )
-
-            const x = startX + i * (barWidth + barSpacing)
-            const gradient = ctx.createLinearGradient(
-              0,
-              (height - barHeight) / 2,
-              0,
-              (height + barHeight) / 2
-            )
-            const hue = 210 + (i / barCount) * 30
-            gradient.addColorStop(0, `hsla(${hue}, 100%, 70%, 0.9)`)
-            gradient.addColorStop(1, `hsla(${hue}, 100%, 50%, 0.7)`)
-            ctx.fillStyle = gradient
-
-            const y = (height - barHeight) / 2
-            const radius = Math.min(barWidth / 2, 4)
-
-            // Draw rounded rectangle
-            ctx.beginPath()
-            ctx.moveTo(x + radius, y)
-            ctx.lineTo(x + barWidth - radius, y)
-            ctx.quadraticCurveTo(x + barWidth, y, x + barWidth, y + radius)
-            ctx.lineTo(x + barWidth, y + barHeight - radius)
-            ctx.quadraticCurveTo(
-              x + barWidth,
-              y + barHeight,
-              x + barWidth - radius,
-              y + barHeight
-            )
-            ctx.lineTo(x + radius, y + barHeight)
-            ctx.quadraticCurveTo(x, y + barHeight, x, y + barHeight - radius)
-            ctx.lineTo(x, y + radius)
-            ctx.quadraticCurveTo(x, y, x + radius, y)
-            ctx.fill()
-          }
-
-          // Add center pulse for strong signals
-          if (average > 20) {
-            const centerX = width / 2
-            const centerY = height / 2
-            const maxRadius = Math.min(width, height) / 6
-            const radius = (average / 255) * maxRadius
-
-            const circleGradient = ctx.createRadialGradient(
-              centerX,
-              centerY,
-              0,
-              centerX,
-              centerY,
-              radius
-            )
-            circleGradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)')
-            circleGradient.addColorStop(0.7, 'rgba(59, 130, 246, 0.2)')
-            circleGradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
-
-            ctx.fillStyle = circleGradient
-            ctx.beginPath()
-            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
-            ctx.fill()
-          }
-        }
-      } catch (error) {
-        console.error('Error in draw function:', error)
       }
 
-      animationRef.current = requestAnimationFrame(draw)
+      animationRef.current = requestAnimationFrame(detectSilence)
     }
 
-    // Handle canvas resizing
-    const resizeCanvas = () => {
-      if (canvasRef.current) {
-        const canvas = canvasRef.current
-        const container = canvas.parentElement
-        if (container) {
-          const { width, height } = container.getBoundingClientRect()
-          canvas.width = width
-          canvas.height = height
-        }
-      }
-    }
-
-    resizeCanvas()
-    const resizeObserver = new ResizeObserver(resizeCanvas)
-    if (canvasRef.current?.parentElement) {
-      resizeObserver.observe(canvasRef.current.parentElement)
-    }
-    window.addEventListener('resize', resizeCanvas)
-
-    draw()
+    detectSilence()
 
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
       }
-      resizeObserver.disconnect()
-      window.removeEventListener('resize', resizeCanvas)
     }
   }, [stream, isRecording, isPaused])
 
@@ -396,12 +214,7 @@ export default function RecordingControl({
           </div>
         )}
         <div className="govuk-!-margin-bottom-4 mx-auto border-[#8eb8dc]">
-          <div
-            ref={containerRef}
-            className="mx-auto"
-            // className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
-          >
-            {/* <canvas ref={canvasRef} aria-hidden="true" className="size-full" /> */}
+          <div className="mx-auto">
             <MinuteVisualizer
               stream={stream}
               isRecording={isRecording}

@@ -8,7 +8,7 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import posthog from 'posthog-js'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 
 export type RenameTranscription = {
@@ -172,55 +172,5 @@ export function RenameTitleInput({
         {isPending ? 'Saving title' : ''}
       </span>
     </form>
-  )
-}
-
-export function RenameTranscriptionInline({
-  transcription,
-  headingLevel = 'h2',
-  headingClassName = 'govuk-body govuk-!-margin-bottom-0',
-}: {
-  transcription: RenameTranscription
-  headingLevel?: 'h1' | 'h2' | 'h3'
-  headingClassName?: string
-}) {
-  const [editing, setEditing] = useState(false)
-  const { save, isPending } = useRenameTranscription(transcription)
-  const displayTitle = getTranscriptionDisplayTitle(
-    transcription.title,
-    transcription.status
-  )
-
-  const Heading = headingLevel
-
-  const handleSubmit = useCallback(
-    (title: string) => {
-      save(title)
-      setEditing(false)
-    },
-    [save]
-  )
-
-  if (editing) {
-    return (
-      <RenameTitleInput
-        transcription={transcription}
-        isPending={isPending}
-        onSubmit={handleSubmit}
-        onCancel={() => setEditing(false)}
-      />
-    )
-  }
-
-  return (
-    <div className="flex min-w-0 flex-1 items-center gap-3">
-      <RenameButton
-        displayTitle={displayTitle}
-        onClick={() => setEditing(true)}
-      />
-      <Heading className={`${headingClassName} min-w-0 truncate`}>
-        {displayTitle}
-      </Heading>
-    </div>
   )
 }

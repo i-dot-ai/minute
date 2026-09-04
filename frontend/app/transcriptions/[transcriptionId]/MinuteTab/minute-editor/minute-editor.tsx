@@ -2,7 +2,6 @@
 
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
 import { ProcessingCard } from '@/components/processing-card'
-import { Button } from '@/components/ui/button'
 import { useNow } from '@/hooks/use-now'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import {
@@ -405,10 +404,11 @@ const MinuteVersionDeleteButton = ({
     },
   })
   return (
-    <Button
-      variant="outline"
+    <button
+      type="button"
       onClick={() => mutate({ path: { minute_version_id: minuteVersion.id } })}
-      className={className}
+      className={`govuk-button govuk-button--secondary ${className ?? ''}`}
+      data-module="govuk-button"
     >
       {isPending ? (
         <>
@@ -419,6 +419,6 @@ const MinuteVersionDeleteButton = ({
           <Undo className="size-4" /> Undo
         </>
       )}
-    </Button>
+    </button>
   )
 }

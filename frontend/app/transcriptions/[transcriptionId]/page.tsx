@@ -7,9 +7,9 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { RetryTranscriptionDialog } from '@/components/audio/retry-transcription-dialog'
+import { ProcessingCard } from '@/components/processing-card'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, Pencil, Save } from 'lucide-react'
-import { AudioWav } from '@/components/icons/AudioWav'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -133,10 +133,11 @@ export default function TranscriptionPage() {
               The transcription is being processed. Return later to view the
               transcript.
             </p>
-            <div className="flex w-full justify-center">
-              <AudioWav />
-            </div>
-            <h2 className="govuk-heading-m">Audio</h2>
+            <ProcessingCard
+              className="govuk-!-margin-top-5"
+              heading="Transcribing"
+            />
+            <h2 className="govuk-heading-m govuk-!-margin-top-6">Audio</h2>
             <AudioPlayer transcriptionId={transcription.id} />
           </div>
         </div>

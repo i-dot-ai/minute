@@ -7,10 +7,10 @@ const SUMMARY_MINUTES_PER_AUDIO_MINUTE = 0.017
 // Short recordings still carry fixed overheads, so never estimate below this.
 const MINIMUM_ESTIMATE_MINUTES = 1
 
-// A phase counts as stalled once it has run half again as long as its estimate.
+// A phase counts as stalled once it has run twice as long as its estimate.
 // Short clips get a floor so a quick job is not flagged seconds after its
 // estimate lapses, and an unknown duration falls back to a flat limit.
-const STALL_ESTIMATE_MULTIPLIER = 1.5
+const STALL_ESTIMATE_MULTIPLIER = 2
 const TRANSCRIPTION_STALL_FLOOR_MINUTES = 3
 const SUMMARY_STALL_FLOOR_MINUTES = 3
 const STALL_FALLBACK_MINUTES = 10

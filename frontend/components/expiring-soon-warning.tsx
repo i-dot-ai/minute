@@ -7,7 +7,7 @@ const ExpiringSoonWarning = () => {
   const { data: expiringTranscriptions } = useTranscriptions({
     page: 1,
     pageSize: 1,
-    expiring: true,
+    filterBy: 'expiring-soon',
   })
 
   if (!expiringTranscriptions?.total_count) return null

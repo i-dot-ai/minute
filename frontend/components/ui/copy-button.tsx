@@ -1,16 +1,24 @@
 import posthog from 'posthog-js'
-import { useState } from 'react'
 import { Copy } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface CopyButtonProps {
   textToCopy: string
   posthogEvent: string
   disabled?: boolean
+  label?: string
+  posthogProperties?: Record<string, string | number>
+  onCopied?: () => void
 }
 
-function CopyButton({ textToCopy, posthogEvent, disabled }: CopyButtonProps) {
-  const [isCopied, setIsCopied] = useState(false)
-
+function CopyButton({
+  textToCopy,
+  posthogEvent,
+  disabled,
+  label = 'Copy',
+  posthogProperties,
+  onCopied,
+}: CopyButtonProps) {
   const stripHtmlTags = (html: string) => {
     const tmp = document.createElement('DIV')
     tmp.innerHTML = html
@@ -35,25 +43,21 @@ function CopyButton({ textToCopy, posthogEvent, disabled }: CopyButtonProps) {
 
     posthog.capture(posthogEvent, {
       contentLength: textToCopy.length,
+      ...posthogProperties,
     })
-    setIsCopied(true)
-    setTimeout(() => {
-      setIsCopied(false)
-    }, 2000)
+    onCopied?.()
+    toast.success('Copied to clipboard')
   }
 
   return (
-    <>
-      <button
-        className="govuk-button govuk-button--inverse flex items-center gap-2"
-        onClick={handleCopy}
-        disabled={disabled}
-      >
-        <Copy className="size-4" />
-        Copy
-      </button>
-      {isCopied && <p className="govuk-tag govuk-tag--green">Copied</p>}
-    </>
+    <button
+      className="govuk-button govuk-button--secondary flex items-center gap-2"
+      onClick={handleCopy}
+      disabled={disabled}
+    >
+      <Copy className="size-4" />
+      {label}
+    </button>
   )
 }
 

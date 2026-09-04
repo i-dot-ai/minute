@@ -1,7 +1,5 @@
 'use client'
 
-import type { OnboardingStepData } from '@/hooks/use-onboarding-tour'
-import Link from 'next/link'
 import type { TooltipRenderProps } from 'react-joyride'
 
 export function GovukJoyrideTooltip({
@@ -10,14 +8,14 @@ export function GovukJoyrideTooltip({
   primaryProps,
   index,
   step,
+  size,
   tooltipProps,
 }: TooltipRenderProps) {
-  const { buttons, content, locale, title } = step
-  const navHref = (step.data as OnboardingStepData | undefined)?.href
+  const { buttons, content, title } = step
 
   return (
     <div
-      className="react-joyride__tooltip joyride-govuk-tooltip govuk-!-padding-top-6 border border-2"
+      className="react-joyride__tooltip joyride-govuk-tooltip govuk-!-padding-top-6 !bg-[#16548a]"
       data-joyride-step={index}
       {...tooltipProps}
       aria-describedby={
@@ -28,7 +26,7 @@ export function GovukJoyrideTooltip({
       {buttons.includes('close') && (
         <button
           type="button"
-          className="joyride-govuk-tooltip__close"
+          className="joyride-govuk-tooltip__close !text-white"
           data-testid="button-close"
           {...closeProps}
         >
@@ -46,15 +44,24 @@ export function GovukJoyrideTooltip({
           </svg>
         </button>
       )}
+      <p className="govuk-body-s govuk-!-margin-bottom-0 !text-white">
+        {index + 1} of {size}
+      </p>
       {title && (
-        <h4 className="govuk-heading-m" id={`joyride-step-${index}-title`}>
+        <h4
+          className="govuk-heading-m !text-white"
+          id={`joyride-step-${index}-title`}
+        >
           {title}
         </h4>
       )}
-      <p className="govuk-body" id={`joyride-step-${index}-content`}>
+      <p
+        className="govuk-body !text-white"
+        id={`joyride-step-${index}-content`}
+      >
         {content}
       </p>
-      <div className="govuk-button-group govuk-!-margin-bottom-0">
+      <div className="govuk-button-group govuk-!-margin-bottom-0 justify-end">
         {buttons.includes('back') && index > 0 && (
           <button
             type="button"
@@ -62,13 +69,12 @@ export function GovukJoyrideTooltip({
             {...backProps}
           />
         )}
-        {navHref && (
-          <Link href={navHref} className="govuk-button">
-            {locale.next ?? 'Next'}
-          </Link>
-        )}
         {buttons.includes('primary') && (
-          <button type="button" className="govuk-button" {...primaryProps} />
+          <button
+            type="button"
+            className="govuk-button govuk-button--inverse"
+            {...primaryProps}
+          />
         )}
       </div>
     </div>

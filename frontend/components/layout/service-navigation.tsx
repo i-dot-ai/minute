@@ -1,31 +1,29 @@
 'use client'
-import Link from 'next/link'
+import { GuardedLink } from '@/components/navigation/guarded-link'
 import { usePathname } from 'next/navigation'
+import { Bookmark, LayoutPanelTop, Mic } from 'lucide-react'
+import { requestOnboardingTourRestart } from '@/hooks/use-onboarding-tour'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
   if (pathname === '/unauthorised') {
     return null
   }
+  const pagesWithTour = ['/transcriptions', '/templates']
+  const showTour =
+    pathname === '/' || pagesWithTour.some((page) => pathname.includes(page))
+
   return (
-    <section
-      aria-label="Service information"
-      className={`govuk-service-navigation ${pathname === '/' ? 'govuk-service-navigation--inverse' : ''}`}
+    <div
+      className="govuk-service-navigation govuk-service-navigation--side-nav"
       data-module="govuk-service-navigation"
     >
       <div className="govuk-width-container">
         <div className="govuk-service-navigation__container">
-          <span
-            className={`govuk-service-navigation__service-name ${pathname === '/' ? 'govuk-!-margin-right-3 govuk-service-navigation__item--active' : ''}`}
+          <nav
+            aria-label="Menu"
+            className="govuk-service-navigation__wrapper sm:flex sm:items-center sm:justify-between md:block"
           >
-            <Link
-              href="/"
-              className={`govuk-service-navigation__link ${pathname === '/' ? 'govuk-!-padding-right-3' : ''}`}
-            >
-              Home
-            </Link>
-          </span>
-          <nav aria-label="Menu" className="govuk-service-navigation__wrapper">
             <button
               type="button"
               className="govuk-service-navigation__toggle govuk-js-service-navigation-toggle"
@@ -37,54 +35,94 @@ export const ServiceNavigation = () => {
             </button>
             <ul className="govuk-service-navigation__list" id="navigation">
               <li
-                className={`govuk-service-navigation__item ${pathname.includes('/new') ? 'govuk-service-navigation__item--active' : ''}`}
+                className={`govuk-service-navigation__item ${pathname === '/' || pathname.includes('/new') ? 'govuk-service-navigation__item--active' : ''}`}
               >
-                <Link
+                <GuardedLink
                   className="govuk-service-navigation__link"
-                  href="/new"
-                  data-onboarding="new-transcription-nav"
+                  href="/"
+                  aria-current={
+                    pathname === '/' || pathname.includes('/new')
+                      ? 'page'
+                      : undefined
+                  }
                 >
-                  New transcription
-                </Link>
+                  <Mic className="size-5" />
+                  Record
+                </GuardedLink>
               </li>
               <li
                 className={`govuk-service-navigation__item ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__item--active' : ''}`}
               >
-                <Link
+                <GuardedLink
                   className="govuk-service-navigation__link"
                   href="/transcriptions"
-                  data-onboarding="saved-transcriptions-nav"
+                  aria-current={
+                    pathname.includes('/transcriptions') ? 'page' : undefined
+                  }
                 >
-                  Saved transcriptions
-                </Link>
+                  <Bookmark className="size-5" />
+                  Transcripts
+                </GuardedLink>
               </li>
               <li
                 className={`govuk-service-navigation__item ${pathname.includes('/templates') ? 'govuk-service-navigation__item--active' : ''}`}
               >
-                <Link
+                <GuardedLink
                   className="govuk-service-navigation__link"
                   href="/templates"
-                  data-onboarding="templates-nav"
+                  aria-current={
+                    pathname.includes('/templates') ? 'page' : undefined
+                  }
                 >
+                  <LayoutPanelTop className="size-5" />
                   Templates
-                </Link>
-              </li>
-              <li
-                className={`govuk-service-navigation__item ${pathname.includes('/settings') ? 'govuk-service-navigation__item--active' : ''}`}
-              >
-                <Link
-                  className="govuk-service-navigation__link"
-                  href="/settings"
-                  data-onboarding="settings-nav"
-                >
-                  Settings
-                </Link>
+                </GuardedLink>
               </li>
             </ul>
+            <div>
+              {showTour && (
+                <div className="govuk-!-padding-top-3 govuk-!-padding-bottom-3">
+                  <button
+                    type="button"
+                    className="govuk-service-navigation__link cursor-pointer text-(--govuk-link-colour) sm:mx-auto"
+                    onClick={requestOnboardingTourRestart}
+                  >
+                    Tour this page
+                  </button>
+                </div>
+              )}
+              <ul className="govuk-service-navigation__list govuk-service-navigation__list--footer">
+                <li
+                  className={`govuk-service-navigation__item ${pathname.includes('/privacy') ? 'govuk-service-navigation__item--active' : ''}`}
+                >
+                  <GuardedLink
+                    className="govuk-service-navigation__link"
+                    href="/privacy"
+                  >
+                    Privacy
+                  </GuardedLink>
+                </li>
+                <li
+                  className={`govuk-service-navigation__item ${pathname.includes('/support') ? 'govuk-service-navigation__item--active' : ''}`}
+                >
+                  <GuardedLink
+                    className="govuk-service-navigation__link"
+                    href="/support"
+                  >
+                    Contact
+                  </GuardedLink>
+                </li>
+              </ul>
+              <img
+                src="/images/govuk-crest.svg"
+                alt=""
+                className="mx-auto mb-4 hidden size-10 sm:block"
+              />
+            </div>
           </nav>
         </div>
       </div>
-    </section>
+    </div>
   )
 }
 

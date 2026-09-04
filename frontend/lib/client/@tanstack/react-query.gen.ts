@@ -18,6 +18,7 @@ import {
   createUserTemplateUserTemplatesPost,
   deleteChatsTranscriptionsTranscriptionIdChatDelete,
   deleteChatTranscriptionsTranscriptionIdChatChatIdDelete,
+  deleteMinuteMinutesMinuteIdDelete,
   deleteMinuteVersionMinuteVersionsMinuteVersionIdDelete,
   deleteTranscriptionTranscriptionsTranscriptionIdDelete,
   deleteUserTemplateUserTemplatesTemplateIdDelete,
@@ -40,6 +41,7 @@ import {
   type Options,
   saveTranscriptionTranscriptionsTranscriptionIdPatch,
   updateDataRetentionUsersDataRetentionPatch,
+  updateDefaultTemplateUsersDefaultTemplatePatch,
 } from '../sdk.gen'
 import type {
   CreateChatTranscriptionsTranscriptionIdChatPostData,
@@ -47,6 +49,7 @@ import type {
   CreateChatTranscriptionsTranscriptionIdChatPostResponse,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostData,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostError,
+  CreateMinuteTranscriptionTranscriptionIdMinutesPostResponse,
   CreateMinuteVersionMinutesMinuteIdVersionsPostData,
   CreateMinuteVersionMinutesMinuteIdVersionsPostError,
   CreateMinuteVersionMinutesMinuteIdVersionsPostResponse,
@@ -64,6 +67,9 @@ import type {
   DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteData,
   DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteError,
   DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteResponse,
+  DeleteMinuteMinutesMinuteIdDeleteData,
+  DeleteMinuteMinutesMinuteIdDeleteError,
+  DeleteMinuteMinutesMinuteIdDeleteResponse,
   DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteData,
   DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteError,
   DeleteTranscriptionTranscriptionsTranscriptionIdDeleteData,
@@ -73,6 +79,7 @@ import type {
   DeleteUserTemplateUserTemplatesTemplateIdDeleteError,
   DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData,
   DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError,
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
   EditUserTemplateUserTemplatesTemplateIdPatchData,
   EditUserTemplateUserTemplatesTemplateIdPatchError,
   GetChatTranscriptionsTranscriptionIdChatChatIdGetData,
@@ -121,6 +128,9 @@ import type {
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchError,
   UpdateDataRetentionUsersDataRetentionPatchResponse,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchData,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchError,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchResponse,
 } from '../types.gen'
 
 export type QueryKey<TOptions extends Options> = [
@@ -560,6 +570,39 @@ export const updateDataRetentionUsersDataRetentionPatchMutation = (
   return mutationOptions
 }
 
+/**
+ * Update Default Template
+ *
+ * Set the current user's default template.
+ *
+ * Exactly one of template_id (a custom template owned by the user) or template_name (a
+ * system template) may be provided. Providing neither clears the default. Setting a new
+ * default overwrites the previous one, so there is only ever one default per user.
+ */
+export const updateDefaultTemplateUsersDefaultTemplatePatchMutation = (
+  options?: Partial<Options<UpdateDefaultTemplateUsersDefaultTemplatePatchData>>
+): UseMutationOptions<
+  UpdateDefaultTemplateUsersDefaultTemplatePatchResponse,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchError,
+  Options<UpdateDefaultTemplateUsersDefaultTemplatePatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateDefaultTemplateUsersDefaultTemplatePatchResponse,
+    UpdateDefaultTemplateUsersDefaultTemplatePatchError,
+    Options<UpdateDefaultTemplateUsersDefaultTemplatePatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateDefaultTemplateUsersDefaultTemplatePatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
+
 export const listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey =
   (
     options: Options<ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetData>
@@ -610,12 +653,12 @@ export const createMinuteTranscriptionTranscriptionIdMinutesPostMutation = (
     Options<CreateMinuteTranscriptionTranscriptionIdMinutesPostData>
   >
 ): UseMutationOptions<
-  unknown,
+  CreateMinuteTranscriptionTranscriptionIdMinutesPostResponse,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostError,
   Options<CreateMinuteTranscriptionTranscriptionIdMinutesPostData>
 > => {
   const mutationOptions: UseMutationOptions<
-    unknown,
+    CreateMinuteTranscriptionTranscriptionIdMinutesPostResponse,
     CreateMinuteTranscriptionTranscriptionIdMinutesPostError,
     Options<CreateMinuteTranscriptionTranscriptionIdMinutesPostData>
   > = {
@@ -659,6 +702,33 @@ export const getMinuteMinutesMinutesIdGetOptions = (
     },
     queryKey: getMinuteMinutesMinutesIdGetQueryKey(options),
   })
+
+/**
+ * Delete Minute
+ */
+export const deleteMinuteMinutesMinuteIdDeleteMutation = (
+  options?: Partial<Options<DeleteMinuteMinutesMinuteIdDeleteData>>
+): UseMutationOptions<
+  DeleteMinuteMinutesMinuteIdDeleteResponse,
+  DeleteMinuteMinutesMinuteIdDeleteError,
+  Options<DeleteMinuteMinutesMinuteIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteMinuteMinutesMinuteIdDeleteResponse,
+    DeleteMinuteMinutesMinuteIdDeleteError,
+    Options<DeleteMinuteMinutesMinuteIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteMinuteMinutesMinuteIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
 
 export const listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey = (
   options: Options<ListMinuteVersionsMinutesMinuteIdVersionsGetData>
@@ -951,12 +1021,12 @@ export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation =
       Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
     >
   ): UseMutationOptions<
-    unknown,
+    DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
     DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError,
     Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
   > => {
     const mutationOptions: UseMutationOptions<
-      unknown,
+      DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
       DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError,
       Options<DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostData>
     > = {

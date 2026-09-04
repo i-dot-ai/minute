@@ -22,7 +22,11 @@ export const PaginatedTranscriptions = () => {
     data: paginatedResponse,
     isLoading,
     error,
-  } = useTranscriptions({ page: currentPage, pageSize: PAGE_SIZE, expiring })
+  } = useTranscriptions({
+    page: currentPage,
+    pageSize: PAGE_SIZE,
+    filterBy: expiring ? 'expiring-soon' : undefined,
+  })
 
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
     router.replace(pathname + `?page=${paginatedResponse.total_pages}`)

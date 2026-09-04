@@ -27,6 +27,9 @@ import type {
   DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteData,
   DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteErrors,
   DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteResponses,
+  DeleteMinuteMinutesMinuteIdDeleteData,
+  DeleteMinuteMinutesMinuteIdDeleteErrors,
+  DeleteMinuteMinutesMinuteIdDeleteResponses,
   DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteData,
   DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteErrors,
   DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteResponses,
@@ -89,6 +92,9 @@ import type {
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchErrors,
   UpdateDataRetentionUsersDataRetentionPatchResponses,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchData,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchErrors,
+  UpdateDefaultTemplateUsersDefaultTemplatePatchResponses,
 } from './types.gen'
 
 export type Options<
@@ -301,6 +307,36 @@ export const updateDataRetentionUsersDataRetentionPatch = <
   })
 
 /**
+ * Update Default Template
+ *
+ * Set the current user's default template.
+ *
+ * Exactly one of template_id (a custom template owned by the user) or template_name (a
+ * system template) may be provided. Providing neither clears the default. Setting a new
+ * default overwrites the previous one, so there is only ever one default per user.
+ */
+export const updateDefaultTemplateUsersDefaultTemplatePatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateDefaultTemplateUsersDefaultTemplatePatchData,
+    ThrowOnError
+  >
+) =>
+  (options.client ?? client).patch<
+    UpdateDefaultTemplateUsersDefaultTemplatePatchResponses,
+    UpdateDefaultTemplateUsersDefaultTemplatePatchErrors,
+    ThrowOnError
+  >({
+    url: '/users/default-template',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+
+/**
  * List Minutes For Transcription
  */
 export const listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGet =
@@ -353,6 +389,20 @@ export const getMinuteMinutesMinutesIdGet = <
     GetMinuteMinutesMinutesIdGetErrors,
     ThrowOnError
   >({ url: '/minutes/{minutes_id}', ...options })
+
+/**
+ * Delete Minute
+ */
+export const deleteMinuteMinutesMinuteIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeleteMinuteMinutesMinuteIdDeleteData, ThrowOnError>
+) =>
+  (options.client ?? client).delete<
+    DeleteMinuteMinutesMinuteIdDeleteResponses,
+    DeleteMinuteMinutesMinuteIdDeleteErrors,
+    ThrowOnError
+  >({ url: '/minutes/{minute_id}', ...options })
 
 /**
  * List Minute Versions

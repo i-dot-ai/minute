@@ -12,37 +12,62 @@ export function PosthogBanner() {
     return null
   }
 
+  const isDismissed =
+    localStorage.getItem('posthog-banner-dismissed') === payload.title
+
+  if (isDismissed) {
+    return null
+  }
+
+  const handleDismiss = () => {
+    localStorage.setItem('posthog-banner-dismissed', payload.title || '')
+    window.location.reload()
+  }
+
   return (
-    <>
-      <div
-        className="govuk-notification-banner"
-        role="region"
-        aria-labelledby="govuk-notification-banner-title"
-        data-module="govuk-notification-banner"
-      >
-        <div className="govuk-notification-banner__header">
-          <h2
-            className="govuk-notification-banner__title"
-            id="govuk-notification-banner-title"
-          >
-            {payload.title || 'Important'}
-          </h2>
-        </div>
-        <div className="govuk-notification-banner__content">
-          <p className="govuk-notification-banner__heading">
-            {payload.message ||
-              'There is a problem with Minute. Our team is working to resolve this issue as quickly as possible. We apologise for any inconvenience'}
-            {payload.linkHref && (
-              <>
-                {' '}
-                <Link href={payload.linkHref} className="govuk-link">
-                  {payload.linkText || 'Learn more'}
-                </Link>
-              </>
-            )}
-          </p>
-        </div>
+    <div
+      className="govuk-!-padding-4 govuk-!-margin-bottom-4 bg-[#16548a] text-white"
+      role="region"
+      aria-labelledby="notification-banner-title"
+    >
+      <div className="flex items-start justify-between">
+        <h2
+          className="govuk-heading-s !text-white"
+          id="notification-banner-title"
+        >
+          {payload.title || 'Important'}
+        </h2>
+        <button className="govuk-link !text-white" onClick={handleDismiss}>
+          Dismiss
+        </button>
       </div>
-    </>
+      <details className="govuk-details govuk-!-margin-bottom-0">
+        <summary className="govuk-details__summary before:!text-white">
+          <span className="govuk-details__summary-text !text-white">
+            {payload.detailsText || 'See details'}
+          </span>
+        </summary>
+        <div className="govuk-details__text !text-white">
+          {payload.message || ''}
+          {payload.messageItems && (
+            <ul className="govuk-list govuk-list--bullet">
+              {payload.messageItems.map((item: string) => (
+                <li key={item} className="text-white">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          )}
+          {payload.linkHref && payload.linkText && (
+            <>
+              {' '}
+              <Link href={payload.linkHref} className="govuk-link !text-white">
+                {payload.linkText}
+              </Link>
+            </>
+          )}
+        </div>
+      </details>
+    </div>
   )
 }

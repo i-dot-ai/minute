@@ -1,19 +1,19 @@
 'use client'
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { SingleRecording } from '@/lib/client'
 import { Download } from 'lucide-react'
 import posthog from 'posthog-js'
 
 export const DownloadButton = ({
   recordings,
-  inverse = false,
 }: {
   recordings: SingleRecording[]
-  inverse?: boolean
 }) => {
   const onClick = (recording: SingleRecording) => () => {
     posthog.capture('recording_downloaded', {
@@ -28,34 +28,39 @@ export const DownloadButton = ({
         download
         role="button"
         onClick={onClick(recordings[0])}
-        className={`govuk-button ${inverse ? 'govuk-button--inverse' : 'govuk-button--secondary'}`}
+        className="govuk-button govuk-button--secondary sm:mb-0"
       >
         <Download className="size-4" /> Download audio
       </a>
     )
   }
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          className={`govuk-button ${inverse ? 'govuk-button--inverse' : 'govuk-button--secondary'}`}
-        >
+    <Dialog>
+      <DialogTrigger asChild>
+        <button className="govuk-button govuk-button--secondary sm:mb-0">
           <Download className="size-4" /> Download audio
         </button>
-      </PopoverTrigger>
-      <PopoverContent>
-        {recordings.map((recording) => (
-          <button key={recording.id} onClick={onClick(recording)}>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Download audio</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-2">
+          {recordings.map((recording) => (
             <a
+              key={recording.id}
               href={recording.url}
               download
-              className="govuk-button govuk-button--secondary"
+              role="button"
+              onClick={onClick(recording)}
+              className="govuk-button govuk-button--secondary sm:mb-0"
             >
-              <Download /> Download {recording.extension} file
+              <Download className="size-4" /> Download {recording.extension}{' '}
+              file
             </a>
-          </button>
-        ))}
-      </PopoverContent>
-    </Popover>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

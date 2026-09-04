@@ -9,7 +9,14 @@
   }
 }
 
-@media (min-width: 1260px) {
+@media (min-width: 1430px) {
+  .govuk-width-container:not(.govuk-width-container--with-secondary-nav) {
+    margin-right: auto;
+    margin-left: auto;
+  }
+}
+
+@media (min-width: 1670px) {
   .govuk-width-container {
     margin-right: auto;
     margin-left: auto;

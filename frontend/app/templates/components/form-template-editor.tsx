@@ -1,16 +1,10 @@
 'use client'
 
-import { ExampleTemplatesDialog } from '@/app/templates/components/example-templates-dialog'
-import { exampleFormTemplates } from '@/app/templates/data/example-templates'
 import { TemplateData } from '@/types/templates'
-import { ArrowDown, ArrowUp, Plus, Save } from 'lucide-react'
+import { ArrowDown, ArrowUp, Plus } from 'lucide-react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
 
-export const FormTemplateEditor = ({
-  onSubmit,
-}: {
-  onSubmit: (data: TemplateData) => void
-}) => {
+export const FormTemplateEditor = () => {
   const form = useFormContext<TemplateData>()
   const fieldArray = useFieldArray({
     control: form.control,
@@ -21,89 +15,25 @@ export const FormTemplateEditor = ({
     },
   })
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)}>
-      <div className="govuk-button-group">
-        <ExampleTemplatesDialog
-          examples={exampleFormTemplates}
-          onSelectTemplate={(template) => form.reset(template)}
-        />
-      </div>
-      <div className="text-red-600">
-        <p className="govuk-body">
-          {form.formState.errors.questions?.root?.message
-            ? form.formState.errors.questions?.root?.message
-            : null}
-        </p>
-        <p className="govuk-body">
-          {form.formState.errors.name?.message
-            ? form.formState.errors.name?.message
-            : null}
-        </p>
-        <p className="govuk-body">
-          {form.formState.errors.description?.message
-            ? form.formState.errors.description?.message
-            : null}
-        </p>
-      </div>
-      <h2 className="govuk-heading-l">Template details</h2>
-      <p className="govuk-body">
-        Add a name and description so you can find your template later. Name and
-        description are not used to generate your minute, any structure and
-        style instructions should be added to the template content field.
-      </p>
+    <>
       <div className="govuk-form-group">
-        <label className="govuk-label govuk-label--m" htmlFor="name">
-          Template name
-        </label>
-        <div id="name-hint" className="govuk-hint">
-          A short memorable name to help you find this template later.
-        </div>
-        <input
-          required
-          className="govuk-input"
-          id="name"
-          type="text"
-          {...form.register('name', {
-            required: { value: true, message: 'Template name required' },
-          })}
-        />
-      </div>
-      <div className="govuk-form-group">
-        <label className="govuk-label govuk-label--m" htmlFor="description">
-          Description
-        </label>
-        <div id="description-hint" className="govuk-hint">
-          A description to help identify the template, NOT a style guide or
-          instructions for the summary.
-        </div>
-        <input
-          className="govuk-input"
-          id="description"
-          {...form.register('description', {
-            required: { value: true, message: 'Description required' },
-          })}
-          aria-describedby="description-hint"
-        />
-      </div>
-      <h2 className="govuk-heading-l">Template content</h2>
-      <div className="govuk-form-group">
-        <label className="govuk-label govuk-label--m" htmlFor="content">
+        <label className="govuk-label govuk-label--s" htmlFor="styleGuide">
           Style guide
         </label>
-        <div id="content-hint" className="govuk-hint">
+        <div id="styleGuide-hint" className="govuk-hint">
           the &ldquo;Style guide&rdquo; to provide style guidance that will
           apply every question.
         </div>
         <textarea
-          className="govuk-textarea"
-          id="content"
+          className="govuk-textarea bg-white"
+          id="styleGuide"
           rows={10}
-          {...form.register('content')}
-          aria-describedby="content-hint"
+          {...form.register('styleGuide')}
+          aria-describedby="styleGuide-hint"
         />
       </div>
       <div className="govuk-form-group">
-        <label className="govuk-label govuk-label--m" htmlFor="questions">
+        <label className="govuk-label govuk-label--s" htmlFor="questions">
           Questions
         </label>
         <div id="questions-hint" className="govuk-hint">
@@ -114,85 +44,90 @@ export const FormTemplateEditor = ({
         </div>
         <ul className="govuk-list govuk-list--spaced">
           {fieldArray.fields.map((field, index, array) => (
-            <li key={field.id} className="govuk-summary-card">
-              <div>
-                <div className="govuk-summary-card__title-wrapper">
-                  <h3 className="govuk-summary-card__title">
-                    Question {index + 1}
-                  </h3>
-                  <ul className="govuk-summary-card__actions">
-                    <li className="govuk-summary-card__action">
-                      <button
-                        type="button"
-                        disabled={index === 0}
-                        className="govuk-button govuk-button--secondary govuk-!-margin-0"
-                        onClick={() => {
-                          fieldArray.swap(index, index - 1)
-                        }}
-                      >
-                        <ArrowUp className="size-4" /> Move up
-                      </button>
-                    </li>
-                    <li className="govuk-summary-card__action">
-                      <button
-                        type="button"
-                        className="govuk-button govuk-button--secondary govuk-!-margin-0"
-                        disabled={index === array.length - 1}
-                        onClick={() => {
-                          fieldArray.swap(index + 1, index)
-                        }}
-                      >
-                        <ArrowDown className="size-4" /> Move down
-                      </button>
-                    </li>
-                    <li className="govuk-summary-card__action">
-                      <button
-                        type="button"
-                        className="govuk-link link--warning align-sub"
-                        onClick={() => {
-                          fieldArray.remove(index)
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </li>
-                  </ul>
+            <li
+              key={field.id}
+              className="govuk-!-padding-4 govuk-!-margin-top-6 border-l-4 border-(--govuk-brand-colour) bg-[#d2e2f1]"
+            >
+              <div className="govuk-!-margin-bottom-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="govuk-form-group flex-1">
+                  <label
+                    className="govuk-label"
+                    htmlFor={`questions.${index}.title`}
+                  >
+                    Question text
+                  </label>
+                  <input
+                    className="govuk-input bg-white"
+                    id={`questions.${index}.title`}
+                    type="text"
+                    {...form.register(`questions.${index}.title`)}
+                  />
                 </div>
-                <div className="govuk-summary-card__content">
-                  <div className="govuk-form-group">
-                    <label
-                      className="govuk-label"
-                      htmlFor={`questions.${index}.title`}
+                <ul className="govuk-summary-card__actions flex-1">
+                  <li className="govuk-summary-card__action">
+                    <button
+                      type="button"
+                      disabled={index === 0}
+                      className="govuk-button govuk-button--tertiary govuk-!-margin-0"
+                      onClick={() => {
+                        fieldArray.swap(index, index - 1)
+                      }}
                     >
-                      Question text
-                    </label>
-                    <input
-                      className="govuk-input"
-                      id={`questions.${index}.title`}
-                      type="text"
-                      {...form.register(`questions.${index}.title`)}
-                    />
-                  </div>
-                  <div className="govuk-form-group">
-                    <label
-                      className="govuk-label"
-                      htmlFor={`questions.${index}.description`}
+                      <ArrowUp className="size-4" />{' '}
+                      <span className="govuk-visually-hidden">
+                        Move up question {index + 1}
+                      </span>
+                    </button>
+                  </li>
+                  <li className="govuk-summary-card__action">
+                    <button
+                      type="button"
+                      className="govuk-button govuk-button--tertiary govuk-!-margin-0"
+                      disabled={index === array.length - 1}
+                      onClick={() => {
+                        fieldArray.swap(index + 1, index)
+                      }}
                     >
-                      Question description
-                    </label>
-                    <div id="questions-description-hint" className="govuk-hint">
-                      A description of how to answer the question, what
-                      information to include, and style guidance.
-                    </div>
-                    <textarea
-                      className="govuk-textarea"
-                      id={`questions.${index}.description`}
-                      rows={3}
-                      {...form.register(`questions.${index}.description`)}
-                      aria-describedby="questions-description-hint"
-                    ></textarea>
-                  </div>
+                      <ArrowDown className="size-4" />{' '}
+                      <span className="govuk-visually-hidden">
+                        Move down question {index + 1}
+                      </span>
+                    </button>
+                  </li>
+                  <li className="govuk-summary-card__action">
+                    <button
+                      type="button"
+                      className="govuk-link link--warning align-sub"
+                      onClick={() => {
+                        fieldArray.remove(index)
+                      }}
+                    >
+                      Delete{' '}
+                      <span className="govuk-visually-hidden">
+                        question {index + 1}
+                      </span>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              <div className="govuk-form-group">
+                <label
+                  className="govuk-label"
+                  htmlFor={`questions.${index}.description`}
+                >
+                  Question description
+                </label>
+                <div id="questions-description-hint" className="govuk-hint">
+                  A description of how to answer the question, what information
+                  to include, and style guidance.
                 </div>
+                <textarea
+                  className="govuk-textarea govuk-!-margin-bottom-0 bg-white"
+                  id={`questions.${index}.description`}
+                  rows={3}
+                  {...form.register(`questions.${index}.description`)}
+                  aria-describedby="questions-description-hint"
+                ></textarea>
               </div>
             </li>
           ))}
@@ -211,12 +146,6 @@ export const FormTemplateEditor = ({
           <Plus className="size-4" /> Add question
         </button>
       </div>
-      <div className="govuk-button-group">
-        <button type="submit" className="govuk-button govuk-button--start">
-          <Save />
-          Save template
-        </button>
-      </div>
-    </form>
+    </>
   )
 }

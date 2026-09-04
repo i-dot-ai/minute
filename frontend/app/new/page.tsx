@@ -1,105 +1,57 @@
-import Link from 'next/link'
+'use client'
 
-export default function NewTranscriptPage() {
+import { MicRecorderForm } from '@/components/audio/mic-recorder'
+import { TabRecorderForm } from '@/components/audio/tab-recorder/tab-recorder'
+import { useRecordingSession } from '@/providers/recording-session-provider'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+
+export default function RecordPage() {
+  const router = useRouter()
+  const { mode, screenStream, devices, selectedDeviceId, reset } =
+    useRecordingSession()
+
+  const missingSession = !mode || (mode === 'virtual-meeting' && !screenStream)
+
+  useEffect(() => {
+    if (missingSession) router.replace('/')
+  }, [missingSession, router])
+
+  if (missingSession) return null
+
+  const handleStarted = (id: string) => router.push(`/new/status/${id}`)
+  const handleDiscard = () => {
+    reset()
+    router.push('/')
+  }
+
   return (
-    <>
-      <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">
-        <ol className="govuk-breadcrumbs__list">
-          <li className="govuk-breadcrumbs__list-item">
-            <Link className="govuk-breadcrumbs__link" href="/">
-              Home
-            </Link>
-          </li>
-        </ol>
-      </nav>
+    <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
-        <div className="govuk-grid-column-two-thirds">
-          <h1 className="govuk-heading-xl">Start a new transcription</h1>
-          <p className="govuk-body-l">
-            There are three ways to start a new transcription:
+        <div className="govuk-grid-column-full">
+          <h1 className="govuk-heading-l">Record a meeting</h1>
+          <p className="govuk-hint">
+            Please ensure that all participants are aware that they have been
+            recorded. Suitable up to <strong>OFFICIAL SENSITIVE</strong>.
           </p>
+          {mode === 'in-person' ? (
+            <MicRecorderForm
+              initialDevices={devices}
+              initialDeviceId={selectedDeviceId}
+              onDiscard={handleDiscard}
+              onStarted={handleStarted}
+            />
+          ) : (
+            <TabRecorderForm
+              initialDevices={devices}
+              initialDeviceId={selectedDeviceId}
+              screenStream={screenStream}
+              onDiscard={handleDiscard}
+              onStarted={handleStarted}
+            />
+          )}
         </div>
       </div>
-      <div className="govuk-grid-row" data-onboarding="new-transcription-page">
-        <div className="govuk-grid-column-one-third govuk-!-margin-bottom-4">
-          <div className="govuk-!-padding-4 bg-[#8eb8dc]">
-            <h2 className="govuk-heading-l">Record an in person meeting</h2>
-            <div className="govuk-button-group">
-              <Link
-                href="/new/record-audio"
-                role="button"
-                className="govuk-button govuk-button--start govuk-button--inverse govuk-!-margin-top-3"
-              >
-                Record audio
-                <svg
-                  className="govuk-button__start-icon"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="17.5"
-                  height="19"
-                  viewBox="0 0 33 40"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
-                </svg>
-              </Link>
-            </div>
-          </div>
-        </div>
-        <div className="govuk-grid-column-one-third govuk-!-margin-bottom-4">
-          <div className="govuk-!-padding-4 bg-[#8eb8dc]">
-            <h2 className="govuk-heading-l">Record a virtual meeting</h2>
-            <div className="govuk-button-group">
-              <Link
-                href="/new/record-virtual"
-                role="button"
-                className="govuk-button govuk-button--start govuk-button--inverse govuk-!-margin-top-3"
-              >
-                Record a tab
-                <svg
-                  className="govuk-button__start-icon"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="17.5"
-                  height="19"
-                  viewBox="0 0 33 40"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
-                </svg>
-              </Link>
-            </div>
-          </div>
-        </div>
-        <div className="govuk-grid-column-one-third govuk-!-margin-bottom-4">
-          <div className="govuk-!-padding-4 bg-[#8eb8dc]">
-            <h2 className="govuk-heading-l">
-              Upload a file from your computer
-            </h2>
-            <div className="govuk-button-group">
-              <Link
-                href="/new/upload"
-                draggable
-                role="button"
-                className="govuk-button govuk-button--start govuk-button--inverse govuk-!-margin-top-3"
-              >
-                Upload a file
-                <svg
-                  className="govuk-button__start-icon"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="17.5"
-                  height="19"
-                  viewBox="0 0 33 40"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
-                </svg>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+    </div>
   )
 }

@@ -1,33 +1,54 @@
 'use client'
 
-import { Mic } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
-import {
-  AudioDevice,
-  MicrophonePermission,
-} from '@/components/audio/microphone-permission'
+import { AudioDevice } from '@/components/audio/microphone-permission'
 import RecordingControl from '@/components/audio/recording-control'
-import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
-import { InstructionsTabs } from '@/components/audio/tab-recorder/instructions'
 import { TranscriptionForm } from '@/components/audio/types'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
-import { getFileExtensionFromBlob } from '@/lib/getFileExtension'
+import { RecordingFinishedState } from '@/components/audio/recording-finished-state'
 
-export const TabRecorderForm = () => {
-  const { isPending, onSubmit, form } = useStartTranscription()
+export const TabRecorderForm = ({
+  initialDeviceId,
+  initialDevices,
+  screenStream,
+  onDiscard,
+  onStarted,
+}: {
+  initialDeviceId?: string
+  initialDevices?: AudioDevice[]
+  screenStream?: MediaStream | null
+  onDiscard?: () => void
+  onStarted?: (transcriptionId: string) => void
+} = {}) => {
+  const { isPending, isError, onSubmit, form } = useStartTranscription(
+    undefined,
+    onStarted
+  )
   const watchBlob = form.watch('file')
+  // Set when the user chooses "Generate summary" in the stop dialog. Stopping the
+  // recorder is async, so we wait for the audio blob to land before submitting.
+  const [generateRequested, setGenerateRequested] = useState(false)
+  const isFinishing = generateRequested || isPending
+
+  useEffect(() => {
+    if (generateRequested && watchBlob) {
+      setGenerateRequested(false)
+      form.handleSubmit(onSubmit)()
+    }
+  }, [generateRequested, watchBlob, form, onSubmit])
 
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
+        {isFinishing && <RecordingFinishedState />}
         <Controller
           control={form.control}
           name="file"
@@ -35,13 +56,24 @@ export const TabRecorderForm = () => {
             <TabRecorder
               recordedAudio={value}
               setRecordedAudio={(blob) => onChange(blob)}
+              initialDeviceId={initialDeviceId}
+              initialDevices={initialDevices}
+              initialScreenStream={screenStream}
+              onDiscard={onDiscard}
+              onGenerate={() => setGenerateRequested(true)}
             />
           )}
         />
-        <StartTranscriptionSection
-          isShowing={!!watchBlob}
-          isPending={isPending}
-        />
+        {isError && (
+          <div className="govuk-!-margin-top-4">
+            <p className="govuk-body">
+              Something went wrong starting your summary. Please try again.
+            </p>
+            <button type="button" onClick={onDiscard} className="govuk-button">
+              Start again
+            </button>
+          </div>
+        )}
       </form>
     </FormProvider>
   )
@@ -50,27 +82,34 @@ export const TabRecorderForm = () => {
 function TabRecorder({
   setRecordedAudio,
   recordedAudio,
+  initialDeviceId,
+  initialDevices,
+  initialScreenStream,
+  onDiscard,
+  onGenerate,
 }: {
   recordedAudio: Blob | null
   setRecordedAudio: (blob: Blob | null) => void
+  initialDeviceId?: string
+  initialDevices?: AudioDevice[]
+  initialScreenStream?: MediaStream | null
+  onDiscard?: () => void
+  onGenerate?: () => void
 }) {
+  // When a device is handed in pre-resolved (from the home page), permission is
+  // already granted upstream — so skip the cold flow and start recording immediately.
+  const autoStart = !!(initialDeviceId && initialDevices?.length)
   const { requestWakeLock, releaseWakeLock } = useWakeLock()
   const { updateRecording, addRecording, removeRecording } = useRecordingDb()
   const [err, setError] = useState<string | null>(null)
   const [isRecording, setIsRecording] = useState(false)
-  const [discardDialogOpen, setDiscardDialogOpen] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  // Set when discarding mid-recording so onstop drops the audio instead of saving it.
+  const discardingRef = useRef(false)
   const audioContext = useRef<AudioContext | null>(null)
   const recordingGain = useRef<GainNode | null>(null)
   const form = useFormContext<TranscriptionForm>()
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const [permissionGranted, setPermissionGranted] = useState<boolean>(false)
-  const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
-  const handlePermissionGranted = (devices: AudioDevice[]) => {
-    setAudioDevices(devices)
-    setSelectedDeviceId(devices[0].deviceId)
-    setPermissionGranted(true)
-    setError(null)
-  }
+  const selectedDeviceId = initialDeviceId ?? ''
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const mediaChunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
@@ -92,7 +131,16 @@ function TabRecorder({
     }
     streamRef.current = null
     micStreamRef.current = null
+    screenStreamRef.current = null
     mediaRecorderRef.current = null
+
+    // Close the audio context here (on actual stop) rather than in a mount
+    // cleanup — under Strict Mode the mount cleanup fires mid-start and would
+    // close the freshly created context, silencing the recording.
+    if (audioContext.current) {
+      audioContext.current.close().catch(console.error)
+      audioContext.current = null
+    }
 
     setIsRecording(false)
     releaseWakeLock()
@@ -123,14 +171,6 @@ function TabRecorder({
       stopRecording()
     }
   }, [stopRecording])
-  // Clean up audio context on page unmount
-  useEffect(() => {
-    return () => {
-      if (audioContext.current) {
-        audioContext.current.close().catch(console.error)
-      }
-    }
-  }, [])
 
   // Handle pause state changes
   const handlePauseStateChange = useCallback((paused: boolean) => {
@@ -149,17 +189,11 @@ function TabRecorder({
     mediaChunksRef.current = []
 
     try {
-      if (!navigator.mediaDevices?.getDisplayMedia) {
-        throw new Error(
-          'Screen capture is not supported in this browser. Please use Chrome or Edge.'
-        )
+      // The home page opens the share picker on click and hands the stream in.
+      const screenStream = initialScreenStream
+      if (!screenStream) {
+        throw new Error('No screen share available. Please start again.')
       }
-
-      // First get the display media stream (tab capture)
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true, // Request video without specific constraints
-        audio: true, // Request audio
-      })
 
       // Check if we have an audio track from the tab
       if (!screenStream.getAudioTracks().length) {
@@ -173,6 +207,12 @@ function TabRecorder({
 
       // Create a new audio context for processing audio and for pausing
       const newAudioContext = new AudioContext()
+      // Browsers create the context suspended unless started from a user gesture.
+      // Since recording now auto-starts after the share picker, resume it so audio
+      // actually flows into the recording destination.
+      if (newAudioContext.state === 'suspended') {
+        await newAudioContext.resume()
+      }
       const destination = newAudioContext.createMediaStreamDestination()
       audioContext.current = newAudioContext
 
@@ -244,6 +284,17 @@ function TabRecorder({
       }
 
       mediaRecorder.onstop = async () => {
+        if (discardingRef.current) {
+          discardingRef.current = false
+          setRecordedAudio(null)
+          const recordingId = form.getValues('recordingId')
+          if (recordingId) {
+            await removeRecording(recordingId)
+          }
+          stopAllTracks()
+          onDiscard?.()
+          return
+        }
         if (mediaChunksRef.current.length > 0) {
           const audioBlob = new Blob(mediaChunksRef.current, {
             type: 'audio/webm',
@@ -274,6 +325,9 @@ function TabRecorder({
   }, [
     addRecording,
     form,
+    initialScreenStream,
+    onDiscard,
+    removeRecording,
     requestWakeLock,
     selectedDeviceId,
     setRecordedAudio,
@@ -281,101 +335,37 @@ function TabRecorder({
     updateRecording,
   ])
 
-  if (!permissionGranted || !audioDevices.length) {
-    return (
-      <MicrophonePermission
-        onPermissionGranted={handlePermissionGranted}
-        onError={setError}
-      />
-    )
-  }
+  const hasAutoStarted = useRef(false)
+  useEffect(() => {
+    if (autoStart && !hasAutoStarted.current) {
+      hasAutoStarted.current = true
+      startRecording()
+    }
+  }, [autoStart, startRecording])
 
   return (
     <div className="space-y-4">
-      {recordedAudio ? (
-        <div className="govuk-grid-row">
-          <div className="govuk-grid-column-one-third">
-            <h2 className="govuk-heading-m">Your recording:</h2>
-          </div>
-          <div className="govuk-grid-column-two-thirds">
-            <audio
-              src={URL.createObjectURL(recordedAudio)}
-              controls
-              className="w-full"
-            />
-            <div className="govuk-button-group govuk-!-margin-top-2">
-              <a
-                role="button"
-                href={URL.createObjectURL(recordedAudio)}
-                download={`audio-file.${getFileExtensionFromBlob(recordedAudio)}`}
-                className="govuk-button govuk-button--secondary"
-              >
-                Download audio
-              </a>
-              <button
-                type="button"
-                className="govuk-link link--warning"
-                onClick={() => setDiscardDialogOpen(true)}
-              >
-                Discard recording
-              </button>
-            </div>
-          </div>
-        </div>
+      {isRecording ? (
+        <RecordingControl
+          stream={streamRef.current}
+          isRecording={isRecording}
+          onStopRecording={stopRecording}
+          onPauseStateChange={handlePauseStateChange}
+          onDiscard={() => setIsDialogOpen(true)}
+          onGenerate={onGenerate}
+        />
       ) : (
-        <div className="govuk-grid-row">
-          <div className="govuk-grid-column-two-thirds">
-            {!isRecording ? (
-              <>
-                <InstructionsTabs />
-                <p className="govuk-body">
-                  Remember to inform all participants that they are being
-                  recorded.
-                </p>
-                <div className="govuk-form-group">
-                  <h2>
-                    <label
-                      className="govuk-label govuk-label--l"
-                      htmlFor="microphone"
-                    >
-                      Choose microphone
-                    </label>
-                  </h2>
-                  <select
-                    className="govuk-select"
-                    id="microphone"
-                    name="microphone"
-                    value={selectedDeviceId}
-                    onChange={(e) => setSelectedDeviceId(e.target.value)}
-                  >
-                    {audioDevices.map((device) => (
-                      <option key={device.deviceId} value={device.deviceId}>
-                        {device.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button
-                  type="button"
-                  onClick={startRecording}
-                  className="govuk-button govuk-button--start"
-                >
-                  <Mic className="mr-2 size-4" />
-                  Start recording
-                </button>
-              </>
-            ) : (
-              <div className="space-y-4">
-                <RecordingControl
-                  stream={streamRef.current}
-                  isRecording={isRecording}
-                  onStopRecording={stopRecording}
-                  onPauseStateChange={handlePauseStateChange}
-                />
-              </div>
-            )}
+        err && (
+          <div className="govuk-button-group">
+            <button
+              type="button"
+              onClick={() => onDiscard?.()}
+              className="govuk-link link--warning"
+            >
+              Back
+            </button>
           </div>
-        </div>
+        )
       )}
 
       {err && (
@@ -383,16 +373,24 @@ function TabRecorder({
           <AlertDescription>{err}</AlertDescription>
         </Alert>
       )}
+
       <DiscardConfirmDialog
-        open={discardDialogOpen}
-        setOpen={setDiscardDialogOpen}
+        open={isDialogOpen}
+        setOpen={setIsDialogOpen}
         onClickConfirm={() => {
+          setIsDialogOpen(false)
+          // Mid-recording: stop first; onstop handles cleanup once the recorder flushes.
+          if (isRecording && mediaRecorderRef.current) {
+            discardingRef.current = true
+            stopRecording()
+            return
+          }
           setRecordedAudio(null)
-          setDiscardDialogOpen(false)
           const recordingId = form.getValues('recordingId')
           if (recordingId) {
             removeRecording(recordingId)
           }
+          onDiscard?.()
         }}
       />
     </div>

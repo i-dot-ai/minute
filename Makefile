@@ -67,6 +67,41 @@ stop:
 	docker compose down
 
 
+## Database
+# POSTGRES_HOST is forced to localhost because .env may point at the container name.
+ALEMBIC = $(ENV_SH) POSTGRES_HOST=localhost uv run alembic
+
+.PHONY: db-reset db-migrate db-migrate-down db-migrate-up db-migrate-history db-migrate-current db-migrate-create
+
+db-reset:  
+	@echo "About to DESTROY all data in database '$(POSTGRES_DB)' of the 'minute' compose project."
+	@echo "Press Ctrl-C within 5 seconds to abort."
+	@sleep 5
+	docker compose exec -T db psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) -c \
+		"DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO postgres; GRANT ALL ON SCHEMA public TO public;"
+	$(ALEMBIC) upgrade head
+	@echo "Database reset complete."
+
+db-migrate:  
+	$(ALEMBIC) upgrade head
+
+db-migrate-down:  
+	$(ALEMBIC) downgrade -1
+
+db-migrate-up:  
+	$(ALEMBIC) upgrade +1
+
+db-migrate-history:  
+	$(ALEMBIC) history
+
+db-migrate-current:  
+	$(ALEMBIC) current
+
+db-migrate-create:  
+	@test -n "$(name)" || (echo "Pass a name: make db-migrate-create name=\"add_user_table\"" && exit 1)
+	$(ALEMBIC) revision --autogenerate -m "$(name)"
+
+
 .PHONY: generate_aws_diagram
 generate_aws_diagram:
 	uv sync --group dev

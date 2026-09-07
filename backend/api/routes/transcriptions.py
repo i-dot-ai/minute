@@ -47,6 +47,7 @@ transcription_queue_service = get_queue_service(
 
 logger = logging.getLogger(__name__)
 
+
 def _next_cleanup_cutoff(retention_days: int) -> datetime:
     """Records created before this instant get deleted at the next cleanup run (23:00 UTC daily)."""
     now = datetime.now(UTC)

@@ -7,6 +7,11 @@ from pydantic import BaseModel, Field
 from common.database.postgres_models import ContentSource, DialogueEntry, HallucinationType, JobStatus, TemplateType
 
 
+class TranscriptionListFilter(StrEnum):
+    EXPIRING_SOON = "expiring-soon"
+    FAILED = "failed"
+
+
 class TranscriptionMetadata(BaseModel):
     """Pydantic model for transcription metadata."""
 
@@ -85,10 +90,17 @@ class GetUserResponse(BaseModel):
     updated_datetime: datetime
     email: str
     data_retention_days: int | None
+    default_template_id: uuid.UUID | None = None
+    default_template_name: str | None = None
 
 
 class DataRetentionUpdateResponse(BaseModel):
     data_retention_days: int | None
+
+
+class SetDefaultTemplateRequest(BaseModel):
+    template_id: uuid.UUID | None = None
+    template_name: str | None = None
 
 
 class TranscriptionGetResponse(BaseModel):
@@ -115,9 +127,13 @@ class MinuteListItem(BaseModel):
 
 
 class MinutesCreateRequest(BaseModel):
-    template_name: str = Field(description="Name of the template to use for the minutes")
+    template_name: str | None = Field(description="Name of the template to use for the minutes", default=None)
     template_id: uuid.UUID | None = Field(description="Optional id of user template", default=None)
     agenda: str | None = Field(description="The agenda for the meeting", default=None)
+    source_minute_id: uuid.UUID | None = Field(
+        description="If set, copy template_name, user_template_id and agenda from this minute",
+        default=None,
+    )
 
 
 class AiEdit(BaseModel):
@@ -220,6 +236,7 @@ class TemplateMetadata(BaseModel):
     description: str
     category: str
     agenda_usage: AgendaUsage
+    is_default: bool = False
 
 
 class CreateQuestion(BaseModel):
@@ -247,6 +264,7 @@ class TemplateResponse(BaseModel):
     description: str
     type: TemplateType
     questions: list[Question] | None
+    is_default: bool = False
 
 
 class CreateUserTemplateRequest(BaseModel):

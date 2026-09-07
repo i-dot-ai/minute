@@ -25,14 +25,17 @@ ga_only_template_metadata = [template for template in all_template_metadata if t
 
 
 @templates_router.get("/templates")
-def get_templates(user: UserDep) -> list[TemplateMetadata]:  # noqa: ARG001
+def get_templates(user: UserDep) -> list[TemplateMetadata]:
     """Get metadata for all templates."""
     # currently we have no beta templates. Uncomment this code to enable this feature
     # if posthog_client and posthog_client.get_feature_flag("beta-templates", user.email):
     #     return all_template_metadata
     # else:
     #     return ga_only_template_metadata
-    return ga_only_template_metadata
+    return [
+        template.model_copy(update={"is_default": template.name == user.default_template_name})
+        for template in ga_only_template_metadata
+    ]
 
 
 @templates_router.get("/user-templates")
@@ -54,6 +57,7 @@ async def get_user_templates(user: UserDep, session: SQLSessionDep) -> list[Temp
             description=template.description,
             type=template.type,
             questions=None,
+            is_default=template.id == user.default_template_id,
         )
         for template in templates
     ]
@@ -85,6 +89,7 @@ async def get_user_template(user: UserDep, session: SQLSessionDep, template_id: 
             Question(id=question.id, title=question.title, description=question.description, position=question.position)
             for question in template.questions
         ],
+        is_default=template.id == user.default_template_id,
     )
 
 
@@ -171,7 +176,7 @@ async def delete_user_template(user: UserDep, session: SQLSessionDep, template_i
 
 
 @templates_router.post("/user-templates/{template_id}/duplicate")
-async def duplicate_user_template(user: UserDep, session: SQLSessionDep, template_id: UUID) -> None:
+async def duplicate_user_template(user: UserDep, session: SQLSessionDep, template_id: UUID) -> UUID:
     original_template = (
         await session.exec(
             select(UserTemplate)
@@ -201,3 +206,5 @@ async def duplicate_user_template(user: UserDep, session: SQLSessionDep, templat
 
     session.add(template)
     await session.commit()
+
+    return template.id

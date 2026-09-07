@@ -57,22 +57,44 @@ async def list_minutes_for_transcription(
 @minutes_router.post("/transcription/{transcription_id}/minutes")
 async def create_minute(
     transcription_id: uuid.UUID, request: MinutesCreateRequest, session: SQLSessionDep, user: UserDep
-):
+) -> MinuteListItem:
     transcription = await session.get(Transcription, transcription_id)
     if not transcription or transcription.user_id != user.id:
         raise HTTPException(404, "Not found")
+    if request.source_minute_id:
+        source_minute = await session.get(Minute, request.source_minute_id)
+        if not source_minute or source_minute.transcription_id != transcription_id:
+            raise HTTPException(404, "Source minute not found")
+        template_name = source_minute.template_name
+        user_template_id = source_minute.user_template_id
+        agenda = source_minute.agenda
+    else:
+        if request.template_name is None:
+            raise HTTPException(422, "template_name is required when source_minute_id is not provided")
+        template_name = request.template_name
+        user_template_id = request.template_id
+        agenda = request.agenda
     minute = Minute(
         transcription_id=transcription_id,
-        template_name=request.template_name,
-        agenda=request.agenda,
-        user_template_id=request.template_id,
+        template_name=template_name,
+        agenda=agenda,
+        user_template_id=user_template_id,
     )
     session.add(minute)
     minute_version = MinuteVersion(id=uuid.uuid4(), minute_id=minute.id)
     session.add(minute_version)
     await session.commit()
     await session.refresh(minute_version)
+    await session.refresh(minute)
     llm_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
+    return MinuteListItem(
+        id=minute.id,
+        created_datetime=minute.created_datetime,
+        updated_datetime=minute.updated_datetime,
+        transcription_id=minute.transcription_id,
+        template_name=minute.template_name,
+        agenda=minute.agenda,
+    )
 
 
 @minutes_router.get("/minutes/{minutes_id}")
@@ -88,6 +110,17 @@ async def get_minute(minutes_id: uuid.UUID, session: SQLSessionDep, user: UserDe
         raise HTTPException(404, "Not found")
 
     return minute
+
+
+@minutes_router.delete("/minutes/{minute_id}", status_code=204)
+async def delete_minute(minute_id: uuid.UUID, session: SQLSessionDep, user: UserDep) -> None:
+    query = select(Minute).where(Minute.id == minute_id).options(selectinload(Minute.transcription))
+    minute = (await session.exec(query)).first()
+    if not minute or not minute.transcription.user_id or minute.transcription.user_id != user.id:
+        raise HTTPException(404, "Not found")
+
+    await session.delete(minute)
+    await session.commit()
 
 
 @minutes_router.get("/minutes/{minute_id}/versions")

@@ -1,46 +1,58 @@
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Dispatch, SetStateAction } from 'react'
+
 export const DiscardConfirmDialog = ({
   open,
   setOpen,
   onClickConfirm,
+  title = 'Are you sure you want to discard your recording?',
+  description = 'Your recording has not been uploaded yet. Discarding it will delete the recording permanently.',
+  confirmLabel = 'Discard recording',
 }: {
   open: boolean
   setOpen: Dispatch<SetStateAction<boolean>>
   onClickConfirm: () => void
+  title?: string
+  description?: string
+  confirmLabel?: string
 }) => {
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent>
-        <DialogTitle className="govuk-heading-l">
-          Are you sure you want to discard your recording?
-        </DialogTitle>
-        <DialogDescription className="govuk-body">
-          Your recording has not been uploaded yet. Discarding it will delete
-          the recording permanently.
-        </DialogDescription>
-        <div className="govuk-button-group">
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="govuk-heading-l">
+            {title}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="govuk-body">
+            {description}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="govuk-button-group sm:justify-end">
+          <AlertDialogCancel asChild>
+            <button
+              type="button"
+              className="govuk-button govuk-button--secondary !no-underline"
+            >
+              Cancel
+            </button>
+          </AlertDialogCancel>
           <button
             type="button"
             onClick={onClickConfirm}
             className="govuk-button govuk-button--warning"
           >
-            Discard recording
+            {confirmLabel}
           </button>
-          <button
-            type="button"
-            className="govuk-button govuk-button--secondary"
-            onClick={() => setOpen(false)}
-          >
-            Cancel
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

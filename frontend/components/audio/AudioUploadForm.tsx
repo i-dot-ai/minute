@@ -2,13 +2,18 @@
 
 import { useGovukModule } from '@/hooks/use-govuk-module'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
+import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { FormProvider } from 'react-hook-form'
-import { StartTranscriptionSection } from './start-transcription-section'
+import { GenerateSummaryDialog } from './generate-summary-dialog'
 
 export const AudioUploadForm = () => {
-  const { isPending, onSubmit, form } = useStartTranscription()
+  const router = useRouter()
+  const { isPending, onSubmit, form } = useStartTranscription(undefined, (id) =>
+    router.push(`/new/status/${id}`)
+  )
   const [fileError, setFileError] = useState<string | null>(null)
+  const [open, setOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const file = form.watch('file')
@@ -36,54 +41,64 @@ export const AudioUploadForm = () => {
     input.addEventListener('change', handler)
     return () => input.removeEventListener('change', handler)
   }, [form])
+
   return (
-    <>
-      <FormProvider {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="govuk-grid-row govuk-!-margin-bottom-6">
-            <div className="govuk-grid-column-one-third">
-              <label
-                className="govuk-label govuk-fieldset__legend--m"
-                htmlFor="file-upload"
-                id="file-upload-label"
-              >
-                Select a file to upload
-              </label>
+    <FormProvider {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="govuk-!-margin-top-7"
+      >
+        <label
+          className="govuk-label govuk-fieldset__legend--s"
+          htmlFor="file-upload"
+          id="file-upload-label"
+        >
+          Select a file to upload
+        </label>
 
-              <div id="file-upload-hint" className="govuk-hint">
-                Maximum file size: 5GB. Please ensure that all participants are
-                aware that they have been recorded.
-              </div>
-            </div>
+        <div id="file-upload-hint" className="govuk-hint">
+          Maximum file size: 5GB.
+        </div>
 
-            <div className="govuk-grid-column-two-thirds">
-              {fileError && (
-                <p id="file-upload-error" className="govuk-error-message">
-                  <span className="govuk-visually-hidden">Error:</span>
-                  {fileError}
-                </p>
-              )}
-              <div
-                ref={wrapperRef}
-                className="govuk-file-upload-wrapper"
-                data-module="govuk-file-upload"
-              >
-                <input
-                  ref={inputRef}
-                  className="govuk-file-upload"
-                  id="file-upload"
-                  name="file"
-                  type="file"
-                  accept="audio/*,video/*"
-                  aria-describedby="file-upload-hint file-upload-error"
-                />
-              </div>
-            </div>
-          </div>
+        {fileError && (
+          <p id="file-upload-error" className="govuk-error-message">
+            <span className="govuk-visually-hidden">Error:</span>
+            {fileError}
+          </p>
+        )}
+        <div
+          ref={wrapperRef}
+          className="govuk-file-upload-wrapper"
+          data-module="govuk-file-upload"
+        >
+          <input
+            ref={inputRef}
+            className="govuk-file-upload"
+            id="file-upload"
+            name="file"
+            type="file"
+            accept="audio/*,video/*"
+            aria-describedby="file-upload-hint file-upload-error"
+          />
+        </div>
 
-          <StartTranscriptionSection isShowing={!!file} isPending={isPending} />
-        </form>
-      </FormProvider>
-    </>
+        {file && (
+          <button
+            type="button"
+            className="govuk-button govuk-button--start govuk-!-margin-top-4"
+            onClick={() => setOpen(true)}
+          >
+            Upload file
+          </button>
+        )}
+
+        <GenerateSummaryDialog
+          open={open}
+          onOpenChange={setOpen}
+          onConfirm={form.handleSubmit(onSubmit)}
+          disabled={isPending}
+        />
+      </form>
+    </FormProvider>
   )
 }

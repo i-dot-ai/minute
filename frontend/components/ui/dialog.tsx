@@ -4,6 +4,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { XIcon } from 'lucide-react'
 import * as React from 'react'
 
+import { handleModalOpenAutoFocus } from '@/components/ui/modal-focus'
 import { cn } from '@/lib/utils'
 
 function Dialog({
@@ -47,7 +48,7 @@ const DialogOverlay = React.forwardRef<
   )
 })
 
-const wideModalClasses = 'max-h-[90vh] overflow-auto sm:max-w-4xl lg:max-w-5xl'
+const wideModalClasses = 'max-h-[90vh] overflow-auto sm:max-w-4xl lg:max-w-4xl'
 
 const DialogContent = React.forwardRef<
   HTMLDivElement,
@@ -56,7 +57,14 @@ const DialogContent = React.forwardRef<
     wideModal?: boolean
   }
 >(function DialogContent(
-  { className, children, showCloseButton = true, wideModal = false, ...props },
+  {
+    className,
+    children,
+    showCloseButton = true,
+    wideModal = false,
+    onOpenAutoFocus,
+    ...props
+  },
   ref
 ) {
   return (
@@ -65,10 +73,13 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg',
+          'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg',
           wideModal && wideModalClasses,
           className
         )}
+        onOpenAutoFocus={(event) =>
+          handleModalOpenAutoFocus(event, onOpenAutoFocus)
+        }
         {...props}
         ref={ref}
       >
@@ -117,7 +128,11 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('text-lg leading-none font-semibold', className)}
+      tabIndex={-1}
+      className={cn(
+        'text-lg leading-none font-semibold outline-none',
+        className
+      )}
       {...props}
     />
   )

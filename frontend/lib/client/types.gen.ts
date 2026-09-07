@@ -182,6 +182,14 @@ export type GetUserResponse = {
    * Data Retention Days
    */
   data_retention_days: number | null
+  /**
+   * Default Template Id
+   */
+  default_template_id?: string | null
+  /**
+   * Default Template Name
+   */
+  default_template_name?: string | null
 }
 
 /**
@@ -361,7 +369,7 @@ export type MinutesCreateRequest = {
    *
    * Name of the template to use for the minutes
    */
-  template_name: string
+  template_name?: string | null
   /**
    * Template Id
    *
@@ -374,6 +382,12 @@ export type MinutesCreateRequest = {
    * The agenda for the meeting
    */
   agenda?: string | null
+  /**
+   * Source Minute Id
+   *
+   * If set, copy template_name, user_template_id and agenda from this minute
+   */
+  source_minute_id?: string | null
 }
 
 /**
@@ -473,6 +487,20 @@ export type RecordingCreateResponse = {
 }
 
 /**
+ * SetDefaultTemplateRequest
+ */
+export type SetDefaultTemplateRequest = {
+  /**
+   * Template Id
+   */
+  template_id?: string | null
+  /**
+   * Template Name
+   */
+  template_name?: string | null
+}
+
+/**
  * SingleRecording
  */
 export type SingleRecording = {
@@ -507,6 +535,10 @@ export type TemplateMetadata = {
    */
   category: string
   agenda_usage: AgendaUsage
+  /**
+   * Is Default
+   */
+  is_default?: boolean
 }
 
 /**
@@ -538,6 +570,10 @@ export type TemplateResponse = {
    * Questions
    */
   questions: Array<Question> | null
+  /**
+   * Is Default
+   */
+  is_default?: boolean
 }
 
 /**
@@ -646,6 +682,11 @@ export type TranscriptionGetResponse = {
 }
 
 /**
+ * TranscriptionListFilter
+ */
+export type TranscriptionListFilter = 'expiring-soon' | 'failed'
+
+/**
  * TranscriptionMetadata
  *
  * Pydantic model for transcription metadata.
@@ -743,9 +784,15 @@ export type ListTranscriptionsTranscriptionsGetData = {
      */
     page_size?: number
     /**
-     * Expiring
+     * Filter By
      */
-    expiring?: boolean
+    filter_by?: TranscriptionListFilter | null
+    /**
+     * Search
+     *
+     * Match against transcription title
+     */
+    search?: string | null
   }
   url: '/transcriptions'
 }
@@ -1059,6 +1106,39 @@ export type UpdateDataRetentionUsersDataRetentionPatchResponses = {
 export type UpdateDataRetentionUsersDataRetentionPatchResponse =
   UpdateDataRetentionUsersDataRetentionPatchResponses[keyof UpdateDataRetentionUsersDataRetentionPatchResponses]
 
+export type UpdateDefaultTemplateUsersDefaultTemplatePatchData = {
+  body: SetDefaultTemplateRequest
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query?: never
+  url: '/users/default-template'
+}
+
+export type UpdateDefaultTemplateUsersDefaultTemplatePatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type UpdateDefaultTemplateUsersDefaultTemplatePatchError =
+  UpdateDefaultTemplateUsersDefaultTemplatePatchErrors[keyof UpdateDefaultTemplateUsersDefaultTemplatePatchErrors]
+
+export type UpdateDefaultTemplateUsersDefaultTemplatePatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: GetUserResponse
+}
+
+export type UpdateDefaultTemplateUsersDefaultTemplatePatchResponse =
+  UpdateDefaultTemplateUsersDefaultTemplatePatchResponses[keyof UpdateDefaultTemplateUsersDefaultTemplatePatchResponses]
+
 export type ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetData =
   {
     body?: never
@@ -1134,8 +1214,11 @@ export type CreateMinuteTranscriptionTranscriptionIdMinutesPostResponses = {
   /**
    * Successful Response
    */
-  200: unknown
+  200: MinuteListItem
 }
+
+export type CreateMinuteTranscriptionTranscriptionIdMinutesPostResponse =
+  CreateMinuteTranscriptionTranscriptionIdMinutesPostResponses[keyof CreateMinuteTranscriptionTranscriptionIdMinutesPostResponses]
 
 export type GetMinuteMinutesMinutesIdGetData = {
   body?: never
@@ -1174,6 +1257,44 @@ export type GetMinuteMinutesMinutesIdGetResponses = {
 
 export type GetMinuteMinutesMinutesIdGetResponse =
   GetMinuteMinutesMinutesIdGetResponses[keyof GetMinuteMinutesMinutesIdGetResponses]
+
+export type DeleteMinuteMinutesMinuteIdDeleteData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path: {
+    /**
+     * Minute Id
+     */
+    minute_id: string
+  }
+  query?: never
+  url: '/minutes/{minute_id}'
+}
+
+export type DeleteMinuteMinutesMinuteIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type DeleteMinuteMinutesMinuteIdDeleteError =
+  DeleteMinuteMinutesMinuteIdDeleteErrors[keyof DeleteMinuteMinutesMinuteIdDeleteErrors]
+
+export type DeleteMinuteMinutesMinuteIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type DeleteMinuteMinutesMinuteIdDeleteResponse =
+  DeleteMinuteMinutesMinuteIdDeleteResponses[keyof DeleteMinuteMinutesMinuteIdDeleteResponses]
 
 export type ListMinuteVersionsMinutesMinuteIdVersionsGetData = {
   body?: never
@@ -1565,10 +1686,15 @@ export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostError =
 export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses =
   {
     /**
+     * Response Duplicate User Template User Templates  Template Id  Duplicate Post
+     *
      * Successful Response
      */
-    200: unknown
+    200: string
   }
+
+export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse =
+  DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses[keyof DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses]
 
 export type DeleteChatsTranscriptionsTranscriptionIdChatDeleteData = {
   body?: never

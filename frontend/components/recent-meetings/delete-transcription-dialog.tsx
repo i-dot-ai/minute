@@ -1,18 +1,20 @@
 'use client'
 
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { JobStatus } from '@/lib/client'
 import {
   deleteTranscriptionTranscriptionsTranscriptionIdDeleteMutation,
   listTranscriptionsTranscriptionsGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { Dispatch, SetStateAction } from 'react'
@@ -50,6 +52,8 @@ export const DeleteTranscriptionDialog = ({
       setOpen(false)
       if (pathname.startsWith('/transcriptions/')) {
         router.push('/transcriptions')
+      } else if (pathname.startsWith('/new/status/')) {
+        router.push('/')
       }
     },
   })
@@ -61,14 +65,16 @@ export const DeleteTranscriptionDialog = ({
       : 'No title')
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent>
-        <DialogTitle className="govuk-heading-l">
-          Are you sure you want to delete this transcription?
-        </DialogTitle>
-        <DialogDescription className="govuk-body">
-          This will permanently delete the transcription and cannot be undone.
-        </DialogDescription>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="govuk-heading-l">
+            Are you sure you want to delete this transcription?
+          </AlertDialogTitle>
+          <AlertDialogDescription className="govuk-body">
+            This will permanently delete the transcription and cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
         <p className="govuk-body govuk-!-font-weight-bold">{title}</p>
         <p className="govuk-body-s">
           {date.toLocaleDateString('en-GB', {
@@ -79,15 +85,16 @@ export const DeleteTranscriptionDialog = ({
             minute: '2-digit',
           })}
         </p>
-        <div className="govuk-button-group">
-          <button
-            type="button"
-            className="govuk-button govuk-button--secondary"
-            disabled={isPending}
-            onClick={() => setOpen(false)}
-          >
-            Cancel
-          </button>
+        <AlertDialogFooter className="govuk-button-group sm:justify-end">
+          <AlertDialogCancel asChild>
+            <button
+              type="button"
+              className="govuk-button govuk-button--secondary !no-underline"
+              disabled={isPending}
+            >
+              Cancel
+            </button>
+          </AlertDialogCancel>
           <button
             type="button"
             className="govuk-button govuk-button--warning"
@@ -98,16 +105,10 @@ export const DeleteTranscriptionDialog = ({
               })
             }
           >
-            {isPending ? (
-              <>
-                <Loader2 className="size-4 animate-spin" /> Deleting
-              </>
-            ) : (
-              'Delete transcription'
-            )}
+            Delete transcription
           </button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

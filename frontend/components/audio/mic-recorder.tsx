@@ -43,6 +43,10 @@ export function MicRecorderForm({
     }
   }, [generateRequested, watchBlob, form, onSubmit])
 
+  const onRecordingFailed = useCallback(() => {
+    setGenerateRequested(false)
+  }, [])
+
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -58,6 +62,7 @@ export function MicRecorderForm({
               initialDevices={initialDevices}
               onDiscard={onDiscard}
               onGenerate={() => setGenerateRequested(true)}
+              onRecordingFailed={onRecordingFailed}
             />
           )}
         />
@@ -83,6 +88,7 @@ function MicRecorderComponent({
   initialDevices,
   onDiscard,
   onGenerate,
+  onRecordingFailed,
 }: {
   recordedAudio: Blob | null
   setRecordedAudio: (blob: Blob | null) => void
@@ -90,6 +96,7 @@ function MicRecorderComponent({
   initialDevices?: AudioDevice[]
   onDiscard?: () => void
   onGenerate?: () => void
+  onRecordingFailed?: () => void
 }) {
   // When a device is handed in pre-resolved (from the home page), permission is
   // already granted upstream — so skip the cold flow and start recording immediately.
@@ -156,6 +163,7 @@ function MicRecorderComponent({
         setError('Recording error occurred. Please try again.')
         // Don't call stopRecording here as it might cause a loop
         // Just clean up manually if needed
+        onRecordingFailed?.()
         stopAllTracks()
       }
 
@@ -184,6 +192,9 @@ function MicRecorderComponent({
           setError(
             'No audio data was recorded. Please try again and ensure audio is shared.'
           )
+          // No blob will arrive, so tell the parent to drop the pending
+          // "generate" request instead of hanging on the uploading state.
+          onRecordingFailed?.()
         }
         stopAllTracks()
       }
@@ -201,6 +212,7 @@ function MicRecorderComponent({
     addRecording,
     form,
     onDiscard,
+    onRecordingFailed,
     removeRecording,
     requestWakeLock,
     selectedDeviceId,

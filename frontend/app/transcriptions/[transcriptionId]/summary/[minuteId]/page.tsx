@@ -33,7 +33,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { use, useCallback, useEffect, useState } from 'react'
+import { use, useCallback, useEffect, useRef, useState } from 'react'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 
 export default function SummaryPage({
@@ -79,11 +79,13 @@ export default function SummaryPage({
     status: transcription?.status ?? 'completed',
   })
 
+  const titleRef = useRef(transcription?.title)
+  titleRef.current = transcription?.title
   useEffect(() => {
-    if (editState?.isEditable && transcription) {
-      setDraftTitle(transcription.title ?? '')
+    if (editState?.isEditable) {
+      setDraftTitle(titleRef.current ?? '')
     }
-  }, [editState?.isEditable, transcription])
+  }, [editState?.isEditable])
 
   const handleSave = useCallback(() => {
     saveTitle(draftTitle)

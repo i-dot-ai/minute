@@ -159,6 +159,7 @@ class MinuteVersionResponse(BaseModel):
     minute_id: uuid.UUID
     status: JobStatus
     created_datetime: datetime
+    updated_datetime: datetime
     html_content: str
     error: str | None
     ai_edit_instructions: str | None

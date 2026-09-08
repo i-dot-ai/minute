@@ -49,7 +49,7 @@ export function NewMinuteDialog({
     },
   })
   useEffect(() => {
-    if (open) {
+    if (open && !form.formState.isDirty) {
       form.reset({
         file: null,
         template: defaultTemplate ?? GENERAL_TEMPLATE,

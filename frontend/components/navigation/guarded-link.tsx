@@ -28,8 +28,10 @@ export const GuardedLink = ({ href, onClick, ...props }: GuardedLinkProps) => {
         ) {
           return
         }
-        const proceeded = requestNavigation(() => router.push(String(href)))
-        if (!proceeded) e.preventDefault()
+        // Always drive navigation through router.push so Link doesn't navigate
+        // in parallel; requestNavigation runs it now or defers it behind the guard.
+        e.preventDefault()
+        requestNavigation(() => router.push(String(href)))
       }}
       {...props}
     />

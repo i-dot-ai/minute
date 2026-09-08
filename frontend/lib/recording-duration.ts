@@ -6,6 +6,12 @@
 
 const STORAGE_PREFIX = 'recording-duration-sec:'
 
+// Best-effort measurement must never hang the submit flow, so give up after
+// this long and resolve null. Some malformed/oddly-muxed blobs load metadata
+// as Infinity and then never fire the timeupdate/durationchange the workaround
+// below relies on, which would otherwise leave the Promise pending forever.
+const MEASURE_TIMEOUT_MS = 5000
+
 /**
  * Decodes a media blob just far enough to read its duration in seconds.
  *
@@ -13,6 +19,9 @@ const STORAGE_PREFIX = 'recording-duration-sec:'
  * in their WebM header, so the element first reports `Infinity`. Seeking past
  * the end forces the browser to scan for the real end, which it then reports via
  * `durationchange` — the standard workaround for that container bug.
+ *
+ * Resolves `null` (rather than hanging) on error, on unsupported input, or if
+ * no duration is produced within `MEASURE_TIMEOUT_MS`.
  */
 export const measureAudioDurationSec = (blob: Blob): Promise<number | null> =>
   new Promise((resolve) => {
@@ -27,9 +36,12 @@ export const measureAudioDurationSec = (blob: Blob): Promise<number | null> =>
     const finish = (duration: number | null) => {
       if (settled) return
       settled = true
+      clearTimeout(timeoutId)
       URL.revokeObjectURL(url)
       resolve(duration !== null && Number.isFinite(duration) ? duration : null)
     }
+
+    const timeoutId = setTimeout(() => finish(null), MEASURE_TIMEOUT_MS)
 
     audio.preload = 'metadata'
     audio.onloadedmetadata = () => {

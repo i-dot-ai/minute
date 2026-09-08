@@ -223,9 +223,12 @@ export const StartTranscriptionSection = () => {
               : 'required'}
             )
           </label>
+          <div id="agenda-hint" className="govuk-hint">
+            Add discussion points from the meeting that should be included in
+            the summary.
+          </div>
           <textarea
             className="govuk-textarea govuk-textarea--subtle"
-            placeholder="Add discussion points from the meeting that should be included in the summary."
             id="agenda"
             rows={4}
             aria-describedby="agenda-hint"

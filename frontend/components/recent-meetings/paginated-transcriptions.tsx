@@ -114,6 +114,10 @@ export const PaginatedTranscriptions = () => {
   }, [currentPage, filterBy, search])
 
   useEffect(() => {
+    setSearchInput(search)
+  }, [search])
+
+  useEffect(() => {
     if (searchInput.trim() === search) return
     const timer = setTimeout(() => {
       router.replace(
@@ -228,7 +232,7 @@ export const PaginatedTranscriptions = () => {
               permanently.
             </p>
             <p className="govuk-body">
-              <strong>Uplaod failed</strong> means that retrying the upload
+              <strong>Upload failed</strong> means that retrying the upload
               failed again. Please{' '}
               <Link href="/support" className="govuk-link">
                 contact support

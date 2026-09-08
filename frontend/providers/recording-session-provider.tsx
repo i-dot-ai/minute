@@ -1,15 +1,22 @@
 'use client'
 
 import { AudioDevice } from '@/components/audio/microphone-permission'
+import { Template } from '@/types/templates'
 import { ReactNode, createContext, useContext, useState } from 'react'
 
-export type RecordingMode = 'in-person' | 'virtual-meeting'
+export type RecordingMode = 'in-person' | 'virtual-meeting' | 'upload-file'
 
 type RecordingSessionValue = {
   mode: RecordingMode | null
   setMode: (mode: RecordingMode | null) => void
   screenStream: MediaStream | null
   setScreenStream: (stream: MediaStream | null) => void
+  uploadFile: File | null
+  setUploadFile: (file: File | null) => void
+  uploadTemplate: Template | null
+  setUploadTemplate: (template: Template | null) => void
+  uploadAgenda: string | undefined
+  setUploadAgenda: (agenda: string | undefined) => void
   devices: AudioDevice[]
   setDevices: (devices: AudioDevice[]) => void
   selectedDeviceId: string
@@ -28,12 +35,20 @@ export function RecordingSessionProvider({
 }) {
   const [mode, setMode] = useState<RecordingMode | null>(null)
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null)
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadTemplate, setUploadTemplate] = useState<Template | null>(null)
+  const [uploadAgenda, setUploadAgenda] = useState<string | undefined>(
+    undefined
+  )
   const [devices, setDevices] = useState<AudioDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState('')
 
   const reset = () => {
     setMode(null)
     setScreenStream(null)
+    setUploadFile(null)
+    setUploadTemplate(null)
+    setUploadAgenda(undefined)
   }
 
   return (
@@ -43,6 +58,12 @@ export function RecordingSessionProvider({
         setMode,
         screenStream,
         setScreenStream,
+        uploadFile,
+        setUploadFile,
+        uploadTemplate,
+        setUploadTemplate,
+        uploadAgenda,
+        setUploadAgenda,
         devices,
         setDevices,
         selectedDeviceId,

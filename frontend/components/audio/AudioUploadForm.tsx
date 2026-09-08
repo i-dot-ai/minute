@@ -1,27 +1,51 @@
 'use client'
 
+import { TranscriptionForm } from '@/components/audio/types'
+import { useDefaultTemplate } from '@/hooks/useDefaultTemplate'
 import { useGovukModule } from '@/hooks/use-govuk-module'
-import { useStartTranscription } from '@/hooks/useStartTranscription'
+import { useRecordingSession } from '@/providers/recording-session-provider'
+import { Template } from '@/types/templates'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { FormProvider } from 'react-hook-form'
+import { FormProvider, useForm } from 'react-hook-form'
 import { GenerateSummaryDialog } from './generate-summary-dialog'
+
+const GENERAL_TEMPLATE: Template = {
+  name: 'General',
+  description:
+    'Standard meeting summary with key points, decisions, and action items',
+  agenda_usage: 'optional',
+  id: null,
+}
 
 export const AudioUploadForm = () => {
   const router = useRouter()
-  const { isPending, onSubmit, form } = useStartTranscription(undefined, (id) =>
-    router.push(`/new/status/${id}`)
-  )
+  const { setMode, setUploadFile, setUploadTemplate, setUploadAgenda } =
+    useRecordingSession()
   const [fileError, setFileError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const form = useForm<TranscriptionForm>({
+    defaultValues: {
+      file: null,
+      template: GENERAL_TEMPLATE,
+    },
+  })
   const file = form.watch('file')
   const selectedTemplate = form.watch('template')
   const agendaValue = form.watch('agenda')
   const agendaRequired =
     typeof selectedTemplate !== 'string' &&
     selectedTemplate?.agenda_usage === 'required'
+
+  const defaultTemplate = useDefaultTemplate()
+  useEffect(() => {
+    if (defaultTemplate && !form.formState.dirtyFields.template) {
+      form.setValue('template', defaultTemplate)
+    }
+  }, [defaultTemplate, form])
 
   useGovukModule(wrapperRef, 'FileUpload')
 
@@ -47,12 +71,19 @@ export const AudioUploadForm = () => {
     return () => input.removeEventListener('change', handler)
   }, [form])
 
+  const handleGenerate = () => {
+    const values = form.getValues()
+    if (!(values.file instanceof File)) return
+    setUploadFile(values.file)
+    setUploadTemplate(values.template)
+    setUploadAgenda(values.agenda)
+    setMode('upload-file')
+    router.push('/new')
+  }
+
   return (
     <FormProvider {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="govuk-!-margin-top-7"
-      >
+      <div className="govuk-!-margin-top-7">
         <label
           className="govuk-label govuk-fieldset__legend--s"
           htmlFor="file-upload"
@@ -100,10 +131,13 @@ export const AudioUploadForm = () => {
         <GenerateSummaryDialog
           open={open}
           onOpenChange={setOpen}
-          onConfirm={form.handleSubmit(onSubmit)}
-          disabled={isPending || (agendaRequired && !agendaValue)}
+          onConfirm={() => {
+            setOpen(false)
+            handleGenerate()
+          }}
+          disabled={agendaRequired && !agendaValue}
         />
-      </form>
+      </div>
     </FormProvider>
   )
 }

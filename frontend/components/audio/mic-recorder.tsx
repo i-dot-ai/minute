@@ -43,6 +43,13 @@ export function MicRecorderForm({
     }
   }, [generateRequested, watchBlob, form, onSubmit])
 
+  // If the recorder stops without producing any audio (e.g. zero chunks) or
+  // errors, no blob will ever arrive to trigger the effect above. Clear the
+  // pending flag so we don't leave the "Uploading your recording…" state stuck.
+  const handleRecordingFailed = useCallback(() => {
+    setGenerateRequested(false)
+  }, [])
+
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>

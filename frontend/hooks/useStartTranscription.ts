@@ -74,12 +74,12 @@ export const useStartTranscription = (
         const recordingData = await createRecording({
           body: { file_extension },
         })
-        // Measured alongside the upload so the status page can show an estimate
-        // while transcribing, before the transcript or audio URL exists.
-        const [durationSec] = await Promise.all([
-          measureAudioDurationSec(file),
-          uploadBlob({ file, uploadUrl: recordingData.upload_url }),
-        ])
+        // Measured for the status page's estimate, but best-effort: it must not
+        // gate transcription. Start it alongside the upload and await only the
+        // upload, so a slow/never-settling measurement can't block creating the
+        // transcription. (measureAudioDurationSec is itself timeout-bounded.)
+        const durationPromise = measureAudioDurationSec(file)
+        await uploadBlob({ file, uploadUrl: recordingData.upload_url })
         const transcriptionData = await createTranscription({
           body: {
             recording_id: recordingData.id,
@@ -88,7 +88,10 @@ export const useStartTranscription = (
             agenda,
           },
         })
-        storeRecordingDurationSec(transcriptionData.id, durationSec)
+        // Store before navigating so the status page can read the estimate on
+        // mount. Safe to await now that transcription is already created and the
+        // measurement is bounded.
+        storeRecordingDurationSec(transcriptionData.id, await durationPromise)
         if (recordingId) {
           await removeRecording(recordingId)
         }

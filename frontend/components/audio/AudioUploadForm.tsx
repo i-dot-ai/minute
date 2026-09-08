@@ -17,6 +17,11 @@ export const AudioUploadForm = () => {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const file = form.watch('file')
+  const selectedTemplate = form.watch('template')
+  const agendaValue = form.watch('agenda')
+  const agendaRequired =
+    typeof selectedTemplate !== 'string' &&
+    selectedTemplate?.agenda_usage === 'required'
 
   useGovukModule(wrapperRef, 'FileUpload')
 
@@ -96,7 +101,7 @@ export const AudioUploadForm = () => {
           open={open}
           onOpenChange={setOpen}
           onConfirm={form.handleSubmit(onSubmit)}
-          disabled={isPending}
+          disabled={isPending || (agendaRequired && !agendaValue)}
         />
       </form>
     </FormProvider>

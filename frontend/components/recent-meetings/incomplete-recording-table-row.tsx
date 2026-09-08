@@ -34,6 +34,11 @@ export const IncompleteRecordingTableRow = ({
   )
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [uploadOpen, setUploadOpen] = useState(false)
+  const selectedTemplate = form.watch('template')
+  const agendaValue = form.watch('agenda')
+  const agendaRequired =
+    typeof selectedTemplate !== 'string' &&
+    selectedTemplate?.agenda_usage === 'required'
   const queryClient = useQueryClient()
   const url = useMemo(
     () => URL.createObjectURL(recording.blob),
@@ -143,7 +148,7 @@ export const IncompleteRecordingTableRow = ({
                 open={uploadOpen}
                 onOpenChange={setUploadOpen}
                 onConfirm={form.handleSubmit(onSubmit)}
-                disabled={isPending}
+                disabled={isPending || (agendaRequired && !agendaValue)}
               />
             </form>
           </FormProvider>

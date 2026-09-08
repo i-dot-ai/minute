@@ -32,17 +32,16 @@ export const measureAudioDurationSec = (blob: Blob): Promise<number | null> =>
     const url = URL.createObjectURL(blob)
     const audio = document.createElement('audio')
     let settled = false
-    let timeoutId: ReturnType<typeof setTimeout> | undefined
 
     const finish = (duration: number | null) => {
       if (settled) return
       settled = true
-      if (timeoutId !== undefined) clearTimeout(timeoutId)
+      clearTimeout(timeoutId)
       URL.revokeObjectURL(url)
       resolve(duration !== null && Number.isFinite(duration) ? duration : null)
     }
 
-    timeoutId = setTimeout(() => finish(null), MEASURE_TIMEOUT_MS)
+    const timeoutId = setTimeout(() => finish(null), MEASURE_TIMEOUT_MS)
 
     audio.preload = 'metadata'
     audio.onloadedmetadata = () => {

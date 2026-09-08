@@ -105,7 +105,7 @@ async def list_transcriptions(
     )
 
     count_result = await session.exec(count_statement)
-    total_count = count_result.first() or 0
+    total_count = count_result.one()
     result = await session.exec(statement)
     transcriptions = result.all()
 

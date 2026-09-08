@@ -192,8 +192,6 @@ function MicRecorderComponent({
           setError(
             'No audio data was recorded. Please try again and ensure audio is shared.'
           )
-          // No blob will arrive, so tell the parent to drop the pending
-          // "generate" request instead of hanging on the uploading state.
           onRecordingFailed?.()
         }
         stopAllTracks()

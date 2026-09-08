@@ -11,7 +11,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { FormProvider } from 'react-hook-form'
 
 export const IncompleteRecordingTableRow = ({
@@ -39,6 +39,9 @@ export const IncompleteRecordingTableRow = ({
     () => URL.createObjectURL(recording.blob),
     [recording.blob]
   )
+  useEffect(() => {
+    return () => URL.revokeObjectURL(url)
+  }, [url])
   const created = new Date(recording.updated_at)
   const isEarlierYear = created.getFullYear() < new Date().getFullYear()
   const date = created.toLocaleString('en-GB', {

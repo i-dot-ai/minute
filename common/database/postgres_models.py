@@ -23,9 +23,7 @@ def created_datetime_column():
 
 
 def updated_datetime_column():
-    return Column(
-        TIMESTAMP(timezone=True), nullable=False, server_default=now(), default=None, onupdate=now()
-    )
+    return Column(TIMESTAMP(timezone=True), nullable=False, server_default=now(), default=None, onupdate=now())
 
 
 class BaseTableMixin(SQLModel):

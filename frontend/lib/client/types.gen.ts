@@ -346,6 +346,10 @@ export type MinuteVersionResponse = {
    */
   created_datetime: string
   /**
+   * Updated Datetime
+   */
+  updated_datetime: string
+  /**
    * Html Content
    */
   html_content: string

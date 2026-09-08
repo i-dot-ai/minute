@@ -86,14 +86,13 @@ export function MinuteEditor({
     ...listMinuteVersionsMinutesMinuteIdVersionsGetOptions({
       path: { minute_id: minute.id! },
     }),
-    refetchInterval: (query) =>
-      query.state.data &&
-      query.state.data.length > 0 &&
-      ['awaiting_start', 'in_progress'].includes(
-        query.state.data[version].status
-      )
+    refetchInterval: (query) => {
+      const current = query.state.data?.[version]
+      return current &&
+        ['awaiting_start', 'in_progress'].includes(current.status)
         ? 1000
-        : false,
+        : false
+    },
   })
   const minuteVersion = useMemo(
     () => (minuteVersions.length > 0 ? minuteVersions[version] : undefined),

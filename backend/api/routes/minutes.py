@@ -165,6 +165,8 @@ async def create_minute_version(
         ai_edit_instructions=request.ai_edit_instructions.instruction if request.ai_edit_instructions else None,
         status=JobStatus.AWAITING_START if request.ai_edit_instructions else JobStatus.COMPLETED,
     )
+    # Touched explicitly: adding a version leaves the minute row itself unchanged, so
+    # the column's onupdate never fires and the list ordering would miss the edit.
     minute.updated_datetime = datetime.now(tz=UTC)
     session.add(minute_version)
     await session.commit()

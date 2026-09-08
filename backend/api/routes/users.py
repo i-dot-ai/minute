@@ -1,5 +1,4 @@
 import logging
-from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
@@ -51,7 +50,6 @@ async def update_data_retention(
         )
 
     user.data_retention_days = data.data_retention_days
-    user.updated_datetime = datetime.now(tz=UTC)
 
     await session.commit()
     await session.refresh(user)
@@ -103,8 +101,6 @@ async def update_default_template(
     else:
         user.default_template_id = None
         user.default_template_name = None
-
-    user.updated_datetime = datetime.now(tz=UTC)
 
     await session.commit()
     await session.refresh(user)

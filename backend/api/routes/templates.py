@@ -157,6 +157,8 @@ async def edit_user_template(
         for remaining_question in questions:
             await session.delete(remaining_question)
 
+    # Touched explicitly: a questions-only PATCH changes only TemplateQuestion rows, so
+    # the column's onupdate never fires for user_template.
     template.updated_datetime = datetime.datetime.now(tz=datetime.UTC)
 
     await session.commit()

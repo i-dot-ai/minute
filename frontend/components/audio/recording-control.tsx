@@ -28,19 +28,13 @@ export default function RecordingControl({
   onDiscard,
   onGenerate,
 }: RecordingControlProps) {
-  const animationRef = useRef<number | null>(null)
-  const analyserRef = useRef<AnalyserNode | null>(null)
-  const dataArrayRef = useRef<Uint8Array | null>(null)
-  const audioContextRef = useRef<AudioContext | null>(null)
   const [showStopDialog, setShowStopDialog] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [mediaTracks, setMediaTracks] = useState<MediaStreamTrack[]>([])
   const [announcement, setAnnouncement] = useState('')
-  // Silence detection: flagged after a sustained quiet spell so natural speech
-  // pauses don't trigger it. Mirrored in a ref for the rAF draw loop.
+  // Fed by <MinuteVisualizer>'s onSilenceChange, which already runs the
+  // analyser loop and flags sustained silence.
   const [audioSilent, setAudioSilent] = useState(false)
-  const audioSilentRef = useRef(false)
-  const silenceStartRef = useRef<number | null>(null)
   const recordingHeadingRef = useRef<HTMLHeadingElement>(null)
 
   // The start button unmounts when the recorder UI replaces it, which would
@@ -67,94 +61,6 @@ export default function RecordingControl({
       setIsPaused(recorderControls.isPaused)
     }
   }, [recorderControls?.isPaused])
-
-  useEffect(() => {
-    // Restart silence tracking whenever the stream or pause state changes.
-    silenceStartRef.current = null
-
-    // Check if we have a valid stream with audio tracks
-    const isValidStream =
-      stream && stream.active && stream.getAudioTracks().length > 0
-
-    if (!isValidStream || !isRecording) {
-      // Clean up if not recording or invalid stream
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close().catch(console.error)
-        audioContextRef.current = null
-      }
-      analyserRef.current = null
-      dataArrayRef.current = null
-      return
-    }
-
-    // Initialize audio context and analyzer
-    try {
-      // Always recreate the audio context when the stream changes
-      if (audioContextRef.current) {
-        audioContextRef.current.close().catch(console.error)
-        audioContextRef.current = null
-        analyserRef.current = null
-      }
-
-      audioContextRef.current = new AudioContext()
-      analyserRef.current = audioContextRef.current.createAnalyser()
-      analyserRef.current.fftSize = 256
-      analyserRef.current.smoothingTimeConstant = 0.7
-
-      const bufferLength = analyserRef.current.frequencyBinCount
-      dataArrayRef.current = new Uint8Array(bufferLength)
-
-      // Create a media stream source and connect it to the analyzer
-      const source = audioContextRef.current.createMediaStreamSource(stream)
-      source.connect(analyserRef.current)
-    } catch (error) {
-      console.error('Error setting up audio context', error)
-    }
-
-    // Sample the analyser on each frame purely to detect sustained silence.
-    // The visual rendering is handled separately by <MinuteVisualizer />.
-    const detectSilence = () => {
-      const analyser = analyserRef.current
-      const dataArray = dataArrayRef.current
-
-      if (isRecording && analyser && dataArray) {
-        analyser.getByteFrequencyData(dataArray)
-
-        const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length
-        const hasAudioData = average > 5
-
-        if (hasAudioData) {
-          silenceStartRef.current = null
-          if (audioSilentRef.current) {
-            audioSilentRef.current = false
-            setAudioSilent(false)
-          }
-        } else if (!isPaused) {
-          silenceStartRef.current ??= Date.now()
-          if (
-            Date.now() - silenceStartRef.current > 3000 &&
-            !audioSilentRef.current
-          ) {
-            audioSilentRef.current = true
-            setAudioSilent(true)
-          }
-        }
-      }
-
-      animationRef.current = requestAnimationFrame(detectSilence)
-    }
-
-    detectSilence()
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-    }
-  }, [stream, isRecording, isPaused])
 
   const togglePause = () => {
     setAnnouncement(isPaused ? 'Recording resumed' : 'Recording paused')
@@ -219,6 +125,7 @@ export default function RecordingControl({
               stream={stream}
               isRecording={isRecording}
               isPaused={isPaused}
+              onSilenceChange={setAudioSilent}
             />
             {!isRecording && (
               <p className="govuk-body">

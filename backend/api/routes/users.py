@@ -87,7 +87,7 @@ async def update_default_template(
             )
         ).first()
         if not template:
-            raise HTTPException(404)
+            raise HTTPException(404, detail="User template not found")
         user.default_template_id = template.id
         user.default_template_name = None
     elif data.template_name is not None:
@@ -97,7 +97,7 @@ async def update_default_template(
             if template.name not in get_settings().BETA_TEMPLATE_NAMES
         }
         if data.template_name not in valid_names:
-            raise HTTPException(404)
+            raise HTTPException(404, detail="System template not found")
         user.default_template_name = data.template_name
         user.default_template_id = None
     else:

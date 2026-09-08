@@ -90,8 +90,11 @@ async def list_transcriptions(
         filters.append(
             or_(
                 col(Transcription.title).ilike(f"%{escaped}%"),
-                # pg_trgm similarity gives typo tolerance, e.g. "budjet" still matches "Budget review"
-                func.similarity(col(Transcription.title), search_term) >= settings.SEARCH_SIMILARITY_THRESHOLD,
+                # pg_trgm gives typo tolerance, e.g. "budjet" still matches "Budget review".
+                # `%` is similarity() >= pg_trgm.similarity_threshold, but unlike the bare
+                # function call it can use the trigram index. The threshold is a GUC, set from
+                # SEARCH_SIMILARITY_THRESHOLD for every connection in postgres_database.py.
+                col(Transcription.title).op("%", is_comparison=True)(search_term),
             )
         )
 

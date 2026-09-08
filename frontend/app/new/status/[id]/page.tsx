@@ -112,11 +112,14 @@ export default function RecordStatusPage({
 
   const now = useNow({ enabled: isProcessing })
 
-  // The summary phase re-anchors on the version being generated, so both the
-  // countdown and the stall check restart when transcription hands over.
+  // The summary phase re-anchors on when its version was last touched: the
+  // worker flips the version to in_progress as summary generation starts,
+  // bumping updated_datetime, so both the countdown and the stall check
+  // restart when transcription hands over rather than counting from the
+  // version row's creation (which happens back at transcription-creation time).
   const phase: ProcessingPhase = transcriptionDone ? 'summary' : 'transcription'
   const phaseStartedAt = transcriptionDone
-    ? minuteVersionsQuery.data?.[0]?.created_datetime
+    ? minuteVersionsQuery.data?.[0]?.updated_datetime
     : transcription?.created_datetime
 
   const isStalled =

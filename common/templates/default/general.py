@@ -52,6 +52,11 @@ Writing Guidelines:
     - Include relevant context where it aids understanding
     - Maintain appropriate level of detail based on topic importance
 
+Formatting:
+    - Render lists as markdown bullet points, with each item starting with "- " on its own line
+    - This applies especially to Action Items and Next Steps: put each item on a separate bullet, never combine multiple items onto one line
+    - Separate distinct list items with a line break so they render as individual bullets
+
 Remember to:
     - Emphasise outcomes and decisions over process
     - Clearly distinguish between decisions made and items requiring further discussion

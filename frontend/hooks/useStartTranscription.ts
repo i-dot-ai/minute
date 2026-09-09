@@ -4,19 +4,26 @@ import {
   createTranscriptionTranscriptionsPostMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { getFileExtension } from '@/lib/getFileExtension'
+import {
+  measureAudioDurationSec,
+  storeRecordingDurationSec,
+} from '@/lib/recording-duration'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useDefaultTemplate } from '@/hooks/useDefaultTemplate'
 
 export const useStartTranscription = (
-  defaultValues?: Partial<TranscriptionForm>
+  defaultValues?: Partial<TranscriptionForm>,
+  onStarted?: (transcriptionId: string) => void
 ) => {
   const router = useRouter()
   const { removeRecording } = useRecordingDb()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isError, setIsError] = useState(false)
   const { mutateAsync: createTranscription } = useMutation({
     ...createTranscriptionTranscriptionsPostMutation(),
   })
@@ -50,6 +57,7 @@ export const useStartTranscription = (
         return
       }
       setIsSubmitting(true)
+      setIsError(false)
       try {
         const isFile = file instanceof File
         const source = !!defaultValues?.recordingId
@@ -66,6 +74,11 @@ export const useStartTranscription = (
         const recordingData = await createRecording({
           body: { file_extension },
         })
+        // Measured for the status page's estimate, but best-effort: it must not
+        // gate transcription. Start it alongside the upload and await only the
+        // upload, so a slow/never-settling measurement can't block creating the
+        // transcription. (measureAudioDurationSec is itself timeout-bounded.)
+        const durationPromise = measureAudioDurationSec(file)
         await uploadBlob({ file, uploadUrl: recordingData.upload_url })
         const transcriptionData = await createTranscription({
           body: {
@@ -75,18 +88,28 @@ export const useStartTranscription = (
             agenda,
           },
         })
+        // Store before navigating so the status page can read the estimate on
+        // mount. Safe to await now that transcription is already created and the
+        // measurement is bounded.
+        storeRecordingDurationSec(transcriptionData.id, await durationPromise)
         if (recordingId) {
           await removeRecording(recordingId)
         }
-        router.push(`/transcriptions/${transcriptionData.id}`)
+        if (onStarted) {
+          onStarted(transcriptionData.id)
+        } else {
+          router.push(`/transcriptions/${transcriptionData.id}`)
+        }
       } catch {
         setIsSubmitting(false)
+        setIsError(true)
       }
     },
     [
       createRecording,
       createTranscription,
       defaultValues?.recordingId,
+      onStarted,
       removeRecording,
       router,
       uploadBlob,
@@ -105,8 +128,17 @@ export const useStartTranscription = (
       ...defaultValues,
     },
   })
+
+  const defaultTemplate = useDefaultTemplate()
+  useEffect(() => {
+    if (defaultTemplate && !form.formState.dirtyFields.template) {
+      form.setValue('template', defaultTemplate)
+    }
+  }, [defaultTemplate, form])
+
   return {
     isPending: isSubmitting,
+    isError,
     onSubmit,
     form,
   }

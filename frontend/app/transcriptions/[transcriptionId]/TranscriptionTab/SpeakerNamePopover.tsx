@@ -1,14 +1,12 @@
 'use client'
 
-import { DialogueEntryForm } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
+import { DialogueEntryForm } from '@/types/transcriptions'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { PenIcon } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
@@ -64,34 +62,30 @@ export const SpeakerNamePopover = ({
       <DialogTrigger asChild>
         <button
           type="button"
-          className="speaker-name-popover__trigger govuk-link govuk-link--no-visited-state"
+          className="govuk-link govuk-link--no-visited-state text-(--govuk-link-colour)"
         >
-          <PenIcon className="size-4" />
-          <span className="govuk-visually-hidden">Edit speaker name for </span>
-          {entry.speaker}:
+          Edit name
         </button>
       </DialogTrigger>
       <DialogContent>
-        <DialogTitle className="govuk-heading-m">Edit speaker name</DialogTitle>
-        <div className="govuk-form-group">
-          <label className="govuk-label" htmlFor={inputId}>
-            Speaker name
+        <DialogTitle>
+          <label
+            className="govuk-label govuk-label--m govuk-!-margin-bottom-0"
+            htmlFor={inputId}
+          >
+            Edit speaker name
           </label>
-          <DialogDescription id={hintId} className="govuk-hint">
-            Update either this occurrence or all occurrences of &apos;
-            {entry.speaker}&apos;
-          </DialogDescription>
-          <input
-            className="govuk-input"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            id={inputId}
-            name={inputId}
-            type="text"
-            aria-describedby={hintId}
-          />
-        </div>
-        <div className="govuk-button-group govuk-!-margin-top-4">
+        </DialogTitle>
+        <input
+          className="govuk-input"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          id={inputId}
+          name={inputId}
+          type="text"
+          aria-describedby={hintId}
+        />
+        <div className="govuk-button-group govuk-!-margin-top-4 govuk-!-margin-bottom-0">
           <button
             type="button"
             className="govuk-button govuk-button--secondary"
@@ -106,9 +100,11 @@ export const SpeakerNamePopover = ({
           >
             Update all occurrences
           </button>
+        </div>
+        <div className="govuk-button-group justify-end">
           <button
             type="button"
-            className="govuk-link govuk-link--no-visited-state"
+            className="govuk-button govuk-button--secondary"
             onClick={() => setOpen(false)}
           >
             Cancel

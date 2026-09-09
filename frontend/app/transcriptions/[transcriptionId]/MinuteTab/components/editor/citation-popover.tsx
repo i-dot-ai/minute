@@ -1,5 +1,6 @@
 import { DialogueEntry } from '@/lib/client'
 import React, { useEffect, useRef } from 'react'
+import { CircleUserRound } from 'lucide-react'
 
 interface CitationPopoverContentProps {
   dialogueEntries: DialogueEntry[]
@@ -28,7 +29,12 @@ export default function CitationPopoverContent({
             index === selectedIndex ? 'transcription-text-area--playing' : ''
           }`}
         >
-          <h2 className="govuk-heading-s">{entry.speaker}</h2>
+          <div className="govuk-!-margin-bottom-3 govuk-!-padding-top-1 flex items-center gap-2">
+            <CircleUserRound />
+            <h2 className="govuk-heading-s govuk-!-margin-bottom-0">
+              {entry.speaker}
+            </h2>
+          </div>
           <p className="govuk-body">{entry.text}</p>
         </div>
       ))}

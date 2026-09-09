@@ -166,6 +166,11 @@ class Settings(BaseSettings):
         ),
     )
 
+    SEARCH_SIMILARITY_THRESHOLD: float = Field(
+        default=0.3,
+        description="Minimum pg_trgm similarity for a title to count as a fuzzy search match",
+    )
+
     LOCAL_STORAGE_PATH: str = Field(
         default="/tmp",  # noqa: S108
         description="The folder where the data directory is mounted for the local storage service.",

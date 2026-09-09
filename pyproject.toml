@@ -83,23 +83,13 @@ default-groups = "all"
 [tool.pytest.ini_options]
 minversion = "8.3"
 addopts = "-ra -q"
-testpaths = [
-    "tests"
-]
+testpaths = ["tests"]
 
 [tool.hatch.build.targets.sdist]
-include = [
-    "worker",
-    "backend",
-    "common",
-]
+include = ["worker", "backend", "common"]
 
 [tool.hatch.build.targets.wheel]
-include = [
-    "worker",
-    "backend",
-    "common",
-]
+include = ["worker", "backend", "common"]
 
 [build-system]
 requires = ["hatchling"]
@@ -110,14 +100,53 @@ exclude = ["data/*"]
 
 [tool.ruff.lint]
 select = [
-    "A", "B", "C", "E", "F", "G", "I", "N", "Q", "S", "T", "W",
-    "ARG", "ASYNC", "BLE", "COM", "DJ", "DTZ", "EM", "EXE", "FURB",
-    "ICN", "INT", "ISC", "LOG", "NPY", "PD", "PGH", "PIE", "PL",
-    "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "SLOT",
-    "TCH", "TD", "TID", "UP", "YTT"
+    "A",
+    "B",
+    "C",
+    "E",
+    "F",
+    "G",
+    "I",
+    "N",
+    "Q",
+    "S",
+    "T",
+    "W",
+    "ARG",
+    "ASYNC",
+    "BLE",
+    "COM",
+    "DJ",
+    "DTZ",
+    "EM",
+    "EXE",
+    "FURB",
+    "ICN",
+    "INT",
+    "ISC",
+    "LOG",
+    "NPY",
+    "PD",
+    "PGH",
+    "PIE",
+    "PL",
+    "PT",
+    "PTH",
+    "PYI",
+    "RET",
+    "RSE",
+    "RUF",
+    "SIM",
+    "SLF",
+    "SLOT",
+    "TCH",
+    "TD",
+    "TID",
+    "UP",
+    "YTT",
 ]
 exclude = ["out/*", "alembic/versions/*"]
-ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318","ISC001"]
+ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318", "ISC001"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["backend", "frontend"]

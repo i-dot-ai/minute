@@ -16,12 +16,15 @@ function PosthogProvider({ children }: React.PropsWithChildren) {
     }
     posthog.init(API_KEY, {
       api_host: 'https://eu.i.posthog.com',
+      persistence: 'memory',
+      autocapture: false,
+      disable_session_recording: true,
     })
 
-    if (user?.email) {
-      posthog.identify(user.email, { email: user.email })
+    if (user?.id) {
+      posthog.identify(user.id, { email_domain: user.email?.split('@')[1] })
     }
-  }, [user?.email])
+  }, [user?.id])
 
   return <PostHogProvider client={posthog}>{children}</PostHogProvider>
 }

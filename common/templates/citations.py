@@ -14,9 +14,39 @@ async def add_citations_to_minute(
 
     minute = await chatbot.chat(messages)
 
-    minute = combine_consecutive_citations(minute)
+    minute = strip_preamble(initial_draft, minute or "")
+    minute = unwrap_backticked_citations(minute)
 
-    return minute or ""
+    return combine_consecutive_citations(minute)
+
+
+backticked_citation_pattern = re.compile(r"`{1,2}((?:\[\d+(?:-\d+)?\])+)`{1,2}")
+
+
+def strip_preamble(initial_draft: str, minute: str) -> str:
+    """Drop any commentary the model wrote before the summary itself.
+
+    The citations pass is asked to return the draft unchanged apart from the citations, but it
+    sometimes prefaces it with a line such as "Below are the updated meeting minutes". If the draft
+    opened with a Markdown heading then nothing can legitimately precede that heading, so anything
+    before the first one is the model talking about its own work.
+    """
+    if not initial_draft.lstrip().startswith("#"):
+        return minute
+    lines = minute.split("\n")
+    for i, line in enumerate(lines):
+        if line.startswith("#"):
+            return "\n".join(lines[i:])
+    return minute
+
+
+def unwrap_backticked_citations(minute: str) -> str:
+    """Remove code formatting from citations, e.g. `[3]` -> [3].
+
+    mistune renders a backticked citation as a <code> element, which the minute editor then shows as
+    monospace code rather than as part of the sentence.
+    """
+    return backticked_citation_pattern.sub(r"\1", minute)
 
 
 MAX_CITATION_DISTANCE = 2

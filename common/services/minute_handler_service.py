@@ -1,4 +1,5 @@
 import logging
+import re
 import uuid
 from typing import cast
 from uuid import UUID
@@ -31,6 +32,19 @@ logger = logging.getLogger(__name__)
 
 class MinuteGenerationFailedError(Exception):
     pass
+
+
+fenced_document_pattern = re.compile(r"\A\s*```[a-zA-Z]*\n(.*?)\n?```\s*\Z", re.DOTALL)
+
+
+def strip_document_code_fence(markdown: str) -> str:
+    """Unwrap a whole minute that the model returned inside a code fence.
+
+    mistune turns a fence around the entire document into a single <pre><code> block, which renders
+    the minute as raw Markdown rather than as formatted text.
+    """
+    match = fenced_document_pattern.match(markdown)
+    return match.group(1) if match else markdown
 
 
 class MinuteHandlerService:
@@ -205,7 +219,7 @@ class MinuteHandlerService:
                 result, hallucinations = await cls.generate_basic_minutes(minute.transcription.dialogue_entries)
             case _:
                 result, hallucinations = await cls.generate_full_minutes(minute)
-        result = mistune.html(result)
+        result = mistune.html(strip_document_code_fence(result))
         return cast(str, result), hallucinations
 
     @classmethod

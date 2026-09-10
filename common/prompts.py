@@ -138,15 +138,18 @@ Add citations to the provided meeting summary which reference items in the trans
 
 <formatting_instructions>
 Each citation should be of the form [n] where n is the index of the transcript item. Each citation should be one number surrounded by square brackets. For example, you must do [80][81] not [80, 81].
+Do not wrap citations in backticks or any other code formatting: write [80], never `[80]`.
 </formatting_instructions>
 
 <requirements>
 Each statement should have a maximum of 5 citations.
 Do not add citations to lists of attendees.
+Reproduce the summary's Markdown exactly as given: the same headings, bullets, bold text, tables and line breaks. Adding citations is the only change you may make.
 </requirements>
 
 <output>
 Output the meeting summary unchanged except for the addition of citations.
+Start your response with the first line of the summary. Do not add a preamble, a sign-off, or any commentary about what you have done.
 </output>
 """,
         }

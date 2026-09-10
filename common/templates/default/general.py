@@ -20,16 +20,16 @@ class General(SimpleTemplate):
         date = datetime.now(tz=ZoneInfo("Europe/London")).strftime("%d %B %Y")
 
         if not agenda:
-            meeting_agenda_str = """4. Discussion Points
+            meeting_agenda_str = """## 4. Discussion Points
 - Present in chronological order
-- Group related topics under clear subheadings
+- Group related topics under "### " subheadings
 - Include different perspectives and debates
 - Capture the reasoning behind discussions
 - Note any data or evidence presented
 - Highlight concerns raised and how they were addressed
 - Err on the side of including more detail rather than less"""
         else:
-            meeting_agenda_str = f"""4. Discussion Points
+            meeting_agenda_str = f"""## 4. Discussion Points
 - Include different perspectives and debates
 - Capture the reasoning behind discussions
 - Note any data or evidence presented
@@ -37,7 +37,7 @@ class General(SimpleTemplate):
 - Err on the side of including more detail rather than less
 
 These are the agenda items for this meeting. Do not include other items under the Discussion Points header.
-Use them as headings for the discussion points.:
+Use them as "### " subheadings for the discussion points.:
  - {'\n - '.join(topic for topic in agenda.splitlines())}
 
            """
@@ -52,10 +52,11 @@ Writing Guidelines:
     - Include relevant context where it aids understanding
     - Maintain appropriate level of detail based on topic importance
 
-Formatting:
-    - Render lists as markdown bullet points, with each item starting with "- " on its own line
-    - This applies especially to Action Items and Next Steps: put each item on a separate bullet, never combine multiple items onto one line
-    - Separate distinct list items with a line break so they render as individual bullets
+Output format:
+    - Write the minutes in Markdown, and use only these constructs: "# " for the title, "## " for each section heading below, "### " for subheadings within a section, "- " for bullets, and "**bold**" for emphasis
+    - Do not use tables, code fences, backticks or HTML. Action Items and Next Steps must be bullets, never a table
+    - Start every bullet with "- " on its own line. This applies especially to Action Items and Next Steps: put each item on a separate bullet, never combine multiple items onto one line
+    - Begin your response with the "# " title line. Do not add a preamble, a sign-off, or any commentary about the minutes themselves
 
 Remember to:
     - Emphasise outcomes and decisions over process
@@ -63,39 +64,42 @@ Remember to:
     - Maintain chronological flow while grouping related topics
     - Be precise with technical terms and proper nouns
 
-You should structure the minutes with these sections (omit any that aren't relevant to the meeting):
+Open the minutes with a "# " title derived from the content discussed, then use these section headings exactly as written below (omit any section that isn't relevant to the meeting):
 
-1. Meeting Overview
-   - Date: {date}
-   - Title (derive this from the content discussed)
-   - Purpose/Objective of the meeting (if discernible from the discussion)
+## 1. Meeting Overview
+- Date: {date}
+- Title (derive this from the content discussed)
+- Purpose/Objective of the meeting (if discernible from the discussion)
 
-2. Attendees (only if explicitly named in the transcript)
-   - Do not include if speakers are labeled as "spk_0", "spk_1", etc.
-   - Include roles/departments if mentioned
+## 2. Attendees
+- Include this section only if attendees are explicitly named in the transcript
+- Do not include if speakers are labeled as "spk_0", "spk_1", etc.
+- Include roles/departments if mentioned
 
-3. Executive Summary
-   - Brief 2-3 sentence overview of the meeting's key outcomes
-   - Highlight major decisions or significant discussion points
+## 3. Executive Summary
+- Brief 2-3 sentence overview of the meeting's key outcomes
+- Highlight major decisions or significant discussion points
 
 {meeting_agenda_str}
 
-5. Key Decisions
-   - Clear statement of each decision made
-   - Include context and rationale
-   - Note who made or approved each decision (if specified)
-   - Record any dissenting opinions
+## 5. Key Decisions
+- Clear statement of each decision made
+- Include context and rationale
+- Note who made or approved each decision (if specified)
+- Record any dissenting opinions
 
-6. Action Items
-   - List specific tasks assigned
-   - Include responsible parties (if identified)
-   - Note deadlines or timeframes
-   - Specify any dependencies or resources needed
+## 6. Action Items
+- One bullet per task, never a table
+- List specific tasks assigned
+- Include responsible parties (if identified)
+- Note deadlines or timeframes
+- Specify any dependencies or resources needed
 
-7. Next Steps
-   - Document any planned follow-up meetings
-   - Note upcoming milestones or deadlines
-   - List any pending items for future discussion"""
+## 7. Next Steps
+- One bullet per item, never a table
+- Document any planned follow-up meetings
+- Note upcoming milestones or deadlines
+- List any pending items for future discussion"""
         return [
             {
                 "role": "system",

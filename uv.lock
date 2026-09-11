@@ -607,6 +607,23 @@ wheels = [
 ]
 
 [[package]]
+name = "elevenlabs"
+version = "2.66.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pydantic-core" },
+    { name = "requests" },
+    { name = "typing-extensions" },
+    { name = "websockets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cf/e2/191439b42753b350cd41be78e2ee32015793215546fd8c1f4c3ad6642805/elevenlabs-2.66.0.tar.gz", hash = "sha256:6372efd76710e82013a388585a6b8a1aada2f8c91046ee0105afe67565cea291", size = 805355, upload-time = "2026-09-02T13:21:25.711Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/92/a0/2f063e96602914ec3e4acaa680a51d08a57a96546da6caf4b1dc83d5b63d/elevenlabs-2.66.0-py3-none-any.whl", hash = "sha256:c7bcc1b616887d2e2482e07a2c91640897fc9b7e24d930940abe7336485ba706", size = 2126871, upload-time = "2026-09-02T13:21:23.718Z" },
+]
+
+[[package]]
 name = "executing"
 version = "2.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1200,6 +1217,7 @@ dev = [
 worker = [
     { name = "azure-identity" },
     { name = "azure-storage-blob" },
+    { name = "elevenlabs" },
     { name = "ffmpeg-python" },
     { name = "google-genai" },
     { name = "openai" },
@@ -1257,6 +1275,7 @@ dev = [
 worker = [
     { name = "azure-identity", specifier = ">=1.23.1,<2" },
     { name = "azure-storage-blob", specifier = ">=12.26.0,<13" },
+    { name = "elevenlabs" },
     { name = "ffmpeg-python", specifier = ">=0.2.0,<0.3" },
     { name = "google-genai", specifier = ">=1.10.0,<2" },
     { name = "openai", specifier = ">=1.42.0,<2" },

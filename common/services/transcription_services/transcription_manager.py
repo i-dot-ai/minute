@@ -15,6 +15,7 @@ from common.services.transcription_services.adapter import AdapterType, Transcri
 from common.services.transcription_services.aws import AWSTranscribeAdapter
 from common.services.transcription_services.azure import AzureSpeechAdapter
 from common.services.transcription_services.azure_async import AzureBatchTranscriptionAdapter
+from common.services.transcription_services.elevenlabs import ElevenLabsSpeechAdapter
 from common.settings import get_settings
 from common.types import TranscriptionJobMessageData
 
@@ -24,7 +25,8 @@ settings = get_settings()
 SUPPORTED_FORMATS = {".mp3"}
 # add any new adapters here
 _adapters = {
-    adapter.name: adapter for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter, AzureBatchTranscriptionAdapter]
+    adapter.name: adapter
+    for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter, AzureBatchTranscriptionAdapter, ElevenLabsSpeechAdapter]
 }
 storage_service = get_storage_service(get_settings().STORAGE_SERVICE_NAME)
 

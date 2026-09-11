@@ -129,6 +129,17 @@ class Settings(BaseSettings):
         default=None,
     )
 
+    # if using elevenlabs_stt
+    ELEVENLABS_API_KEY: str | None = Field(description="ElevenLabs API key for Scribe speech-to-text", default=None)
+    ELEVENLABS_STT_MODEL: str = Field(
+        description="ElevenLabs speech-to-text model id to transcribe with", default="scribe_v2"
+    )
+    ELEVENLABS_STT_TIMEOUT_SECONDS: float = Field(
+        description="How long to wait for a synchronous ElevenLabs transcription before giving up. This, rather "
+        "than the service limit, is what caps the length of audio the adapter can handle.",
+        default=3600.0,
+    )
+
     QUEUE_SERVICE_NAME: str = Field(
         description="Queue service type to communicate with worker. Currently supported are: sqs, azure-service-bus",
         default="sqs",

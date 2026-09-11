@@ -57,6 +57,11 @@ class ElevenLabsSpeechAdapter(TranscriptionAdapter):
     @transcription_retry(retry_if_exception(_is_retryable))
     async def start(cls, audio_file_path_or_recording: Path | Recording) -> TranscriptionJobMessageData:
         """Transcribe a local audio file with the ElevenLabs Scribe API."""
+        # The manager hands synchronous adapters the downloaded file; only async adapters receive a Recording.
+        if not isinstance(audio_file_path_or_recording, Path):
+            msg = f"{cls.__name__} needs a local audio file, got {type(audio_file_path_or_recording).__name__}"
+            raise TypeError(msg)
+
         client = AsyncElevenLabs(api_key=settings.ELEVENLABS_API_KEY, timeout=settings.ELEVENLABS_STT_TIMEOUT_SECONDS)
 
         with sentry_sdk.start_transaction(op="process", name="post_file_to_elevenlabs_transcribe") as transaction:

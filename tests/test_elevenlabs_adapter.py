@@ -1,10 +1,12 @@
 import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
+from uuid import uuid4
 
 import pytest
 from elevenlabs.core import ApiError
 
+from common.database.postgres_models import Recording
 from common.services.exceptions import TranscriptionFailedError
 from common.services.transcription_services.adapter import AdapterType
 from common.services.transcription_services.elevenlabs import ElevenLabsSpeechAdapter, _is_retryable
@@ -188,6 +190,16 @@ class TestStart:
 
         with patcher, pytest.raises(TranscriptionFailedError, match="no usable dialogue entries"):
             await ElevenLabsSpeechAdapter.start(audio_file)
+
+    @pytest.mark.asyncio
+    async def test_rejects_a_recording_instead_of_a_local_file(self):
+        recording = Recording(user_id=uuid4(), s3_file_key="recording.mp3")
+        patcher, _ = self._patched_client(FakeWord("unused"))
+
+        with patcher as client_class, pytest.raises(TypeError, match="needs a local audio file"):
+            await ElevenLabsSpeechAdapter.start(recording)
+
+        client_class.assert_not_called()
 
 
 class TestAdapterContract:

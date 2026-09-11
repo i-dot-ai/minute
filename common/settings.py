@@ -90,6 +90,22 @@ class Settings(BaseSettings):
         description="List of service names to use for transcription. See backend/services/transcription_services",
         default_factory=list,
     )
+    # retry and polling behaviour shared by every transcription service
+    TRANSCRIPTION_RETRY_ATTEMPTS: int = Field(
+        description="How many times to call a transcription service before giving up on a transient error", default=5
+    )
+    TRANSCRIPTION_RETRY_MIN_WAIT_SECONDS: float = Field(
+        description="Shortest exponential backoff wait between transcription service retries", default=4.0
+    )
+    TRANSCRIPTION_RETRY_MAX_WAIT_SECONDS: float = Field(
+        description="Longest exponential backoff wait between transcription service retries", default=10.0
+    )
+    TRANSCRIPTION_POLL_ATTEMPTS: int = Field(
+        description="How many times an async transcription service is polled for a finished job per check", default=5
+    )
+    TRANSCRIPTION_POLL_INTERVAL_SECONDS: float = Field(
+        description="How long to wait between polls of an async transcription service for a finished job", default=5.0
+    )
 
     FAST_LLM_PROVIDER: str = Field(
         description="Fast LLM provider to use. Currently 'openai' or 'gemini' are supported. Note that this should be "

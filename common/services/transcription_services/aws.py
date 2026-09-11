@@ -45,11 +45,9 @@ class AWSTranscribeAdapter(TranscriptionAdapter):
         return TranscriptionJobMessageData(transcription_service=cls.name, job_name=job_name)
 
     @classmethod
-    async def check(
-        cls, data: TranscriptionJobMessageData, retry_count: int = 5, retry_delay: int = 5
-    ) -> TranscriptionJobMessageData:
+    async def check(cls, data: TranscriptionJobMessageData) -> TranscriptionJobMessageData:
         # Poll for completion
-        for _ in range(retry_count):
+        for _ in range(settings.TRANSCRIPTION_POLL_ATTEMPTS):
             s3 = boto3.client("s3", region_name=settings.AWS_REGION)
             transcribe = boto3.client("transcribe", region_name=settings.AWS_REGION)
             status = transcribe.get_transcription_job(TranscriptionJobName=data.job_name)
@@ -79,7 +77,7 @@ class AWSTranscribeAdapter(TranscriptionAdapter):
                 msg = f"Transcription job failed: {failure_reason}"
                 raise ValueError(msg)
             else:
-                await asyncio.sleep(retry_delay)
+                await asyncio.sleep(settings.TRANSCRIPTION_POLL_INTERVAL_SECONDS)
 
         return data
 

@@ -201,6 +201,23 @@ class TestStart:
 
         client_class.assert_not_called()
 
+    @pytest.mark.asyncio
+    async def test_calls_the_configured_base_url(self, audio_file):
+        response = FakeWord("unused")
+        response.words = [word("Hello", 0.0, 0.5, "speaker_0")]
+        patcher, _ = self._patched_client(response)
+        # Deliberately not the EU residency default, so a hardcoded URL in the adapter would fail this.
+        global_api = "https://api.elevenlabs.io"
+
+        with (
+            patcher as client_class,
+            patch("common.services.transcription_services.elevenlabs.settings.ELEVENLABS_BASE_URL", global_api),
+        ):
+            await ElevenLabsSpeechAdapter.start(audio_file)
+
+        # A data residency key is rejected by every stack but its own, so the URL has to reach the client.
+        assert client_class.call_args.kwargs["base_url"] == global_api
+
 
 class TestAdapterContract:
     def test_is_registered_with_the_manager(self):

@@ -62,7 +62,11 @@ class ElevenLabsSpeechAdapter(TranscriptionAdapter):
             msg = f"{cls.__name__} needs a local audio file, got {type(audio_file_path_or_recording).__name__}"
             raise TypeError(msg)
 
-        client = AsyncElevenLabs(api_key=settings.ELEVENLABS_API_KEY, timeout=settings.ELEVENLABS_STT_TIMEOUT_SECONDS)
+        client = AsyncElevenLabs(
+            api_key=settings.ELEVENLABS_API_KEY,
+            base_url=settings.ELEVENLABS_BASE_URL,
+            timeout=settings.ELEVENLABS_STT_TIMEOUT_SECONDS,
+        )
 
         with sentry_sdk.start_transaction(op="process", name="post_file_to_elevenlabs_transcribe") as transaction:
             transaction.set_data("file_size", audio_file_path_or_recording.stat().st_size)

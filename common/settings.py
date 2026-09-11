@@ -147,6 +147,11 @@ class Settings(BaseSettings):
 
     # if using elevenlabs_stt
     ELEVENLABS_API_KEY: str | None = Field(description="ElevenLabs API key for Scribe speech-to-text", default=None)
+    ELEVENLABS_BASE_URL: str = Field(
+        description="ElevenLabs API base URL. A data residency API key only works against its own stack, so point "
+        "this at the stack the key was issued for; the global API is https://api.elevenlabs.io",
+        default="https://api.eu.residency.elevenlabs.io",
+    )
     ELEVENLABS_STT_MODEL: str = Field(
         description="ElevenLabs speech-to-text model id to transcribe with", default="scribe_v2"
     )

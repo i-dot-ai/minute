@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from tenacity import RetryError, retry_if_exception_type
@@ -18,30 +18,18 @@ def _retry_with(attempts):
 class TestTranscriptionRetry:
     @pytest.mark.asyncio
     async def test_stops_after_the_configured_number_of_attempts(self):
-        calls = 0
-
-        @_retry_with(attempts=3)
-        async def always_fails():
-            nonlocal calls
-            calls += 1
-            raise ValueError
+        always_fails = AsyncMock(side_effect=ValueError)
 
         with pytest.raises(RetryError):
-            await always_fails()
+            await _retry_with(attempts=3)(always_fails)()
 
-        assert calls == 3
+        assert always_fails.await_count == 3
 
     @pytest.mark.asyncio
     async def test_does_not_retry_errors_outside_the_adapter_condition(self):
-        calls = 0
-
-        @_retry_with(attempts=3)
-        async def fails_permanently():
-            nonlocal calls
-            calls += 1
-            raise TypeError
+        fails_permanently = AsyncMock(side_effect=TypeError)
 
         with pytest.raises(TypeError):
-            await fails_permanently()
+            await _retry_with(attempts=3)(fails_permanently)()
 
-        assert calls == 1
+        assert fails_permanently.await_count == 1

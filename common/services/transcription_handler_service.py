@@ -11,6 +11,7 @@ from common.generate_meeting_title import generate_meeting_title
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_chat_with_transcript_system_message
 from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
+from common.services.posthog_client import capture_event
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.settings import get_settings
 from common.templates.citations import combine_consecutive_citations
@@ -168,6 +169,11 @@ class TranscriptionHandlerService:
                 cls.update_transcription(
                     transcription.id, status=JobStatus.COMPLETED, transcript=dialogue_entries, title=meeting_title
                 )
+                capture_event(
+                    transcription.user_id,
+                    "transcription_succeeded",
+                    {"transcriptionId": str(transcription.id)},
+                )
 
         except Exception as e:
             msg = f"Transcription failed: {e!s}"
@@ -177,6 +183,11 @@ class TranscriptionHandlerService:
             except Exception:
                 logger.exception("Error updating transcription status. Maybe it doesn't exist?")
 
+            capture_event(
+                transcription.user_id,
+                "transcription_failed",
+                {"transcriptionId": str(transcription.id)},
+            )
             raise TranscriptionFailedError from e
         else:
             return transcription_job

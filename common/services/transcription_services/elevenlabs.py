@@ -129,7 +129,10 @@ class ElevenLabsSpeechAdapter(TranscriptionAdapter):
                 current["text"] += word.text
                 current["end_time"] = max(current["end_time"], end)
 
+        non_empty: list[DialogueEntry] = []
         for entry in entries:
             entry["text"] = entry["text"].strip()
+            if entry["text"]:
+                non_empty.append(entry)
 
-        return [entry for entry in entries if entry["text"]]
+        return non_empty

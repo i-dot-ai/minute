@@ -2,14 +2,34 @@
 
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
+import { usePathname, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
-import React from 'react'
+import React, { Suspense, useEffect, PropsWithChildren } from 'react'
 
-function PosthogProvider({ children }: React.PropsWithChildren) {
+function PageviewTracker() {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (!posthog.__loaded) {
+      return
+    }
+    let url = window.origin + pathname
+    const search = searchParams.toString()
+    if (search) {
+      url = `${url}?${search}`
+    }
+    posthog.capture('$pageview', { $current_url: url })
+  }, [pathname, searchParams])
+
+  return null
+}
+
+function PosthogProvider({ children }: PropsWithChildren) {
   const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
 
-  React.useEffect(() => {
+  useEffect(() => {
     const API_KEY = process.env.NEXT_PUBLIC_POSTHOG_API_KEY
     if (!API_KEY) {
       return
@@ -19,6 +39,7 @@ function PosthogProvider({ children }: React.PropsWithChildren) {
       persistence: 'memory',
       autocapture: false,
       disable_session_recording: true,
+      capture_pageview: false,
     })
 
     if (user?.id) {
@@ -26,7 +47,14 @@ function PosthogProvider({ children }: React.PropsWithChildren) {
     }
   }, [user?.id])
 
-  return <PostHogProvider client={posthog}>{children}</PostHogProvider>
+  return (
+    <PostHogProvider client={posthog}>
+      <Suspense fallback={null}>
+        <PageviewTracker />
+      </Suspense>
+      {children}
+    </PostHogProvider>
+  )
 }
 
 export default PosthogProvider

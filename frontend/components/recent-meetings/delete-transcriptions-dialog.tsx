@@ -13,7 +13,7 @@ import { listTranscriptionsTranscriptionsGetQueryKey } from '@/lib/client/@tanst
 import { deleteTranscriptionTranscriptionsTranscriptionIdDelete } from '@/lib/client/sdk.gen'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import posthog from 'posthog-js'
-import { Dispatch, SetStateAction } from 'react'
+import { Dispatch, SetStateAction, useRef } from 'react'
 
 export const DeleteTranscriptionsDialog = ({
   open,
@@ -29,6 +29,7 @@ export const DeleteTranscriptionsDialog = ({
   onDeleted: () => void
 }) => {
   const queryClient = useQueryClient()
+  const confirmedRef = useRef(false)
   const { mutate: deleteTranscriptions, isPending } = useMutation({
     mutationFn: async (ids: string[]) => {
       await Promise.all(
@@ -49,8 +50,20 @@ export const DeleteTranscriptionsDialog = ({
     },
   })
 
+  const handleOpenChange = (next: boolean) => {
+    if (!next && !confirmedRef.current) {
+      posthog.capture('delete_modal_cancelled', {
+        entity_type: 'transcription',
+        bulk: true,
+        count,
+      })
+    }
+    confirmedRef.current = false
+    setOpen(next)
+  }
+
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="govuk-heading-l">
@@ -76,7 +89,10 @@ export const DeleteTranscriptionsDialog = ({
             type="button"
             className="govuk-button govuk-button--warning"
             disabled={isPending}
-            onClick={() => deleteTranscriptions(transcriptionIds)}
+            onClick={() => {
+              confirmedRef.current = true
+              deleteTranscriptions(transcriptionIds)
+            }}
           >
             Delete {count} selected
           </button>

@@ -89,6 +89,7 @@ export function NewMinuteDialog({
           })
           posthog.capture('generate_ai_minutes_started', {
             style: !!template.id ? 'User generated' : template.name,
+            transcriptionId,
           })
           setOpen(false)
           onCreated?.()

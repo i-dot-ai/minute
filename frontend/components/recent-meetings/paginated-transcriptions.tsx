@@ -12,6 +12,7 @@ import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import posthog from 'posthog-js'
 import { useEffect, useRef, useState } from 'react'
 import { Search, FileText } from 'lucide-react'
 
@@ -213,7 +214,16 @@ export const PaginatedTranscriptions = () => {
         </form>
       </div>
       {visibleOfflineRecordings.length > 0 && (
-        <details className="govuk-details">
+        <details
+          className="govuk-details"
+          onToggle={(e) => {
+            if (e.currentTarget.open) {
+              posthog.capture('details_expanded', {
+                which: 'why_not_uploaded',
+              })
+            }
+          }}
+        >
           <summary className="govuk-details__summary">
             <span className="govuk-details__summary-text">
               Why are some recordings marked &quot;Not uploaded&quot;?

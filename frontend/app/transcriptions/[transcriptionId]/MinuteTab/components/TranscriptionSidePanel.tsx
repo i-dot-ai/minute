@@ -7,6 +7,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams, usePathname, useRouter } from 'next/navigation'
+import posthog from 'posthog-js'
 import { useState } from 'react'
 import { PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 
@@ -110,7 +111,12 @@ export function TranscriptionSidePanel() {
       <button
         type="button"
         className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-margin-bottom-4 flex items-center gap-2 text-(--govuk-link-colour) xl:hidden"
-        onClick={() => setIsCollapsed((collapsed) => !collapsed)}
+        onClick={() => {
+          posthog.capture('sidebar_collapse_toggled', {
+            state: isCollapsed ? 'expanded' : 'collapsed',
+          })
+          setIsCollapsed((collapsed) => !collapsed)
+        }}
       >
         {isCollapsed ? (
           <>

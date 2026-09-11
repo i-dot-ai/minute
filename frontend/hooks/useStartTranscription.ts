@@ -38,14 +38,24 @@ export const useStartTranscription = (
       uploadUrl: string
       file: Blob | File
     }) => {
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'x-ms-blob-type': 'BlockBlob',
-        },
-      })
+      let uploadResponse: Response
+      try {
+        uploadResponse = await fetch(uploadUrl, {
+          method: 'PUT',
+          body: file,
+          headers: {
+            'x-ms-blob-type': 'BlockBlob',
+          },
+        })
+      } catch (error) {
+        posthog.capture('upload_failed', { failure_type: 'network' })
+        throw error
+      }
       if (!uploadResponse.ok) {
+        posthog.capture('upload_failed', {
+          failure_type: 'bad_response',
+          status: uploadResponse.status,
+        })
         throw new Error('Failed to upload file to S3')
       }
     },

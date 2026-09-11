@@ -7,6 +7,7 @@ import {
 } from '@/hooks/use-onboarding-tour'
 import { EVENTS, STATUS } from 'react-joyride'
 import { usePathname } from 'next/navigation'
+import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 const UNAUTHORISED_PATH = '/unauthorised'
@@ -68,11 +69,23 @@ export function OnboardingTour() {
     run: tourActive,
     steps,
     onEvent: (data) => {
+      if (data.type === EVENTS.TOUR_START) {
+        posthog.capture('tour_started', { page: tourKey })
+      } else if (data.type === EVENTS.STEP_AFTER) {
+        posthog.capture('tour_step_viewed', {
+          page: tourKey,
+          step_index: data.index,
+        })
+      }
       if (
         data.type === EVENTS.TOUR_END ||
         data.status === STATUS.SKIPPED ||
         data.status === STATUS.FINISHED
       ) {
+        posthog.capture(
+          data.status === STATUS.FINISHED ? 'tour_completed' : 'tour_dismissed',
+          { page: tourKey, step_index: data.index }
+        )
         finishTour()
       }
     },

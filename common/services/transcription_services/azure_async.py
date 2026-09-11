@@ -10,11 +10,12 @@ from typing import Any
 import aioboto3
 import httpx
 from azure.storage.blob import BlobClient, ContainerClient, ContainerSasPermissions, generate_container_sas
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from common.database.postgres_models import DialogueEntry, Recording
+from common.http_status import CREATED, OK
 from common.services.storage_services import get_storage_service
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
+from common.services.transcription_services.retry import RETRY_ON_HTTPX_ERRORS, transcription_retry
 from common.settings import get_settings
 from common.types import TranscriptionJobMessageData
 
@@ -52,11 +53,7 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
     adapter_type = AdapterType.ASYNC
 
     @classmethod
-    @retry(
-        retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.TimeoutException)),
-        wait=wait_exponential(multiplier=1, min=4, max=10),
-        stop=stop_after_attempt(5),
-    )
+    @transcription_retry(RETRY_ON_HTTPX_ERRORS)
     async def start(cls, audio_file_path_or_recording: Path | Recording) -> TranscriptionJobMessageData:
         """
         Async version of transcribe audio using Azure Speech-to-Text API
@@ -93,21 +90,17 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
 
         async with httpx.AsyncClient(timeout=timeout_settings) as client:
             response = await client.post(submit_url, headers=headers, json=data, params=params)
-            if response.status_code != 201:  # noqa: PLR2004
+            if response.status_code != CREATED:
                 response.raise_for_status()
 
         return TranscriptionJobMessageData(transcription_service=cls.name, job_name=response.json()["self"])
 
     @classmethod
-    @retry(
-        retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.TimeoutException)),
-        wait=wait_exponential(multiplier=1, min=4, max=10),
-        stop=stop_after_attempt(5),
-    )
+    @transcription_retry(RETRY_ON_HTTPX_ERRORS)
     async def get_results(cls, files_url: str, data: TranscriptionJobMessageData) -> TranscriptionJobMessageData:
         async with httpx.AsyncClient(timeout=timeout_settings) as client:
             files_response = await client.get(files_url, headers=headers, params=params)
-            if files_response.status_code != 200:  # noqa: PLR2004
+            if files_response.status_code != OK:
                 files_response.raise_for_status()
 
             result = None
@@ -168,19 +161,13 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
         ]
 
     @classmethod
-    @retry(
-        retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.TimeoutException)),
-        wait=wait_exponential(multiplier=1, min=4, max=10),
-        stop=stop_after_attempt(5),
-    )
-    async def check(
-        cls, data: TranscriptionJobMessageData, retry_count: int = 5, retry_delay: int = 5
-    ) -> TranscriptionJobMessageData:
+    @transcription_retry(RETRY_ON_HTTPX_ERRORS)
+    async def check(cls, data: TranscriptionJobMessageData) -> TranscriptionJobMessageData:
         # Poll for completion
-        for _ in range(retry_count):
+        for _ in range(settings.TRANSCRIPTION_POLL_ATTEMPTS):
             async with httpx.AsyncClient(timeout=timeout_settings) as client:
                 job_response = await client.get(data.job_name, headers=headers, params=params)
-                if job_response.status_code != 200:  # noqa: PLR2004
+                if job_response.status_code != OK:
                     job_response.raise_for_status()
 
                 job_data = job_response.json()
@@ -195,7 +182,7 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
                         msg = f"no status in response {job_response.json()}"
                         raise ValueError(msg)
                     case _:
-                        await asyncio.sleep(retry_delay)
+                        await asyncio.sleep(settings.TRANSCRIPTION_POLL_INTERVAL_SECONDS)
         return data
 
     @classmethod

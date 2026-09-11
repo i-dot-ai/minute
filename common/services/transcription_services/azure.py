@@ -5,12 +5,13 @@ from typing import Any
 import aiofiles
 import httpx
 import sentry_sdk
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from common.database.postgres_models import Recording
+from common.http_status import TOO_MANY_REQUESTS
 from common.services.exceptions import TranscriptionFailedError
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
-from common.services.transcription_services.azure_common import TOO_MANY_REQUESTS, convert_to_dialogue_entries
+from common.services.transcription_services.azure_common import convert_to_dialogue_entries
+from common.services.transcription_services.retry import RETRY_ON_HTTPX_ERRORS, transcription_retry
 from common.settings import get_settings
 from common.types import TranscriptionJobMessageData
 
@@ -32,11 +33,7 @@ class AzureSpeechAdapter(TranscriptionAdapter):
         return data
 
     @classmethod
-    @retry(
-        retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.TimeoutException)),
-        wait=wait_exponential(multiplier=1, min=4, max=10),
-        stop=stop_after_attempt(5),
-    )
+    @transcription_retry(RETRY_ON_HTTPX_ERRORS)
     async def start(cls, audio_file_path_or_recording: Path | Recording) -> TranscriptionJobMessageData:
         """Transcribe using Azure Speech-to-Text API."""
         # Use your existing Azure transcription function

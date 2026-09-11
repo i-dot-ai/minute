@@ -27,6 +27,10 @@ locals {
       value = "placeholder" # Update value in SSM - Do not hardcode
     },
     {
+      name  = "ELEVENLABS_API_KEY"
+      value = "placeholder" # Update value in SSM - Do not hardcode
+    },
+    {
       name  = "POSTGRES_PORT"
       value = 5432
     },

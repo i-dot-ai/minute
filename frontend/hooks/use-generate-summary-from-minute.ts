@@ -41,6 +41,8 @@ export const useGenerateSummaryFromMinute = (transcriptionId: string) => {
       posthog.capture('generate_ai_minutes_started', {
         style: minute.template_name,
         source: 'speaker_editor',
+        transcriptionId,
+        isRegeneration: !!sourceMinuteId,
       })
       return minute
     },

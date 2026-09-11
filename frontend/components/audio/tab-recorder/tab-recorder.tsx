@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import posthog from 'posthog-js'
+
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
@@ -245,6 +247,10 @@ function TabRecorder({
           'Could not access microphone. Recording only tab audio.',
           micError
         )
+        posthog.capture('mic_start_failed', {
+          source: 'tab_recorder',
+          recording_continued: true,
+        })
       }
 
       const composedStream = new MediaStream()

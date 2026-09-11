@@ -40,6 +40,10 @@ class AzureSpeechAdapter(TranscriptionAdapter):
         """
         Async version of transcribe audio using Azure Speech-to-Text API
         """
+        # The manager hands synchronous adapters the downloaded file; only async adapters receive a Recording.
+        if not isinstance(audio_file_path_or_recording, Path):
+            msg = f"{cls.__name__} needs a local audio file, got {type(audio_file_path_or_recording).__name__}"
+            raise TypeError(msg)
 
         with sentry_sdk.start_transaction(op="process", name="read_file_before_azure_transcribe") as transaction:
             async with aiofiles.open(audio_file_path_or_recording, "rb") as audio_file:

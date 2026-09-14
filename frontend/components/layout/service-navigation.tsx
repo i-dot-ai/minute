@@ -1,17 +1,23 @@
 'use client'
 import { GuardedLink } from '@/components/navigation/guarded-link'
 import { usePathname } from 'next/navigation'
-import { Bookmark, LayoutPanelTop, Mic } from 'lucide-react'
+import { Bookmark, ChevronDown, ChevronUp, LayoutPanelTop, Mic } from 'lucide-react'
 import { requestOnboardingTourRestart } from '@/hooks/use-onboarding-tour'
+import { TranscriptMenu } from '@/components/layout/transcript-menu'
+import { useState } from 'react'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
+  const [isTranscriptDetailsCollapsed, setIsTranscriptDetailsCollapsed] = useState(true)
   if (pathname === '/unauthorised') {
     return null
   }
   const pagesWithTour = ['/transcriptions', '/templates']
   const showTour =
     pathname === '/' || pagesWithTour.some((page) => pathname.includes(page))
+
+
+  const isTranscriptDetailsPage = pathname.includes('/transcriptions/') && !pathname.endsWith('/transcriptions')
 
   return (
     <div
@@ -51,18 +57,33 @@ export const ServiceNavigation = () => {
                 </GuardedLink>
               </li>
               <li
-                className={`govuk-service-navigation__item ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__item--active' : ''}`}
               >
-                <GuardedLink
-                  className="govuk-service-navigation__link"
-                  href="/transcriptions"
-                  aria-current={
-                    pathname.includes('/transcriptions') ? 'page' : undefined
-                  }
+                <div
+                  className={`govuk-service-navigation__item !flex justify-between ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__item--active' : ''}`}
                 >
-                  <Bookmark className="size-5" />
-                  Transcripts
-                </GuardedLink>
+
+                  <GuardedLink
+                    className="govuk-service-navigation__link"
+                    href="/transcriptions"
+                    aria-current={
+                      pathname.includes('/transcriptions') ? 'page' : undefined
+                    }
+                  >
+                    <Bookmark className="size-5" />
+                    Transcripts
+                  </GuardedLink>
+                  {
+                    isTranscriptDetailsPage &&
+                    <button onClick={() => setIsTranscriptDetailsCollapsed(prev => !prev)}>
+                      {isTranscriptDetailsCollapsed ? <ChevronDown /> : <ChevronUp />}
+                      <span className="govuk-visually-hidden">{isTranscriptDetailsCollapsed ? 'Expand' : 'Collapse'} transcript details</span>
+                    </button>
+                  }
+                </div>
+                {
+                  isTranscriptDetailsPage && !isTranscriptDetailsCollapsed &&
+                  <TranscriptMenu />
+                }
               </li>
               <li
                 className={`govuk-service-navigation__item ${pathname.includes('/templates') ? 'govuk-service-navigation__item--active' : ''}`}
@@ -79,7 +100,7 @@ export const ServiceNavigation = () => {
                 </GuardedLink>
               </li>
             </ul>
-            <div>
+            <div className="w-full">
               {showTour && (
                 <div className="govuk-!-padding-top-3 govuk-!-padding-bottom-3">
                   <button

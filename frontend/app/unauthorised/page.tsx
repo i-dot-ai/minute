@@ -42,28 +42,6 @@ function Unauthorised(): React.JSX.Element {
               </div>
             </div>
           )}
-          <div
-            className="govuk-notification-banner"
-            role="region"
-            aria-labelledby="govuk-notification-banner-title"
-            data-module="govuk-notification-banner"
-          >
-            <div className="govuk-notification-banner__header">
-              <h2
-                className="govuk-notification-banner__title"
-                id="govuk-notification-banner-title"
-              >
-                Important
-              </h2>
-            </div>
-            <div className="govuk-notification-banner__content">
-              <p className="govuk-notification-banner__heading">
-                We are currently experiencing access issues and working to
-                resolve it as quickly as possible. We are sorry for any
-                inconvenience caused.
-              </p>
-            </div>
-          </div>
           <h1 className="govuk-heading-xl">Unauthorised Access</h1>
           <p className="govuk-body">
             Sorry, you don&apos;t have permission to access this page.

@@ -6,6 +6,7 @@ locals {
 
   MAX_TRANSCRIPTION_PROCESSES = terraform.workspace == "prod" ? 4 : 2
   MAX_LLM_PROCESSES           = terraform.workspace == "prod" ? 8 : 4
+  TRANSCRIPTION_SERVICES      = terraform.workspace == "preprod" ? "[\"elevenlabs_stt\"]" : "[\"azure_stt_synchronous\",\"azure_stt_batch\"]"
 
   shared_environment_variables = {
     "ENVIRONMENT" : terraform.workspace,
@@ -21,7 +22,7 @@ locals {
     "TRANSCRIPTION_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name
     "LLM_QUEUE_NAME" : aws_sqs_queue.llm_queue.name
     "LLM_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.llm_queue_deadletter.name
-    "TRANSCRIPTION_SERVICES" : "[\"azure_stt_synchronous\",\"azure_stt_batch\"]"
+    "TRANSCRIPTION_SERVICES" : local.TRANSCRIPTION_SERVICES
     "MAX_TRANSCRIPTION_PROCESSES" : local.MAX_TRANSCRIPTION_PROCESSES
     "MAX_LLM_PROCESSES" : local.MAX_LLM_PROCESSES
     "AZURE_TRANSCRIPTION_CONTAINER_NAME" : "transcriptions"

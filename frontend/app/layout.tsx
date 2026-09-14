@@ -51,7 +51,6 @@ export default function RootLayout({
                     <Header />
                     <div className="sm:flex sm:min-h-0 sm:flex-1">
                       <ServiceNavigation />
-                      <TranscriptionSidePanel />
                       <main
                         id="main-content"
                         tabIndex={-1}

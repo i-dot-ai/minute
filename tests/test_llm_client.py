@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from common.llm.client import create_chatbot
 from tests.marks import costs_money
 
-pytestmark = [costs_money]
+pytestmark = [costs_money()]
 structured_chat_prompt_1 = [
     {"role": "system", "content": "You are a helpful assistant. Extract the properties of the house."},
     {"role": "user", "content": "The house is red and ten meters tall, with 3 bedrooms and 2 bathrooms."},

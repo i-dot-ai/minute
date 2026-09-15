@@ -46,7 +46,7 @@ from tests.marks import costs_money
 from tests.utils import FileTypeTests, get_test_client
 from worker.worker_service import WorkerService, create_worker_service
 
-pytestmark = [costs_money]
+pytestmark = [costs_money()]
 
 
 @pytest.fixture

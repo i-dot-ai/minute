@@ -16,6 +16,7 @@ from common.prompts import (
     get_ai_edit_initial_messages,
     get_basic_minutes_prompt,
 )
+from common.services.posthog_client import capture_event
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings
 from common.templates.user_template import generate_user_template
@@ -154,9 +155,19 @@ class MinuteHandlerService:
                 hallucinations=hallucinations,
                 status=JobStatus.COMPLETED,
             )
+            capture_event(
+                minute_version.minute.transcription.user_id,
+                "summary_generation_succeeded",
+                {"transcriptionId": str(minute_version.minute.transcription_id)},
+            )
         except Exception as e:
             logger.exception("%s: Minute generation failed", minute_version.minute_id)
             cls.record_minute_version_failure(minute_version.id, error=str(e))
+            capture_event(
+                minute_version.minute.transcription.user_id,
+                "summary_generation_failed",
+                {"transcriptionId": str(minute_version.minute.transcription_id)},
+            )
             raise MinuteGenerationFailedError from e
 
     @classmethod

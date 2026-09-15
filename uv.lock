@@ -1203,6 +1203,7 @@ worker = [
     { name = "ffmpeg-python" },
     { name = "google-genai" },
     { name = "openai" },
+    { name = "posthog" },
     { name = "ray", extra = ["default"] },
 ]
 
@@ -1260,6 +1261,7 @@ worker = [
     { name = "ffmpeg-python", specifier = ">=0.2.0,<0.3" },
     { name = "google-genai", specifier = ">=1.10.0,<2" },
     { name = "openai", specifier = ">=1.42.0,<2" },
+    { name = "posthog", specifier = ">=6.6.1,<7" },
     { name = "ray", extras = ["default"], specifier = ">=2.53.0,<3" },
 ]
 

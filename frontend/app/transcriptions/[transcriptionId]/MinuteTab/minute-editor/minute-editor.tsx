@@ -163,6 +163,7 @@ export function MinuteEditor({
       if (data.html != minuteVersion?.html_content) {
         posthog.capture('summary_edited', {
           transcriptionId: transcription.id,
+          summaryId: minute?.id,
         })
         saveEdit(
           {
@@ -262,13 +263,13 @@ export function MinuteEditor({
         minuteVersionHtml: minuteVersion.html_content || '',
         showEditActions: false,
         isEditable: false,
-        setIsEditable: () => {},
+        setIsEditable: () => { },
         hasCitations: false,
         hideCitations: false,
-        toggleHideCitations: () => {},
+        toggleHideCitations: () => { },
         onSuccess,
-        onSave: () => {},
-        onCancel: () => {},
+        onSave: () => { },
+        onCancel: () => { },
       })
       return
     }

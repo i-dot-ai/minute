@@ -2,6 +2,7 @@
 
 import { FeatureFlags } from '@/lib/feature-flags'
 import Link from 'next/link'
+import posthog from 'posthog-js'
 import { useFeatureFlagPayload } from 'posthog-js/react'
 
 export function PosthogBanner() {
@@ -20,6 +21,7 @@ export function PosthogBanner() {
   }
 
   const handleDismiss = () => {
+    posthog.capture('banner_dismissed')
     localStorage.setItem('posthog-banner-dismissed', payload.title || '')
     window.location.reload()
   }
@@ -41,7 +43,14 @@ export function PosthogBanner() {
           Dismiss
         </button>
       </div>
-      <details className="govuk-details govuk-!-margin-bottom-0">
+      <details
+        className="govuk-details govuk-!-margin-bottom-0"
+        onToggle={(e) => {
+          if (e.currentTarget.open) {
+            posthog.capture('posthog_banner_details_expanded')
+          }
+        }}
+      >
         <summary className="govuk-details__summary before:!text-white">
           <span className="govuk-details__summary-text !text-white">
             {payload.detailsText || 'See details'}

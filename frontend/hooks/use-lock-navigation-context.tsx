@@ -18,6 +18,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import posthog from 'posthog-js'
 
 type LockNavigationContextType = {
   lockNavigation: boolean
@@ -59,6 +60,7 @@ export const LockNavigationProvider = ({
   const handleConfirm = useCallback(() => {
     const proceed = pendingRef.current
     pendingRef.current = null
+    posthog.capture('leave_recording_prompt_resolved', { outcome: 'left' })
     setOpen(false)
     setLockNavigation(false)
     proceed?.()
@@ -66,6 +68,7 @@ export const LockNavigationProvider = ({
 
   const handleCancel = useCallback(() => {
     pendingRef.current = null
+    posthog.capture('leave_recording_prompt_resolved', { outcome: 'stayed' })
     setOpen(false)
   }, [])
 

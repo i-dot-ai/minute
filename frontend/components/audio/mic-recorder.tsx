@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import posthog from 'posthog-js'
+
 import RecordingControl from './recording-control'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -204,6 +206,7 @@ function MicRecorderComponent({
       setIsRecording(true)
     } catch (micError) {
       console.warn('Error occurred starting audio recording.', micError)
+      posthog.capture('mic_start_failed', { source: 'mic_recorder' })
     }
     // Create a media recorder from the composed stream
   }, [

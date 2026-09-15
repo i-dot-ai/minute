@@ -17,7 +17,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePathname, useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { Dispatch, SetStateAction } from 'react'
+import { Dispatch, SetStateAction, useRef } from 'react'
 
 export type DeleteTranscription = {
   id: string
@@ -39,6 +39,7 @@ export const DeleteTranscriptionDialog = ({
   const queryClient = useQueryClient()
   const router = useRouter()
   const pathname = usePathname()
+  const confirmedRef = useRef(false)
   const { mutate: deleteTranscription, isPending } = useMutation({
     ...deleteTranscriptionTranscriptionsTranscriptionIdDeleteMutation(),
     onSuccess() {
@@ -58,6 +59,17 @@ export const DeleteTranscriptionDialog = ({
     },
   })
 
+  const handleOpenChange = (next: boolean) => {
+    if (!next && !confirmedRef.current) {
+      posthog.capture('delete_modal_cancelled', {
+        entity_type: 'transcription',
+        bulk: false,
+      })
+    }
+    confirmedRef.current = false
+    setOpen(next)
+  }
+
   const title =
     transcription.title ||
     (['awaiting_start', 'in_progress'].includes(transcription.status)
@@ -65,7 +77,7 @@ export const DeleteTranscriptionDialog = ({
       : 'No title')
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="govuk-heading-l">
@@ -99,11 +111,12 @@ export const DeleteTranscriptionDialog = ({
             type="button"
             className="govuk-button govuk-button--warning"
             disabled={isPending}
-            onClick={() =>
+            onClick={() => {
+              confirmedRef.current = true
               deleteTranscription({
                 path: { transcription_id: transcription.id },
               })
-            }
+            }}
           >
             Delete transcription
           </button>

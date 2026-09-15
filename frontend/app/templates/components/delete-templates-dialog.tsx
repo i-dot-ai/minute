@@ -13,7 +13,7 @@ import { getUserTemplatesUserTemplatesGetQueryKey } from '@/lib/client/@tanstack
 import { deleteUserTemplateUserTemplatesTemplateIdDelete } from '@/lib/client/sdk.gen'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import posthog from 'posthog-js'
-import { Dispatch, SetStateAction } from 'react'
+import { Dispatch, SetStateAction, useRef } from 'react'
 
 export const DeleteTemplatesDialog = ({
   open,
@@ -28,6 +28,7 @@ export const DeleteTemplatesDialog = ({
 }) => {
   const queryClient = useQueryClient()
   const count = templateIds.length
+  const confirmedRef = useRef(false)
   const { mutate: deleteTemplates, isPending } = useMutation({
     mutationFn: async (ids: string[]) => {
       await Promise.all(
@@ -48,8 +49,20 @@ export const DeleteTemplatesDialog = ({
     },
   })
 
+  const handleOpenChange = (next: boolean) => {
+    if (!next && !confirmedRef.current) {
+      posthog.capture('delete_modal_cancelled', {
+        entity_type: 'template',
+        bulk: true,
+        count,
+      })
+    }
+    confirmedRef.current = false
+    setOpen(next)
+  }
+
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="govuk-heading-l">
@@ -75,7 +88,10 @@ export const DeleteTemplatesDialog = ({
             type="button"
             className="govuk-button govuk-button--warning"
             disabled={isPending}
-            onClick={() => deleteTemplates(templateIds)}
+            onClick={() => {
+              confirmedRef.current = true
+              deleteTemplates(templateIds)
+            }}
           >
             Delete
           </button>

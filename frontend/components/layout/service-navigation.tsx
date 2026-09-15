@@ -1,14 +1,21 @@
 'use client'
 import { GuardedLink } from '@/components/navigation/guarded-link'
 import { usePathname } from 'next/navigation'
-import { Bookmark, ChevronDown, ChevronUp, LayoutPanelTop, Mic } from 'lucide-react'
+import {
+  Bookmark,
+  ChevronDown,
+  ChevronUp,
+  LayoutPanelTop,
+  Mic,
+} from 'lucide-react'
 import { requestOnboardingTourRestart } from '@/hooks/use-onboarding-tour'
 import { TranscriptMenu } from '@/components/layout/transcript-menu'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
-  const [isTranscriptDetailsCollapsed, setIsTranscriptDetailsCollapsed] = useState(true)
+  const [isTranscriptDetailsCollapsed, setIsTranscriptDetailsCollapsed] =
+    useState(false)
   if (pathname === '/unauthorised') {
     return null
   }
@@ -16,8 +23,9 @@ export const ServiceNavigation = () => {
   const showTour =
     pathname === '/' || pagesWithTour.some((page) => pathname.includes(page))
 
-
-  const isTranscriptDetailsPage = pathname.includes('/transcriptions/') && !pathname.endsWith('/transcriptions')
+  const isTranscriptDetailsPage =
+    pathname.includes('/transcriptions/') &&
+    !pathname.endsWith('/transcriptions')
 
   return (
     <div
@@ -56,12 +64,10 @@ export const ServiceNavigation = () => {
                   Record
                 </GuardedLink>
               </li>
-              <li
-              >
+              <li>
                 <div
                   className={`govuk-service-navigation__item !flex justify-between ${pathname.includes('/transcriptions') ? 'govuk-service-navigation__item--active' : ''}`}
                 >
-
                   <GuardedLink
                     className="govuk-service-navigation__link"
                     href="/transcriptions"
@@ -72,18 +78,28 @@ export const ServiceNavigation = () => {
                     <Bookmark className="size-5" />
                     Transcripts
                   </GuardedLink>
-                  {
-                    isTranscriptDetailsPage &&
-                    <button onClick={() => setIsTranscriptDetailsCollapsed(prev => !prev)}>
-                      {isTranscriptDetailsCollapsed ? <ChevronDown /> : <ChevronUp />}
-                      <span className="govuk-visually-hidden">{isTranscriptDetailsCollapsed ? 'Expand' : 'Collapse'} transcript details</span>
+                  {isTranscriptDetailsPage && (
+                    <button
+                      onClick={() =>
+                        setIsTranscriptDetailsCollapsed((prev) => !prev)
+                      }
+                      className="govuk-service-navigation__link cursor-pointer hover:bg-[#8eb8dc]"
+                    >
+                      {isTranscriptDetailsCollapsed ? (
+                        <ChevronDown />
+                      ) : (
+                        <ChevronUp />
+                      )}
+                      <span className="govuk-visually-hidden">
+                        {isTranscriptDetailsCollapsed ? 'Expand' : 'Collapse'}{' '}
+                        transcript details
+                      </span>
                     </button>
-                  }
+                  )}
                 </div>
-                {
-                  isTranscriptDetailsPage && !isTranscriptDetailsCollapsed &&
+                {isTranscriptDetailsPage && !isTranscriptDetailsCollapsed && (
                   <TranscriptMenu />
-                }
+                )}
               </li>
               <li
                 className={`govuk-service-navigation__item ${pathname.includes('/templates') ? 'govuk-service-navigation__item--active' : ''}`}
@@ -100,7 +116,7 @@ export const ServiceNavigation = () => {
                 </GuardedLink>
               </li>
             </ul>
-            <div className="w-full">
+            <div className="w-full sm:mt-auto">
               {showTour && (
                 <div className="govuk-!-padding-top-3 govuk-!-padding-bottom-3">
                   <button

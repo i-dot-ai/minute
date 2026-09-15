@@ -76,7 +76,7 @@ export const ServiceNavigation = () => {
                     }
                   >
                     <Bookmark className="size-5" />
-                    Transcripts
+                    Transcriptions
                   </GuardedLink>
                   {isTranscriptDetailsPage && (
                     <button

@@ -263,13 +263,13 @@ export function MinuteEditor({
         minuteVersionHtml: minuteVersion.html_content || '',
         showEditActions: false,
         isEditable: false,
-        setIsEditable: () => { },
+        setIsEditable: () => {},
         hasCitations: false,
         hideCitations: false,
-        toggleHideCitations: () => { },
+        toggleHideCitations: () => {},
         onSuccess,
-        onSave: () => { },
-        onCancel: () => { },
+        onSave: () => {},
+        onCancel: () => {},
       })
       return
     }

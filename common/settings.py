@@ -90,6 +90,22 @@ class Settings(BaseSettings):
         description="List of service names to use for transcription. See backend/services/transcription_services",
         default_factory=list,
     )
+    # retry and polling behaviour shared by every transcription service
+    TRANSCRIPTION_RETRY_ATTEMPTS: int = Field(
+        description="How many times to call a transcription service before giving up on a transient error", default=5
+    )
+    TRANSCRIPTION_RETRY_MIN_WAIT_SECONDS: float = Field(
+        description="Shortest exponential backoff wait between transcription service retries", default=4.0
+    )
+    TRANSCRIPTION_RETRY_MAX_WAIT_SECONDS: float = Field(
+        description="Longest exponential backoff wait between transcription service retries", default=10.0
+    )
+    TRANSCRIPTION_POLL_ATTEMPTS: int = Field(
+        description="How many times an async transcription service is polled for a finished job per check", default=5
+    )
+    TRANSCRIPTION_POLL_INTERVAL_SECONDS: float = Field(
+        description="How long to wait between polls of an async transcription service for a finished job", default=5.0
+    )
 
     FAST_LLM_PROVIDER: str = Field(
         description="Fast LLM provider to use. Currently 'openai' or 'gemini' are supported. Note that this should be "
@@ -127,6 +143,22 @@ class Settings(BaseSettings):
         description="Azure container name for transcription result files. Note that Azure Batch transcription requires "
         "this.",
         default=None,
+    )
+
+    # if using elevenlabs_stt
+    ELEVENLABS_API_KEY: str | None = Field(description="ElevenLabs API key for Scribe speech-to-text", default=None)
+    ELEVENLABS_BASE_URL: str = Field(
+        description="ElevenLabs API base URL. A data residency API key only works against its own stack, so point "
+        "this at the stack the key was issued for; the global API is https://api.elevenlabs.io",
+        default="https://api.eu.residency.elevenlabs.io",
+    )
+    ELEVENLABS_STT_MODEL: str = Field(
+        description="ElevenLabs speech-to-text model id to transcribe with", default="scribe_v2"
+    )
+    ELEVENLABS_STT_TIMEOUT_SECONDS: float = Field(
+        description="How long to wait for a synchronous ElevenLabs transcription before giving up. This, rather "
+        "than the service limit, is what caps the length of audio the adapter can handle.",
+        default=3600.0,
     )
 
     QUEUE_SERVICE_NAME: str = Field(

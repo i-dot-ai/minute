@@ -15,21 +15,21 @@ export function TranscriptMenu() {
   const [areSummariesCollapsed, setAreSummariesCollapsed] = useState(false)
   const pathname = usePathname()
 
-  if (!transcriptionId) return null
-
   const { data: minutes = [] } = useQuery({
     ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(
       {
-        path: { transcription_id: transcriptionId },
+        path: { transcription_id: transcriptionId ?? '' },
       }
     ),
     enabled: !!transcriptionId,
   })
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
-      path: { transcription_id: transcriptionId },
+      path: { transcription_id: transcriptionId ?? '' },
     }),
   })
+
+  if (!transcriptionId) return null
   const transcriptPage = !pathname.includes('/summary')
 
   return (

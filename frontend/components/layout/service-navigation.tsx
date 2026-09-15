@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { requestOnboardingTourRestart } from '@/hooks/use-onboarding-tour'
 import { TranscriptMenu } from '@/components/layout/transcript-menu'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()

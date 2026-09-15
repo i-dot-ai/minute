@@ -80,6 +80,9 @@ skip = [
 
 [tool.uv]
 default-groups = "all"
+override-dependencies = [
+    "wrapt>=2.4.0",
+]
 
 [tool.pytest.ini_options]
 minversion = "8.3"

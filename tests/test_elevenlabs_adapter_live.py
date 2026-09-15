@@ -15,7 +15,7 @@ from common.services.transcription_services.elevenlabs import ElevenLabsSpeechAd
 from tests.marks import costs_money, requires_audio_data
 from tests.utils import FileTypeTests
 
-pytestmark = [costs_money, requires_audio_data]
+pytestmark = [costs_money("ELEVENLABS_API_KEY"), requires_audio_data]
 
 # Long enough for a few speaker turns, short enough to keep each run cheap.
 CLIP_SECONDS = 60
@@ -36,8 +36,6 @@ def audio_clip(tmp_path) -> Path:
 
 @pytest.mark.asyncio
 async def test_transcribes_a_clip_into_speaker_turns(audio_clip):
-    assert ElevenLabsSpeechAdapter.is_available(), "Set ELEVENLABS_API_KEY in .env to run this test"
-
     result = await ElevenLabsSpeechAdapter.start(audio_clip)
 
     assert result.transcription_service == ElevenLabsSpeechAdapter.name

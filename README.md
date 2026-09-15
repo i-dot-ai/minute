@@ -139,7 +139,7 @@ time, we enable these with:
 ALLOW_TESTS_TO_ACCESS_PAID_APIS=1
 ```
 
-is in your `.env` file.
+is in your `.env` file. Tests that need an API key, such as the ElevenLabs ones, are also skipped until that key is set.
 
 In order to run some tests, you will need some preprocessed transcript `.json` files. These should be located in
 the top level `.data` dir in the repo. Within this directory, different subdirectories are routed to

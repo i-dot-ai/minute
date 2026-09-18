@@ -261,3 +261,83 @@ async def test_a_missing_transcript_is_indistinguishable_from_someone_elses():
             async with mcp_test_client() as client:
                 with pytest.raises(ToolError, match="belongs to you"):
                     await client.call_tool("get_transcript", {"transcription_id": str(uuid.uuid4())})
+
+
+@contextmanager
+def internal_access_client_configured():
+    """Pretend an Internal Access client has been registered for this server."""
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr("backend.mcp_server.server.settings.MCP_OIDC_CLIENT_ID", "minute-mcp")
+        patch.setattr("backend.mcp_server.server.settings.MCP_OIDC_CLIENT_SECRET", "not-a-real-secret")
+        yield
+
+
+def test_locally_the_endpoint_still_takes_a_bearer_token():
+    """Local development needs no registered client: the Auth API is short-circuited anyway."""
+    from backend.mcp_server.auth import AuthApiTokenVerifier
+    from backend.mcp_server.server import build_auth
+
+    assert isinstance(build_auth(), AuthApiTokenVerifier)
+
+
+def test_a_deployed_environment_without_a_client_refuses_to_start():
+    """A missing setting must not quietly downgrade production to the weaker credential.
+
+    The failure it prevents is silent: the app comes up, serves bearer tokens,
+    and the only symptom is a discovery document that 404s.
+    """
+    from backend.mcp_server.server import MissingMcpOidcClientError, build_auth
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr("backend.mcp_server.server.settings.ENVIRONMENT", "dev")
+        patch.setattr("backend.mcp_server.server.settings.MCP_OIDC_CLIENT_ID", None)
+        patch.setattr("backend.mcp_server.server.settings.MCP_OIDC_CLIENT_SECRET", None)
+
+        # Matched loosely: the message names the escape hatch, however it is worded.
+        with pytest.raises(MissingMcpOidcClientError, match="MCP_ENABLED"):
+            build_auth()
+
+
+def test_a_deployed_environment_with_a_client_is_fine():
+    """The check is about a missing client, not about being deployed."""
+    from fastmcp.server.auth.oidc_proxy import OIDCProxy
+
+    from backend.mcp_server.server import build_auth
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr("backend.mcp_server.server.settings.ENVIRONMENT", "dev")
+        with internal_access_client_configured():
+            assert isinstance(build_auth(), OIDCProxy)
+
+
+def test_the_proxy_still_asks_the_auth_api_on_every_request():
+    """The verifier is handed to the proxy, not replaced by it.
+
+    This is what keeps the allowlist live: the proxy swaps the token it issued
+    for the upstream one and passes that to the verifier per request.
+    """
+    from fastmcp.server.auth.oidc_proxy import OIDCProxy
+
+    from backend.mcp_server.auth import AuthApiTokenVerifier
+    from backend.mcp_server.server import build_auth
+
+    with internal_access_client_configured():
+        auth = build_auth()
+
+    assert isinstance(auth, OIDCProxy)
+    # Reaching into FastMCP here on purpose: this attribute is what the proxy
+    # calls per request, and the whole point of the wiring is that it is ours.
+    assert isinstance(auth._token_validator, AuthApiTokenVerifier)  # noqa: SLF001
+
+
+def test_the_discovery_documents_are_served_from_the_root():
+    """Not from under /mcp, where no client would look for them."""
+    from backend.mcp_server.server import build_mcp_server, well_known_routes
+
+    with internal_access_client_configured():
+        server = build_mcp_server()
+
+    paths = [route.path for route in well_known_routes(server, mcp_path="/mcp")]
+
+    assert paths, "the proxy should contribute discovery routes"
+    assert all(path.startswith("/.well-known/") for path in paths), paths

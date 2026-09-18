@@ -175,6 +175,28 @@ class Settings(BaseSettings):
         description="The public address of the /mcp endpoint.",
         default="http://localhost:8080/mcp",
     )
+    MCP_OIDC_CONFIG_URL: str = Field(
+        description="Discovery document for GOV.UK Internal Access.",
+        default="https://sso.service.security.gov.uk/.well-known/openid-configuration",
+    )
+    MCP_OIDC_CLIENT_ID: str | None = Field(
+        description=(
+            "Internal Access client for the MCP server."
+            "Registered separately from the one the load balancer uses, so this server's blast radius "
+            "does not include the whole app. "
+            "Unset means the OAuth flow is off and the endpoint falls back to accepting the "
+            "x-amzn-oidc-data as a bearer token."
+        ),
+        default=None,
+    )
+    MCP_OIDC_CLIENT_SECRET: str | None = Field(
+        description="Secret for MCP_OIDC_CLIENT_ID. Both must be set for the OAuth flow to be served.",
+        default=None,
+    )
+    MCP_OIDC_SCOPES: list[str] = Field(
+        description="Scopes requested from Internal Access. `email` is the one we use to resolve to a Minute user.",
+        default=["email"],
+    )
 
     LOCAL_STORAGE_PATH: str = Field(
         default="/tmp",  # noqa: S108

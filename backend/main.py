@@ -7,16 +7,19 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
+from fastmcp import FastMCP
+from fastmcp.server.http import StarletteWithLifespan
 
 from backend.api.routes import router as api_router
 from backend.cleanup_job import init_cleanup_scheduler
-from backend.mcp_server import build_mcp_app
+from backend.mcp_server import build_mcp_app, build_mcp_server, well_known_routes
 from common.settings import get_settings
 
 settings = get_settings()
 log = logging.getLogger("uvicorn")
 
-mcp_app = build_mcp_app() if settings.MCP_ENABLED else None
+mcp_server: FastMCP | None = build_mcp_server() if settings.MCP_ENABLED else None
+mcp_app: StarletteWithLifespan | None = build_mcp_app(mcp_server) if mcp_server else None
 
 
 @asynccontextmanager
@@ -70,6 +73,10 @@ app.include_router(api_router)
 
 if mcp_app:
     app.mount("/mcp", mcp_app)
+
+    # oauth discovery routes for the mcp server
+    for route in well_known_routes(mcp_server):
+        app.router.routes.append(route)
 
 if settings.STORAGE_SERVICE_NAME == "local":
     from common.services.storage_services.local.mock_storage_service import mock_storage_app

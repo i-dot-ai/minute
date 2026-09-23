@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import json
 import logging
+import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
@@ -95,8 +96,23 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
 
         with sentry_sdk.start_transaction(op="process", name="azure_stt_batch") as transaction:
             async with httpx.AsyncClient(timeout=timeout_settings) as client:
+                start_time = time.monotonic()
                 response = await client.post(submit_url, headers=headers, json=data, params=params)
+                duration_ms = (time.monotonic() - start_time) * 1000
                 transaction.set_tag("azure_stt_batch.status_code", response.status_code)
+
+                sentry_sdk.metrics.count(
+                    "azure_stt.requests",
+                    1,
+                    attributes={"adapter": cls.name, "status_code": response.status_code},
+                )
+                sentry_sdk.metrics.distribution(
+                    "azure_stt.duration",
+                    duration_ms,
+                    unit="millisecond",
+                    attributes={"adapter": cls.name, "status_code": response.status_code},
+                )
+
                 if response.status_code != httpx.codes.CREATED:
                     transaction.set_status(SPANSTATUS.UNKNOWN_ERROR)
                     transaction.set_tag("azure_stt_batch.unknown_error", True)

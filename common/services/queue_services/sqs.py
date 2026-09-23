@@ -2,6 +2,7 @@ import logging
 from typing import Any
 
 import boto3
+import sentry_sdk
 
 from common.services.queue_services.base import QueueService
 from common.settings import get_settings
@@ -50,6 +51,19 @@ class SQSQueueService(QueueService):
             MaxNumberOfMessages=max_messages,
             WaitTimeSeconds=self.polling_interval,  # Long polling
         )
+
+        try:
+            attributes = self.sqs.get_queue_attributes(
+                QueueUrl=self.queue_url, AttributeNames=["ApproximateNumberOfMessages"]
+            )
+            depth = int(attributes["Attributes"]["ApproximateNumberOfMessages"])
+            sentry_sdk.metrics.gauge(
+                "queue.depth",
+                depth,
+                attributes={"queue": self.queue_name},
+            )
+        except Exception:
+            logger.exception("failed to record queue depth metric")
 
         messages = response.get("Messages", [])
         out = []

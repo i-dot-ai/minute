@@ -1,4 +1,5 @@
 import logging
+import time
 from pathlib import Path
 from typing import Any
 
@@ -58,6 +59,13 @@ class AzureSpeechAdapter(TranscriptionAdapter):
             transaction.set_data("file_size", audio_file_path_or_recording.stat().st_size)
             transaction.set_data("file_type", audio_file_path_or_recording.suffix.lower())
 
+            sentry_sdk.metrics.distribution(
+                "azure_stt.file_size",
+                audio_file_path_or_recording.stat().st_size,
+                unit="byte",
+                attributes={"adapter": cls.name},
+            )
+
             params = {"api-version": "2024-11-15"}
 
             timeout_settings = httpx.Timeout(
@@ -69,8 +77,23 @@ class AzureSpeechAdapter(TranscriptionAdapter):
         with sentry_sdk.start_transaction(op="process", name="post_file_to_azure_transcribe") as transaction:
             transaction.set_data("file_size", audio_file_path_or_recording.stat().st_size)
             async with httpx.AsyncClient(timeout=timeout_settings) as client:
+                start_time = time.monotonic()
                 response = await client.post(url, headers=headers, files=files, params=params)
+                duration_ms = (time.monotonic() - start_time) * 1000
                 transaction.set_tag("azure_stt.status_code", response.status_code)
+
+                sentry_sdk.metrics.count(
+                    "azure_stt.requests",
+                    1,
+                    attributes={"adapter": cls.name, "status_code": response.status_code},
+                )
+                sentry_sdk.metrics.distribution(
+                    "azure_stt.duration",
+                    duration_ms,
+                    unit="millisecond",
+                    attributes={"adapter": cls.name, "status_code": response.status_code},
+                )
+
                 if response.status_code == httpx.codes.TOO_MANY_REQUESTS:
                     transaction.set_status(SPANSTATUS.RESOURCE_EXHAUSTED)
                     transaction.set_tag("azure_stt.too_many_requests", True)

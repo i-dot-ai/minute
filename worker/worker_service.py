@@ -4,6 +4,7 @@ import logging
 import ray
 
 from common.logger import setup_logger
+from common.sentry import init_sentry
 from common.services.queue_services import get_queue_service
 from common.services.queue_services.base import QueueService
 from common.settings import get_settings
@@ -12,6 +13,12 @@ from worker.signal_handler import SignalHandler
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
+
+def setup_ray_worker_process() -> None:
+    # runs in each Ray worker process, as the actors don't inherit the driver's logging or Sentry setup
+    setup_logger()
+    init_sentry()
 
 
 class WorkerService:
@@ -93,6 +100,6 @@ def create_worker_service() -> WorkerService:
         configure_logging=True,
         dashboard_host=settings.RAY_DASHBOARD_HOST,
         dashboard_port=8265,
-        runtime_env={"worker_process_setup_hook": setup_logger},
+        runtime_env={"worker_process_setup_hook": setup_ray_worker_process},
     )
     return WorkerService(transcription_queue_service=transcription_sqs_service, llm_queue_service=llm_sqs_service)

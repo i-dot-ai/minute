@@ -1,7 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
 
-import sentry_sdk
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +8,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from backend.api.routes import router as api_router
 from backend.cleanup_job import init_cleanup_scheduler
+from common.sentry import init_sentry
 from common.settings import get_settings
 
 settings = get_settings()
@@ -26,18 +26,7 @@ async def lifespan(app_: FastAPI):  # noqa: ARG001
     log.info("Shutting down...")
 
 
-# init sentry, if used
-if settings.SENTRY_DSN:
-    if settings.ENVIRONMENT == "prod":
-        sentry_init_opts = {"traces_sample_rate": 1.0, "profile_session_sample_rate": 0.2}
-    else:
-        sentry_init_opts = {
-            "send_default_pii": True,
-            "traces_sample_rate": 1.0,
-            "profile_session_sample_rate": 1.0,
-            "profile_lifecycle": "trace",
-        }
-    sentry_sdk.init(settings.SENTRY_DSN, environment=settings.ENVIRONMENT, **sentry_init_opts)
+init_sentry()
 app = FastAPI(lifespan=lifespan, openapi_url="/api/openapi.json")
 
 

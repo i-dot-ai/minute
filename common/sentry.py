@@ -1,6 +1,8 @@
+import logging
 from typing import Any
 
 import sentry_sdk
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 from common.settings import get_settings
 
@@ -33,5 +35,10 @@ def init_sentry() -> None:
         dsn=settings.SENTRY_DSN,
         environment=settings.ENVIRONMENT,
         release=settings.SENTRY_RELEASE,
+        enable_logs=True,
+        integrations=[
+            # Forward all app log records (INFO and above) to Sentry Logs.
+            LoggingIntegration(sentry_logs_level=logging.INFO),
+        ],
         **sentry_init_opts,
     )

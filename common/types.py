@@ -2,9 +2,16 @@ import uuid
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
-from common.database.postgres_models import ContentSource, DialogueEntry, HallucinationType, JobStatus, TemplateType
+from common.database.postgres_models import (
+    ContentSource,
+    DialogueEntry,
+    HallucinationType,
+    JobStatus,
+    TemplateType,
+    User,
+)
 
 
 class TranscriptionListFilter(StrEnum):
@@ -93,14 +100,33 @@ class GetUserResponse(BaseModel):
     default_template_id: uuid.UUID | None = None
     default_template_name: str | None = None
 
+    @classmethod
+    def from_user(cls, user: User):
+        return cls(
+            id=user.id,
+            created_datetime=user.created_datetime,
+            updated_datetime=user.updated_datetime,
+            email=user.email,
+            data_retention_days=user.data_retention_days,
+            default_template_id=user.default_template_id,
+            default_template_name=user.default_template_name,
+        )
 
-class DataRetentionUpdateResponse(BaseModel):
-    data_retention_days: int | None
+
+class UpdateDataRetentionReq(BaseModel):
+    data_retention_days: int | None = Field(default=None, gt=0)
 
 
 class SetDefaultTemplateRequest(BaseModel):
     template_id: uuid.UUID | None = None
     template_name: str | None = None
+
+    @model_validator(mode="after")
+    def check_mutually_exclusive(self):
+        if self.template_id is not None and self.template_name is not None:
+            msg = "Provide either template_id or template_name, not both"
+            raise ValueError(msg)
+        return self
 
 
 class TranscriptionGetResponse(BaseModel):
@@ -127,13 +153,17 @@ class MinuteListItem(BaseModel):
 
 
 class MinutesCreateRequest(BaseModel):
-    template_name: str | None = Field(description="Name of the template to use for the minutes", default=None)
-    template_id: uuid.UUID | None = Field(description="Optional id of user template", default=None)
-    agenda: str | None = Field(description="The agenda for the meeting", default=None)
-    source_minute_id: uuid.UUID | None = Field(
-        description="If set, copy template_name, user_template_id and agenda from this minute",
-        default=None,
-    )
+    template_name: str | None = None
+    template_id: uuid.UUID | None = None
+    agenda: str | None = None
+    source_minute_id: uuid.UUID | None = None  # Copy if set
+
+    @model_validator(mode="after")
+    def check_mutually_exclusive(self):
+        if self.source_minute_id is None and self.template_name is None:
+            msg = "Provide either source_minute_id or template_name"
+            raise ValueError(msg)
+        return self
 
 
 class AiEdit(BaseModel):
@@ -186,6 +216,7 @@ class MeetingCheck(BaseModel):
 
 class TaskType(IntEnum):
     # messages have a natural ordering in which we want them to happen
+    FFMPEG_PREPROCESSING = 0
     TRANSCRIPTION = 1
     MINUTE = 2
     EDIT = 3
@@ -274,3 +305,35 @@ class CreateUserTemplateRequest(BaseModel):
     description: str
     type: TemplateType
     questions: list[CreateQuestion] | None = None
+
+
+class PipelineStageStatus(BaseModel):
+    """Status of a single stage in the recording -> transcription -> minute pipeline."""
+
+    stage: str = Field(description="Stage name, e.g. 'preprocessing', 'transcription', 'minute_generation'")
+    status: str = Field(description="Stage status derived from DB state")
+    detail: str | None = Field(default=None, description="Human-readable explanation of the current state")
+    updated_datetime: datetime | None = Field(default=None, description="When this stage's record last changed")
+
+
+class QueueDepth(BaseModel):
+    name: str
+    visible: int = Field(description="Messages waiting to be picked up")
+    in_flight: int = Field(description="Messages received by a worker but not yet completed")
+    delayed: int = Field(description="Messages scheduled for future delivery")
+    deadletter: int = Field(description="Messages that exhausted retries and moved to the DLQ")
+
+
+class TranscriptionStatusResponse(BaseModel):
+    """Diagnostic view of a transcription's execution across the whole pipeline."""
+
+    transcription_id: uuid.UUID
+    transcription_status: JobStatus
+    title: str | None = None
+    created_datetime: datetime
+    updated_datetime: datetime
+    error: str | None = None
+    recordings: list[dict] = Field(default_factory=list, description="Recording rows and their processing status")
+    stages: list[PipelineStageStatus] = Field(default_factory=list)
+    queues: list[QueueDepth] = Field(default_factory=list)
+    summary: str = Field(description="One-line human summary of where the pipeline is stuck or done")

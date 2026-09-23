@@ -29,7 +29,7 @@ RUN uv sync --frozen --no-install-project --no-group dev
 # Copy the FastAPI application code
 COPY backend backend
 COPY common common
-COPY worker/__init__.py worker/__init__.py
+COPY workers/__init__.py workers/__init__.py
 COPY alembic alembic
 COPY alembic.ini alembic.ini
 # Expose the port the app runs on

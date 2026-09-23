@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def get_client():
     async with ContainerClient.from_connection_string(
-        settings.AZURE_BLOB_CONNECTION_STRING, settings.AZURE_UPLOADS_CONTAINER_NAME
+        settings.AZURE_BLOB_CONNECTION_STRING,
+        settings.AZURE_UPLOADS_CONTAINER_NAME,
     ) as container_client:
         yield container_client
 

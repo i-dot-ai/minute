@@ -29,10 +29,10 @@ CA_SH = if [ -f "$(CA_BUNDLE)" ]; then \
 	GRPC_DEFAULT_SSL_ROOTS_FILE_PATH="$(CA_BUNDLE)"; \
 	fi;
 
-# The worker's Ray actors write heartbeats to HEARTBEAT_DIR, which defaults to
-# /healthcheck. That path exists in the worker container but the macOS root volume
-# is read-only, so the actors die on creation and silently consume nothing. Point
-# it somewhere writable for host-run tests.
+# The workers write heartbeats to HEARTBEAT_DIR, which defaults to /healthcheck.
+# That path exists in the worker container but the macOS root volume is read-only,
+# so heartbeat creation fails and the healthcheck reports no workers. Point it
+# somewhere writable for host-run tests.
 HEARTBEAT_SH = HEARTBEAT_DIR="$(CURDIR)/.worker-tmp/healthcheck";
 
 # Source .env via the shell (not make's `export`, which keeps the literal quotes
@@ -55,7 +55,7 @@ run_backend:
 	uv run uvicorn backend.main:app --reload --port 8080
 
 run_worker:
-	uv run python backend/services/queue_service.py
+	uv run python -m workers.$(worker-type).main
 
 run:
 	docker compose up -d --wait
@@ -91,15 +91,25 @@ ifndef cache
 	override cache = ./.build-cache
 endif
 
+# Map a build `service` to its Dockerfile. Worker Dockerfiles live inside their
+# per-worker package folder (workers/<type>/Dockerfile). The `service` name is kept
+# as-is for ECR repo naming (minute-worker-*), so we only remap the Dockerfile path.
+# Anything without an explicit mapping falls back to $(service)/Dockerfile
+# (e.g. backend/Dockerfile, frontend/Dockerfile).
+DOCKERFILE_worker-ffmpeg        = workers/ffmpeg/Dockerfile
+DOCKERFILE_worker-transcription = workers/transcription/Dockerfile
+DOCKERFILE_worker-llm           = workers/summary/Dockerfile
+DOCKERFILE = $(or $(DOCKERFILE_$(service)),$(service)/Dockerfile)
+
 docker_build: ## Build the docker container for the specified service when running in CI/CD
 	DOCKER_BUILDKIT=1 docker buildx build --platform linux/amd64 --load --builder=$(DOCKER_BUILDER_CONTAINER) -t $(IMAGE) \
 	$(DOCKER_BUILD_ARGS) \
 	--cache-to type=local,dest=$(cache) \
 	--cache-from type=local,src=$(cache) \
-	-f $(service)/Dockerfile .
+	-f $(DOCKERFILE) .
 
 docker_build_local: ## Build the docker container for the specified service locally
-	DOCKER_BUILDKIT=1 docker build --platform=linux/amd64 -t $(IMAGE) -f $(service)/Dockerfile .
+	DOCKER_BUILDKIT=1 docker build --platform=linux/amd64 -t $(IMAGE) -f $(DOCKERFILE) .
 
 docker_push:
 	docker push $(IMAGE)

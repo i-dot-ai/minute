@@ -15,6 +15,7 @@ from common.database.postgres_models import (
     Minute,
     MinuteVersion,
     Recording,
+    RecordingStatus,
     Transcription,
 )
 from common.services.queue_services import get_queue_service
@@ -22,6 +23,8 @@ from common.services.storage_services import get_storage_service
 from common.settings import get_settings
 from common.types import (
     PaginatedTranscriptionsResponse,
+    PipelineStageStatus,
+    QueueDepth,
     RecordingCreateRequest,
     RecordingCreateResponse,
     SingleRecording,
@@ -32,6 +35,7 @@ from common.types import (
     TranscriptionListFilter,
     TranscriptionMetadata,
     TranscriptionPatchRequest,
+    TranscriptionStatusResponse,
     WorkerMessage,
 )
 
@@ -42,8 +46,12 @@ storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 transcriptions_router = APIRouter(tags=["Transcriptions"])
 transcription_queue_service = get_queue_service(
-    settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
+    settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
 )
+transcription_ready_queue_service = get_queue_service(
+    settings.TRANSCRIPTION_READY_QUEUE_NAME, settings.TRANSCRIPTION_READY_DEADLETTER_QUEUE_NAME
+)
+llm_queue_service = get_queue_service(settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME)
 
 logger = logging.getLogger(__name__)
 
@@ -180,7 +188,7 @@ async def create_transcription(
     session.add(minute_version)
     recording.transcription_id = transcription.id
     await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
+    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.FFMPEG_PREPROCESSING))
 
     return TranscriptionCreateResponse(id=transcription.id)
 
@@ -201,6 +209,185 @@ async def get_transcription(
         dialogue_entries=transcription.dialogue_entries,
         title=transcription.title,
         created_datetime=transcription.created_datetime,
+    )
+
+
+def _collect_queue_depths() -> list[QueueDepth]:
+    """Read approximate depths for all pipeline queues. Best-effort; never raises."""
+    queues = [
+        ("transcription", transcription_queue_service),
+        ("transcription_ready", transcription_ready_queue_service),
+        ("llm", llm_queue_service),
+    ]
+    out: list[QueueDepth] = []
+    for name, service in queues:
+        try:
+            depth = service.get_queue_depth()
+            out.append(QueueDepth(name=name, **depth))
+        except Exception:
+            logger.exception("Failed to read queue depth for %s", name)
+            out.append(QueueDepth(name=name, visible=-1, in_flight=-1, delayed=-1, deadletter=-1))
+    return out
+
+
+def _preprocessing_stage(recordings: list[Recording]) -> tuple[PipelineStageStatus, bool]:
+    """Stage 1: FFmpeg preprocessing, tracked on the recording rows. Returns (stage, done)."""
+    if not recordings:
+        return (
+            PipelineStageStatus(
+                stage="preprocessing",
+                status="missing",
+                detail="No recording row exists for this transcription.",
+            ),
+            False,
+        )
+
+    newest = recordings[0]
+    ready = any(r.status == RecordingStatus.READY_FOR_TRANSCRIPTION for r in recordings)
+    failed = any(r.status == RecordingStatus.FAILED_PROCESSING for r in recordings)
+    if failed:
+        status, detail = "failed", "FFmpeg preprocessing failed for a recording."
+    elif ready:
+        status, detail = "completed", "Audio preprocessed and ready for transcription."
+    else:
+        status, detail = (
+            "waiting",
+            f"Recording uploaded (status={newest.status}); waiting for the FFmpeg worker to pick it up.",
+        )
+    return (
+        PipelineStageStatus(
+            stage="preprocessing", status=status, detail=detail, updated_datetime=newest.created_datetime
+        ),
+        ready,
+    )
+
+
+def _transcription_stage(transcription: Transcription, preprocessing_done: bool) -> PipelineStageStatus:
+    """Stage 2: Transcription, tracked on the transcription row."""
+    if transcription.status == JobStatus.COMPLETED:
+        status, detail = "completed", "Transcript generated."
+    elif transcription.status == JobStatus.FAILED:
+        status, detail = "failed", transcription.error or "Transcription failed."
+    elif transcription.status == JobStatus.IN_PROGRESS:
+        status, detail = "in_progress", "Transcription worker is processing the audio."
+    elif preprocessing_done:
+        status, detail = (
+            "waiting",
+            "Audio is ready but the transcription worker has not started it. "
+            "Check the transcription worker is running and consuming the transcription-ready queue.",
+        )
+    else:
+        status, detail = "blocked", "Waiting on preprocessing to finish before transcription can start."
+    return PipelineStageStatus(
+        stage="transcription", status=status, detail=detail, updated_datetime=transcription.updated_datetime
+    )
+
+
+def _minute_stage(transcription: Transcription, minute_versions: list[MinuteVersion]) -> PipelineStageStatus:
+    """Stage 3: Minute generation, tracked on minute versions."""
+    if not minute_versions:
+        return PipelineStageStatus(stage="minute_generation", status="missing", detail="No minute version rows found.")
+
+    newest = minute_versions[0]
+    if newest.status == JobStatus.COMPLETED:
+        status, detail = "completed", "Minutes generated."
+    elif newest.status == JobStatus.FAILED:
+        status, detail = "failed", newest.error or "Minute generation failed."
+    elif newest.status == JobStatus.IN_PROGRESS:
+        status, detail = "in_progress", "LLM worker is generating minutes."
+    elif transcription.status == JobStatus.COMPLETED:
+        status, detail = (
+            "waiting",
+            "Transcript ready but minute generation has not started. Check the LLM worker and the llm queue.",
+        )
+    else:
+        status, detail = "blocked", "Waiting on transcription to complete."
+    return PipelineStageStatus(
+        stage="minute_generation", status=status, detail=detail, updated_datetime=newest.updated_datetime
+    )
+
+
+def _build_pipeline_stages(
+    transcription: Transcription,
+    recordings: list[Recording],
+    minute_versions: list[MinuteVersion],
+) -> tuple[list[PipelineStageStatus], str]:
+    """Derive per-stage status and a one-line summary from persisted state."""
+    preprocessing_stage, preprocessing_done = _preprocessing_stage(recordings)
+    stages = [
+        preprocessing_stage,
+        _transcription_stage(transcription, preprocessing_done),
+        _minute_stage(transcription, minute_versions),
+    ]
+
+    # One-line summary: first non-terminal stage explains where we are stuck.
+    summary = "Pipeline complete."
+    for stage in stages:
+        if stage.status in {"failed", "missing"}:
+            summary = f"Stuck at {stage.stage}: {stage.detail}"
+            break
+        if stage.status in {"waiting", "blocked", "in_progress"}:
+            summary = f"At {stage.stage} ({stage.status}): {stage.detail}"
+            break
+    return stages, summary
+
+
+@transcriptions_router.get(
+    "/transcriptions/{transcription_id}/status", response_model=TranscriptionStatusResponse
+)
+async def get_transcription_status(
+    transcription_id: uuid.UUID,
+    session: SQLSessionDep,
+    current_user: UserDep,
+) -> TranscriptionStatusResponse:
+    """Diagnostic view of a transcription's execution across the whole pipeline.
+
+    Shows each stage (preprocessing -> transcription -> minute generation), what state
+    it is in and when it last changed, plus live queue depths so you can see what is
+    waiting or in-flight and where a job is stuck.
+    """
+    transcription = await session.get(Transcription, transcription_id)
+    if not transcription or transcription.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Transcription not found")
+
+    recordings_result = await session.exec(
+        select(Recording)
+        .where(Recording.transcription_id == transcription_id)
+        .order_by(col(Recording.created_datetime).desc())
+    )
+    recordings = list(recordings_result.all())
+
+    mv_result = await session.exec(
+        select(MinuteVersion)
+        .join(Minute, col(MinuteVersion.minute_id) == col(Minute.id))
+        .where(Minute.transcription_id == transcription_id)
+        .order_by(col(MinuteVersion.updated_datetime).desc())
+    )
+    minute_versions = list(mv_result.all())
+
+    stages, summary = _build_pipeline_stages(transcription, recordings, minute_versions)
+
+    recording_views = [
+        {
+            "id": str(r.id),
+            "s3_file_key": r.s3_file_key,
+            "status": str(r.status),
+            "created_datetime": r.created_datetime.isoformat() if r.created_datetime else None,
+        }
+        for r in recordings
+    ]
+
+    return TranscriptionStatusResponse(
+        transcription_id=transcription.id,
+        transcription_status=transcription.status,
+        title=transcription.title,
+        created_datetime=transcription.created_datetime,
+        updated_datetime=transcription.updated_datetime,
+        error=transcription.error,
+        recordings=recording_views,
+        stages=stages,
+        queues=_collect_queue_depths(),
+        summary=summary,
     )
 
 

@@ -150,3 +150,8 @@ different tests (see [test_queues_e2e.py](tests/test_queues_e2e.py) for an examp
 You can add your own templates by implementing either the `SimpleTemplate` or `SectionTemplate` protocols (see [here](backend/templates/types.py))
 Simply put them in the [templates](backend/templates) directory, and they will automatically be discovered when the backend starts.
 
+# Add-ons
+
+[Board](https://github.com/orgs/i-dot-ai/projects/37/views/1)
+
+[Dev worker](https://eu-west-2.console.aws.amazon.com/ecs/v2/clusters/i-dot-ai-dev-ecs-cluster/services/i-dot-ai-dev-minute-worker-ecs-service/deployments?region=eu-west-2)

@@ -56,6 +56,12 @@ class Settings(BaseSettings):
     TRANSCRIPTION_DEADLETTER_QUEUE_NAME: str = Field(
         description="deadletter queue name to use for SQS. Ignored if using Azure Service Bus "
     )
+    TRANSCRIPTION_READY_QUEUE_NAME: str = Field(
+        description="queue name for audio preprocessed by the FFmpeg worker, ready for transcription"
+    )
+    TRANSCRIPTION_READY_DEADLETTER_QUEUE_NAME: str = Field(
+        description="deadletter queue name for the transcription-ready queue. Ignored if using Azure Service Bus "
+    )
     LLM_QUEUE_NAME: str = Field(description="queue name to use for SQS/Azure Service Bus queues")
     LLM_DEADLETTER_QUEUE_NAME: str = Field(
         description="deadletter queue name to use for SQS. Ignored if using Azure Service Bus "
@@ -63,9 +69,6 @@ class Settings(BaseSettings):
 
     AZURE_SPEECH_KEY: str = Field(description="Azure STT speech key for API")
     AZURE_SPEECH_REGION: str = Field(description="Region for Azure STT")
-
-    MAX_TRANSCRIPTION_PROCESSES: int = Field(description="the number of transcription workers per node", default=1)
-    MAX_LLM_PROCESSES: int = Field(description="the number of LLM workers per node", default=1)
 
     # if using Azure OpenAI
     AZURE_DEPLOYMENT: str | None = Field(description="Azure deployment for openAI", default=None)
@@ -87,7 +90,7 @@ class Settings(BaseSettings):
     )
 
     TRANSCRIPTION_SERVICES: list[str] = Field(
-        description="List of service names to use for transcription. See backend/services/transcription_services",
+        description="List of service names to use for transcription. See workers/transcription/transcription_services",
         default_factory=list,
     )
 
@@ -117,27 +120,16 @@ class Settings(BaseSettings):
     )
     # if using s3
     DATA_S3_BUCKET: str | None = Field(description="S3 bucket name for data storage", default=None)
+
     # if using Azure blob
-    AZURE_BLOB_CONNECTION_STRING: str | None = Field(description="Azure Blob Storage connection string", default=None)
-    AZURE_UPLOADS_CONTAINER_NAME: str | None = Field(
-        description="Azure container name for uploaded files", default=None
-    )
+    AZURE_BLOB_CONNECTION_STRING: str = Field(description="Azure Blob Storage connection string")
+    AZURE_UPLOADS_CONTAINER_NAME: str = Field(description="Azure container name for uploaded files")
+
     # if using azure_stt_batch
-    AZURE_TRANSCRIPTION_CONTAINER_NAME: str | None = Field(
+    AZURE_TRANSCRIPTION_CONTAINER_NAME: str = Field(
         description="Azure container name for transcription result files. Note that Azure Batch transcription requires "
         "this.",
-        default=None,
     )
-
-    QUEUE_SERVICE_NAME: str = Field(
-        description="Queue service type to communicate with worker. Currently supported are: sqs, azure-service-bus",
-        default="sqs",
-    )
-    # if using azure-service-bus
-    AZURE_SB_CONNECTION_STRING: str | None = Field(description="Azure service bus connection string", default=None)
-
-    # if running the worker inside a docker container (use "0.0.0.0" )
-    RAY_DASHBOARD_HOST: str = Field(description="Ray dashboard host IP address", default="127.0.0.1")
 
     BETA_TEMPLATE_NAMES: list[str] = Field(
         description="List of template names available in beta. These are currently made available via a Posthog feature"

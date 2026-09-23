@@ -3,7 +3,6 @@ from typing import Any
 
 import boto3
 
-from common.services.queue_services.base import QueueService
 from common.settings import get_settings
 from common.types import WorkerMessage
 
@@ -24,7 +23,7 @@ def get_sqs_client():
     return boto3.client("sqs")
 
 
-class SQSQueueService(QueueService):
+class SQSQueueService:
     name = "sqs"
 
     def __init__(
@@ -39,10 +38,6 @@ class SQSQueueService(QueueService):
         self.queue_url = self.sqs.get_queue_url(QueueName=self.queue_name)["QueueUrl"]
         self.dead_letter_queue_url = self.sqs.get_queue_url(QueueName=self.deadletter_queue_name)["QueueUrl"]
         self.polling_interval = polling_interval
-
-    def __reduce__(self):
-        """Required so that Ray can deserialize the queue service by instantiated a new one."""
-        return SQSQueueService, (self.queue_name, self.deadletter_queue_name)
 
     def receive_message(self, max_messages: int = 10) -> list[tuple[WorkerMessage, Any]]:
         response = self.sqs.receive_message(
@@ -65,8 +60,14 @@ class SQSQueueService(QueueService):
                 logger.exception("failed to process message")
         return out
 
-    def publish_message(self, message: WorkerMessage):
-        self.sqs.send_message(QueueUrl=self.queue_url, MessageBody=message.model_dump_json())
+    def publish_message(self, message: WorkerMessage, delay_seconds: int = 0):
+        # SQS caps DelaySeconds at 900 (15 minutes).
+        delay_seconds = max(0, min(delay_seconds, 900))
+        self.sqs.send_message(
+            QueueUrl=self.queue_url,
+            MessageBody=message.model_dump_json(),
+            DelaySeconds=delay_seconds,
+        )
 
     def complete_message(self, receipt_handle: Any):
         try:
@@ -91,3 +92,29 @@ class SQSQueueService(QueueService):
 
     def purge_messages(self):
         self.sqs.purge_queue(QueueUrl=self.queue_url)
+
+    def get_queue_depth(self) -> dict[str, int]:
+        """Return approximate message counts for the main and dead-letter queues.
+
+        Useful for diagnostics: shows how many messages are waiting, in-flight
+        (received but not yet deleted), or delayed, plus anything in the DLQ.
+        """
+        attrs = self.sqs.get_queue_attributes(
+            QueueUrl=self.queue_url,
+            AttributeNames=[
+                "ApproximateNumberOfMessages",
+                "ApproximateNumberOfMessagesNotVisible",
+                "ApproximateNumberOfMessagesDelayed",
+            ],
+        ).get("Attributes", {})
+        dlq_attrs = self.sqs.get_queue_attributes(
+            QueueUrl=self.dead_letter_queue_url,
+            AttributeNames=["ApproximateNumberOfMessages"],
+        ).get("Attributes", {})
+        return {
+            "visible": int(attrs.get("ApproximateNumberOfMessages", 0)),
+            "in_flight": int(attrs.get("ApproximateNumberOfMessagesNotVisible", 0)),
+            "delayed": int(attrs.get("ApproximateNumberOfMessagesDelayed", 0)),
+            "deadletter": int(dlq_attrs.get("ApproximateNumberOfMessages", 0)),
+        }
+

@@ -49,6 +49,31 @@ $AWS sqs set-queue-attributes \
     \"RedrivePolicy\": \"{\\\"deadLetterTargetArn\\\":\\\"$TRANSCRIPTION_DEADLETTER_ARN\\\",\\\"maxReceiveCount\\\":\\\"4\\\"}\"
 }"
 
+################################
+## TRANSCRIPTION READY QUEUE
+################################
+
+TRANSCRIPTION_READY_QUEUE_URL=$($AWS sqs create-queue --queue-name "$TRANSCRIPTION_READY_QUEUE_NAME" --query QueueUrl --output text)
+TRANSCRIPTION_READY_DEADLETTER_QUEUE_URL=$($AWS sqs create-queue --queue-name "$TRANSCRIPTION_READY_DEADLETTER_QUEUE_NAME" --query QueueUrl --output text)
+echo "Transcription-ready queue URL: $TRANSCRIPTION_READY_QUEUE_URL"
+echo "Transcription-ready dead letter queue URL: $TRANSCRIPTION_READY_DEADLETTER_QUEUE_URL"
+
+echo "Purging $TRANSCRIPTION_READY_QUEUE_URL"
+$AWS sqs purge-queue --queue-url "$TRANSCRIPTION_READY_QUEUE_URL"
+
+TRANSCRIPTION_READY_DEADLETTER_ARN=$($AWS sqs get-queue-attributes \
+  --queue-url "$TRANSCRIPTION_READY_DEADLETTER_QUEUE_URL" \
+  --attribute-names QueueArn \
+  --query 'Attributes.QueueArn' --output text)
+
+echo "Transcription-ready dead letter queue ARN: $TRANSCRIPTION_READY_DEADLETTER_ARN"
+
+$AWS sqs set-queue-attributes \
+--queue-url "$TRANSCRIPTION_READY_QUEUE_URL" \
+--attributes "{
+    \"RedrivePolicy\": \"{\\\"deadLetterTargetArn\\\":\\\"$TRANSCRIPTION_READY_DEADLETTER_ARN\\\",\\\"maxReceiveCount\\\":\\\"4\\\"}\"
+}"
+
 ##############################
 ## LLM QUEUE
 ##############################

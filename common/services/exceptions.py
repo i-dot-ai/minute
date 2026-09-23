@@ -1,3 +1,6 @@
+class AudioFileTooLongError(Exception):
+    pass
+
 class TranscriptionFailedError(Exception):
     """Exception raised when a transcription fails."""
 

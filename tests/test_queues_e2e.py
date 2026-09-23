@@ -25,12 +25,11 @@ from typing import Any
 from uuid import UUID
 
 import pytest
-import ray
 import requests
 
 from common.database.postgres_models import ContentSource, JobStatus, Minute, MinuteVersion, Transcription
 from common.services.queue_services import get_queue_service
-from common.services.template_manager import TemplateManager
+from common.services import system_template_manager
 from common.settings import get_settings
 from common.types import (
     AgendaUsage,
@@ -44,23 +43,61 @@ from common.types import (
 )
 from tests.marks import costs_money
 from tests.utils import FileTypeTests, get_test_client
-from worker.worker_service import WorkerService, create_worker_service
+from workers.ffmpeg.worker import FFmpegWorker
+from workers.summary.worker import SummaryWorker
+from workers.transcription.worker import TranscriptionWorker
 
 pytestmark = [costs_money]
 
 
+class _CompositeWorker:
+    """Runs the ffmpeg, transcription and llm workers concurrently as a single task.
+
+    The e2e tests drive the whole pipeline, so they need all three workers running
+    together the way they do in production (each polling its own queue).
+    """
+
+    def __init__(self, workers):
+        self._workers = workers
+
+    async def run(self):
+        await asyncio.gather(*(worker.run() for worker in self._workers))
+
+
 @pytest.fixture
-def worker_service() -> Generator[WorkerService, Any, None]:
-    worker_service = create_worker_service()
-    yield worker_service
-    ray.shutdown()
+def worker_service() -> Generator[_CompositeWorker, Any, None]:
+    settings = get_settings()
+    transcription_queue_service = get_queue_service(
+        settings.TRANSCRIPTION_QUEUE_NAME,
+        settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME,
+    )
+    transcription_ready_queue_service = get_queue_service(
+        settings.TRANSCRIPTION_READY_QUEUE_NAME,
+        settings.TRANSCRIPTION_READY_DEADLETTER_QUEUE_NAME,
+    )
+    llm_queue_service = get_queue_service(
+        settings.LLM_QUEUE_NAME,
+        settings.LLM_DEADLETTER_QUEUE_NAME,
+    )
+
+    ffmpeg_worker = FFmpegWorker(
+        transcription_queue_service=transcription_queue_service,
+        transcription_ready_queue_service=transcription_ready_queue_service,
+    )
+    transcription_worker = TranscriptionWorker(
+        transcription_ready_queue_service=transcription_ready_queue_service,
+        llm_queue_service=llm_queue_service,
+    )
+    llm_worker = SummaryWorker(llm_queue_service=llm_queue_service)
+
+    return _CompositeWorker([ffmpeg_worker, transcription_worker, llm_worker])
 
 
 @pytest.fixture(autouse=True)
 async def transcription_queue_service():
     settings = get_settings()
     queue_service = get_queue_service(
-        settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
+        settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
     )
     queue_service.purge_messages()
     # needed to ensure sqs queue is purged (not sure if this long is needed for ministack)
@@ -69,10 +106,22 @@ async def transcription_queue_service():
 
 
 @pytest.fixture(autouse=True)
+async def transcription_ready_queue_service():
+    settings = get_settings()
+    queue_service = get_queue_service(
+        settings.TRANSCRIPTION_READY_QUEUE_NAME,
+        settings.TRANSCRIPTION_READY_DEADLETTER_QUEUE_NAME,
+    )
+    queue_service.purge_messages()
+    await asyncio.sleep(1)
+    return queue_service
+
+
+@pytest.fixture(autouse=True)
 async def llm_queue_service():
     settings = get_settings()
     queue_service = get_queue_service(
-        settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
+        settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
     )
     queue_service.purge_messages()
     # needed to ensure sqs queue is purged (not sure if this long is needed for ministack)
@@ -193,7 +242,7 @@ async def check_worker(receive_task):
 async def assert_minute_edit_succeeds(transcription_id: UUID, receive_task: asyncio.Task) -> None:
     completed = set()
     minutes = await get_minutes(transcription_id)
-    assert len(minutes) == len(TemplateManager.templates), "Unexpected number of minutes"
+    assert len(minutes) == len(system_template_manager.get_templates()), "Unexpected number of minutes"
     while len(completed) != len(minutes):
         print(f"AI Edit completed count: {len(completed)}, total required: {len(minutes)}")  # noqa: T201
         for minute in await get_minutes(transcription_id):
@@ -213,12 +262,12 @@ async def assert_minute_edit_succeeds(transcription_id: UUID, receive_task: asyn
 
 async def assert_minute_templates_succeeds(transcription_id: UUID, receive_task: asyncio.Task) -> None:
     minutes = await get_minutes(transcription_id)
-    assert len(minutes) == len(TemplateManager.templates)
+    assert len(minutes) == len(system_template_manager.get_templates())
     completed_version_ids = set()
-    while len(completed_version_ids) != len(TemplateManager.templates):
+    while len(completed_version_ids) != len(system_template_manager.get_templates()):
         print(  # noqa: T201
             f"""initial template completed count: {len(completed_version_ids)},
-total required: {len(TemplateManager.templates)}"""
+total required: {len(system_template_manager.get_templates())}"""
         )
         for minute in minutes:
             minute_versions = await get_minute_versions(minute.id)
@@ -251,7 +300,7 @@ async def assert_chat_succeeds(
 
 async def create_template_minutes(transcription_id: UUID) -> None:
     async with get_test_client() as test_client:
-        for template in TemplateManager.templates.values():
+        for template in system_template_manager.get_templates().values():
             # the General template is created by default after the initial transcription
             if template.name != "General":
                 agenda = (

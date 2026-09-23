@@ -1,9 +1,6 @@
 from enum import Enum, auto
 from typing import TypeVar
 
-from google.genai.types import (
-    GenerateContentConfig,
-)
 from pydantic import BaseModel
 from tenacity import (
     retry,
@@ -11,7 +8,7 @@ from tenacity import (
     wait_random_exponential,
 )
 
-from common.llm.adapters import GeminiModelAdapter, ModelAdapter, OpenAIModelAdapter
+from common.llm.adapters import ModelAdapter
 from common.prompts import get_hallucination_detection_messages
 from common.settings import get_settings
 from common.types import LLMHallucination
@@ -90,6 +87,8 @@ def create_chatbot(model_type: str, model_name: str, temperature: float = DEFAUL
         ValueError: If the specified model type is unsupported.
     """
     if model_type == "openai":
+        from common.llm.adapters.azure_openai import OpenAIModelAdapter
+
         return ChatBot(
             OpenAIModelAdapter(
                 model=model_name,
@@ -101,6 +100,10 @@ def create_chatbot(model_type: str, model_name: str, temperature: float = DEFAUL
             )
         )
     elif model_type == "gemini":
+        from google.genai.types import GenerateContentConfig
+
+        from common.llm.adapters.gemini import GeminiModelAdapter
+
         return ChatBot(
             GeminiModelAdapter(
                 model=model_name,

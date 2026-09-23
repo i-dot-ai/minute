@@ -23,9 +23,7 @@ from common.types import (
 
 settings = get_settings()
 chat_router = APIRouter(tags=["Chat"])
-llm_queue_service = get_queue_service(
-    settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
-)
+llm_queue_service = get_queue_service(settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME)
 
 logger = logging.getLogger(__name__)
 

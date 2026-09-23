@@ -50,6 +50,12 @@ class ContentSource(StrEnum):
     INITIAL_GENERATION = auto()
 
 
+class RecordingStatus(StrEnum):
+    UPLOADED = auto()
+    READY_FOR_TRANSCRIPTION = auto()
+    FAILED_PROCESSING = auto()
+
+
 class MinuteVersion(BaseTableMixin, table=True):
     __tablename__ = "minute_version"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
@@ -136,6 +142,9 @@ class Recording(BaseTableMixin, table=True):
     s3_file_key: str
     transcription_id: UUID | None = Field(default=None, foreign_key="transcription.id", ondelete="SET NULL")
     transcription: "Transcription" = Relationship(back_populates="recordings")
+    status: RecordingStatus = Field(
+        default=RecordingStatus.UPLOADED, sa_column_kwargs={"server_default": RecordingStatus.UPLOADED.name}
+    )
 
 
 class Chat(BaseTableMixin, table=True):
@@ -185,8 +194,8 @@ class Transcription(BaseTableMixin, table=True):
 
 
 class TemplateType(StrEnum):
-    DOCUMENT = auto()
-    FORM = auto()
+    DOCUMENT = auto()  # Frontend: Summary: Provides a summary of the meeting
+    FORM = auto()  # Frontend: Q & A: Answers a list of questions from the meeting
 
 
 class TemplateQuestion(BaseTableMixin, table=True):

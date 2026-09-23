@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 
-from common.services.template_manager import TemplateManager
+from common.services import system_template_manager
 from tests.utils import get_test_client
 
 
@@ -12,7 +12,7 @@ async def test_get_templates_success(expected_status_code):
     async with get_test_client() as ac:
         response = await ac.get("/templates")
         assert response.status_code == expected_status_code
-        assert len(response.json()) == len(TemplateManager.templates)
+        assert len(response.json()) == len(system_template_manager.get_templates())
 
 
 async def _create_user_template(ac, name: str) -> str:

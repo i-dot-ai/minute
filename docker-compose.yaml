@@ -38,19 +38,12 @@ services:
         - path: ./uv.lock
           action: rebuild
 
-  worker:
+  worker_ffmpeg:
     build:
       context: .
-      dockerfile: ./worker/Dockerfile
-    shm_size: 4gb
-    deploy: # Make sure the worker has a couple of CPUS
-      resources:
-        limits:
-          cpus: "2.0" # Set CPU limit to 2 cores
+      dockerfile: ./workers/ffmpeg/Dockerfile
     env_file:
       - .env
-    ports:
-      - "8265:8265"
     volumes:
       - ${WORKER_TMP:-./.worker-tmp}:/tmp
       - type: bind
@@ -58,10 +51,10 @@ services:
         target: /static
     environment:
       - POSTGRES_HOST=db
-      - RAY_DASHBOARD_HOST=0.0.0.0
       - MINISTACK_URL=http://ministack:4566
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
+      - WORKER_TYPE=ffmpeg
     stop_grace_period: 10s
     depends_on:
       db:
@@ -69,9 +62,7 @@ services:
       ministack:
         condition: service_healthy
     healthcheck:
-      # Direct interpreter call (venv is on PATH); avoids `uv run` touching
-      # /app/.venv on a timer while Ray is running off the same venv.
-      test: ["CMD-SHELL", "python worker/healthcheck.py"]
+      test: ["CMD-SHELL", "python workers/healthcheck.py"]
       interval: 60s
       retries: 3
       start_period: 60s
@@ -79,7 +70,87 @@ services:
     develop:
       watch:
         - path: ./worker
-          target: /app/backend
+          target: /app/worker
+          action: sync+restart
+        - path: ./common
+          target: /app/common
+          action: sync+restart
+        - path: ./uv.lock
+          action: rebuild
+
+  worker_transcription:
+    build:
+      context: .
+      dockerfile: ./workers/transcription/Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ${WORKER_TMP:-./.worker-tmp}:/tmp
+      - type: bind
+        source: ./.data
+        target: /static
+    environment:
+      - POSTGRES_HOST=db
+      - MINISTACK_URL=http://ministack:4566
+      - STORAGE_SERVICE_NAME=local
+      - LOCAL_STORAGE_PATH=/static
+      - WORKER_TYPE=transcription
+    stop_grace_period: 10s
+    depends_on:
+      db:
+        condition: service_healthy
+      ministack:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python workers/healthcheck.py"]
+      interval: 60s
+      retries: 3
+      start_period: 60s
+      timeout: 5s
+    develop:
+      watch:
+        - path: ./worker
+          target: /app/worker
+          action: sync+restart
+        - path: ./common
+          target: /app/common
+          action: sync+restart
+        - path: ./uv.lock
+          action: rebuild
+
+  worker_llm:
+    build:
+      context: .
+      dockerfile: ./workers/summary/Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ${WORKER_TMP:-./.worker-tmp}:/tmp
+      - type: bind
+        source: ./.data
+        target: /static
+    environment:
+      - POSTGRES_HOST=db
+      - MINISTACK_URL=http://ministack:4566
+      - STORAGE_SERVICE_NAME=local
+      - LOCAL_STORAGE_PATH=/static
+      - WORKER_TYPE=llm
+    stop_grace_period: 10s
+    depends_on:
+      db:
+        condition: service_healthy
+      ministack:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python workers/healthcheck.py"]
+      interval: 60s
+      retries: 3
+      start_period: 60s
+      timeout: 5s
+    develop:
+      watch:
+        - path: ./worker
+          target: /app/worker
           action: sync+restart
         - path: ./common
           target: /app/common

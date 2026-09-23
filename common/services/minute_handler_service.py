@@ -16,8 +16,8 @@ from common.prompts import (
     get_ai_edit_initial_messages,
     get_basic_minutes_prompt,
 )
+from common.services import system_template_manager
 from common.services.posthog_client import capture_event
-from common.services.template_manager import TemplateManager
 from common.settings import get_settings
 from common.templates.user_template import generate_user_template
 from common.types import (
@@ -242,7 +242,7 @@ class MinuteHandlerService:
             result, hallucinations = await cls.generate_minute_from_user_template(minute)
         else:
             logger.info("%s: Generating minute from default template: %s", minute.id, minute.template_name)
-            template = TemplateManager.get_template(minute.template_name)
+            template = system_template_manager.get_template(minute.template_name)
             result, hallucinations = await template.generate(minute)
         logger.info("%s: Successfully generated minute", minute.id)
         result = convert_american_to_british_spelling(result)

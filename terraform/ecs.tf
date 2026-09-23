@@ -4,9 +4,6 @@ locals {
 
   additional_policy_arns = { for idx, arn in [aws_iam_policy.ecs_exec_custom_policy.arn] : idx => arn }
 
-  MAX_TRANSCRIPTION_PROCESSES = terraform.workspace == "prod" ? 4 : 2
-  MAX_LLM_PROCESSES           = terraform.workspace == "prod" ? 8 : 4
-
   shared_environment_variables = {
     "ENVIRONMENT" : terraform.workspace,
     "PORT" : local.backend_port,
@@ -16,18 +13,18 @@ locals {
     "DOCKER_BUILDER_CONTAINER" : "minute",
     "POSTGRES_HOST" : module.rds.db_instance_address,
     "AUTH_PROVIDER_PUBLIC_KEY" : data.aws_ssm_parameter.auth_provider_public_key.value,
-    "AZURE_OPENAI_API_VERSION" : "2024-10-21"
-    "TRANSCRIPTION_QUEUE_NAME" : aws_sqs_queue.transcription_queue.name
-    "TRANSCRIPTION_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name
-    "LLM_QUEUE_NAME" : aws_sqs_queue.llm_queue.name
-    "LLM_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.llm_queue_deadletter.name
-    "TRANSCRIPTION_SERVICES" : "[\"azure_stt_synchronous\",\"azure_stt_batch\"]"
-    "MAX_TRANSCRIPTION_PROCESSES" : local.MAX_TRANSCRIPTION_PROCESSES
-    "MAX_LLM_PROCESSES" : local.MAX_LLM_PROCESSES
-    "AZURE_TRANSCRIPTION_CONTAINER_NAME" : "transcriptions"
-    "FAST_LLM_PROVIDER"   = "gemini"
-    "FAST_LLM_MODEL_NAME" = "gemini-3.5-flash"
-    "BEST_LLM_PROVIDER"   = "gemini"
+    "AZURE_OPENAI_API_VERSION" : "2024-10-21",
+    "TRANSCRIPTION_QUEUE_NAME" : aws_sqs_queue.transcription_queue.name,
+    "TRANSCRIPTION_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name,
+    "TRANSCRIPTION_READY_QUEUE_NAME" : aws_sqs_queue.transcription_ready_queue.name,
+    "TRANSCRIPTION_READY_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_ready_queue_deadletter.name,
+    "LLM_QUEUE_NAME" : aws_sqs_queue.llm_queue.name,
+    "LLM_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.llm_queue_deadletter.name,
+    "TRANSCRIPTION_SERVICES" : "[\"azure_stt_synchronous\",\"azure_stt_batch\"]",
+    "AZURE_TRANSCRIPTION_CONTAINER_NAME" : "transcriptions",
+    "FAST_LLM_PROVIDER"   = "gemini",
+    "FAST_LLM_MODEL_NAME" = "gemini-3.5-flash",
+    "BEST_LLM_PROVIDER"   = "gemini",
     "BEST_LLM_MODEL_NAME" = "gemini-3.5-flash"
   }
 
@@ -156,15 +153,15 @@ module "frontend" {
   user_session_timeout = 604800 # 7 days in seconds
 }
 
-module "worker" {
-  name = "${local.name}-worker"
+module "worker_ffmpeg" {
+  name = "${local.name}-worker-ffmpeg"
 
   # checkov:skip=CKV_SECRET_4:Skip secret check as these have to be used within the Github Action
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v7.0.1-ecs"
   desired_app_count            = terraform.workspace == "prod" ? 2 : 1
   image_tag                    = var.image_tag
-  ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-worker"
+  ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-worker-ffmpeg"
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
@@ -173,30 +170,133 @@ module "worker" {
   ecs_cluster_name             = data.terraform_remote_state.platform.outputs.ecs_cluster_name
   task_additional_iam_policies = local.additional_policy_arns
   certificate_arn              = data.terraform_remote_state.universal.outputs.certificate_arn
-  target_group_name_override   = "minute-worker-${var.env}-tg"
+  target_group_name_override   = "minute-worker-ffmpeg-${var.env}-tg"
   permissions_boundary_name    = "infra/i-dot-ai-${var.env}-minute-perms-boundary-app"
 
   create_networking = false
   create_listener   = false
 
   environment_variables = merge(local.shared_environment_variables, {
-    "APP_NAME" : "${local.name}-worker",
-    "AUTH_API_URL" : "unused", # Worker settings need refactoring so we can remove this
+    "APP_NAME" : "${local.name}-worker-ffmpeg",
+    "AUTH_API_URL" : "unused",
+    "WORKER_TYPE" : "ffmpeg",
   })
 
   secrets = [
     for k, v in aws_ssm_parameter.env_secrets : {
-      name      = regex("([^/]+$)", v.arn)[0], # Extract right-most string (param name) after the final slash
+      name      = regex("([^/]+$)", v.arn)[0],
       valueFrom = v.arn
     }
   ]
 
-  memory = terraform.workspace == "prod" ? 8192 : 4096
-  cpu    = terraform.workspace == "prod" ? 4096 : 2048
+  memory = 2048
+  cpu    = 1024
 
   http_healthcheck = false
   container_healthcheck = {
-    command     = ["CMD-SHELL", "uv run python worker/healthcheck.py"]
+    command     = ["CMD-SHELL", "python workers/healthcheck.py"]
+    interval    = 60
+    retries     = 3
+    startPeriod = 60
+    timeout     = 5
+  }
+}
+
+module "worker_transcription" {
+  name = "${local.name}-worker-transcription"
+
+  # checkov:skip=CKV_SECRET_4:Skip secret check as these have to be used within the Github Action
+  # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
+  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v7.0.1-ecs"
+  desired_app_count            = terraform.workspace == "prod" ? 4 : 2
+  image_tag                    = var.image_tag
+  ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-worker-transcription"
+  vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
+  private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
+  load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
+  aws_lb_arn                   = module.load_balancer.alb_arn
+  ecs_cluster_id               = data.terraform_remote_state.platform.outputs.ecs_cluster_id
+  ecs_cluster_name             = data.terraform_remote_state.platform.outputs.ecs_cluster_name
+  task_additional_iam_policies = local.additional_policy_arns
+  certificate_arn              = data.terraform_remote_state.universal.outputs.certificate_arn
+  target_group_name_override   = "minute-worker-transcription-${var.env}-tg"
+  permissions_boundary_name    = "infra/i-dot-ai-${var.env}-minute-perms-boundary-app"
+
+  create_networking = false
+  create_listener   = false
+
+  environment_variables = merge(local.shared_environment_variables, {
+    "APP_NAME" : "${local.name}-worker-transcription",
+    "AUTH_API_URL" : "unused",
+    "WORKER_TYPE" : "transcription",
+  })
+
+  secrets = [
+    for k, v in aws_ssm_parameter.env_secrets : {
+      name      = regex("([^/]+$)", v.arn)[0],
+      valueFrom = v.arn
+    }
+  ]
+
+  memory = 1024
+  cpu    = 512
+
+  http_healthcheck = false
+  container_healthcheck = {
+    command     = ["CMD-SHELL", "python workers/healthcheck.py"]
+    interval    = 60
+    retries     = 3
+    startPeriod = 60
+    timeout     = 5
+  }
+}
+
+module "worker_llm" {
+  name = "${local.name}-worker-llm"
+
+  # Each LLM task processes exactly one prompt at a time (LLMWorker.max_messages = 1),
+  # so total concurrent LLM calls == number of running tasks. Scale throughput by task
+  # count on the smallest Fargate size (256 CPU / 512 MB) rather than in-process batching,
+  # which keeps precise control over how many LLM calls run at once.
+  # checkov:skip=CKV_SECRET_4:Skip secret check as these have to be used within the Github Action
+  # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
+  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v7.0.1-ecs"
+  desired_app_count            = terraform.workspace == "prod" ? 20 : 4
+  image_tag                    = var.image_tag
+  ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-worker-llm"
+  vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
+  private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
+  load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
+  aws_lb_arn                   = module.load_balancer.alb_arn
+  ecs_cluster_id               = data.terraform_remote_state.platform.outputs.ecs_cluster_id
+  ecs_cluster_name             = data.terraform_remote_state.platform.outputs.ecs_cluster_name
+  task_additional_iam_policies = local.additional_policy_arns
+  certificate_arn              = data.terraform_remote_state.universal.outputs.certificate_arn
+  target_group_name_override   = "minute-worker-llm-${var.env}-tg"
+  permissions_boundary_name    = "infra/i-dot-ai-${var.env}-minute-perms-boundary-app"
+
+  create_networking = false
+  create_listener   = false
+
+  environment_variables = merge(local.shared_environment_variables, {
+    "APP_NAME" : "${local.name}-worker-llm",
+    "AUTH_API_URL" : "unused",
+    "WORKER_TYPE" : "llm",
+  })
+
+  secrets = [
+    for k, v in aws_ssm_parameter.env_secrets : {
+      name      = regex("([^/]+$)", v.arn)[0],
+      valueFrom = v.arn
+    }
+  ]
+
+  memory = 512
+  cpu    = 256
+
+  http_healthcheck = false
+  container_healthcheck = {
+    command     = ["CMD-SHELL", "python workers/healthcheck.py"]
     interval    = 60
     retries     = 3
     startPeriod = 60

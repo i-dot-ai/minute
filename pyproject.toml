@@ -28,7 +28,6 @@ dependencies = [
     "markdownify>=1.2.0,<2",
     "python-multipart>=0.0.20,<0.0.21",
     "i-dot-ai-utilities>=0.4.4,<0.5",
-    "azure-servicebus>=7.14.2,<8",
 ]
 
 [tool.ruff]
@@ -47,9 +46,25 @@ worker = [
     "google-genai>=1.10.0,<2",
     "openai>=1.42.0,<2",
     "ffmpeg-python>=0.2.0,<0.3",
-    "ray[default]>=2.53.0,<3",
     "azure-storage-blob>=12.26.0,<13",
-    "azure-identity>=1.23.1,<2",
+    "posthog>=6.6.1,<7",
+]
+# Per-worker dependency groups. Each image installs only the group it needs so
+# provider-specific SDKs are not shipped where they are unused. The umbrella
+# `worker` group above is the union (used by local dev via default-groups = "all").
+worker-ffmpeg = [
+    "ffmpeg-python>=0.2.0,<0.3",
+]
+worker-transcription = [
+    "azure-storage-blob>=12.26.0,<13",
+    "google-genai>=1.10.0,<2",
+    "openai>=1.42.0,<2",
+    "ffmpeg-python>=0.2.0,<0.3",
+    "posthog>=6.6.1,<7",
+]
+worker-llm = [
+    "google-genai>=1.10.0,<2",
+    "openai>=1.42.0,<2",
     "posthog>=6.6.1,<7",
 ]
 dev = [
@@ -90,14 +105,14 @@ testpaths = [
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "worker",
+    "workers",
     "backend",
     "common",
 ]
 
 [tool.hatch.build.targets.wheel]
 include = [
-    "worker",
+    "workers",
     "backend",
     "common",
 ]

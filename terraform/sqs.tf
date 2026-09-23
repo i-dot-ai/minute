@@ -20,6 +20,28 @@ resource "aws_sqs_queue_redrive_allow_policy" "transcription_queue_redrive_allow
   })
 }
 
+resource "aws_sqs_queue" "transcription_ready_queue" {
+  name = "${local.name}-transcription-ready-queue"
+
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.transcription_ready_queue_deadletter.arn
+    maxReceiveCount     = 4
+  })
+}
+
+resource "aws_sqs_queue" "transcription_ready_queue_deadletter" {
+  name = "${local.name}-transcription-ready-queue-deadletter"
+}
+
+resource "aws_sqs_queue_redrive_allow_policy" "transcription_ready_queue_redrive_allow_policy" {
+  queue_url = aws_sqs_queue.transcription_ready_queue_deadletter.id
+
+  redrive_allow_policy = jsonencode({
+    redrivePermission = "byQueue",
+    sourceQueueArns   = [aws_sqs_queue.transcription_ready_queue.arn]
+  })
+}
+
 resource "aws_sqs_queue" "llm_queue" {
   name = "${local.name}-llm-queue"
 

@@ -1276,7 +1276,7 @@ dev = [
 worker = [
     { name = "azure-identity", specifier = ">=1.23.1,<2" },
     { name = "azure-storage-blob", specifier = ">=12.26.0,<13" },
-    { name = "elevenlabs" },
+    { name = "elevenlabs", specifier = "==2.66.0" },
     { name = "ffmpeg-python", specifier = ">=0.2.0,<0.3" },
     { name = "google-genai", specifier = ">=1.10.0,<2" },
     { name = "openai", specifier = ">=1.42.0,<2" },

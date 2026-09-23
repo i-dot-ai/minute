@@ -44,6 +44,9 @@ class Settings(BaseSettings):
 
     ENVIRONMENT: str = "local"
     SENTRY_DSN: str | None = Field(description="Sentry DSN if using Sentry for telemetry", default=None)
+    SENTRY_RELEASE: str | None = Field(
+        description="Release identifier for Sentry (usually the git commit SHA)", default=None
+    )
 
     # Structured logger setup
     EXECUTION_ENVIRONMENT: ExecutionEnvironmentType = (

@@ -32,5 +32,6 @@ def init_sentry() -> None:
     sentry_sdk.init(
         dsn=settings.SENTRY_DSN,
         environment=settings.ENVIRONMENT,
+        release=settings.SENTRY_RELEASE,
         **sentry_init_opts,
     )

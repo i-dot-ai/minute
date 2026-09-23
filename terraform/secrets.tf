@@ -11,14 +11,6 @@ locals {
       value = "placeholder" # Update value in SSM - Do not hardcode
     },
     {
-      name  = "AZURE_OPENAI_ENDPOINT"
-      value = "placeholder" # Update value in SSM - Do not hardcode
-    },
-    {
-      name  = "AZURE_OPENAI_API_KEY"
-      value = "placeholder" # Update value in SSM - Do not hardcode
-    },
-    {
       name  = "AZURE_SPEECH_KEY"
       value = "placeholder" # Update value in SSM - Do not hardcode
     },
@@ -44,10 +36,6 @@ locals {
     },
     {
       name  = "SENTRY_DSN"
-      value = "placeholder" # Update value in SSM - Do not hardcode
-    },
-    {
-      name  = "AZURE_DEPLOYMENT"
       value = "placeholder" # Update value in SSM - Do not hardcode
     },
     {

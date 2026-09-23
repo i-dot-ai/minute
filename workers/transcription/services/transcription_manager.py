@@ -4,13 +4,12 @@ from pathlib import Path
 
 import sentry_sdk
 
-from common.audio.ffmpeg import get_duration
-from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_models import Transcription
-from common.services.exceptions import AudioFileTooLongError, TranscriptionFailedError
 from common.services.storage_services import get_storage_service
 from common.settings import get_settings
+from common.str_utils import convert_american_to_british_spelling
 from common.types import TranscriptionJobMessageData
+from workers.transcription.audio import get_duration
 from workers.transcription.services._stt import _STT
 from workers.transcription.services.azure_stt import AzureSTT
 from workers.transcription.services.azure_stt_batch import AzureSTTBatch
@@ -31,6 +30,10 @@ _ADAPTERS_BY_NAME: dict[str, type[_STT]] = {
     AzureSTT.name: AzureSTT,
     AzureSTTBatch.name: AzureSTTBatch,
 }
+
+
+class AudioFileTooLongError(Exception):
+    pass
 
 
 class TranscriptionServiceManager:
@@ -73,7 +76,10 @@ class TranscriptionServiceManager:
             else:
                 transcription_job = await adapter.start(audio_file_path_or_recording=recording)
 
-        if not transcription_job.transcript:
+        # `transcript is None` means the async adapter only submitted the job, so poll
+        # for the result. An empty list means the sync adapter finished with no speech,
+        # which is already a terminal result.
+        if transcription_job.transcript is None:
             transcription_job = await self.check_transcription(adapter.name, transcription_job)
         return transcription_job
 
@@ -83,7 +89,7 @@ class TranscriptionServiceManager:
         adapter = _ADAPTERS_BY_NAME.get(adapter_name)
         if adapter is None:
             msg = f"Transcription service {adapter_name} is not available"
-            raise TranscriptionFailedError(msg)
+            raise RuntimeError(msg)
 
         transcription_job = await adapter.check(async_transcription_message_data)
         if transcription_job.transcript:

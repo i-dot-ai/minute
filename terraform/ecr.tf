@@ -3,9 +3,9 @@ locals {
   # `service` names used by the CI build workflow (minute-<service>) and the
   # ecr_repository_uri values referenced by the ECS modules below.
   worker_ecr_repositories = [
-    "${var.project_name}-worker-ffmpeg",
+    "${var.project_name}-audio-worker",
     "${var.project_name}-worker-transcription",
-    "${var.project_name}-worker-llm",
+    "${var.project_name}-worker-summary",
   ]
 }
 

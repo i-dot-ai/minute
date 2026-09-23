@@ -70,12 +70,6 @@ class Settings(BaseSettings):
     AZURE_SPEECH_KEY: str = Field(description="Azure STT speech key for API")
     AZURE_SPEECH_REGION: str = Field(description="Region for Azure STT")
 
-    # if using Azure OpenAI
-    AZURE_DEPLOYMENT: str | None = Field(description="Azure deployment for openAI", default=None)
-    AZURE_OPENAI_API_KEY: str | None = Field(description="Azure API key for openAI", default=None)
-    AZURE_OPENAI_ENDPOINT: str | None = Field(description="Azure OpenAI service endpoint URL", default=None)
-    AZURE_OPENAI_API_VERSION: str | None = Field(description="Azure OpenAI API version", default=None)
-
     # if using Gemini
     GOOGLE_APPLICATION_CREDENTIALS: str | None = Field(
         description="Path to Google Cloud service account credentials JSON file", default=None
@@ -95,7 +89,7 @@ class Settings(BaseSettings):
     )
 
     FAST_LLM_PROVIDER: str = Field(
-        description="Fast LLM provider to use. Currently 'openai' or 'gemini' are supported. Note that this should be "
+        description="Fast LLM provider to use. Currently only 'gemini' is supported. Note that this should be "
         "used for low complexity LLM tasks, like AI edits",
         default="gemini",
     )
@@ -104,7 +98,7 @@ class Settings(BaseSettings):
         default="gemini-3.5-flash",
     )
     BEST_LLM_PROVIDER: str = Field(
-        description="Best LLM provider to use. Currently 'openai' or 'gemini' are supported. Note that this should be "
+        description="Best LLM provider to use. Currently only 'gemini' is supported. Note that this should be "
         "used for higher complexity LLM tasks, like initial minute generation.",
         default="gemini",
     )

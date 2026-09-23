@@ -12,7 +12,7 @@ ENV UV_NO_SYNC=1
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
@@ -23,8 +23,10 @@ WORKDIR /app
 # Copy only dependency manifests to cache them in a docker layer
 COPY pyproject.toml uv.lock README.md ./
 
-# Install project dependencies (without the project itself).
-RUN uv sync --frozen --no-install-project --no-group dev
+# Install only the backend's dependencies (without the project itself). Using
+# --no-default-groups + --group backend keeps the worker-only SDKs (google-genai,
+# ffmpeg-python, azure-storage-blob) out of the API image.
+RUN uv sync --frozen --no-install-project --no-default-groups --group backend
 
 # Copy the FastAPI application code
 COPY backend backend

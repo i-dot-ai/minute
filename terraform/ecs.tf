@@ -13,7 +13,6 @@ locals {
     "DOCKER_BUILDER_CONTAINER" : "minute",
     "POSTGRES_HOST" : module.rds.db_instance_address,
     "AUTH_PROVIDER_PUBLIC_KEY" : data.aws_ssm_parameter.auth_provider_public_key.value,
-    "AZURE_OPENAI_API_VERSION" : "2024-10-21",
     "TRANSCRIPTION_QUEUE_NAME" : aws_sqs_queue.transcription_queue.name,
     "TRANSCRIPTION_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name,
     "TRANSCRIPTION_READY_QUEUE_NAME" : aws_sqs_queue.transcription_ready_queue.name,
@@ -153,15 +152,15 @@ module "frontend" {
   user_session_timeout = 604800 # 7 days in seconds
 }
 
-module "worker_ffmpeg" {
-  name = "${local.name}-worker-ffmpeg"
+module "audio_worker" {
+  name = "${local.name}-audio-worker"
 
   # checkov:skip=CKV_SECRET_4:Skip secret check as these have to be used within the Github Action
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v7.0.1-ecs"
   desired_app_count            = terraform.workspace == "prod" ? 2 : 1
   image_tag                    = var.image_tag
-  ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-worker-ffmpeg"
+  ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-audio-worker"
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
@@ -170,16 +169,15 @@ module "worker_ffmpeg" {
   ecs_cluster_name             = data.terraform_remote_state.platform.outputs.ecs_cluster_name
   task_additional_iam_policies = local.additional_policy_arns
   certificate_arn              = data.terraform_remote_state.universal.outputs.certificate_arn
-  target_group_name_override   = "minute-worker-ffmpeg-${var.env}-tg"
+  target_group_name_override   = "minute-audio-worker-${var.env}-tg"
   permissions_boundary_name    = "infra/i-dot-ai-${var.env}-minute-perms-boundary-app"
 
   create_networking = false
   create_listener   = false
 
   environment_variables = merge(local.shared_environment_variables, {
-    "APP_NAME" : "${local.name}-worker-ffmpeg",
+    "APP_NAME" : "${local.name}-audio-worker",
     "AUTH_API_URL" : "unused",
-    "WORKER_TYPE" : "ffmpeg",
   })
 
   secrets = [
@@ -228,7 +226,6 @@ module "worker_transcription" {
   environment_variables = merge(local.shared_environment_variables, {
     "APP_NAME" : "${local.name}-worker-transcription",
     "AUTH_API_URL" : "unused",
-    "WORKER_TYPE" : "transcription",
   })
 
   secrets = [
@@ -251,8 +248,8 @@ module "worker_transcription" {
   }
 }
 
-module "worker_llm" {
-  name = "${local.name}-worker-llm"
+module "worker_summary" {
+  name = "${local.name}-worker-summary"
 
   # Each LLM task processes exactly one prompt at a time (LLMWorker.max_messages = 1),
   # so total concurrent LLM calls == number of running tasks. Scale throughput by task
@@ -263,7 +260,7 @@ module "worker_llm" {
   source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v7.0.1-ecs"
   desired_app_count            = terraform.workspace == "prod" ? 20 : 4
   image_tag                    = var.image_tag
-  ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-worker-llm"
+  ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-worker-summary"
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
@@ -272,16 +269,15 @@ module "worker_llm" {
   ecs_cluster_name             = data.terraform_remote_state.platform.outputs.ecs_cluster_name
   task_additional_iam_policies = local.additional_policy_arns
   certificate_arn              = data.terraform_remote_state.universal.outputs.certificate_arn
-  target_group_name_override   = "minute-worker-llm-${var.env}-tg"
+  target_group_name_override   = "minute-worker-summary-${var.env}-tg"
   permissions_boundary_name    = "infra/i-dot-ai-${var.env}-minute-perms-boundary-app"
 
   create_networking = false
   create_listener   = false
 
   environment_variables = merge(local.shared_environment_variables, {
-    "APP_NAME" : "${local.name}-worker-llm",
+    "APP_NAME" : "${local.name}-worker-summary",
     "AUTH_API_URL" : "unused",
-    "WORKER_TYPE" : "llm",
   })
 
   secrets = [

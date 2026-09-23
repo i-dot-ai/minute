@@ -1,5 +1,4 @@
 import logging
-import re
 import uuid
 from typing import cast
 from uuid import UUID
@@ -7,10 +6,8 @@ from uuid import UUID
 import mistune
 from sqlalchemy.orm import selectinload
 
-from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import DialogueEntry, Hallucination, JobStatus, Minute, MinuteVersion, UserTemplate
-from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import (
     get_ai_edit_initial_messages,
@@ -19,6 +16,11 @@ from common.prompts import (
 from common.services import system_template_manager
 from common.services.posthog_client import capture_event
 from common.settings import get_settings
+from common.str_utils import (
+    convert_american_to_british_spelling,
+    strip_document_code_fence,
+    transcript_as_speaker_and_utterance,
+)
 from common.templates.user_template import generate_user_template
 from common.types import (
     LLMHallucination,
@@ -33,19 +35,6 @@ logger = logging.getLogger(__name__)
 
 class MinuteGenerationFailedError(Exception):
     pass
-
-
-fenced_document_pattern = re.compile(r"\A\s*```[a-zA-Z]*\n(.*?)\n?```\s*\Z", re.DOTALL)
-
-
-def strip_document_code_fence(markdown: str) -> str:
-    """Unwrap a whole minute that the model returned inside a code fence.
-
-    mistune turns a fence around the entire document into a single <pre><code> block, which renders
-    the minute as raw Markdown rather than as formatted text.
-    """
-    match = fenced_document_pattern.match(markdown)
-    return match.group(1) if match else markdown
 
 
 class MinuteHandlerService:
@@ -114,30 +103,6 @@ class MinuteHandlerService:
             return minute_version
 
     @classmethod
-    async def get_only_minute_version_for_minute_id(cls, minute_id: UUID) -> MinuteVersion:
-        with SessionLocal() as session:
-            minute = session.get(
-                Minute,
-                minute_id,
-                options=[selectinload(Minute.minute_versions)],
-            )
-            if not minute:
-                msg = f"Minute not found for minute id: {minute_id}"
-                raise ValueError(msg)
-            if not minute.minute_versions:
-                msg = f"MinuteVersion not found for minute id: {minute_id}"
-                raise ValueError(msg)
-            if len(minute.minute_versions) != 1:
-                msg = (
-                    f"More than one MinuteVersions found for minute id: {minute_id}. This function should only be "
-                    f"used for the initial generation of a Minute."
-                )
-                raise ValueError(msg)
-
-            session.expunge(minute)
-            return minute.minute_versions[0]
-
-    @classmethod
     async def process_minute_generation_message(cls, minute_version_id: UUID) -> None:
         try:
             minute_version = await cls.get_minute_version(minute_version_id=minute_version_id)
@@ -146,7 +111,27 @@ class MinuteHandlerService:
             raise MinuteGenerationFailedError from e
         try:
             cls.update_minute_version(minute_version.id, status=JobStatus.IN_PROGRESS)
-            meeting_type = cls.predict_meeting(minute_version.minute.transcription.dialogue_entries)
+
+            # No speech was recognised in the recording (empty/None transcript). There is
+            # nothing to summarise, so complete with an informative message instead of
+            # calling the LLM (which would also crash on an empty transcript).
+            dialogue_entries = minute_version.minute.transcription.dialogue_entries
+            if not dialogue_entries:
+                logger.info("%s: No transcript found, skipping summary generation", minute_version.minute_id)
+                cls.update_minute_version(
+                    minute_version.id,
+                    html_content="<p>No transcript found. Skipping summary.</p>",
+                    hallucinations=[],
+                    status=JobStatus.COMPLETED,
+                )
+                capture_event(
+                    minute_version.minute.transcription.user_id,
+                    "summary_generation_skipped_no_transcript",
+                    {"transcriptionId": str(minute_version.minute.transcription_id)},
+                )
+                return
+
+            meeting_type = cls.predict_meeting(dialogue_entries)
             logger.info("%s: Predicted minute version %s", minute_version.minute_id, meeting_type)
             html_content, hallucinations = await cls.generate_minutes(meeting_type, minute_version.minute)
             cls.update_minute_version(

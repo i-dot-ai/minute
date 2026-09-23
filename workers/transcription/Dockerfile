@@ -9,13 +9,12 @@ ENV UV_LINK_MODE=copy
 ENV UV_NO_SYNC=1
 ENV PATH="/app/.venv/bin:$PATH"
 
-# This image only runs the transcription worker.
-ENV WORKER_TYPE=transcription
+# Install system dependencies. This worker only reads audio metadata (duration via
+# ffprobe, which ships in the ffmpeg package); it does not transcode. --no-install-recommends
+# skips ffmpeg's large optional dependency tree (fonts, extra codecs, X11 libs).
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg curl && rm -rf /var/lib/apt/lists/*
 
-# Install system dependencies (ffprobe/ffmpeg used to measure audio duration)
-RUN apt-get update && apt-get install -y ffmpeg curl && rm -rf /var/lib/apt/lists/*
-
-# Install uv
+# Install uv (build-time only)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app

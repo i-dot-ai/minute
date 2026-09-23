@@ -2,11 +2,11 @@ import logging
 
 from common.services.exceptions import InteractionFailedError
 from common.services.interactive_chat_service import process_interactive_message
-from common.services.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
 from common.services.queue_services.sqs import SQSQueueService
 from common.types import EditMessageData, TaskType, WorkerMessage
 from workers.base_worker import BaseWorker, PoisonMessageError
 from workers.signal_handler import SignalHandler
+from workers.summary.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
 
 logger = logging.getLogger(__name__)
 

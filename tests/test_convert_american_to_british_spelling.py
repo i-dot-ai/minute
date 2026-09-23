@@ -1,7 +1,7 @@
 # ruff: noqa: S101
 import time
 
-from common.convert_american_to_british_spelling import convert_american_to_british_spelling
+from common.str_utils import convert_american_to_british_spelling
 
 
 def test_basic_word_conversion():

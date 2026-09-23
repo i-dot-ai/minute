@@ -12,13 +12,13 @@ import sentry_sdk
 from azure.storage.blob import BlobClient, ContainerClient, ContainerSasPermissions, generate_container_sas
 from sentry_sdk.consts import SPANSTATUS
 from sentry_sdk.tracing import get_span_status_from_http_code
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_exception_type, stop_after_attempt
 
 from common.database.postgres_models import Recording
 from common.services.storage_services import get_storage_service
 from common.settings import get_settings
 from common.types import TranscriptionJobMessageData
-from workers.transcription.services._helpers import get_dialogue_entries
+from workers.transcription.services._helpers import get_dialogue_entries, wait_for_retry_after
 from workers.transcription.services._stt import _STT
 
 logger = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ class AzureSTTBatch(_STT):
     @classmethod
     @retry(
         retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.TimeoutException)),
-        wait=wait_exponential(multiplier=1),  # Retry: 1, 2, 4, 8 seconds
+        wait=wait_for_retry_after(),  # honour Azure's Retry-After on 429, else exp backoff
         stop=stop_after_attempt(5),
         reraise=True,
     )
@@ -169,7 +169,7 @@ class AzureSTTBatch(_STT):
     @classmethod
     @retry(
         retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.TimeoutException)),
-        wait=wait_exponential(multiplier=1),  # Retry: 1, 2, 4, 8 seconds
+        wait=wait_for_retry_after(),  # honour Azure's Retry-After on 429, else exp backoff
         stop=stop_after_attempt(5),
         reraise=True,
     )

@@ -37,34 +37,26 @@ fix = true
 
 [dependency-groups]
 backend = [
-    "pyjwt>=2.9.0,<3",
-    "posthog>=6.6.1,<7",
     "uvicorn>=0.31.0,<0.32",
     "apscheduler>=3.11.0,<4",
-]
-worker = [
-    "google-genai>=1.10.0,<2",
-    "openai>=1.42.0,<2",
-    "ffmpeg-python>=0.2.0,<0.3",
-    "azure-storage-blob>=12.26.0,<13",
-    "posthog>=6.6.1,<7",
+    # Required by i-dot-ai-utilities' auth client (common/auth.py), which imports
+    # `requests` but does not declare it as a dependency. Previously satisfied only
+    # transitively via the LLM/Azure SDKs that the backend no longer installs.
+    "requests>=2.32.0,<3",
 ]
 # Per-worker dependency groups. Each image installs only the group it needs so
-# provider-specific SDKs are not shipped where they are unused. The umbrella
-# `worker` group above is the union (used by local dev via default-groups = "all").
-worker-ffmpeg = [
+# provider-specific SDKs are not shipped where they are unused. Local dev installs
+# the union of all groups via default-groups = "all".
+audio-worker = [
     "ffmpeg-python>=0.2.0,<0.3",
 ]
 worker-transcription = [
     "azure-storage-blob>=12.26.0,<13",
     "google-genai>=1.10.0,<2",
-    "openai>=1.42.0,<2",
-    "ffmpeg-python>=0.2.0,<0.3",
     "posthog>=6.6.1,<7",
 ]
-worker-llm = [
+worker-summary = [
     "google-genai>=1.10.0,<2",
-    "openai>=1.42.0,<2",
     "posthog>=6.6.1,<7",
 ]
 dev = [

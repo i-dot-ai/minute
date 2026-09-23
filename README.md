@@ -155,3 +155,5 @@ Simply put them in the [templates](backend/templates) directory, and they will a
 [Board](https://github.com/orgs/i-dot-ai/projects/37/views/1)
 
 [Dev worker](https://eu-west-2.console.aws.amazon.com/ecs/v2/clusters/i-dot-ai-dev-ecs-cluster/services/i-dot-ai-dev-minute-worker-ecs-service/deployments?region=eu-west-2)
+
+DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker compose up --build

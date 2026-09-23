@@ -2,7 +2,7 @@
 
 This module deliberately imports only the database layer and shared types, NOT
 the LLM / Azure / ffmpeg stacks pulled in by TranscriptionHandlerService. It lets
-lightweight workers (e.g. the ffmpeg worker) mark a transcription as failed without
+lightweight workers (e.g. the audio worker) mark a transcription as failed without
 dragging in the full transcription/LLM dependency tree.
 """
 

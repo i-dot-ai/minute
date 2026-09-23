@@ -1,7 +1,7 @@
 import logging
 
-from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
+from common.str_utils import transcript_as_speaker_and_utterance
 from common.types import DialogueEntry, SpeakerPredictionOutput
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ Conversation:
         return {pred.original_speaker: pred.predicted_name for pred in speaker_prediction.predictions}
     except Exception as e:  # noqa: BLE001 # flagged by ruff - investigate when we have time.
         error_message = str(e)
-        # Check for content filter errors from Azure OpenAI
+        # Check for content filter / safety errors from the LLM provider
         if any(
             term in error_message.lower()
             for term in [

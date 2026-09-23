@@ -3,15 +3,15 @@ from uuid import UUID
 
 from sqlalchemy.orm import selectinload
 
-from common.audio.speakers import process_speakers_and_dialogue_entries
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import JobStatus, Minute, Transcription
-from common.generate_meeting_title import generate_meeting_title
 from common.services.exceptions import TranscriptionFailedError
 from common.services.posthog_client import capture_event
 from common.services.transcription_status import update_transcription
 from common.types import DialogueEntry, TranscriptionJobMessageData
+from workers.transcription.generate_meeting_title import generate_meeting_title
 from workers.transcription.services.transcription_manager import TranscriptionServiceManager
+from workers.transcription.speakers import process_speakers_and_dialogue_entries
 
 transcription_manager = TranscriptionServiceManager()
 logger = logging.getLogger(__name__)
@@ -64,9 +64,18 @@ class TranscriptionHandlerService:
                 update_transcription(transcription.id, status=JobStatus.IN_PROGRESS)
                 transcription_job = await transcription_manager.perform_transcription_steps(transcription=transcription)
 
-            if transcription_job.transcript:
-                dialogue_entries = await cls.identify_speakers(transcription_job.transcript)
-                meeting_title = await generate_meeting_title(transcript=dialogue_entries)
+            # `transcript is None` -> async job still running; leave IN_PROGRESS so the
+            # worker re-queues. A list (even empty) means the job finished.
+            if transcription_job.transcript is not None:
+                if transcription_job.transcript:
+                    dialogue_entries = await cls.identify_speakers(transcription_job.transcript)
+                    meeting_title = await generate_meeting_title(transcript=dialogue_entries)
+                else:
+                    # Azure recognised no speech (e.g. silent recording). Complete with an
+                    # empty transcript rather than looping or failing.
+                    logger.warning("Transcription %s completed with no speech recognised", transcription.id)
+                    dialogue_entries = []
+                    meeting_title = None
                 update_transcription(
                     transcription.id, status=JobStatus.COMPLETED, transcript=dialogue_entries, title=meeting_title
                 )

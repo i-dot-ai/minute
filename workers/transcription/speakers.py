@@ -1,7 +1,7 @@
 import logging
 
-from common.audio.generate_speaker_predictions import generate_speaker_predictions
 from common.types import DialogueEntry
+from workers.transcription.generate_speaker_predictions import generate_speaker_predictions
 
 logger = logging.getLogger(__name__)
 

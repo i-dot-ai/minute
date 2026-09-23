@@ -28,8 +28,8 @@ import pytest
 import requests
 
 from common.database.postgres_models import ContentSource, JobStatus, Minute, MinuteVersion, Transcription
-from common.services.queue_services import get_queue_service
 from common.services import system_template_manager
+from common.services.queue_services import get_queue_service
 from common.settings import get_settings
 from common.types import (
     AgendaUsage,
@@ -43,7 +43,7 @@ from common.types import (
 )
 from tests.marks import costs_money
 from tests.utils import FileTypeTests, get_test_client
-from workers.ffmpeg.worker import FFmpegWorker
+from workers.audio.worker import AudioWorker
 from workers.summary.worker import SummaryWorker
 from workers.transcription.worker import TranscriptionWorker
 
@@ -51,7 +51,7 @@ pytestmark = [costs_money]
 
 
 class _CompositeWorker:
-    """Runs the ffmpeg, transcription and llm workers concurrently as a single task.
+    """Runs the audio, transcription and llm workers concurrently as a single task.
 
     The e2e tests drive the whole pipeline, so they need all three workers running
     together the way they do in production (each polling its own queue).
@@ -80,7 +80,7 @@ def worker_service() -> Generator[_CompositeWorker, Any, None]:
         settings.LLM_DEADLETTER_QUEUE_NAME,
     )
 
-    ffmpeg_worker = FFmpegWorker(
+    audio_worker = AudioWorker(
         transcription_queue_service=transcription_queue_service,
         transcription_ready_queue_service=transcription_ready_queue_service,
     )
@@ -90,7 +90,7 @@ def worker_service() -> Generator[_CompositeWorker, Any, None]:
     )
     llm_worker = SummaryWorker(llm_queue_service=llm_queue_service)
 
-    return _CompositeWorker([ffmpeg_worker, transcription_worker, llm_worker])
+    return _CompositeWorker([audio_worker, transcription_worker, llm_worker])
 
 
 @pytest.fixture(autouse=True)

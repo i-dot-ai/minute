@@ -6,7 +6,6 @@ from pathlib import Path
 
 from sqlalchemy.orm import selectinload
 
-from common.audio.ffmpeg import convert_to_mp3, get_num_audio_channels
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import JobStatus, Minute, Recording, RecordingStatus, Transcription
 from common.services.queue_services.sqs import SQSQueueService
@@ -14,6 +13,7 @@ from common.services.storage_services import get_storage_service
 from common.services.transcription_status import update_transcription
 from common.settings import get_settings
 from common.types import TaskType, WorkerMessage
+from workers.audio.audio import convert_to_mp3, get_num_audio_channels
 from workers.base_worker import BaseWorker, PoisonMessageError
 from workers.signal_handler import SignalHandler
 
@@ -23,7 +23,7 @@ storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 SUPPORTED_FORMATS = {".mp3"}
 
 
-class FFmpegWorker(BaseWorker):
+class AudioWorker(BaseWorker):
     """CPU-bound worker that preprocesses audio files.
 
     Reads from the transcription queue, converts audio to MP3 mono if needed, then
@@ -43,7 +43,7 @@ class FFmpegWorker(BaseWorker):
 
     async def process_message(self, message: WorkerMessage) -> None:
         """Process audio preprocessing for a recording."""
-        logger.info("Processing FFmpeg preprocessing for minute id: %s", message.id)
+        logger.info("Processing audio preprocessing for minute id: %s", message.id)
 
         with SessionLocal() as session:
             recording = self._get_recording_for_minute(session, message.id)

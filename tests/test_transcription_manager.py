@@ -4,11 +4,11 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from common.services.exceptions import AudioFileTooLongError, TranscriptionFailedError
 from common.types import TranscriptionJobMessageData
 from workers.transcription.services import AzureSTT, AzureSTTBatch
 from workers.transcription.services.transcription_manager import (
     MAX_DURATION_BATCH,
+    AudioFileTooLongError,
     TranscriptionServiceManager,
 )
 
@@ -86,7 +86,7 @@ class TestCheckTranscription:
     @pytest.mark.asyncio
     async def test_check_transcription_unknown_adapter(self, manager):
         message = TranscriptionJobMessageData(transcription_service="nope", transcript=None)
-        with pytest.raises(TranscriptionFailedError, match="not available"):
+        with pytest.raises(RuntimeError, match="not available"):
             await manager.check_transcription("nope", message)
 
     @pytest.mark.asyncio
@@ -119,6 +119,25 @@ class TestPerformTranscriptionSteps:
             assert result.transcript is not None
             mock_start.assert_awaited_once()
             mock_download.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_synchronous_empty_transcript_is_terminal(self, manager, mock_transcription, mock_recording):
+        """Sync adapter returning [] (no speech) is complete -- check must NOT run."""
+        empty = TranscriptionJobMessageData(transcription_service=AzureSTT.name, transcript=[])
+        download_mock = AsyncMock(side_effect=_fake_download())
+        with (
+            tempfile.NamedTemporaryFile(suffix=".mp3") as temp_file,
+            patch(f"{MANAGER_MODULE}.storage_service.download", new=download_mock),
+            patch(f"{MANAGER_MODULE}.get_duration", return_value=1_500),
+            patch.object(AzureSTT, "start", new=AsyncMock(return_value=empty)),
+            patch.object(manager, "check_transcription", new=AsyncMock()) as mock_check,
+        ):
+            mock_recording.s3_file_key = temp_file.name
+
+            result = await manager.perform_transcription_steps(mock_transcription)
+
+            assert result.transcript == []
+            mock_check.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_asynchronous_path_triggers_check(self, manager, mock_transcription, mock_recording):

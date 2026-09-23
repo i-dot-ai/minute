@@ -216,7 +216,7 @@ class MeetingCheck(BaseModel):
 
 class TaskType(IntEnum):
     # messages have a natural ordering in which we want them to happen
-    FFMPEG_PREPROCESSING = 0
+    AUDIO_PREPROCESSING = 0
     TRANSCRIPTION = 1
     MINUTE = 2
     EDIT = 3

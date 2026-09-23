@@ -96,9 +96,9 @@ endif
 # as-is for ECR repo naming (minute-worker-*), so we only remap the Dockerfile path.
 # Anything without an explicit mapping falls back to $(service)/Dockerfile
 # (e.g. backend/Dockerfile, frontend/Dockerfile).
-DOCKERFILE_worker-ffmpeg        = workers/ffmpeg/Dockerfile
+DOCKERFILE_audio-worker         = workers/audio/Dockerfile
 DOCKERFILE_worker-transcription = workers/transcription/Dockerfile
-DOCKERFILE_worker-llm           = workers/summary/Dockerfile
+DOCKERFILE_worker-summary       = workers/summary/Dockerfile
 DOCKERFILE = $(or $(DOCKERFILE_$(service)),$(service)/Dockerfile)
 
 docker_build: ## Build the docker container for the specified service when running in CI/CD

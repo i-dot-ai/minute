@@ -1,9 +1,9 @@
 import markdownify
 
 from common.database.postgres_models import TemplateType, Transcription, UserTemplate
-from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_transcript_messages
+from common.str_utils import transcript_as_speaker_and_utterance
 from common.types import LLMHallucination
 
 document_prompt = """<task>

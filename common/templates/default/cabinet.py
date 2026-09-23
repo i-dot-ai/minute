@@ -1,9 +1,9 @@
 # flake8: noqa: E501, RUF001,
 from pydantic import BaseModel, Field
 
-from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_sections_from_transcript_prompt
+from common.str_utils import transcript_as_speaker_and_utterance
 from common.templates.types import SectionTemplate
 from common.types import (
     AgendaUsage,

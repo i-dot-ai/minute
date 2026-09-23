@@ -188,7 +188,7 @@ async def create_transcription(
     session.add(minute_version)
     recording.transcription_id = transcription.id
     await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.FFMPEG_PREPROCESSING))
+    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.AUDIO_PREPROCESSING))
 
     return TranscriptionCreateResponse(id=transcription.id)
 
@@ -231,7 +231,7 @@ def _collect_queue_depths() -> list[QueueDepth]:
 
 
 def _preprocessing_stage(recordings: list[Recording]) -> tuple[PipelineStageStatus, bool]:
-    """Stage 1: FFmpeg preprocessing, tracked on the recording rows. Returns (stage, done)."""
+    """Stage 1: audio preprocessing, tracked on the recording rows. Returns (stage, done)."""
     if not recordings:
         return (
             PipelineStageStatus(
@@ -246,13 +246,13 @@ def _preprocessing_stage(recordings: list[Recording]) -> tuple[PipelineStageStat
     ready = any(r.status == RecordingStatus.READY_FOR_TRANSCRIPTION for r in recordings)
     failed = any(r.status == RecordingStatus.FAILED_PROCESSING for r in recordings)
     if failed:
-        status, detail = "failed", "FFmpeg preprocessing failed for a recording."
+        status, detail = "failed", "Audio preprocessing failed for a recording."
     elif ready:
         status, detail = "completed", "Audio preprocessed and ready for transcription."
     else:
         status, detail = (
             "waiting",
-            f"Recording uploaded (status={newest.status}); waiting for the FFmpeg worker to pick it up.",
+            f"Recording uploaded (status={newest.status}); waiting for the audio worker to pick it up.",
         )
     return (
         PipelineStageStatus(

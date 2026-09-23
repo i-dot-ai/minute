@@ -1,4 +1,13 @@
 services:
+  # Local Sentry UI. The app/worker SDKs stream envelopes here (SENTRY_SPOTLIGHT)
+  # when ENVIRONMENT=local, so you can inspect traces, performance and errors in
+  # the browser at http://localhost:8969 with no Sentry account and nothing
+  # leaving your machine.
+  spotlight:
+    image: ghcr.io/getsentry/spotlight:latest
+    ports:
+      - "8969:8969"
+
   backend:
     build:
       context: .
@@ -12,6 +21,7 @@ services:
       - MINISTACK_URL=http://ministack:4566
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
+      - SENTRY_SPOTLIGHT=http://spotlight:8969/stream
     depends_on:
       db:
         condition: service_healthy
@@ -22,7 +32,7 @@ services:
         source: ./.data
         target: /static
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:8080/healthcheck"]
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8080/healthcheck" ]
       interval: 60s
       retries: 3
       start_period: 30s
@@ -38,10 +48,10 @@ services:
         - path: ./uv.lock
           action: rebuild
 
-  worker_ffmpeg:
+  audio_worker:
     build:
       context: .
-      dockerfile: ./workers/ffmpeg/Dockerfile
+      dockerfile: ./workers/audio/Dockerfile
     env_file:
       - .env
     volumes:
@@ -54,7 +64,7 @@ services:
       - MINISTACK_URL=http://ministack:4566
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
-      - WORKER_TYPE=ffmpeg
+      - SENTRY_SPOTLIGHT=http://spotlight:8969/stream
     stop_grace_period: 10s
     depends_on:
       db:
@@ -62,7 +72,7 @@ services:
       ministack:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "python workers/healthcheck.py"]
+      test: [ "CMD-SHELL", "python workers/healthcheck.py" ]
       interval: 60s
       retries: 3
       start_period: 60s
@@ -94,7 +104,7 @@ services:
       - MINISTACK_URL=http://ministack:4566
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
-      - WORKER_TYPE=transcription
+      - SENTRY_SPOTLIGHT=http://spotlight:8969/stream
     stop_grace_period: 10s
     depends_on:
       db:
@@ -102,7 +112,7 @@ services:
       ministack:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "python workers/healthcheck.py"]
+      test: [ "CMD-SHELL", "python workers/healthcheck.py" ]
       interval: 60s
       retries: 3
       start_period: 60s
@@ -118,7 +128,7 @@ services:
         - path: ./uv.lock
           action: rebuild
 
-  worker_llm:
+  worker_summary:
     build:
       context: .
       dockerfile: ./workers/summary/Dockerfile
@@ -134,7 +144,7 @@ services:
       - MINISTACK_URL=http://ministack:4566
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
-      - WORKER_TYPE=llm
+      - SENTRY_SPOTLIGHT=http://spotlight:8969/stream
     stop_grace_period: 10s
     depends_on:
       db:
@@ -142,7 +152,7 @@ services:
       ministack:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "python workers/healthcheck.py"]
+      test: [ "CMD-SHELL", "python workers/healthcheck.py" ]
       interval: 60s
       retries: 3
       start_period: 60s
@@ -199,13 +209,14 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "minute_db"]
+      test: [ "CMD-SHELL", "pg_isready", "-d", "minute_db" ]
       interval: 5s
       timeout: 30s
       retries: 24
       start_period: 30s
 
-  ministack: # MiniStack container (LocalStack-compatible AWS emulator)
+  ministack:
+    # MiniStack container (LocalStack-compatible AWS emulator)
     image: ministackorg/ministack:latest
     env_file:
       - .env
@@ -218,7 +229,7 @@ services:
     environment:
       - AWS_DEFAULT_REGION=eu-west-2
     healthcheck:
-      test: ["CMD", "test", "-f", "/ready.txt"]
+      test: [ "CMD", "test", "-f", "/ready.txt" ]
       interval: 1m30s
       timeout: 30s
       retries: 5

@@ -3,13 +3,9 @@ import re
 
 from breame.spelling import american_spelling_exists, get_british_spelling
 
-logger = logging.getLogger(__name__)
+from common.database.postgres_models import DialogueEntry
 
-# The pattern must start with the letter class so that positions with no following
-# letters fail in O(1). A lazy non-letter prefix group re-expands to the end of the
-# string at every position of a trailing non-letter run (e.g. a markdown table),
-# making the scan quadratic and effectively hanging on large documents.
-WORD_PATTERN = re.compile(r"[a-zA-Z]+")
+logger = logging.getLogger(__name__)
 
 
 def _is_ascii_letter(char: str) -> bool:
@@ -25,6 +21,13 @@ def _preceded_by_backtick(text: str, word_start: int) -> bool:
             return True
         i -= 1
     return False
+
+
+# The pattern must start with the letter class so that positions with no following
+# letters fail in O(1). A lazy non-letter prefix group re-expands to the end of the
+# string at every position of a trailing non-letter run (e.g. a markdown table),
+# making the scan quadratic and effectively hanging on large documents.
+WORD_PATTERN = re.compile(r"[a-zA-Z]+")
 
 
 def convert_american_to_british_spelling(  # noqa: C901
@@ -66,3 +69,24 @@ def convert_american_to_british_spelling(  # noqa: C901
         if strict:
             raise
         return text
+
+
+fenced_document_pattern = re.compile(r"\A\s*```[a-zA-Z]*\n(.*?)\n?```\s*\Z", re.DOTALL)
+
+
+def strip_document_code_fence(markdown: str) -> str:
+    """Unwrap a whole minute that the model returned inside a code fence.
+
+    mistune turns a fence around the entire document into a single <pre><code> block, which renders
+    the minute as raw Markdown rather than as formatted text.
+    """
+    match = fenced_document_pattern.match(markdown)
+    return match.group(1) if match else markdown
+
+
+def transcript_as_speaker_and_utterance(transcript: list[DialogueEntry]) -> str:
+    return "\n".join([f"{item['speaker']}: {item['text']}" for item in transcript])
+
+
+def transcript_as_index_speaker_and_utterance(transcript: list[DialogueEntry]) -> str:
+    return "\n".join(f"[{i}] {entry['speaker']}: {entry['text']}" for i, entry in enumerate(transcript))

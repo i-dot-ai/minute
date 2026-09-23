@@ -1,6 +1,7 @@
 import logging
 
 from common.services.exceptions import TranscriptionFailedError
+from common.services.minute_lookup import get_only_minute_version_for_minute_id
 from common.services.queue_services.sqs import SQSQueueService
 from common.types import TaskType, TranscriptionJobMessageData, WorkerMessage
 from workers.base_worker import BaseWorker
@@ -55,11 +56,14 @@ class TranscriptionWorker(BaseWorker):
             logger.exception("Transcription failed for minute id: %s", message.id)
             return
 
-        if transcription_job.transcript:
+        # `transcript is None` means an async job is still running -> re-queue.
+        # A list (populated or empty) means the job finished, so proceed to minute
+        # generation. An empty transcript still goes through so the minute_version
+        # reaches a terminal COMPLETED state (the generation step handles the
+        # "no speech" case), otherwise the UI would hang waiting on it.
+        if transcription_job.transcript is not None:
             logger.info("Transcription complete for minute id: %s", message.id)
-            from common.services.minute_handler_service import MinuteHandlerService
-
-            minute_version = await MinuteHandlerService.get_only_minute_version_for_minute_id(message.id)
+            minute_version = get_only_minute_version_for_minute_id(message.id)
             self.llm_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
         else:
             logger.info(

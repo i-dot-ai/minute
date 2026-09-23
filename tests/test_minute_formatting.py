@@ -2,7 +2,7 @@
 
 import mistune
 
-from common.services.minute_handler_service import strip_document_code_fence
+from common.str_utils import strip_document_code_fence
 from common.templates.citations import (
     combine_consecutive_citations,
     strip_preamble,

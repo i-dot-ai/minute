@@ -9,7 +9,9 @@ from typing import Any
 
 import aioboto3
 import httpx
+import sentry_sdk
 from azure.storage.blob import BlobClient, ContainerClient, ContainerSasPermissions, generate_container_sas
+from sentry_sdk.consts import SPANSTATUS
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from common.database.postgres_models import DialogueEntry, Recording
@@ -91,10 +93,14 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
                 },
             }
 
-        async with httpx.AsyncClient(timeout=timeout_settings) as client:
-            response = await client.post(submit_url, headers=headers, json=data, params=params)
-            if response.status_code != 201:  # noqa: PLR2004
-                response.raise_for_status()
+        with sentry_sdk.start_transaction(op="process", name="azure_stt_batch") as transaction:
+            async with httpx.AsyncClient(timeout=timeout_settings) as client:
+                response = await client.post(submit_url, headers=headers, json=data, params=params)
+                transaction.set_tag("azure_stt_batch.status_code", response.status_code)
+                if response.status_code != httpx.codes.CREATED:
+                    transaction.set_status(SPANSTATUS.UNKNOWN_ERROR)
+                    transaction.set_tag("azure_stt_batch.unknown_error", True)
+                    response.raise_for_status()
 
         return TranscriptionJobMessageData(transcription_service=cls.name, job_name=response.json()["self"])
 

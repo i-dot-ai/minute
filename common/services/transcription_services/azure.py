@@ -5,12 +5,13 @@ from typing import Any
 import aiofiles
 import httpx
 import sentry_sdk
+from sentry_sdk.consts import SPANSTATUS
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from common.database.postgres_models import Recording
 from common.services.exceptions import TranscriptionFailedError
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
-from common.services.transcription_services.azure_common import TOO_MANY_REQUESTS, convert_to_dialogue_entries
+from common.services.transcription_services.azure_common import convert_to_dialogue_entries
 from common.settings import get_settings
 from common.types import TranscriptionJobMessageData
 
@@ -34,7 +35,7 @@ class AzureSpeechAdapter(TranscriptionAdapter):
     @classmethod
     @retry(
         retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.TimeoutException)),
-        wait=wait_exponential(multiplier=1, min=4, max=10),
+        wait=wait_exponential(multiplier=30),  # 30, 60, 120, 240 secs
         stop=stop_after_attempt(5),
     )
     async def start(cls, audio_file_path_or_recording: Path | Recording) -> TranscriptionJobMessageData:
@@ -69,7 +70,10 @@ class AzureSpeechAdapter(TranscriptionAdapter):
             transaction.set_data("file_size", audio_file_path_or_recording.stat().st_size)
             async with httpx.AsyncClient(timeout=timeout_settings) as client:
                 response = await client.post(url, headers=headers, files=files, params=params)
-                if response.status_code == TOO_MANY_REQUESTS:
+                transaction.set_tag("azure_stt.status_code", response.status_code)
+                if response.status_code == httpx.codes.TOO_MANY_REQUESTS:
+                    transaction.set_status(SPANSTATUS.RESOURCE_EXHAUSTED)
+                    transaction.set_tag("azure_stt.too_many_requests", True)
                     response.raise_for_status()
 
                 full_response = response.json()

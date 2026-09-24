@@ -25,9 +25,8 @@ logger = logging.getLogger(__name__)
 url = f"https://{settings.AZURE_SPEECH_REGION}.api.cognitive.microsoft.com/speechtotext/transcriptions:transcribe"
 headers = {"Ocp-Apim-Subscription-Key": settings.AZURE_SPEECH_KEY}
 
-environment = os.environ.get("ENVIRONMENT")
-logger_env = ExecutionEnvironmentType.LOCAL if environment == "LOCAL" else ExecutionEnvironmentType.FARGATE
-logger_fmt = LogOutputFormat.TEXT if environment == "LOCAL" else LogOutputFormat.JSON
+logger_env = ExecutionEnvironmentType.LOCAL if settings.ENVIRONMENT == "LOCAL" else ExecutionEnvironmentType.FARGATE
+logger_fmt = LogOutputFormat.TEXT if settings.ENVIRONMENT == "LOCAL" else LogOutputFormat.JSON
 
 logger = StructuredLogger(
     level=logging.INFO,
@@ -38,8 +37,6 @@ logger = StructuredLogger(
 )
 
 slogger = StructuredLogger()
-slogger.refresh_context()
-logger.info("A thing happened", thing_id=12345, user_logged_in=True, azure=True)
 
 
 class AzureSpeechAdapter(TranscriptionAdapter):
@@ -101,20 +98,15 @@ class AzureSpeechAdapter(TranscriptionAdapter):
             async with httpx.AsyncClient(timeout=timeout_settings) as client:
                 start_time = time.monotonic()
                 response = await client.post(url, headers=headers, files=files, params=params)
-                duration_ms = (time.monotonic() - start_time) * 1000
+                duration_ms = int((time.monotonic() - start_time) * 1000)
                 transaction.set_tag("azure_stt.status_code", response.status_code)
-                slogger.info("[TAG] azure_stt.status_code", azure_stt=1, status_code=response.status_code)
 
-                sentry_sdk.metrics.count(
-                    "azure_stt.requests",
-                    1,
-                    attributes={"adapter": cls.name, "status_code": response.status_code},
-                )
-                sentry_sdk.metrics.distribution(
-                    "azure_stt.duration",
-                    duration_ms,
-                    unit="millisecond",
-                    attributes={"adapter": cls.name, "status_code": response.status_code},
+                slogger.info(
+                    "[TAG]",
+                    tag="azure_stt",
+                    num_requests=1,
+                    status_code=response.status_code,
+                    duration_ms=duration_ms,
                 )
 
                 if response.status_code == httpx.codes.TOO_MANY_REQUESTS:

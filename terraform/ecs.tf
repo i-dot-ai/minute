@@ -183,6 +183,9 @@ module "worker" {
   environment_variables = merge(local.shared_environment_variables, {
     "APP_NAME" : "${local.name}-worker",
     "AUTH_API_URL" : "unused", # Worker settings need refactoring so we can remove this
+    # Write Ray worker stdout directly to the container stream (no driver prefix/ANSI colors)
+    # so structured JSON logs stay valid and CloudWatch can auto-parse the fields.
+    "RAY_LOG_TO_STDERR" : "1",
   })
 
   secrets = [

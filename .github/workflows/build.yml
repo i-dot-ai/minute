@@ -16,9 +16,21 @@ jobs:
     with:
       service: backend
     secrets: inherit
-  worker:
+  audio-worker:
     permissions: write-all
     uses: ./.github/workflows/build-one.yml
     with:
-      service: worker
+      service: audio-worker
+    secrets: inherit
+  worker-transcription:
+    permissions: write-all
+    uses: ./.github/workflows/build-one.yml
+    with:
+      service: worker-transcription
+    secrets: inherit
+  worker-summary:
+    permissions: write-all
+    uses: ./.github/workflows/build-one.yml
+    with:
+      service: worker-summary
     secrets: inherit

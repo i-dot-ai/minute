@@ -7,7 +7,6 @@ logger = logging.getLogger(__name__)
 
 def get_duration(file_path: Path) -> float:
     try:
-        logger.info("Getting audio duration using ffprobe")
         result = subprocess.run(  # noqa: S603
             [  # noqa: S607
                 "ffprobe",

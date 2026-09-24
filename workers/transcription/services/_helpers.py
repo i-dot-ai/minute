@@ -32,51 +32,81 @@ class wait_for_retry_after(wait_base):  # noqa: N801  (tenacity strategies are l
         self._max_wait = max_wait
 
     def __call__(self, retry_state: RetryCallState) -> float:
-        retry_after = self._retry_after_seconds(retry_state)
+        retry_after = retry_after_seconds(retry_state)
         if retry_after is not None:
-            wait = min(retry_after, self._max_wait)
-            logger.info("Honouring Retry-After: waiting %.1fs before retry", wait)
-            return wait
+            return min(retry_after, self._max_wait)
         # Clamp the fallback too, so a caller-supplied strategy can't exceed max_wait.
         return min(self._fallback(retry_state), self._max_wait)
 
-    def _retry_after_seconds(self, retry_state: RetryCallState) -> float | None:
-        if retry_state.outcome is None or not retry_state.outcome.failed:
-            return None
-        exc = retry_state.outcome.exception()
-        if not isinstance(exc, httpx.HTTPStatusError):
-            return None
 
-        header = exc.response.headers.get("Retry-After")
-        if not header:
-            return None
-        return self._parse_retry_after(header)
+def retry_after_seconds(retry_state: RetryCallState) -> float | None:
+    """Return Azure's suggested ``Retry-After`` delay in seconds, if any.
 
-    @staticmethod
-    def _parse_retry_after(header: str) -> float | None:
-        """Parse a Retry-After header (seconds or HTTP-date) into a delay in seconds."""
-        # Numeric form: delay in seconds. Tolerate surrounding whitespace.
-        stripped = header.strip()
-        try:
-            seconds = int(stripped)
-        except ValueError:
-            pass
-        else:
-            return float(max(seconds, 0))
+    Returns ``None`` when the failed attempt did not carry a parseable
+    ``Retry-After`` header (in which case callers fall back to their own backoff).
+    """
+    if retry_state.outcome is None or not retry_state.outcome.failed:
+        return None
+    exc = retry_state.outcome.exception()
+    if not isinstance(exc, httpx.HTTPStatusError):
+        return None
 
-        # HTTP-date form: wait until that moment. A malformed header is treated as
-        # absent so we fall back to exponential backoff rather than crashing.
-        try:
-            parsed = email.utils.parsedate_to_datetime(stripped)
-        except (TypeError, ValueError):
-            logger.warning("Could not parse Retry-After header %r; using fallback backoff", header)
-            return None
-        if parsed is None:
-            return None
-        if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=UTC)
-        delta = (parsed - datetime.now(UTC)).total_seconds()
-        return max(delta, 0.0)
+    header = exc.response.headers.get("Retry-After")
+    if not header:
+        return None
+    return _parse_retry_after(header)
+
+
+def log_retry_after(retry_state: RetryCallState) -> None:
+    """Tenacity ``before_sleep`` callback: log the delay before each STT retry.
+
+    Surfaces the actual delay chosen and, when the provider supplied one, Azure's
+    suggested ``Retry-After`` value so retries are observable in the logs.
+    """
+    sleep = getattr(retry_state.next_action, "sleep", None)
+    suggested = retry_after_seconds(retry_state)
+    exc = retry_state.outcome.exception() if retry_state.outcome else None
+    if suggested is not None:
+        logger.info(
+            "Retrying STT (attempt %d) after %.1fs; honouring Azure Retry-After of %.1fs (last error: %s)",
+            retry_state.attempt_number,
+            sleep if sleep is not None else -1.0,
+            suggested,
+            exc,
+        )
+    else:
+        logger.info(
+            "Retrying STT (attempt %d) after %.1fs; no Azure Retry-After header, using backoff (last error: %s)",
+            retry_state.attempt_number,
+            sleep if sleep is not None else -1.0,
+            exc,
+        )
+
+
+def _parse_retry_after(header: str) -> float | None:
+    """Parse a Retry-After header (seconds or HTTP-date) into a delay in seconds."""
+    # Numeric form: delay in seconds. Tolerate surrounding whitespace.
+    stripped = header.strip()
+    try:
+        seconds = int(stripped)
+    except ValueError:
+        pass
+    else:
+        return float(max(seconds, 0))
+
+    # HTTP-date form: wait until that moment. A malformed header is treated as
+    # absent so we fall back to exponential backoff rather than crashing.
+    try:
+        parsed = email.utils.parsedate_to_datetime(stripped)
+    except (TypeError, ValueError):
+        logger.warning("Could not parse Retry-After header %r; using fallback backoff", header)
+        return None
+    if parsed is None:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+    delta = (parsed - datetime.now(UTC)).total_seconds()
+    return max(delta, 0.0)
 
 
 def get_dialogue_entries(phrases: list[dict[str, Any]]) -> list[DialogueEntry]:

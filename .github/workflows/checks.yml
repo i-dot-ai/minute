@@ -10,7 +10,7 @@ on:
     paths:
       - backend/**
       - common/**
-      - worker/**
+      - workers/**
       - tests/**
       - alembic/**
       - frontend/**

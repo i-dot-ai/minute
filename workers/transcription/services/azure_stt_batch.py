@@ -18,7 +18,7 @@ from common.database.postgres_models import Recording
 from common.services.storage_services import get_storage_service
 from common.settings import get_settings
 from common.types import TranscriptionJobMessageData
-from workers.transcription.services._helpers import get_dialogue_entries, wait_for_retry_after
+from workers.transcription.services._helpers import get_dialogue_entries, log_retry_after, wait_for_retry_after
 from workers.transcription.services._stt import _STT
 
 logger = logging.getLogger(__name__)
@@ -70,6 +70,7 @@ class AzureSTTBatch(_STT):
         retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.TimeoutException)),
         wait=wait_for_retry_after(),  # honour Azure's Retry-After on 429, else exp backoff
         stop=stop_after_attempt(5),
+        before_sleep=log_retry_after,  # log the delay (and Azure's suggestion) before each retry
         reraise=True,
     )
     async def start(cls, audio_file_path_or_recording: Path | Recording) -> TranscriptionJobMessageData:
@@ -171,6 +172,7 @@ class AzureSTTBatch(_STT):
         retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.TimeoutException)),
         wait=wait_for_retry_after(),  # honour Azure's Retry-After on 429, else exp backoff
         stop=stop_after_attempt(5),
+        before_sleep=log_retry_after,  # log the delay (and Azure's suggestion) before each retry
         reraise=True,
     )
     async def _get_results(cls, files_url: str, data: TranscriptionJobMessageData) -> TranscriptionJobMessageData:

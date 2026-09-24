@@ -34,7 +34,7 @@ logger = StructuredLogger(
     options={
         "execution_environment": logger_env,
         "log_format": logger_fmt,
-    }
+    },
 )
 
 slogger = StructuredLogger()

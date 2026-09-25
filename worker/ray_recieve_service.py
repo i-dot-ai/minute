@@ -53,7 +53,7 @@ class RayTranscriptionService:
             messages = self.transcription_queue_service.receive_message(max_messages=1)
             for message, receipt_handle in messages:
                 try:
-                    logger.info("Received minute id for transcription: %s", message.id)
+                    logger.debug("Received minute id for transcription: %s", message.id)
                     transcription_job = await TranscriptionHandlerService.process_transcription(
                         message.id, message.data
                     )
@@ -93,7 +93,7 @@ class RayLlmService:
     async def process(self) -> None:
         logger.info("receiving LLM messages from Ray queue")
         while not await self.stopped.get.remote():
-            logger.info("Receiving LLM messages")
+            logger.debug("Receiving LLM messages")
             messages = self.queue_service.receive_message(max_messages=10)
             tasks: list[asyncio.Task] = []
             for message, receipt_handle in messages:

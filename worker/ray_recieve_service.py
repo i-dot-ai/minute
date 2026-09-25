@@ -49,11 +49,11 @@ class RayTranscriptionService:
 
     async def process(self) -> None:
         while not await self.stopped.get.remote():
-            logger.info("Receiving transcription messages")
+            logger.debug("Receiving transcription messages")
             messages = self.transcription_queue_service.receive_message(max_messages=1)
             for message, receipt_handle in messages:
                 try:
-                    logger.debug("Received minute id for transcription: %s", message.id)
+                    logger.info("Received minute id for transcription: %s", message.id)
                     transcription_job = await TranscriptionHandlerService.process_transcription(
                         message.id, message.data
                     )

@@ -4,6 +4,7 @@ from typing import Any
 
 import ray
 
+from common.sentry import init_sentry
 from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
 from common.services.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
 from common.services.queue_services.base import QueueService
@@ -36,6 +37,7 @@ class RayTranscriptionService:
     def __init__(
         self, transcription_queue_service: QueueService, llm_queue_service: QueueService, stopped: HasBeenStopped
     ) -> None:
+        init_sentry()
         self.stopped = stopped
         self.transcription_queue_service = transcription_queue_service
         self.llm_queue_service = llm_queue_service
@@ -79,6 +81,7 @@ class RayTranscriptionService:
 @ray.remote(max_restarts=-1, max_task_retries=0)
 class RayLlmService:
     def __init__(self, queue_service: QueueService, stopped: HasBeenStopped) -> None:
+        init_sentry()
         self.stopped = stopped
         self.queue_service = queue_service
         actor_id = ray.get_runtime_context().get_actor_id()

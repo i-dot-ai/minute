@@ -1,4 +1,5 @@
 import logging
+import time
 from pathlib import Path
 from typing import Any
 
@@ -10,14 +11,16 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 from common.database.postgres_models import Recording
 from common.services.exceptions import TranscriptionFailedError
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
-from common.services.transcription_services.azure_common import TOO_MANY_REQUESTS, convert_to_dialogue_entries
-from common.settings import get_settings
+from common.services.transcription_services.azure_common import convert_to_dialogue_entries
+from common.settings import get_settings, get_structured_logger
 from common.types import TranscriptionJobMessageData
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
 url = f"https://{settings.AZURE_SPEECH_REGION}.api.cognitive.microsoft.com/speechtotext/transcriptions:transcribe"
 headers = {"Ocp-Apim-Subscription-Key": settings.AZURE_SPEECH_KEY}
+
+slogger = get_structured_logger()
 
 
 class AzureSpeechAdapter(TranscriptionAdapter):
@@ -34,7 +37,7 @@ class AzureSpeechAdapter(TranscriptionAdapter):
     @classmethod
     @retry(
         retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.TimeoutException)),
-        wait=wait_exponential(multiplier=1, min=4, max=10),
+        wait=wait_exponential(multiplier=30),  # 30, 60, 120, 240 secs
         stop=stop_after_attempt(5),
     )
     async def start(cls, audio_file_path_or_recording: Path | Recording) -> TranscriptionJobMessageData:
@@ -43,6 +46,8 @@ class AzureSpeechAdapter(TranscriptionAdapter):
         """
         Async version of transcribe audio using Azure Speech-to-Text API
         """
+
+        slogger.refresh_context()
 
         with sentry_sdk.start_transaction(op="process", name="read_file_before_azure_transcribe") as transaction:
             async with aiofiles.open(audio_file_path_or_recording, "rb") as audio_file:
@@ -68,8 +73,19 @@ class AzureSpeechAdapter(TranscriptionAdapter):
         with sentry_sdk.start_transaction(op="process", name="post_file_to_azure_transcribe") as transaction:
             transaction.set_data("file_size", audio_file_path_or_recording.stat().st_size)
             async with httpx.AsyncClient(timeout=timeout_settings) as client:
+                start_time = time.monotonic()
                 response = await client.post(url, headers=headers, files=files, params=params)
-                if response.status_code == TOO_MANY_REQUESTS:
+                duration_ms = int((time.monotonic() - start_time) * 1000)
+
+                slogger.info(
+                    "[TAG]",
+                    tag="azure_stt",
+                    num_requests=1,
+                    status_code=response.status_code,
+                    duration_ms=duration_ms,
+                )
+
+                if response.status_code == httpx.codes.TOO_MANY_REQUESTS:
                     response.raise_for_status()
 
                 full_response = response.json()

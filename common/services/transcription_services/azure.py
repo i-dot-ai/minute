@@ -6,17 +6,13 @@ from typing import Any
 import aiofiles
 import httpx
 import sentry_sdk
-from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
-from i_dot_ai_utilities.logging.types.enrichment_types import ExecutionEnvironmentType
-from i_dot_ai_utilities.logging.types.log_output_format import LogOutputFormat
-from sentry_sdk.consts import SPANSTATUS
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from common.database.postgres_models import Recording
 from common.services.exceptions import TranscriptionFailedError
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.services.transcription_services.azure_common import convert_to_dialogue_entries
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 from common.types import TranscriptionJobMessageData
 
 settings = get_settings()
@@ -24,18 +20,7 @@ logger = logging.getLogger(__name__)
 url = f"https://{settings.AZURE_SPEECH_REGION}.api.cognitive.microsoft.com/speechtotext/transcriptions:transcribe"
 headers = {"Ocp-Apim-Subscription-Key": settings.AZURE_SPEECH_KEY}
 
-logger_env = ExecutionEnvironmentType.LOCAL if settings.ENVIRONMENT == "LOCAL" else ExecutionEnvironmentType.FARGATE
-logger_fmt = LogOutputFormat.TEXT if settings.ENVIRONMENT == "LOCAL" else LogOutputFormat.JSON
-
-logger = StructuredLogger(
-    level=logging.INFO,
-    options={
-        "execution_environment": logger_env,
-        "log_format": logger_fmt,
-    },
-)
-
-slogger = StructuredLogger()
+slogger = get_structured_logger()
 
 
 class AzureSpeechAdapter(TranscriptionAdapter):
@@ -77,13 +62,6 @@ class AzureSpeechAdapter(TranscriptionAdapter):
             transaction.set_data("file_size", audio_file_path_or_recording.stat().st_size)
             transaction.set_data("file_type", audio_file_path_or_recording.suffix.lower())
 
-            sentry_sdk.metrics.distribution(
-                "azure_stt.file_size",
-                audio_file_path_or_recording.stat().st_size,
-                unit="byte",
-                attributes={"adapter": cls.name},
-            )
-
             params = {"api-version": "2024-11-15"}
 
             timeout_settings = httpx.Timeout(
@@ -98,7 +76,6 @@ class AzureSpeechAdapter(TranscriptionAdapter):
                 start_time = time.monotonic()
                 response = await client.post(url, headers=headers, files=files, params=params)
                 duration_ms = int((time.monotonic() - start_time) * 1000)
-                transaction.set_tag("azure_stt.status_code", response.status_code)
 
                 slogger.info(
                     "[TAG]",
@@ -109,8 +86,6 @@ class AzureSpeechAdapter(TranscriptionAdapter):
                 )
 
                 if response.status_code == httpx.codes.TOO_MANY_REQUESTS:
-                    transaction.set_status(SPANSTATUS.RESOURCE_EXHAUSTED)
-                    transaction.set_tag("azure_stt.too_many_requests", True)
                     response.raise_for_status()
 
                 full_response = response.json()

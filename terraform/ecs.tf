@@ -11,7 +11,6 @@ locals {
     "ENVIRONMENT" : terraform.workspace,
     "PORT" : local.backend_port,
     "REPO" : "minute",
-    "SENTRY_RELEASE" : var.image_tag,
     "APP_URL" : aws_route53_record.type_a_record.fqdn,
     "AWS_ACCOUNT_ID" : data.aws_caller_identity.current.account_id,
     "DOCKER_BUILDER_CONTAINER" : "minute",

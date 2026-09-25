@@ -10,21 +10,20 @@ from typing import Any
 
 import aioboto3
 import httpx
-import sentry_sdk
 from azure.storage.blob import BlobClient, ContainerClient, ContainerSasPermissions, generate_container_sas
-from sentry_sdk.consts import SPANSTATUS
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from common.database.postgres_models import DialogueEntry, Recording
 from common.services.storage_services import get_storage_service
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 from common.types import TranscriptionJobMessageData
 
 async_session = aioboto3.Session()
 settings = get_settings()
 logger = logging.getLogger(__name__)
 storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
+slogger = get_structured_logger()
 
 
 @contextmanager
@@ -64,6 +63,9 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
         """
         Async version of transcribe audio using Azure Speech-to-Text API
         """
+
+        slogger.refresh_context()
+
         file_name = uuid.uuid4()
         job_name = f"minute-{settings.ENVIRONMENT}-transcription-job-{file_name}"
         presigned_url = await storage_service.generate_presigned_url_get_object(
@@ -94,29 +96,21 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
                 },
             }
 
-        with sentry_sdk.start_transaction(op="process", name="azure_stt_batch") as transaction:
-            async with httpx.AsyncClient(timeout=timeout_settings) as client:
-                start_time = time.monotonic()
-                response = await client.post(submit_url, headers=headers, json=data, params=params)
-                duration_ms = (time.monotonic() - start_time) * 1000
-                transaction.set_tag("azure_stt_batch.status_code", response.status_code)
+        async with httpx.AsyncClient(timeout=timeout_settings) as client:
+            start_time = time.monotonic()
+            response = await client.post(submit_url, headers=headers, json=data, params=params)
+            duration_ms = (time.monotonic() - start_time) * 1000
 
-                sentry_sdk.metrics.count(
-                    "azure_stt.requests",
-                    1,
-                    attributes={"adapter": cls.name, "status_code": response.status_code},
-                )
-                sentry_sdk.metrics.distribution(
-                    "azure_stt.duration",
-                    duration_ms,
-                    unit="millisecond",
-                    attributes={"adapter": cls.name, "status_code": response.status_code},
-                )
+            slogger.info(
+                "[TAG]",
+                tag="azure_stt",
+                num_requests=1,
+                status_code=response.status_code,
+                duration_ms=duration_ms,
+            )
 
-                if response.status_code != httpx.codes.CREATED:
-                    transaction.set_status(SPANSTATUS.UNKNOWN_ERROR)
-                    transaction.set_tag("azure_stt_batch.unknown_error", True)
-                    response.raise_for_status()
+            if response.status_code != httpx.codes.CREATED:
+                response.raise_for_status()
 
         return TranscriptionJobMessageData(transcription_service=cls.name, job_name=response.json()["self"])
 

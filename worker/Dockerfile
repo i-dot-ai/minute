@@ -4,6 +4,9 @@ FROM python:3.12-slim
 ENV RAY_ROTATION_MAX_BYTES=10485760
 ENV RAY_ROTATION_BACKUP_COUNT=1
 ENV PYTHONUNBUFFERED=1
+# Stop Ray collapsing repeated lines across actors and appending "[repeated Nx across cluster]",
+# which breaks structured JSON logs
+ENV RAY_DEDUP_LOGS=0
 
 # uv configuration: install into a project virtualenv at a known path and put it on PATH
 ENV UV_PROJECT_ENVIRONMENT=/app/.venv

@@ -103,7 +103,7 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
 
             slogger.info(
                 "[TAG]",
-                tag="azure_stt",
+                tag=cls.name,
                 num_requests=1,
                 status_code=response.status_code,
                 duration_ms=duration_ms,

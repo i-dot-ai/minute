@@ -3,7 +3,6 @@ import logging
 
 import ray
 
-from common.logger import setup_logger
 from common.services.queue_services import get_queue_service
 from common.services.queue_services.base import QueueService
 from common.settings import get_settings
@@ -93,6 +92,8 @@ def create_worker_service() -> WorkerService:
         configure_logging=True,
         dashboard_host=settings.RAY_DASHBOARD_HOST,
         dashboard_port=8265,
-        runtime_env={"worker_process_setup_hook": setup_logger},
+        # Setting a logging config stops Ray prefixing forwarded actor logs with "(Actor pid=...)",
+        # so structured JSON logs stay valid for CloudWatch.
+        logging_config=ray.LoggingConfig(encoding="JSON", log_level="INFO"),
     )
     return WorkerService(transcription_queue_service=transcription_sqs_service, llm_queue_service=llm_sqs_service)

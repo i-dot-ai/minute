@@ -27,6 +27,22 @@ locals {
       value = "placeholder" # Update value in SSM - Do not hardcode
     },
     {
+      name  = "AZURE_SPEECH_FALLBACK_1_KEY"
+      value = "placeholder" # Update value in SSM - Do not hardcode
+    },
+    {
+      name  = "AZURE_SPEECH_FALLBACK_1_REGION"
+      value = "placeholder" # Update value in SSM - Do not hardcode
+    },
+    {
+      name  = "AZURE_SPEECH_FALLBACK_2_KEY"
+      value = "placeholder" # Update value in SSM - Do not hardcode
+    },
+    {
+      name  = "AZURE_SPEECH_FALLBACK_2_REGION"
+      value = "placeholder" # Update value in SSM - Do not hardcode
+    },
+    {
       name  = "POSTGRES_PORT"
       value = 5432
     },

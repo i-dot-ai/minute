@@ -305,9 +305,7 @@ def test_migration_is_a_noop_when_there_are_no_duplicates(migration_db):
 
     with engine.begin() as conn:
         conn.execute(
-            sa.text(
-                'INSERT INTO "user" (id, email, created_datetime, updated_datetime) ' "VALUES (:i, :e, NOW(), NOW())"
-            ),
+            sa.text('INSERT INTO "user" (id, email, created_datetime, updated_datetime) VALUES (:i, :e, NOW(), NOW())'),
             {"i": BOB, "e": "bob@example.com"},
         )
 
@@ -327,9 +325,7 @@ def test_downgrade_drops_only_the_unique_index(migration_db):
     # Seed a single user so we can verify rows survive the downgrade.
     with engine.begin() as conn:
         conn.execute(
-            sa.text(
-                'INSERT INTO "user" (id, email, created_datetime, updated_datetime) ' "VALUES (:i, :e, NOW(), NOW())"
-            ),
+            sa.text('INSERT INTO "user" (id, email, created_datetime, updated_datetime) VALUES (:i, :e, NOW(), NOW())'),
             {"i": BOB, "e": "bob@example.com"},
         )
 
@@ -338,7 +334,7 @@ def test_downgrade_drops_only_the_unique_index(migration_db):
     with engine.connect() as conn:
         # The unique index is gone.
         present = conn.execute(
-            sa.text("SELECT 1 FROM pg_indexes WHERE schemaname = 'public' " "AND indexname = 'ix_user_email_lower'")
+            sa.text("SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = 'ix_user_email_lower'")
         ).first()
         assert present is None
 

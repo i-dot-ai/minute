@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import json
 import logging
+import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
@@ -15,13 +16,14 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 from common.database.postgres_models import DialogueEntry, Recording
 from common.services.storage_services import get_storage_service
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 from common.types import TranscriptionJobMessageData
 
 async_session = aioboto3.Session()
 settings = get_settings()
 logger = logging.getLogger(__name__)
 storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
+slogger = get_structured_logger()
 
 
 @contextmanager
@@ -61,6 +63,9 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
         """
         Async version of transcribe audio using Azure Speech-to-Text API
         """
+
+        slogger.refresh_context()
+
         file_name = uuid.uuid4()
         job_name = f"minute-{settings.ENVIRONMENT}-transcription-job-{file_name}"
         presigned_url = await storage_service.generate_presigned_url_get_object(
@@ -92,8 +97,19 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
             }
 
         async with httpx.AsyncClient(timeout=timeout_settings) as client:
+            start_time = time.monotonic()
             response = await client.post(submit_url, headers=headers, json=data, params=params)
-            if response.status_code != 201:  # noqa: PLR2004
+            duration_ms = (time.monotonic() - start_time) * 1000
+
+            slogger.info(
+                "[TAG]",
+                tag="azure_stt",
+                num_requests=1,
+                status_code=response.status_code,
+                duration_ms=duration_ms,
+            )
+
+            if response.status_code != httpx.codes.CREATED:
                 response.raise_for_status()
 
         return TranscriptionJobMessageData(transcription_service=cls.name, job_name=response.json()["self"])

@@ -5,7 +5,7 @@ import dotenv
 from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
 from i_dot_ai_utilities.logging.types.enrichment_types import ExecutionEnvironmentType
 from i_dot_ai_utilities.logging.types.log_output_format import LogOutputFormat
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from common.logger import setup_logger, setup_structured_logger
@@ -45,12 +45,19 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "local"
     SENTRY_DSN: str | None = Field(description="Sentry DSN if using Sentry for telemetry", default=None)
 
-    # Structured logger setup
-    EXECUTION_ENVIRONMENT: ExecutionEnvironmentType = (
-        ExecutionEnvironmentType.LOCAL if ENVIRONMENT.lower() == "local" else ExecutionEnvironmentType.FARGATE
-    )
-    LOGGING_FORMAT: LogOutputFormat = LogOutputFormat.TEXT if ENVIRONMENT.lower() == "local" else LogOutputFormat.JSON
+    # Structured logger setup. These are derived from ENVIRONMENT at runtime (see the
+    # validator below) rather than as class-level expressions, which would only ever see
+    # the "local" default and force TEXT/LOCAL regardless of the actual environment.
+    EXECUTION_ENVIRONMENT: ExecutionEnvironmentType = ExecutionEnvironmentType.LOCAL
+    LOGGING_FORMAT: LogOutputFormat = LogOutputFormat.TEXT
     LOG_LEVEL: str = Field(description="The level at which to emit structured logs", default="info")
+
+    @model_validator(mode="after")
+    def _derive_logging_from_environment(self) -> "Settings":
+        is_local = self.ENVIRONMENT.lower() == "local"
+        self.EXECUTION_ENVIRONMENT = ExecutionEnvironmentType.LOCAL if is_local else ExecutionEnvironmentType.FARGATE
+        self.LOGGING_FORMAT = LogOutputFormat.TEXT if is_local else LogOutputFormat.JSON
+        return self
 
     TRANSCRIPTION_QUEUE_NAME: str = Field(description="queue name to use for SQS/Azure Service Bus queues")
     TRANSCRIPTION_DEADLETTER_QUEUE_NAME: str = Field(

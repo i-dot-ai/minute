@@ -9,6 +9,8 @@
     "build:css": "sass --load-path=node_modules --style=compressed --no-source-map styles/govuk.scss styles/govuk.css",
     "start": "next start",
     "lint": "next lint",
+    "test:e2e:mocked": "playwright test --project=e2e-mocked-chromium --project=e2e-mocked-firefox --project=e2e-mocked-webkit",
+    "test:e2e:integrated": "playwright test --project=e2e-integrated",
     "openapi-ts": "openapi-ts",
     "prettier:fix": "prettier --write .",
     "public-site": "npm run public-site:build && npx --yes serve dist -p 5000",
@@ -51,6 +53,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@hey-api/openapi-ts": "^0.97.3",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.16",
     "@types/file-saver": "^2.0.7",

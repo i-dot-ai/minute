@@ -48,6 +48,9 @@ test:
 test_e2e:
 	$(ENV_SH) uv run pytest tests/
 
+test_e2e_integrated
+	cd frontend && npm run test:e2e:integrated
+
 run_frontend:
 	cd frontend && npm run dev
 

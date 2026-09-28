@@ -27,7 +27,7 @@ RETRYABLE_STATUS_CODES = {
     httpx.codes.SERVICE_UNAVAILABLE,
     httpx.codes.GATEWAY_TIMEOUT,
 }
-API_PARAMS = {"api-version": "2024-11-15"}
+API_PARAMS = {"api-version": "2025-10-15"}
 TIMEOUT = httpx.Timeout(
     timeout=900.0,
     connect=900.0,
@@ -79,7 +79,7 @@ def _is_retryable(exception: BaseException) -> bool:
 class AzureSpeechAdapter(TranscriptionAdapter):
     """Adapter for Azure Speech-to-Text service."""
 
-    max_audio_length = 7200
+    max_audio_length = 17999  # Fast transcription requires audio shorter than 5 hours
     name = "azure_stt_synchronous"
     adapter_type = AdapterType.SYNCHRONOUS
 
@@ -165,8 +165,8 @@ class AzureSpeechAdapter(TranscriptionAdapter):
                 transaction.set_data("response", response.status_code)
 
                 # Check for error response first
-                if "code" in full_response:
-                    error_message = full_response.get("message", "Unknown error occurred")
+                if "error" in full_response:
+                    error_message = full_response["error"].get("message", "Unknown error occurred")
                     raise TranscriptionFailedError(error_message)
                 # If no error, proceed with phrases extraction
                 phrases = full_response.get("phrases")

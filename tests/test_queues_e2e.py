@@ -12,9 +12,9 @@ the synchronous Azure speech-to-text path only, and it is worth knowing why:
     work locally without exposing MiniStack publicly.
 
 `TranscriptionServiceManager.select_adaptor` picks the first service whose
-`max_audio_length` covers the recording, and `azure_stt_synchronous` caps at 7200s. The
+`max_audio_length` covers the recording, and `azure_stt_synchronous` caps at 17999s. The
 fixture in .data/test_audio/normal is ~1950s, so these tests stay on the synchronous
-side of that threshold. Swapping in a fixture longer than two hours would select the
+side of that threshold. Swapping in a fixture of five hours or more would select the
 batch adapter and fail for reasons unrelated to the code under test.
 """
 

@@ -35,7 +35,7 @@ def ok() -> httpx.Response:
 
 
 def error(status_code: int) -> httpx.Response:
-    return httpx.Response(status_code, json={"code": "Error", "message": f"HTTP {status_code}"})
+    return httpx.Response(status_code, json={"error": {"code": "Error", "message": f"HTTP {status_code}"}})
 
 
 def timeout() -> httpx.TimeoutException:

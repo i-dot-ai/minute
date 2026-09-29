@@ -41,6 +41,12 @@ class TranscriptionCreateRequest(BaseModel):
     title: str | None = None
 
 
+class TranscriptionRetryRequest(BaseModel):
+    template_name: str
+    template_id: uuid.UUID | None = None
+    agenda: str | None = None
+
+
 class RecordingCreateRequest(BaseModel):
     file_extension: str
 

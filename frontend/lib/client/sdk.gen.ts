@@ -86,6 +86,9 @@ import type {
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetErrors,
   ListTranscriptionsTranscriptionsGetResponses,
+  RetryTranscriptionTranscriptionsTranscriptionIdRetryPostData,
+  RetryTranscriptionTranscriptionsTranscriptionIdRetryPostErrors,
+  RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponses,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchData,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchErrors,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchResponses,
@@ -180,6 +183,32 @@ export const createRecordingRecordingsPost = <
     ThrowOnError
   >({
     url: '/recordings',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+
+/**
+ * Retry Transcription
+ *
+ * Re-run a failed transcription in place, reusing the existing recording and id.
+ */
+export const retryTranscriptionTranscriptionsTranscriptionIdRetryPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    RetryTranscriptionTranscriptionsTranscriptionIdRetryPostData,
+    ThrowOnError
+  >
+) =>
+  (options.client ?? client).post<
+    RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponses,
+    RetryTranscriptionTranscriptionsTranscriptionIdRetryPostErrors,
+    ThrowOnError
+  >({
+    url: '/transcriptions/{transcription_id}/retry',
     ...options,
     headers: {
       'Content-Type': 'application/json',

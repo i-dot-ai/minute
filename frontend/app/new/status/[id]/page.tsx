@@ -279,9 +279,8 @@ export default function RecordStatusPage({
                     ) : (
                       recordings[0] && (
                         <RetryTranscriptionDialog
-                          recordingId={recordings[0].id}
+                          transcriptionId={id}
                           agenda={minutes[0]?.agenda ?? undefined}
-                          title={transcription.title ?? undefined}
                         />
                       )
                     )}

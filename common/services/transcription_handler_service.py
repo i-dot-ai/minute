@@ -1,4 +1,3 @@
-import logging
 from uuid import UUID
 
 from sqlalchemy.orm import selectinload
@@ -13,13 +12,13 @@ from common.prompts import get_chat_with_transcript_system_message
 from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
 from common.services.posthog_client import capture_event
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 from common.templates.citations import combine_consecutive_citations
 from common.types import DialogueEntry, TranscriptionJobMessageData
 
 settings = get_settings()
 transcription_manager = TranscriptionServiceManager()
-logger = logging.getLogger(__name__)
+slogger = get_structured_logger()
 
 
 class TranscriptionHandlerService:
@@ -44,6 +43,7 @@ class TranscriptionHandlerService:
     @staticmethod
     async def process_interactive_message(chat_id: UUID) -> None:
         """Process an interactive message from the LLM and return the result."""
+        slogger.set_context_field("chat_id", str(chat_id))
         try:
             chatbot = create_default_chatbot(FastOrBestLLM.FAST)
             with SessionLocal() as session:
@@ -61,6 +61,8 @@ class TranscriptionHandlerService:
                 )
                 result = session.exec(query)
                 chats = result.all()
+
+                slogger.set_context_field("user_id", str(chat.transcription.user_id))
 
                 chat_history = [get_chat_with_transcript_system_message(chat.transcription.dialogue_entries)]
                 for entry in chats:
@@ -87,14 +89,14 @@ class TranscriptionHandlerService:
                 session.commit()
         except Exception as e:
             msg = f"Chat interaction failed: {e!s}"
-            logger.exception(msg)
+            slogger.exception(msg)
             try:
                 chat.status = JobStatus.FAILED
                 chat.error = msg
                 session.add(chat)
                 session.commit()
             except Exception:
-                logger.exception("Error updating chat status. Maybe it doesn't exist?")
+                slogger.exception("Error updating chat status. Maybe it doesn't exist?")
 
             raise InteractionFailedError from e
 
@@ -147,8 +149,10 @@ class TranscriptionHandlerService:
         cls, minute_id: UUID, async_transcription_message_data: TranscriptionJobMessageData | None = None
     ) -> TranscriptionJobMessageData:
         """Process a transcription job and save results. Returns True if job is complete, False otherwise."""
+        slogger.set_context_field("transcription_id", str(minute_id))
         try:
             transcription = cls.get_transcription_from_minute_id(minute_id)
+            slogger.set_context_field("user_id", str(transcription.user_id))
         except Exception as e:
             raise TranscriptionFailedError from e
 
@@ -177,11 +181,11 @@ class TranscriptionHandlerService:
 
         except Exception as e:
             msg = f"Transcription failed: {e!s}"
-            logger.exception(msg)
+            slogger.exception(msg)
             try:
                 cls.update_transcription(transcription.id, status=JobStatus.FAILED, error=msg)
             except Exception:
-                logger.exception("Error updating transcription status. Maybe it doesn't exist?")
+                slogger.exception("Error updating transcription status. Maybe it doesn't exist?")
 
             capture_event(
                 transcription.user_id,
@@ -199,5 +203,5 @@ class TranscriptionHandlerService:
 
         except Exception:
             # Do not break flow if this step fails
-            logger.exception("Error processing dialogue entries")
+            slogger.exception("Error processing dialogue entries")
         return dialogue_entries

@@ -9,14 +9,15 @@ from common.services.exceptions import InteractionFailedError, TranscriptionFail
 from common.services.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
 from common.services.queue_services.base import QueueService
 from common.services.transcription_handler_service import TranscriptionHandlerService
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 from common.types import TaskType, WorkerMessage
 from worker.healthcheck import HEARTBEAT_DIR, ensure_heartbeat_dir
 
-logger = logging.getLogger(__name__)
 ray_logger = logging.getLogger("ray")
 ray_logger.setLevel(logging.WARNING)
 settings = get_settings()
+
+slogger = get_structured_logger()
 
 
 @ray.remote
@@ -45,31 +46,33 @@ class RayTranscriptionService:
         ensure_heartbeat_dir()
         self.heartbeat_path = HEARTBEAT_DIR / f"worker_{actor_id}.heartbeat"
         self.heartbeat_path.touch()
-        logger.info("Ray Transcription receive service initialised")
+        slogger.info("Ray Transcription receive service initialised")
 
     async def process(self) -> None:
         while not await self.stopped.get.remote():
-            logger.debug("Receiving transcription messages")
+            slogger.debug("Receiving transcription messages")
             messages = self.transcription_queue_service.receive_message(max_messages=1)
             for message, receipt_handle in messages:
+                slogger.refresh_context()
+                slogger.set_context_field("transcription_id", str(message.id))
                 try:
-                    logger.info("Received minute id for transcription: %s", message.id)
+                    slogger.info("Received minute id for transcription")
                     transcription_job = await TranscriptionHandlerService.process_transcription(
                         message.id, message.data
                     )
                 except TranscriptionFailedError:
-                    logger.exception("Transcription failed for minute id: %s", message.id)
+                    slogger.exception("Transcription failed for minute id")
                 else:
                     # sync jobs should have the transcript available immediately, async jobs may need to go on the queue
                     if transcription_job.transcript:
-                        logger.info("Transcription complete for minute id %s complete", message.id)
+                        slogger.info("Transcription complete for minute id")
                         # create a default minute with the general template after every transcription
                         minute_version = await MinuteHandlerService.get_only_minute_version_for_minute_id(message.id)
                         self.llm_queue_service.publish_message(
                             WorkerMessage(id=minute_version.id, type=TaskType.MINUTE)
                         )
                     else:
-                        logger.info("Async transcription job not ready yet. Re-queueing minute id: %s", message.id)
+                        slogger.info("Async transcription job not ready yet. Re-queueing minute id")
                         self.transcription_queue_service.publish_message(
                             WorkerMessage(id=message.id, type=TaskType.TRANSCRIPTION, data=transcription_job)
                         )
@@ -88,12 +91,12 @@ class RayLlmService:
         ensure_heartbeat_dir()
         self.heartbeat_path = HEARTBEAT_DIR / f"worker_{actor_id}.heartbeat"
         self.heartbeat_path.touch()
-        logger.info("Ray LLM receive service initialised")
+        slogger.info("Ray LLM receive service initialised")
 
     async def process(self) -> None:
-        logger.info("receiving LLM messages from Ray queue")
+        slogger.info("receiving LLM messages from Ray queue")
         while not await self.stopped.get.remote():
-            logger.debug("Receiving LLM messages")
+            slogger.debug("Receiving LLM messages")
             messages = self.queue_service.receive_message(max_messages=10)
             tasks: list[asyncio.Task] = []
             for message, receipt_handle in messages:
@@ -105,7 +108,7 @@ class RayLlmService:
                     case TaskType.INTERACTIVE:
                         tasks.append(asyncio.create_task(self.process_interactive_task(message, receipt_handle)))
                     case _:
-                        logger.warning("Unknown task type: %s", message.type)
+                        slogger.warning("Unknown task type: {task_type}", task_type=str(message.type))
                         self.queue_service.deadletter_message(message, receipt_handle)
             if len(tasks) > 0:
                 done, pending = await asyncio.wait(tasks)
@@ -113,19 +116,21 @@ class RayLlmService:
                     try:
                         task.result()
                     except Exception:
-                        logger.exception("Unhandled error in LLM actor")
+                        slogger.exception("Unhandled error in LLM actor")
 
             self.heartbeat_path.touch()
 
     async def process_minute_task(self, message: WorkerMessage, receipt_handle: Any) -> None:
+        slogger.refresh_context()
+        slogger.set_context_field("minute_version_id", str(message.id))
         try:
-            logger.info("Received minute generation message for MinuteVersion id %s", message.id)
+            slogger.info("Received minute generation message for MinuteVersion")
 
             await MinuteHandlerService.process_minute_generation_message(message.id)
             # Delete the message to prevent repeated processing
-            logger.info("Minute generation complete for MinuteVersion id %s", message.id)
+            slogger.info("Minute generation complete for MinuteVersion")
         except MinuteGenerationFailedError:
-            logger.exception("Minute generation for MinuteVersion id %s failed", message.id)
+            slogger.exception("Minute generation for MinuteVersion failed")
             # For handled errors we complete the message, unhandled errors are not caught
             self.queue_service.complete_message(receipt_handle)
         else:
@@ -133,26 +138,30 @@ class RayLlmService:
             self.queue_service.complete_message(receipt_handle)
 
     async def process_edit_task(self, message: WorkerMessage, receipt_handle: Any) -> None:
+        slogger.refresh_context()
+        slogger.set_context_field("minute_version_id", str(message.id))
         try:
-            logger.info("Received minute edit message for minute id %s", message.id)
+            slogger.info("Received minute edit message")
             await MinuteHandlerService.process_minute_edit_message(
                 target_minute_version_id=message.id, source_minute_version_id=message.data.source_id
             )
 
-            logger.info("Minute edit complete for MinuteVersion id %s", message.id)
+            slogger.info("Minute edit complete for MinuteVersion")
         except MinuteGenerationFailedError:
-            logger.exception("Minute edit for MinuteVersion id %s failed", message.id)
+            slogger.exception("Minute edit for MinuteVersion failed")
             self.queue_service.complete_message(receipt_handle=receipt_handle)
         else:
             self.queue_service.complete_message(receipt_handle=receipt_handle)
 
     async def process_interactive_task(self, message: WorkerMessage, receipt_handle: Any) -> None:
+        slogger.refresh_context()
+        slogger.set_context_field("chat_id", str(message.id))
         try:
-            logger.info("Received interactive mode message for chat id %s", message.id)
+            slogger.info("Received interactive mode message")
             await TranscriptionHandlerService.process_interactive_message(message.id)
-            logger.info("Interaction complete for chat id %s", message.id)
+            slogger.info("Interaction complete")
         except InteractionFailedError:
-            logger.exception("Interaction for chat id %s failed", message.id)
+            slogger.exception("Interaction failed")
             self.queue_service.complete_message(receipt_handle=receipt_handle)
         else:
             self.queue_service.complete_message(receipt_handle=receipt_handle)

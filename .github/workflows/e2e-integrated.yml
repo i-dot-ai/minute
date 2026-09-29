@@ -2,9 +2,6 @@ name: E2E Integrated
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - main
 
 # Real transcription is slow and non-deterministic; only one run at a time and
 # cancel superseded ones to avoid stacking paid runs.

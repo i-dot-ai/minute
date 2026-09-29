@@ -7,6 +7,7 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { RetryTranscriptionDialog } from '@/components/audio/retry-transcription-dialog'
+import { getTranscriptionErrorMessage } from '@/lib/transcription-error'
 import { ProcessingCard } from '@/components/processing-card'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, Pencil, Save } from 'lucide-react'
@@ -248,11 +249,11 @@ export default function TranscriptionPage() {
                 </span>
                 <strong className="govuk-warning-text__text">
                   <span className="govuk-visually-hidden">Warning</span>
-                  The transcription failed to process. Try again.{' '}
-                  <Link href="/contact" className="govuk-link">
-                    Contact support
-                  </Link>{' '}
-                  if the issue persists.
+                  {getTranscriptionErrorMessage(transcription.error)}
+                  <Link href="/support" className="govuk-link">
+                    contact support
+                  </Link>
+                  .
                 </strong>
               </div>
               <h2 className="govuk-heading-m">Audio:</h2>

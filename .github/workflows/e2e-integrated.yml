@@ -37,13 +37,6 @@ jobs:
 
           DISABLE_AUTH_SIGNATURE_VERIFICATION=true
           TRANSCRIPTION_SERVICES=["azure_stt_synchronous"]
-          # Pin the Gemini 2.5 models verified to work with the CI Google
-          # project. The settings.py default (gemini-3.5-flash) is not available
-          # to this service account, so we override it here.
-          FAST_LLM_PROVIDER=gemini
-          FAST_LLM_MODEL_NAME=gemini-2.5-flash-lite
-          BEST_LLM_PROVIDER=gemini
-          BEST_LLM_MODEL_NAME=gemini-2.5-flash
           AZURE_SPEECH_KEY=${{ secrets.AZURE_SPEECH_KEY }}
           AZURE_SPEECH_REGION=${{ secrets.AZURE_SPEECH_REGION }}
           GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT }}

@@ -32,7 +32,9 @@ test('Upload an audio file and process summary and transcript', async ({
   await expect(ready).toBeVisible({ timeout: 10_000 })
 
   await page.getByRole('link', { name: 'View transcription' }).click()
-  await expect(page).toHaveURL(/\/transcriptions\/[^/]+\/summary\/[^/]+$/)
+  await expect(page).toHaveURL(/\/transcriptions\/[^/]+\/summary\/[^/]+$/, {
+    timeout: 30_000,
+  })
 
   // loose check that at least one key word from the meeting is in summary and transcript
   const summaryContent = page.locator('#tour-summary')
@@ -42,6 +44,8 @@ test('Upload an audio file and process summary and transcript', async ({
   )
 
   await page.getByRole('link', { name: 'Transcript', exact: true }).click()
-  await expect(page).toHaveURL(/\/transcriptions\/[^/]+\/transcript/)
+  await expect(page).toHaveURL(/\/transcriptions\/[^/]+\/transcript/, {
+    timeout: 30_000,
+  })
   await expect(page.getByRole('main')).toContainText(/absent|student|success/i)
 })

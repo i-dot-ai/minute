@@ -39,6 +39,7 @@ import {
   listMinuteVersionsMinutesMinuteIdVersionsGet,
   listTranscriptionsTranscriptionsGet,
   type Options,
+  retryTranscriptionTranscriptionsTranscriptionIdRetryPost,
   saveTranscriptionTranscriptionsTranscriptionIdPatch,
   updateDataRetentionUsersDataRetentionPatch,
   updateDefaultTemplateUsersDefaultTemplatePatch,
@@ -122,6 +123,9 @@ import type {
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetError,
   ListTranscriptionsTranscriptionsGetResponse,
+  RetryTranscriptionTranscriptionsTranscriptionIdRetryPostData,
+  RetryTranscriptionTranscriptionsTranscriptionIdRetryPostError,
+  RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponse,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchData,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchError,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchResponse,
@@ -372,6 +376,39 @@ export const createRecordingRecordingsPostMutation = (
   }
   return mutationOptions
 }
+
+/**
+ * Retry Transcription
+ *
+ * Re-run a failed transcription in place, reusing the existing recording and id.
+ */
+export const retryTranscriptionTranscriptionsTranscriptionIdRetryPostMutation =
+  (
+    options?: Partial<
+      Options<RetryTranscriptionTranscriptionsTranscriptionIdRetryPostData>
+    >
+  ): UseMutationOptions<
+    RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponse,
+    RetryTranscriptionTranscriptionsTranscriptionIdRetryPostError,
+    Options<RetryTranscriptionTranscriptionsTranscriptionIdRetryPostData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponse,
+      RetryTranscriptionTranscriptionsTranscriptionIdRetryPostError,
+      Options<RetryTranscriptionTranscriptionsTranscriptionIdRetryPostData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await retryTranscriptionTranscriptionsTranscriptionIdRetryPost({
+            ...options,
+            ...fnOptions,
+            throwOnError: true,
+          })
+        return data
+      },
+    }
+    return mutationOptions
+  }
 
 /**
  * Delete Transcription

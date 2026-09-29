@@ -734,6 +734,24 @@ export type TranscriptionPatchRequest = {
 }
 
 /**
+ * TranscriptionRetryRequest
+ */
+export type TranscriptionRetryRequest = {
+  /**
+   * Template Name
+   */
+  template_name: string
+  /**
+   * Template Id
+   */
+  template_id?: string | null
+  /**
+   * Agenda
+   */
+  agenda?: string | null
+}
+
+/**
  * ValidationError
  */
 export type ValidationError = {
@@ -886,6 +904,45 @@ export type CreateRecordingRecordingsPostResponses = {
 
 export type CreateRecordingRecordingsPostResponse =
   CreateRecordingRecordingsPostResponses[keyof CreateRecordingRecordingsPostResponses]
+
+export type RetryTranscriptionTranscriptionsTranscriptionIdRetryPostData = {
+  body: TranscriptionRetryRequest
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path: {
+    /**
+     * Transcription Id
+     */
+    transcription_id: string
+  }
+  query?: never
+  url: '/transcriptions/{transcription_id}/retry'
+}
+
+export type RetryTranscriptionTranscriptionsTranscriptionIdRetryPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type RetryTranscriptionTranscriptionsTranscriptionIdRetryPostError =
+  RetryTranscriptionTranscriptionsTranscriptionIdRetryPostErrors[keyof RetryTranscriptionTranscriptionsTranscriptionIdRetryPostErrors]
+
+export type RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponses =
+  {
+    /**
+     * Successful Response
+     */
+    201: TranscriptionCreateResponse
+  }
+
+export type RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponse =
+  RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponses[keyof RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponses]
 
 export type DeleteTranscriptionTranscriptionsTranscriptionIdDeleteData = {
   body?: never

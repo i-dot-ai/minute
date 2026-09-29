@@ -2,10 +2,13 @@
 
 import { GenerateSummaryDialog } from '@/components/audio/generate-summary-dialog'
 import { TranscriptionForm } from '@/components/audio/types'
-import { createTranscriptionTranscriptionsPostMutation } from '@/lib/client/@tanstack/react-query.gen'
+import {
+  listTranscriptionsTranscriptionsGetQueryKey,
+  retryTranscriptionTranscriptionsTranscriptionIdRetryPostMutation,
+} from '@/lib/client/@tanstack/react-query.gen'
 import { useDefaultTemplate } from '@/hooks/useDefaultTemplate'
 import { Template } from '@/types/templates'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useEffect, useState } from 'react'
@@ -20,16 +23,15 @@ const GENERAL_TEMPLATE: Template = {
 }
 
 export function RetryTranscriptionDialog({
-  recordingId,
+  transcriptionId,
   agenda,
-  title,
 }: {
-  recordingId: string
+  transcriptionId: string
   agenda?: string
-  title?: string
 }) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
+  const queryClient = useQueryClient()
   const defaultTemplate = useDefaultTemplate()
   const form = useForm<TranscriptionForm>({
     defaultValues: {
@@ -54,19 +56,18 @@ export function RetryTranscriptionDialog({
     typeof selectedTemplate !== 'string' &&
     selectedTemplate?.agenda_usage === 'required'
 
-  const { mutate: createTranscription, isPending } = useMutation({
-    ...createTranscriptionTranscriptionsPostMutation(),
+  const { mutate: retryTranscription, isPending } = useMutation({
+    ...retryTranscriptionTranscriptionsTranscriptionIdRetryPostMutation(),
   })
 
   const onSubmit = ({ template, agenda }: TranscriptionForm) => {
-    createTranscription(
+    retryTranscription(
       {
+        path: { transcription_id: transcriptionId },
         body: {
-          recording_id: recordingId,
           template_name: template.name,
           template_id: template.id,
           agenda: template.agenda_usage != 'not_used' ? agenda : undefined,
-          title,
         },
       },
       {
@@ -74,6 +75,9 @@ export function RetryTranscriptionDialog({
           posthog.capture('transcription_started', {
             file_type: '',
             source: 'retry',
+          })
+          queryClient.invalidateQueries({
+            queryKey: listTranscriptionsTranscriptionsGetQueryKey(),
           })
           setOpen(false)
           router.push(`/new/status/${transcription.id}`)

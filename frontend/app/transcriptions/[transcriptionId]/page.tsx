@@ -260,8 +260,7 @@ export default function TranscriptionPage() {
               <div className="govuk-button-group govuk-!-margin-top-4">
                 {recordings[0] && (
                   <RetryTranscriptionDialog
-                    recordingId={recordings[0].id}
-                    title={transcription.title ?? undefined}
+                    transcriptionId={transcription.id}
                   />
                 )}
                 <DownloadButton recordings={recordings} />

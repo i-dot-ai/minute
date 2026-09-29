@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
+from sqlalchemy.orm import selectinload
 from sqlmodel import col, func, or_, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
@@ -32,6 +33,7 @@ from common.types import (
     TranscriptionListFilter,
     TranscriptionMetadata,
     TranscriptionPatchRequest,
+    TranscriptionRetryRequest,
     WorkerMessage,
 )
 
@@ -179,6 +181,69 @@ async def create_transcription(
     session.add(minute)
     session.add(minute_version)
     recording.transcription_id = transcription.id
+    await session.commit()
+    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
+
+    return TranscriptionCreateResponse(id=transcription.id)
+
+
+@transcriptions_router.post(
+    "/transcriptions/{transcription_id}/retry",
+    response_model=TranscriptionCreateResponse,
+    status_code=201,
+)
+async def retry_transcription(
+    transcription_id: uuid.UUID,
+    request: TranscriptionRetryRequest,
+    session: SQLSessionDep,
+    current_user: UserDep,
+) -> TranscriptionCreateResponse:
+    """Re-run a failed transcription in place, reusing the existing recording and id."""
+    transcription = (
+        await session.exec(
+            select(Transcription)
+            .where(Transcription.id == transcription_id)
+            .options(
+                selectinload(Transcription.recordings),
+                selectinload(Transcription.minutes).selectinload(Minute.minute_versions),
+            )
+        )
+    ).first()
+    if not transcription or transcription.user_id != current_user.id:
+        raise HTTPException(404, detail="Transcription not found")
+    if transcription.status != JobStatus.FAILED:
+        raise HTTPException(400, detail="Only failed transcriptions can be retried")
+
+    recording = transcription.recordings[0] if transcription.recordings else None
+    if not recording:
+        raise HTTPException(400, detail="Transcription has no recording to retry")
+    if not await storage_service.check_object_exists(recording.s3_file_key):
+        raise HTTPException(404, detail=f"Recording file not found in S3: {recording.s3_file_key}")
+
+    minute = transcription.minutes[0] if transcription.minutes else None
+    if not minute:
+        raise HTTPException(400, detail="Transcription has no minute to retry")
+    # The worker's transcription path expects the queued minute to hold exactly
+    # one version (its initial generation). A failed transcription always meets
+    # this, but guard explicitly so a multi-version minute is never re-queued
+    # into a state the worker cannot process.
+    if len(minute.minute_versions) != 1:
+        raise HTTPException(400, detail="Transcription cannot be retried in its current state")
+
+    transcription.status = JobStatus.AWAITING_START
+    transcription.error = None
+    transcription.dialogue_entries = None
+    transcription.created_datetime = datetime.now(UTC)
+
+    minute.template_name = request.template_name
+    minute.user_template_id = request.template_id
+    minute.agenda = request.agenda
+
+    minute_version = minute.minute_versions[0]
+    minute_version.status = JobStatus.AWAITING_START
+    minute_version.error = None
+    minute_version.html_content = ""
+
     await session.commit()
     transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
 

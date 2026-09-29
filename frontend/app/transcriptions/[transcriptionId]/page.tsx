@@ -249,8 +249,7 @@ export default function TranscriptionPage() {
                 </span>
                 <strong className="govuk-warning-text__text">
                   <span className="govuk-visually-hidden">Warning</span>
-                  {getTranscriptionErrorMessage(transcription.error)} If the
-                  issue persists,{' '}
+                  {getTranscriptionErrorMessage(transcription.error)}
                   <Link href="/support" className="govuk-link">
                     contact support
                   </Link>

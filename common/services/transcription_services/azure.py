@@ -139,8 +139,6 @@ class AzureSpeechAdapter(TranscriptionAdapter):
         Async version of transcribe audio using Azure Speech-to-Text API
         """
 
-        slogger.refresh_context()
-
         with sentry_sdk.start_transaction(op="process", name="read_file_before_azure_transcribe") as transaction:
             async with aiofiles.open(audio_file_path_or_recording, "rb") as audio_file:
                 audio_content = await audio_file.read()

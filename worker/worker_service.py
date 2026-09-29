@@ -6,7 +6,7 @@ import ray
 from common.services.queue_services import get_queue_service
 from common.services.queue_services.base import QueueService
 from common.settings import get_settings
-from worker.ray_recieve_service import HasBeenStopped, RayLlmService, RayTranscriptionService
+from worker.ray_receive_service import HasBeenStopped, RayLlmService, RayTranscriptionService
 from worker.signal_handler import SignalHandler
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ class WorkerService:
         while not self.signal_handler.signal_received:
             await self._check_and_restart_tasks(futures)
 
-        logger.info("Signal recieved. Setting stopped to True")
+        logger.info("Signal received. Setting stopped to True")
         await self.stopped.set.remote()
 
         while True:

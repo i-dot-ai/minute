@@ -18,7 +18,7 @@ from common.prompts import (
 )
 from common.services.posthog_client import capture_event
 from common.services.template_manager import TemplateManager
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 from common.templates.user_template import generate_user_template
 from common.types import (
     LLMHallucination,
@@ -29,6 +29,7 @@ from common.types import (
 settings = get_settings()
 
 logger = logging.getLogger(__name__)
+slogger = get_structured_logger()
 
 
 class MinuteGenerationFailedError(Exception):
@@ -141,13 +142,15 @@ class MinuteHandlerService:
     async def process_minute_generation_message(cls, minute_version_id: UUID) -> None:
         try:
             minute_version = await cls.get_minute_version(minute_version_id=minute_version_id)
-            logger.info("%s: Successfully found MinuteVersion", minute_version.minute_id)
+            slogger.set_context_field("minute_id", str(minute_version.minute_id))
+            slogger.set_context_field("user_id", str(minute_version.minute.transcription.user_id))
+            slogger.info("Successfully found MinuteVersion")
         except Exception as e:
             raise MinuteGenerationFailedError from e
         try:
             cls.update_minute_version(minute_version.id, status=JobStatus.IN_PROGRESS)
             meeting_type = cls.predict_meeting(minute_version.minute.transcription.dialogue_entries)
-            logger.info("%s: Predicted minute version %s", minute_version.minute_id, meeting_type)
+            slogger.info("Predicted meeting type {meeting_type}", meeting_type=str(meeting_type))
             html_content, hallucinations = await cls.generate_minutes(meeting_type, minute_version.minute)
             cls.update_minute_version(
                 minute_version.id,
@@ -161,7 +164,7 @@ class MinuteHandlerService:
                 {"transcriptionId": str(minute_version.minute.transcription_id)},
             )
         except Exception as e:
-            logger.exception("%s: Minute generation failed", minute_version.minute_id)
+            # Primary failure is logged once at the actor boundary (RayLlmService.process_minute_task).
             cls.record_minute_version_failure(minute_version.id, error=str(e))
             capture_event(
                 minute_version.minute.transcription.user_id,
@@ -175,6 +178,8 @@ class MinuteHandlerService:
         try:
             source_minute_version = await cls.get_minute_version(source_minute_version_id)
             target_minute_version = await cls.get_minute_version(target_minute_version_id)
+            slogger.set_context_field("minute_id", str(target_minute_version.minute_id))
+            slogger.set_context_field("user_id", str(target_minute_version.minute.transcription.user_id))
         except Exception as e:
             raise MinuteGenerationFailedError from e
 
@@ -200,7 +205,7 @@ class MinuteHandlerService:
             )
 
         except Exception as e:
-            logger.exception("%s: Minute edit failed", target_minute_version.minute_id)
+            # Primary failure is logged once at the actor boundary (RayLlmService.process_edit_task).
             cls.record_minute_version_failure(target_minute_version.id, error=str(e))
             raise MinuteGenerationFailedError from e
 

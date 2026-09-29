@@ -683,6 +683,10 @@ export type TranscriptionGetResponse = {
    * Created Datetime
    */
   created_datetime: string
+  /**
+   * Error
+   */
+  error?: string | null
 }
 
 /**

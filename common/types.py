@@ -109,6 +109,7 @@ class TranscriptionGetResponse(BaseModel):
     dialogue_entries: list[DialogueEntry] | None
     status: JobStatus
     created_datetime: datetime
+    error: str | None = None
 
 
 class SingleRecording(BaseModel):

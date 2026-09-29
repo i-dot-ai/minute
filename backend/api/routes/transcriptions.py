@@ -201,6 +201,7 @@ async def get_transcription(
         dialogue_entries=transcription.dialogue_entries,
         title=transcription.title,
         created_datetime=transcription.created_datetime,
+        error=transcription.error,
     )
 
 

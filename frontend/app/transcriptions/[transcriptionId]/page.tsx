@@ -50,7 +50,7 @@ export default function TranscriptionPage() {
     enabled: minutesEnabled,
   })
 
-  const { data: recordings = [] } = useQuery({
+  const { data: recordings = [], isSuccess: recordingsLoaded } = useQuery({
     ...getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions(
       {
         path: { transcription_id: transcriptionId },
@@ -140,6 +140,52 @@ export default function TranscriptionPage() {
             />
             <h2 className="govuk-heading-m govuk-!-margin-top-6">Audio</h2>
             <AudioPlayer transcriptionId={transcription.id} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (
+    transcription.status === 'failed' &&
+    recordingsLoaded &&
+    (!recordings || !recordings[0])
+  ) {
+    return (
+      <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
+        <div className="govuk-grid-row">
+          <div className="govuk-grid-column-two-thirds">
+            <h1 className="govuk-heading-l">Empty meeting</h1>
+            <p className="govuk-body">
+              This meeting is empty. This is likely because it was an old
+              meeting which failed and has since been reprocessed. In this case,
+              your recording is safe, it has been moved to the newer meeting.
+            </p>
+            <p className="govuk-body">
+              We can&apos;t link directly to it from here, but you should be
+              able to find it back in your{' '}
+              <Link
+                href="/transcriptions"
+                className="govuk-link govuk-link--no-visited-state"
+              >
+                transcriptions list
+              </Link>
+              .
+            </p>
+            <p className="govuk-body">
+              Following an update to the app, you shouldn&apos;tt see empty
+              meetings like this when reprocessing recordings after 30 September
+              2026. If you are seeing this page for a meeting processed after
+              this date, or you can&apos;tt find the new meeting in your
+              transcriptions list, please{' '}
+              <Link
+                href="/support"
+                className="govuk-link govuk-link--no-visited-state"
+              >
+                contact us
+              </Link>
+              .
+            </p>
           </div>
         </div>
       </div>

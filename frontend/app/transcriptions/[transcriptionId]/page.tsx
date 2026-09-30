@@ -156,7 +156,7 @@ export default function TranscriptionPage() {
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-two-thirds">
             <h1 className="govuk-heading-l">Empty meeting</h1>
-            <p className='govuk-body'>{date}</p>
+            <p className="govuk-body">{date}</p>
             <p className="govuk-body">
               This meeting is empty. This is likely because it was an old
               meeting which failed and has since been reprocessed. In this case,
@@ -174,11 +174,11 @@ export default function TranscriptionPage() {
               .
             </p>
             <p className="govuk-body">
-              Following an update to the app, you shouldn&apos;tt see empty
-              meetings like this when reprocessing recordings after 30 September
-              2026. If you are seeing this page for a meeting processed after
-              this date, or you can&apos;tt find the new meeting in your
-              transcriptions list, please{' '}
+              Following an update to the app, you should not see empty meetings
+              like this when reprocessing recordings after 30 September 2026. If
+              you are seeing this page for a meeting processed after this date,
+              or you can&apos;t find the new meeting in your transcriptions
+              list, please{' '}
               <Link
                 href="/support"
                 className="govuk-link govuk-link--no-visited-state"

@@ -32,7 +32,7 @@ jobs:
           cat >> .env <<'EOF'
 
           DISABLE_AUTH_SIGNATURE_VERIFICATION=true
-          TRANSCRIPTION_SERVICES=["azure_stt_synchronous"]
+          TRANSCRIPTION_SERVICES='["azure_stt_synchronous"]'
           AZURE_SPEECH_KEY=${{ secrets.AZURE_SPEECH_KEY }}
           AZURE_SPEECH_REGION=${{ secrets.AZURE_SPEECH_REGION }}
           GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT }}

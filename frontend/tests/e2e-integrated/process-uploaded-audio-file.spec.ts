@@ -3,13 +3,13 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const sampleMeeting = path.resolve(__dirname, '../fixtures/sample-meeting.mp4')
+const sampleMeeting = path.resolve(__dirname, '../fixtures/sample-meeting.mp3')
 
 test('Upload an audio file and process summary and transcript', async ({
   page,
 }) => {
   test.setTimeout(10 * 60_000)
-  await page.goto('http://localhost:3000/')
+  await page.goto('/')
 
   await page.getByRole('radio', { name: 'Upload a file' }).check()
 

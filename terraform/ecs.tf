@@ -21,6 +21,8 @@ locals {
     "TRANSCRIPTION_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name
     "LLM_QUEUE_NAME" : aws_sqs_queue.llm_queue.name
     "LLM_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.llm_queue_deadletter.name
+    "AUDIO_QUEUE_NAME" : aws_sqs_queue.audio_queue.name
+    "AUDIO_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.audio_queue_deadletter.name
     "TRANSCRIPTION_SERVICES" : "[\"azure_stt_synchronous\"]"
     "MAX_TRANSCRIPTION_PROCESSES" : local.MAX_TRANSCRIPTION_PROCESSES
     "MAX_LLM_PROCESSES" : local.MAX_LLM_PROCESSES
@@ -197,6 +199,56 @@ module "worker" {
   http_healthcheck = false
   container_healthcheck = {
     command     = ["CMD-SHELL", "uv run python worker/healthcheck.py"]
+    interval    = 60
+    retries     = 3
+    startPeriod = 60
+    timeout     = 5
+  }
+}
+
+module "audio_worker" {
+  name = "${local.name}-audio-worker"
+
+  # checkov:skip=CKV_SECRET_4:Skip secret check as these have to be used within the Github Action
+  # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
+  source = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v7.0.1-ecs"
+  # One ffmpeg process per task; scale horizontally by raising desired_app_count.
+  desired_app_count            = terraform.workspace == "prod" ? 2 : 1
+  image_tag                    = var.image_tag
+  ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-audio_worker"
+  vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
+  private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
+  load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
+  aws_lb_arn                   = module.load_balancer.alb_arn
+  ecs_cluster_id               = data.terraform_remote_state.platform.outputs.ecs_cluster_id
+  ecs_cluster_name             = data.terraform_remote_state.platform.outputs.ecs_cluster_name
+  task_additional_iam_policies = local.additional_policy_arns
+  certificate_arn              = data.terraform_remote_state.universal.outputs.certificate_arn
+  target_group_name_override   = "minute-audio-worker-${var.env}-tg"
+  permissions_boundary_name    = "infra/i-dot-ai-${var.env}-minute-perms-boundary-app"
+
+  create_networking = false
+  create_listener   = false
+
+  environment_variables = merge(local.shared_environment_variables, {
+    "APP_NAME" : "${local.name}-audio-worker",
+    "AUTH_API_URL" : "unused", # Worker settings need refactoring so we can remove this
+  })
+
+  secrets = [
+    for k, v in aws_ssm_parameter.env_secrets : {
+      name      = regex("([^/]+$)", v.arn)[0], # Extract right-most string (param name) after the final slash
+      valueFrom = v.arn
+    }
+  ]
+
+  # A single ffmpeg process needs far less than the Ray worker.
+  memory = terraform.workspace == "prod" ? 2048 : 1024
+  cpu    = terraform.workspace == "prod" ? 1024 : 512
+
+  http_healthcheck = false
+  container_healthcheck = {
+    command     = ["CMD-SHELL", "uv run python audio_worker/healthcheck.py"]
     interval    = 60
     retries     = 3
     startPeriod = 60

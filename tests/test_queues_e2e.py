@@ -28,6 +28,7 @@ import pytest
 import ray
 import requests
 
+from audio_worker.worker_service import AudioWorkerService
 from common.database.postgres_models import ContentSource, JobStatus, Minute, MinuteVersion, Transcription
 from common.services.queue_services import get_queue_service
 from common.services.template_manager import TemplateManager
@@ -54,6 +55,23 @@ def worker_service() -> Generator[WorkerService, Any, None]:
     worker_service = create_worker_service()
     yield worker_service
     ray.shutdown()
+
+
+@pytest.fixture
+def audio_worker_service() -> AudioWorkerService:
+    return AudioWorkerService()
+
+
+@pytest.fixture(autouse=True)
+async def audio_queue_service():
+    settings = get_settings()
+    queue_service = get_queue_service(
+        settings.QUEUE_SERVICE_NAME, settings.AUDIO_QUEUE_NAME, settings.AUDIO_DEADLETTER_QUEUE_NAME
+    )
+    queue_service.purge_messages()
+    # needed to ensure sqs queue is purged (not sure if this long is needed for ministack)
+    await asyncio.sleep(1)
+    return queue_service
 
 
 @pytest.fixture(autouse=True)
@@ -105,8 +123,9 @@ async def load_db_test_instance(file_type: FileTypeTests) -> set[UUID]:
 
 @pytest.mark.requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
-async def test_e2e(worker_service):
+async def test_e2e(worker_service, audio_worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
+    audio_worker_task = asyncio.create_task(audio_worker_service.run())
     transcription_ids = await load_db_test_instance(FileTypeTests.NORMAL)
 
     for transcription_id in transcription_ids:
@@ -117,12 +136,14 @@ async def test_e2e(worker_service):
         await create_versions_for_ai_edit(transcription_id=transcription_id)
         await assert_minute_edit_succeeds(transcription_id=transcription_id, receive_task=worker_service_task)
     worker_service_task.cancel()
+    audio_worker_task.cancel()
 
 
 @pytest.mark.requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
-async def test_e2e_chat(worker_service):
+async def test_e2e_chat(worker_service, audio_worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
+    audio_worker_task = asyncio.create_task(audio_worker_service.run())
 
     # needed to ensure sqs queue is purged (not sure if this long is needed for ministack)
     await asyncio.sleep(1)
@@ -138,24 +159,28 @@ async def test_e2e_chat(worker_service):
         )
     # cancel the queue receiver
     worker_service_task.cancel()
+    audio_worker_task.cancel()
 
 
 @pytest.mark.requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
-async def test_e2e_zero_bytes(worker_service):
+async def test_e2e_zero_bytes(worker_service, audio_worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
+    audio_worker_task = asyncio.create_task(audio_worker_service.run())
     transcription_ids = await load_db_test_instance(FileTypeTests.ZERO_BYTES)
     for transcription_id in transcription_ids:
         await assert_transcription(
             transcription_id, worker_service_task, loop_while_not=JobStatus.FAILED, fail_if=JobStatus.COMPLETED
         )
     worker_service_task.cancel()
+    audio_worker_task.cancel()
 
 
 @pytest.mark.requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
-async def test_e2e_corrupted(worker_service):
+async def test_e2e_corrupted(worker_service, audio_worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
+    audio_worker_task = asyncio.create_task(audio_worker_service.run())
     transcription_ids = await load_db_test_instance(FileTypeTests.CORRUPTED)
 
     for transcription_id in transcription_ids:
@@ -163,6 +188,7 @@ async def test_e2e_corrupted(worker_service):
             transcription_id, worker_service_task, loop_while_not=JobStatus.FAILED, fail_if=JobStatus.COMPLETED
         )
     worker_service_task.cancel()
+    audio_worker_task.cancel()
 
 
 async def create_versions_for_ai_edit(transcription_id: UUID):

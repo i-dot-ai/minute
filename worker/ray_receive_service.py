@@ -59,7 +59,7 @@ class RayTranscriptionService:
                     slogger.info("Received minute id for transcription")
                     transcription_job = await TranscriptionHandlerService.process_transcription(
                         minute_id=message.id,  # message.id -> minute_id
-                        async_transcription_message_data=message.data,
+                        message_data=message.data,
                     )
                 except TranscriptionFailedError:
                     slogger.exception("Transcription failed for minute id")

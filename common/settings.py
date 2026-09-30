@@ -67,6 +67,10 @@ class Settings(BaseSettings):
     LLM_DEADLETTER_QUEUE_NAME: str = Field(
         description="deadletter queue name to use for SQS. Ignored if using Azure Service Bus "
     )
+    AUDIO_QUEUE_NAME: str = Field(description="queue name for the audio (ffmpeg) worker")
+    AUDIO_DEADLETTER_QUEUE_NAME: str = Field(
+        description="deadletter queue name for the audio worker. Ignored if using Azure Service Bus "
+    )
 
     AZURE_SPEECH_KEY: str = Field(description="Azure STT speech key for API")
     AZURE_SPEECH_REGION: str = Field(description="Region for Azure STT")

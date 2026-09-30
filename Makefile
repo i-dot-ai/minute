@@ -60,6 +60,9 @@ run_backend:
 run_worker:
 	uv run python backend/services/queue_service.py
 
+run_audio_worker:
+	$(ENV_SH) uv run python audio_worker/main.py
+
 run:
 	docker compose up -d --wait
 

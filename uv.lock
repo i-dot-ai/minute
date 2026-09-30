@@ -1173,6 +1173,11 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+audio-worker = [
+    { name = "azure-identity" },
+    { name = "azure-storage-blob" },
+    { name = "ffmpeg-python" },
+]
 backend = [
     { name = "apscheduler" },
     { name = "posthog" },
@@ -1200,7 +1205,6 @@ dev = [
 worker = [
     { name = "azure-identity" },
     { name = "azure-storage-blob" },
-    { name = "ffmpeg-python" },
     { name = "google-genai" },
     { name = "openai" },
     { name = "posthog" },
@@ -1231,6 +1235,11 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+audio-worker = [
+    { name = "azure-identity", specifier = ">=1.23.1,<2" },
+    { name = "azure-storage-blob", specifier = ">=12.26.0,<13" },
+    { name = "ffmpeg-python", specifier = ">=0.2.0,<0.3" },
+]
 backend = [
     { name = "apscheduler", specifier = ">=3.11.0,<4" },
     { name = "posthog", specifier = ">=6.6.1,<7" },
@@ -1258,7 +1267,6 @@ dev = [
 worker = [
     { name = "azure-identity", specifier = ">=1.23.1,<2" },
     { name = "azure-storage-blob", specifier = ">=12.26.0,<13" },
-    { name = "ffmpeg-python", specifier = ">=0.2.0,<0.3" },
     { name = "google-genai", specifier = ">=1.10.0,<2" },
     { name = "openai", specifier = ">=1.42.0,<2" },
     { name = "posthog", specifier = ">=6.6.1,<7" },

@@ -16,7 +16,7 @@ ENV UV_NO_SYNC=1
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y ffmpeg curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/

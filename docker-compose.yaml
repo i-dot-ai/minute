@@ -87,6 +87,49 @@ services:
         - path: ./uv.lock
           action: rebuild
 
+  audio_worker:
+    build:
+      context: .
+      dockerfile: ./audio_worker/Dockerfile
+    deploy: # One ffmpeg process; scale horizontally by adding tasks/replicas.
+      resources:
+        limits:
+          cpus: "1.0"
+    env_file:
+      - .env
+    volumes:
+      - ${AUDIO_WORKER_TMP:-./.audio-worker-tmp}:/tmp
+      - type: bind
+        source: ./.data
+        target: /static
+    environment:
+      - POSTGRES_HOST=db
+      - MINISTACK_URL=http://ministack:4566
+      - STORAGE_SERVICE_NAME=local
+      - LOCAL_STORAGE_PATH=/static
+    stop_grace_period: 10s
+    depends_on:
+      db:
+        condition: service_healthy
+      ministack:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python audio_worker/healthcheck.py"]
+      interval: 60s
+      retries: 3
+      start_period: 60s
+      timeout: 5s
+    develop:
+      watch:
+        - path: ./audio_worker
+          target: /app/audio_worker
+          action: sync+restart
+        - path: ./common
+          target: /app/common
+          action: sync+restart
+        - path: ./uv.lock
+          action: rebuild
+
   frontend:
     build:
       context: .

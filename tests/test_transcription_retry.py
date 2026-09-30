@@ -116,7 +116,7 @@ def published_messages(monkeypatch):
         _object_exists,
     )
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
+        "backend.api.routes.transcriptions.audio_queue_service.publish_message",
         published.append,
     )
     return published
@@ -154,7 +154,9 @@ async def test_retry_resets_existing_transcription(failed_transcription, publish
 
     published = published_messages
     assert len(published) == 1
-    assert published[0].id == minute_id
+    # The audio worker is now the entrypoint: retry enqueues a CONVERT job keyed by
+    # the transcription id (not the minute id).
+    assert published[0].id == transcription_id
 
 
 @pytest.mark.asyncio(loop_scope="session")

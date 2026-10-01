@@ -32,7 +32,7 @@ import {
   CircleArrowRight,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { use, useCallback, useEffect, useRef, useState } from 'react'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 
@@ -69,6 +69,37 @@ export default function SummaryPage({
   const [isSavingSpeakers, setIsSavingSpeakers] = useState(false)
 
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const versionParam = searchParams.get('version')
+  const appliedVersionFromUrl = useRef(false)
+
+  // add minute version to query params
+  useEffect(() => {
+    if (!editState?.minuteVersionId) return
+
+    // apply the version from the url once, on first load
+    if (!appliedVersionFromUrl.current) {
+      appliedVersionFromUrl.current = true
+      if (versionParam) {
+        const index = editState.minuteVersions.findIndex(
+          (version) => version.id === versionParam
+        )
+        if (index !== -1) {
+          if (index !== editState.version) editState.setVersion(index)
+          return
+        }
+      }
+    }
+
+    // update query params if viewing a new minute version
+    const url = new URL(window.location.href)
+
+    if (url.searchParams.get('version') === editState.minuteVersionId) return
+
+    url.searchParams.set('version', editState.minuteVersionId)
+    window.history.replaceState(null, '', url) // update address history without triggering app router
+  }, [editState, versionParam])
+
   const { saveTranscription } = useSaveTranscription(transcriptionId)
   const { generateSummary, isGenerating } =
     useGenerateSummaryFromMinute(transcriptionId)

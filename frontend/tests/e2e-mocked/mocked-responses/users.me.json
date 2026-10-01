@@ -1,0 +1,9 @@
+{
+    "id": "71a7e441-2b71-423c-97be-bca02f89a13f",
+    "created_datetime": "2026-06-25T10:15:38.999206Z",
+    "updated_datetime": "2026-09-29T12:44:09.910005Z",
+    "email": "test@test.co.uk",
+    "data_retention_days": null,
+    "default_template_id": null,
+    "default_template_name": null
+}

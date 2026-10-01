@@ -231,9 +231,7 @@ class TestTranscriptionServiceManager:
                 transcription_service=mock_adapter.name,
             )
 
-            result = await manager.perform_transcription_steps(
-                mock_transcription, duration_seconds=mock_duration
-            )
+            result = await manager.perform_transcription_steps(mock_transcription, duration_seconds=mock_duration)
 
             assert result.job_name == "test_job"
             assert result.transcript is not None
@@ -265,9 +263,7 @@ class TestTranscriptionServiceManager:
                     transcription_service=mock_adapter.name,
                 )
 
-                result = await manager.perform_transcription_steps(
-                    mock_transcription, duration_seconds=mock_duration
-                )
+                result = await manager.perform_transcription_steps(mock_transcription, duration_seconds=mock_duration)
 
                 assert result.job_name == "test_job"
                 assert result.transcript is not None

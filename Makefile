@@ -80,7 +80,9 @@ generate_aws_diagram:
 
 # Docker
 
-ECR_REPO_NAME=$(APP_NAME)-$(service)
+# ECR repo names use hyphens, but service dirs (Python packages) may use underscores
+# e.g. service=audio_worker -> repo=minute-audio-worker, Dockerfile path stays audio_worker/
+ECR_REPO_NAME=$(APP_NAME)-$(subst _,-,$(service))
 ECR_URL=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 ECR_REPO_URL=$(ECR_URL)/$(ECR_REPO_NAME)
 

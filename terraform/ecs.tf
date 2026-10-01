@@ -213,9 +213,9 @@ module "audio_worker" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   source = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v7.0.1-ecs"
   # One ffmpeg process per task; scale horizontally by raising desired_app_count.
-  desired_app_count            = terraform.workspace == "prod" ? 2 : 1
+  desired_app_count            = terraform.workspace == "prod" ? 4 : 2
   image_tag                    = var.image_tag
-  ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-audio_worker"
+  ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-audio-worker"
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
@@ -242,15 +242,12 @@ module "audio_worker" {
     }
   ]
 
-  # A single ffmpeg process needs far less than the Ray worker.
-  memory = terraform.workspace == "prod" ? 2048 : 1024
+  # A single ffmpeg process needs far less than the Ray worker. Each task handles one
+  # file at a time and ffmpeg streams input/output through ephemeral disk (not RAM), so
+  # memory stays low regardless of file size; the module default ephemeral storage
+  # (21 GiB) comfortably holds one in-flight job (source + converted mp3).
+  memory = 1024
   cpu    = terraform.workspace == "prod" ? 1024 : 512
-
-  # [WARN] ffmpeg streams input/output to ephemeral storage (disk, not RAM)
-  # It needs room for both input files and converted mp3s at the same time.
-  # Current maximum file size = 5GB. This adds more headroom in prod. The 
-  # min supported value is 21 GiB and the max supported value is 200 GiB.
-  ephemeral_storage = terraform.workspace == "prod" ? 40 : 21
 
   http_healthcheck = false
   container_healthcheck = {

@@ -1,0 +1,75 @@
+name: E2E Integrated
+
+on:
+  workflow_dispatch:
+
+# Real transcription is slow and non-deterministic; only one run at a time and
+# cancel superseded ones to avoid stacking paid runs.
+concurrency:
+  group: e2e-integrated-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-integrated:
+    name: Upload → transcribe → summary (real backend)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Create .env
+        run: |
+          cp .env.example .env
+          cat >> .env <<'EOF'
+
+          DISABLE_AUTH_SIGNATURE_VERIFICATION=true
+          TRANSCRIPTION_SERVICES='["azure_stt_synchronous"]'
+          AZURE_SPEECH_KEY=${{ secrets.AZURE_SPEECH_KEY }}
+          AZURE_SPEECH_REGION=${{ secrets.AZURE_SPEECH_REGION }}
+          GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT }}
+          GOOGLE_CLOUD_LOCATION=${{ secrets.GOOGLE_CLOUD_LOCATION }}
+          GOOGLE_APPLICATION_CREDENTIALS_BASE64=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_BASE64 }}
+          EOF
+
+      - name: Start the stack
+        run: docker compose up -d --wait db ministack backend worker frontend
+
+      - name: Install Playwright (chromium)
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run integrated E2E
+        working-directory: frontend
+        env:
+          CI: "true"
+          # Frontend is already served by docker compose on :3000, so skip
+          # Playwright's own webServer.
+          PW_NO_WEBSERVER: "1"
+        run: npx playwright test --project=e2e-integrated
+
+      - name: Dump service logs on failure
+        if: failure()
+        run: docker compose logs backend worker
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 14
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

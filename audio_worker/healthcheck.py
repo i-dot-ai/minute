@@ -1,10 +1,11 @@
-import logging
 import sys
 import time
 from os import getenv
 from pathlib import Path
 
-logger = logging.getLogger()
+from common.settings import get_structured_logger
+
+slogger = get_structured_logger()
 
 
 HEARTBEAT_DIR = Path(getenv("HEARTBEAT_DIR", "/healthcheck"))
@@ -43,7 +44,7 @@ def healthcheck() -> tuple[bool, str]:
 if __name__ == "__main__":
     healthy, msg = healthcheck()
     if healthy:
-        logger.info(msg)
+        slogger.info(msg)
     else:
-        logger.warning(msg)
+        slogger.warning(msg)
         sys.exit(msg)

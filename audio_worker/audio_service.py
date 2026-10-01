@@ -1,4 +1,3 @@
-import logging
 import tempfile
 import uuid
 from pathlib import Path
@@ -13,10 +12,10 @@ from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import JobStatus, Minute, Recording, Transcription
 from common.services.queue_services.base import QueueService
 from common.services.storage_services import get_storage_service
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 from common.types import TaskType, TranscriptionReadyMessageData, WorkerMessage
 
-logger = logging.getLogger(__name__)
+slogger = get_structured_logger()
 settings = get_settings()
 storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
@@ -40,13 +39,16 @@ class AudioService:
 
     async def process_message(self, message: WorkerMessage) -> None:
         transcription_id = message.id
-        logger.info("Received audio conversion job for transcription id: %s", transcription_id)
+        slogger.set_context_field("transcription_id", str(transcription_id))
+        slogger.info("Received audio conversion job for transcription")
         try:
             recording, minute_id = self._load_recording_and_minute(transcription_id)
+            slogger.set_context_field("minute_id", str(minute_id))
+            slogger.set_context_field("user_id", str(recording.user_id))
             duration_seconds = await self._prepare_recording(recording)
         except Exception as e:
             msg = f"Audio conversion failed for transcription id {transcription_id}: {e!s}"
-            logger.exception(msg)
+            slogger.exception("Audio conversion failed for transcription")
             self._mark_transcription_failed(transcription_id, msg)
             raise AudioConversionFailedError(msg) from e
 
@@ -57,7 +59,7 @@ class AudioService:
                 data=TranscriptionReadyMessageData(duration_seconds=duration_seconds),
             )
         )
-        logger.info("Handed transcription id %s (minute id %s) to the transcription queue", transcription_id, minute_id)
+        slogger.info("Handed transcription to the transcription queue")
 
     @staticmethod
     def _load_recording_and_minute(transcription_id: UUID) -> tuple[Recording, UUID]:
@@ -131,11 +133,11 @@ class AudioService:
             with SessionLocal() as session:
                 transcription = session.get(Transcription, transcription_id)
                 if transcription is None:
-                    logger.warning("Could not mark transcription %s failed: not found", transcription_id)
+                    slogger.warning("Could not mark transcription failed: not found")
                     return
                 transcription.status = JobStatus.FAILED
                 transcription.error = error
                 session.add(transcription)
                 session.commit()
         except Exception:
-            logger.exception("Error updating transcription status. Maybe it doesn't exist?")
+            slogger.exception("Error updating transcription status. Maybe it doesn't exist?")

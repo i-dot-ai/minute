@@ -1,13 +1,12 @@
-import logging
-
 from audio_worker.audio_service import AudioService
 from audio_worker.healthcheck import HEARTBEAT_DIR, ensure_heartbeat_dir
 from audio_worker.signal_handler import SignalHandler
 from common.services.queue_services import get_queue_service
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 
-logger = logging.getLogger(__name__)
 settings = get_settings()
+
+slogger = get_structured_logger()
 
 
 class AudioWorkerService:
@@ -36,18 +35,20 @@ class AudioWorkerService:
         self.heartbeat_path.touch()
 
     async def run(self) -> None:
-        logger.info("Audio worker started. Polling audio queue %s", settings.AUDIO_QUEUE_NAME)
+        slogger.info("Audio worker started. Polling audio queue {queue_name}", queue_name=settings.AUDIO_QUEUE_NAME)
         while not self.signal_handler.signal_received:
             messages = self.audio_queue_service.receive_message(max_messages=1)
             for message, receipt_handle in messages:
+                slogger.refresh_context()
+                slogger.set_context_field("transcription_id", str(message.id))
                 try:
                     await self.audio_service.process_message(message)
                 except Exception:
                     # Known and unexpected failures alike: the transcription is already marked
                     # FAILED where possible. Complete the message so it does not loop; SQS
                     # redrive still moves genuinely poisonous messages to the DLQ on retry.
-                    logger.exception("Audio conversion failed for message id %s", message.id)
+                    slogger.exception("Audio conversion failed for message")
                 self.audio_queue_service.complete_message(receipt_handle)
             self.heartbeat_path.touch()
 
-        logger.info("Signal received. Audio worker shutting down.")
+        slogger.info("Signal received. Audio worker shutting down.")

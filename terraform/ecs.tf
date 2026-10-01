@@ -246,6 +246,12 @@ module "audio_worker" {
   memory = terraform.workspace == "prod" ? 2048 : 1024
   cpu    = terraform.workspace == "prod" ? 1024 : 512
 
+  # [WARN] ffmpeg streams input/output to ephemeral storage (disk, not RAM)
+  # It needs room for both input files and converted mp3s at the same time.
+  # Current maximum file size = 5GB. This adds more headroom in prod. The 
+  # min supported value is 21 GiB and the max supported value is 200 GiB.
+  ephemeral_storage = terraform.workspace == "prod" ? 40 : 21
+
   http_healthcheck = false
   container_healthcheck = {
     command     = ["CMD-SHELL", "uv run python audio_worker/healthcheck.py"]

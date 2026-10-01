@@ -64,8 +64,6 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
         Async version of transcribe audio using Azure Speech-to-Text API
         """
 
-        slogger.refresh_context()
-
         file_name = uuid.uuid4()
         job_name = f"minute-{settings.ENVIRONMENT}-transcription-job-{file_name}"
         presigned_url = await storage_service.generate_presigned_url_get_object(

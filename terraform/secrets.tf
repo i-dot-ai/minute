@@ -27,22 +27,6 @@ locals {
       value = "placeholder" # Update value in SSM - Do not hardcode
     },
     {
-      name  = "AZURE_SPEECH_FALLBACK_1_KEY"
-      value = "placeholder" # Update value in SSM - Do not hardcode
-    },
-    {
-      name  = "AZURE_SPEECH_FALLBACK_1_REGION"
-      value = "placeholder" # Update value in SSM - Do not hardcode
-    },
-    {
-      name  = "AZURE_SPEECH_FALLBACK_2_KEY"
-      value = "placeholder" # Update value in SSM - Do not hardcode
-    },
-    {
-      name  = "AZURE_SPEECH_FALLBACK_2_REGION"
-      value = "placeholder" # Update value in SSM - Do not hardcode
-    },
-    {
       name  = "POSTGRES_PORT"
       value = 5432
     },
@@ -87,10 +71,32 @@ locals {
       value = "placeholder" # Update value in SSM - Do not hardcode
     }
   ]
+
+  # Secrets that should only be created in prod (not present in dev/preprod).
+  prod_only_env_secrets = terraform.workspace == "prod" ? [
+    {
+      name  = "AZURE_SPEECH_FALLBACK_1_KEY"
+      value = "placeholder" # Update value in SSM - Do not hardcode
+    },
+    {
+      name  = "AZURE_SPEECH_FALLBACK_1_REGION"
+      value = "placeholder" # Update value in SSM - Do not hardcode
+    },
+    {
+      name  = "AZURE_SPEECH_FALLBACK_2_KEY"
+      value = "placeholder" # Update value in SSM - Do not hardcode
+    },
+    {
+      name  = "AZURE_SPEECH_FALLBACK_2_REGION"
+      value = "placeholder" # Update value in SSM - Do not hardcode
+    },
+  ] : []
+
+  all_env_secrets = concat(local.env_secrets, local.prod_only_env_secrets)
 }
 
 resource "aws_ssm_parameter" "env_secrets" {
-  for_each = { for ev in local.env_secrets : ev.name => ev }
+  for_each = { for ev in local.all_env_secrets : ev.name => ev }
 
   type   = "SecureString"
   key_id = data.terraform_remote_state.platform.outputs.kms_key_arn

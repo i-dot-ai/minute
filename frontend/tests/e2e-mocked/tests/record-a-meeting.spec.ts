@@ -1,44 +1,14 @@
 import { mockBackend } from '@/tests/e2e-mocked/utilities/mock-backend'
-import { meeting1 } from '@/tests/e2e-mocked/mocked-responses/mock-meeting-1'
-import { test, expect, type Page } from '@playwright/test'
+import {
+  recordAudioFlow,
+  statusToSummaryFlow,
+} from '@/tests/e2e-mocked/utilities/navigation'
+import { test, expect } from '@playwright/test'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const sampleMeeting = path.resolve(__dirname, '../../fixtures/sample-meeting.mp3')
-
-const recordAudioFlow = async (page: Page) => {
-  await expect(page).toHaveURL('/new')
-  await expect(
-    page.getByRole('heading', { name: 'Recording', exact: true })
-  ).toBeVisible()
-
-  // Let a MediaRecorder chunk (emitted every 1s) land so there's audio to save.
-  await page.waitForTimeout(1500)
-
-  await page
-    .getByRole('button', { name: 'Stop recording and save' })
-    .first()
-    .click()
-
-  const dialog = page.getByRole('dialog')
-  await expect(dialog).toBeVisible()
-  await dialog.getByRole('button', { name: 'Stop recording and save' }).click()
-}
-
-const statusToSummaryFlow = async (page: Page) => {
-  await expect(page).toHaveURL(/\/new\/status\/[^/]+$/, { timeout: 30_000 })
-  await expect(page.getByRole('heading', { name: 'Ready' })).toBeVisible()
-
-  await page.getByRole('link', { name: 'View transcription' }).click()
-
-  await expect(page).toHaveURL(/\/transcriptions\/[^/]+\/summary\/[^/]+$/, {
-    timeout: 30_000,
-  })
-  await expect(
-    page.getByRole('heading', { level: 1, name: meeting1.title! })
-  ).toBeVisible()
-}
 
 test.beforeEach(async ({ page }) => {
   await mockBackend(page)

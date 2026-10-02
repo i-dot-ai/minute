@@ -2,7 +2,7 @@ import { mockBackend } from '@/tests/e2e-mocked/utilities/mock-backend'
 import {
   goToSummaryPage,
   enterEditMode,
-} from '@/tests/e2e-mocked/utilities/summary-page'
+} from '@/tests/e2e-mocked/utilities/navigation'
 import { meeting1 } from '@/tests/e2e-mocked/mocked-responses/mock-meeting-1'
 import { test, expect } from '@playwright/test'
 

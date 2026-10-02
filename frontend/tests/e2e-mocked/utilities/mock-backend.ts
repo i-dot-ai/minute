@@ -5,6 +5,8 @@ import type {
   MinuteVersionResponse,
   RecordingCreateResponse,
   SingleRecording,
+  TemplateMetadata,
+  TemplateResponse,
   TranscriptionCreateResponse,
   TranscriptionGetResponse,
 } from '@/lib/client/types.gen'
@@ -72,6 +74,9 @@ export async function mockBackend(
   const minuteId = minutes[0]?.id
   const versions: MinuteVersionResponse[] = [...files.versions]
 
+  const systemTemplates: TemplateMetadata[] = structuredClone(templates)
+  const userTemplatesState: TemplateResponse[] = structuredClone(userTemplates)
+
   if (status) {
     transcription.status = status
     if (status !== 'completed') transcription.dialogue_entries = null
@@ -83,13 +88,13 @@ export async function mockBackend(
       method: 'GET',
       path: '/templates',
       status: 200,
-      response: templates,
+      response: systemTemplates,
     },
     {
       method: 'GET',
       path: '/user-templates',
       status: 200,
-      response: userTemplates,
+      response: userTemplatesState,
     },
     {
       method: 'GET',
@@ -153,6 +158,35 @@ export async function mockBackend(
     const body = route.request().postDataJSON() as Partial<TranscriptionGetResponse>
     Object.assign(transcription, body)
     return route.fulfill(json(200, transcription))
+  })
+
+  await page.route(
+    `**/api/proxy/transcription/${transcriptionId}/minutes`,
+    (route) => {
+      if (route.request().method() !== 'POST') return route.fallback()
+      return route.fulfill(json(200, minutes[0]))
+    }
+  )
+
+  await page.route('**/api/proxy/users/default-template', (route) => {
+    if (route.request().method() !== 'PATCH') return route.fallback()
+    const body = route.request().postDataJSON() as {
+      template_id?: string | null
+      template_name?: string | null
+    }
+    for (const t of userTemplatesState) t.is_default = t.id === body.template_id
+    for (const t of systemTemplates)
+      t.is_default = t.name === body.template_name
+    return route.fulfill(json(200, usersMe))
+  })
+
+  await page.route('**/api/proxy/user-templates/*', (route) => {
+    if (route.request().method() !== 'GET') return route.fallback()
+    const { pathname } = new URL(route.request().url())
+    const id = pathname.split('/').at(-1)
+    const found = userTemplatesState.find((t) => t.id === id)
+    if (!found) return route.fallback()
+    return route.fulfill(json(200, found))
   })
 
   for (const mock of mocks) {

@@ -1,5 +1,5 @@
 import { mockBackend } from '@/tests/e2e-mocked/utilities/mock-backend'
-import { goToSummaryPage } from '@/tests/e2e-mocked/utilities/summary-page'
+import { goToSummaryPage } from '@/tests/e2e-mocked/utilities/navigation'
 import { meeting1 } from '@/tests/e2e-mocked/mocked-responses/mock-meeting-1'
 import { meeting2 } from '@/tests/e2e-mocked/mocked-responses/mock-meeting-2'
 import { meeting2Minutes } from '@/tests/e2e-mocked/mocked-responses/mock-meeting-2.minutes'

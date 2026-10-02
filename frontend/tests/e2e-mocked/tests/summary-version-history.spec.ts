@@ -39,6 +39,7 @@ test('switching between summaries navigates to the selected one', async ({
   await expect(page).toHaveURL(
     new RegExp(`/transcriptions/[^/]+/summary/${executive.id}$`)
   )
+
   await expect(
     nav.getByRole('link', { name: 'Executive summary' }).first()
   ).toHaveAttribute('aria-current', 'page')

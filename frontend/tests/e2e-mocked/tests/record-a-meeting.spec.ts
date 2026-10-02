@@ -40,17 +40,14 @@ const statusToSummaryFlow = async (page: Page) => {
   ).toBeVisible()
 }
 
-// Relies on Chromium-only fake-media-device flags (see playwright.config.ts).
-
-
 test.beforeEach(async ({ page }) => {
   await mockBackend(page)
-  // getDisplayMedia isn't covered by the fake-media flags and may reject in
-  // headless CI, so stub it with a synthetic audio stream.
+  // getDisplayMedia isn't covered by the fake-media flags and may reject in CI.
   await page.addInitScript(() => {
     navigator.mediaDevices.getDisplayMedia = async () => {
-      ;(window as unknown as { __getDisplayMediaCalled?: boolean }).__getDisplayMediaCalled =
-        true
+      ;(
+        window as unknown as { __getDisplayMediaCalled?: boolean }
+      ).__getDisplayMediaCalled = true
       return navigator.mediaDevices.getUserMedia({ audio: true })
     }
   })

@@ -9,6 +9,10 @@ import type {
   TranscriptionGetResponse,
 } from '@/lib/client/types.gen'
 
+import {
+  json,
+  routeMinuteVersions,
+} from '@/tests/e2e-mocked/utilities/minute-versions-route'
 import { meeting1 } from '../mocked-responses/mock-meeting-1'
 import { meeting1Minutes } from '../mocked-responses/mock-meeting-1.minutes'
 import { meeting1Recordings } from '../mocked-responses/mock-meeting-1.recordings'
@@ -62,11 +66,11 @@ export async function mockBackend(
 ): Promise<void> {
   const files = SCENARIOS[scenario]
 
-  // Clone so per-call status overrides don't mutate the shared fixture.
   const transcription: TranscriptionGetResponse = { ...files.transcription }
   const minutes = files.minutes
   const transcriptionId = transcription.id
   const minuteId = minutes[0]?.id
+  const versions: MinuteVersionResponse[] = [...files.versions]
 
   if (status) {
     transcription.status = status
@@ -122,12 +126,6 @@ export async function mockBackend(
     },
     {
       method: 'GET',
-      path: `/minutes/${minuteId}/versions`,
-      status: 200,
-      response: files.versions,
-    },
-    {
-      method: 'GET',
       path: `/transcriptions/${transcriptionId}/recordings`,
       status: 200,
       response: files.recordings,
@@ -144,14 +142,25 @@ export async function mockBackend(
     route.fulfill({ status: 200, body: '' })
   )
 
+  await page.route('**/api/proxy/mock_storage/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'audio/mpeg', body: '' })
+  )
+
+  await routeMinuteVersions(page, { minuteId, versions, scenario })
+
+  await page.route(`**/api/proxy/transcriptions/${transcriptionId}`, (route) => {
+    if (route.request().method() !== 'PATCH') return route.fallback()
+    const body = route.request().postDataJSON() as Partial<TranscriptionGetResponse>
+    Object.assign(transcription, body)
+    return route.fulfill(json(200, transcription))
+  })
+
   for (const mock of mocks) {
-    await page.route(`**/api/proxy${mock.path}`, (route) => {
+    await page.route(`**/api/proxy${mock.path}**`, (route) => {
+      const { pathname } = new URL(route.request().url())
+      if (pathname !== `/api/proxy${mock.path}`) return route.fallback()
       if (route.request().method() !== mock.method) return route.fallback()
-      return route.fulfill({
-        status: mock.status,
-        contentType: 'application/json',
-        body: JSON.stringify(mock.response),
-      })
+      return route.fulfill(json(mock.status, mock.response))
     })
   }
 }

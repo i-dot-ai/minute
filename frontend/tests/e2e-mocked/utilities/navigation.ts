@@ -45,13 +45,13 @@ export const recordAudioFlow = async (page: Page) => {
 }
 
 export const statusToSummaryFlow = async (page: Page) => {
-  await expect(page).toHaveURL(/\/new\/status\/[^/]+$/, { timeout: 30_000 })
+  await expect(page).toHaveURL(/\/new\/status\/[^/]+$/, { timeout: 10_000 })
   await expect(page.getByRole('heading', { name: 'Ready' })).toBeVisible()
 
   await page.getByRole('link', { name: 'View transcription' }).click()
 
   await expect(page).toHaveURL(/\/transcriptions\/[^/]+\/summary\/[^/]+$/, {
-    timeout: 30_000,
+    timeout: 10_000,
   })
   await expect(
     page.getByRole('heading', { level: 1, name: meeting1.title! })

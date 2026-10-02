@@ -5,10 +5,6 @@ on:
   push:
     branches: [main]
 
-concurrency:
-  group: e2e-mocked-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   e2e-mocked:
     name: Mocked E2E (chromium/firefox/webkit)

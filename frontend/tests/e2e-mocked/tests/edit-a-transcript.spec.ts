@@ -54,7 +54,9 @@ test('renaming all speakers persists and regenerates the summary', async ({
       req.method() === 'POST' &&
       /\/transcription\/[^/]+\/minutes$/.test(req.url())
   )
-  await page.getByRole('button', { name: 'Save and create new summary' }).click()
+  await page
+    .getByRole('button', { name: 'Save and create new summary' })
+    .click()
 
   const patch = await savePatch
   const body = patch.postDataJSON() as {

@@ -104,7 +104,12 @@ export async function mockBackend(
       status: 200,
       response: files.recordings,
     },
-    { method: 'GET', path: '/transcriptions', status: 200, response: transcriptions },
+    {
+      method: 'GET',
+      path: '/transcriptions',
+      status: 200,
+      response: transcriptions,
+    },
   ]
 
   await routeStorage(page)

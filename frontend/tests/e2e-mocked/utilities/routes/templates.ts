@@ -35,7 +35,8 @@ export async function routeTemplates(page: Page): Promise<void> {
       template_name?: string | null
     }
     for (const t of userTemplatesState) t.is_default = t.id === body.template_id
-    for (const t of systemTemplates) t.is_default = t.name === body.template_name
+    for (const t of systemTemplates)
+      t.is_default = t.name === body.template_name
     return route.fulfill(json(200, usersMe))
   })
 }

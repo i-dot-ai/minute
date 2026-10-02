@@ -8,7 +8,10 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const sampleMeeting = path.resolve(__dirname, '../../fixtures/sample-meeting.mp3')
+const sampleMeeting = path.resolve(
+  __dirname,
+  '../../fixtures/sample-meeting.mp3'
+)
 
 test.beforeEach(async ({ page }) => {
   await mockBackend(page)

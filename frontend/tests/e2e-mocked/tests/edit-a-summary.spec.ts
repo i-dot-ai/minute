@@ -42,7 +42,9 @@ test('renaming a transcription persists the new title', async ({ page }) => {
   await enterEditMode(page)
 
   const newTitle = 'Renamed meeting title'
-  await page.getByRole('textbox', { name: 'Transcription title' }).fill(newTitle)
+  await page
+    .getByRole('textbox', { name: 'Transcription title' })
+    .fill(newTitle)
 
   const savePatch = page.waitForRequest(
     (req) =>
@@ -65,7 +67,10 @@ test('discarding an edit abandons the change', async ({ page }) => {
 
   let versionPosted = false
   page.on('request', (req) => {
-    if (req.method() === 'POST' && /\/minutes\/[^/]+\/versions$/.test(req.url()))
+    if (
+      req.method() === 'POST' &&
+      /\/minutes\/[^/]+\/versions$/.test(req.url())
+    )
       versionPosted = true
   })
 
@@ -76,14 +81,18 @@ test('discarding an edit abandons the change', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Discard' }).click()
 
-  await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Edit', exact: true })
+  ).toBeVisible()
   const summary = page.getByRole('textbox', { name: 'Summary editor' })
   await expect(summary).not.toContainText('Discarded marker')
   await expect(summary).toContainText("it's changed now and update twice")
   expect(versionPosted).toBe(false)
 })
 
-test('AI edit requests a new version with the instruction', async ({ page }) => {
+test('AI edit requests a new version with the instruction', async ({
+  page,
+}) => {
   await goToSummaryPage(page, meeting1.title!)
   await enterEditMode(page)
 

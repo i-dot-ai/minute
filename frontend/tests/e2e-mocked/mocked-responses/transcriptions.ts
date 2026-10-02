@@ -1,42 +1,42 @@
 import type { PaginatedTranscriptionsResponse } from '@/lib/client/types.gen'
 
 export const transcriptions = {
-  "items": [
+  items: [
     {
-      "id": "36aaf663-9e0a-4dc9-beb5-7aa2a51d57c3",
-      "created_datetime": "2026-09-30T12:37:18.692882Z",
-      "title": "Weekly Student Success Meeting",
-      "text": "Hello everyone. Thank you guys for coming to our weekly student success meeting and let's just get started. So I have our list of chronically absent students here and I've been noticing a troubling trend.",
-      "status": "completed",
-      "expiring": false
+      id: '36aaf663-9e0a-4dc9-beb5-7aa2a51d57c3',
+      created_datetime: '2026-09-30T12:37:18.692882Z',
+      title: 'Weekly Student Success Meeting',
+      text: "Hello everyone. Thank you guys for coming to our weekly student success meeting and let's just get started. So I have our list of chronically absent students here and I've been noticing a troubling trend.",
+      status: 'completed',
+      expiring: false,
     },
     {
-      "id": "5b27b0ed-ce71-4341-8215-e907f95398b4",
-      "created_datetime": "2026-07-09T14:58:26.706158Z",
-      "title": "BBC Charter Renewal Process and Public Consultation",
-      "text": "that no other media producer or even news producer provides, which is things that are embedded in our communities, that speak to the nation, speak to the regions.",
-      "status": "completed",
-      "expiring": false
+      id: '5b27b0ed-ce71-4341-8215-e907f95398b4',
+      created_datetime: '2026-07-09T14:58:26.706158Z',
+      title: 'BBC Charter Renewal Process and Public Consultation',
+      text: 'that no other media producer or even news producer provides, which is things that are embedded in our communities, that speak to the nation, speak to the regions.',
+      status: 'completed',
+      expiring: false,
     },
     {
-      "id": "346065f6-986e-4a14-b5ac-b416722d1988",
-      "created_datetime": "2026-07-09T14:25:57.640983Z",
-      "title": "Dame Judi Dench's Woodland Retreat",
-      "text": "Carl had been having secret fitness sessions and he'd been to a club where drugs were sold. Well, it doesn't look good. And if Jojo did go to prison, his face would not be pretty for much longer.",
-      "status": "completed",
-      "expiring": false
+      id: '346065f6-986e-4a14-b5ac-b416722d1988',
+      created_datetime: '2026-07-09T14:25:57.640983Z',
+      title: "Dame Judi Dench's Woodland Retreat",
+      text: "Carl had been having secret fitness sessions and he'd been to a club where drugs were sold. Well, it doesn't look good. And if Jojo did go to prison, his face would not be pretty for much longer.",
+      status: 'completed',
+      expiring: false,
     },
     {
-      "id": "0831196c-2ab1-4f62-be94-19173a8a2ca4",
-      "created_datetime": "2026-07-09T15:11:55.680946Z",
-      "title": "Global Trends in Coupling and Birth Rates",
-      "text": "the radio times or the Sunday times to find out, oh yes, there's a film on at 8pm, as we used to do maybe 20 years ago. Now there's constant entertainment on demand, whatever you want, whenever you want.",
-      "status": "completed",
-      "expiring": false
-    }
+      id: '0831196c-2ab1-4f62-be94-19173a8a2ca4',
+      created_datetime: '2026-07-09T15:11:55.680946Z',
+      title: 'Global Trends in Coupling and Birth Rates',
+      text: "the radio times or the Sunday times to find out, oh yes, there's a film on at 8pm, as we used to do maybe 20 years ago. Now there's constant entertainment on demand, whatever you want, whenever you want.",
+      status: 'completed',
+      expiring: false,
+    },
   ],
-  "total_count": 4,
-  "page": 1,
-  "page_size": 20,
-  "total_pages": 1
+  total_count: 4,
+  page: 1,
+  page_size: 20,
+  total_pages: 1,
 } satisfies PaginatedTranscriptionsResponse

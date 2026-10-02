@@ -214,6 +214,8 @@ module "audio_worker" {
   source = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v7.0.1-ecs"
   # One ffmpeg process per task; scale horizontally by raising desired_app_count.
   desired_app_count            = terraform.workspace == "prod" ? 4 : 2
+  autoscaling_minimum_target   = terraform.workspace == "prod" ? 4 : 2
+  autoscaling_maximum_target   = terraform.workspace == "prod" ? 8 : 4
   image_tag                    = var.image_tag
   ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-audio-worker"
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
@@ -245,13 +247,20 @@ module "audio_worker" {
   # A single ffmpeg process needs far less than the Ray worker. Each task handles one
   # file at a time and ffmpeg streams input/output through ephemeral disk (not RAM), so
   # memory stays low regardless of file size; the module default ephemeral storage
-  # (21 GiB) comfortably holds one in-flight job (source + converted mp3).
+  # (20 GiB) comfortably holds one in-flight job (source + converted mp3).
   memory = 1024
-  cpu    = terraform.workspace == "prod" ? 1024 : 512
+  cpu    = 512
+
+  wait_for_ready_state = true
+  deployment_circuit_breaker = {
+    enable   = true
+    rollback = true
+  }
 
   http_healthcheck = false
   container_healthcheck = {
-    command     = ["CMD-SHELL", "uv run python audio_worker/healthcheck.py"]
+    # Direct interpreter call (the venv is first on PATH in the image), matching docker-compose.
+    command     = ["CMD-SHELL", "python audio_worker/healthcheck.py"]
     interval    = 60
     retries     = 3
     startPeriod = 60

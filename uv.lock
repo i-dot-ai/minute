@@ -1177,6 +1177,7 @@ audio-worker = [
     { name = "azure-identity" },
     { name = "azure-storage-blob" },
     { name = "ffmpeg-python" },
+    { name = "posthog" },
 ]
 backend = [
     { name = "apscheduler" },
@@ -1239,6 +1240,7 @@ audio-worker = [
     { name = "azure-identity", specifier = ">=1.23.1,<2" },
     { name = "azure-storage-blob", specifier = ">=12.26.0,<13" },
     { name = "ffmpeg-python", specifier = ">=0.2.0,<0.3" },
+    { name = "posthog", specifier = ">=6.6.1,<7" },
 ]
 backend = [
     { name = "apscheduler", specifier = ">=3.11.0,<4" },

@@ -55,6 +55,7 @@ audio-worker = [
     "ffmpeg-python>=0.2.0,<0.3",
     "azure-storage-blob>=12.26.0,<13",
     "azure-identity>=1.23.1,<2",
+    "posthog>=6.6.1,<7",
 ]
 dev = [
     "bumpversion>=0.6.0,<0.7",

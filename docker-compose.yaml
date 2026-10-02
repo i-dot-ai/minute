@@ -97,8 +97,9 @@ services:
           cpus: "1.0"
     env_file:
       - .env
+    # Local bind-mounted recordings are created by other containers with host ownership.
+    user: root
     volumes:
-      - ${AUDIO_WORKER_TMP:-./.audio-worker-tmp}:/tmp
       - type: bind
         source: ./.data
         target: /static
@@ -107,7 +108,8 @@ services:
       - MINISTACK_URL=http://ministack:4566
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
-    stop_grace_period: 10s
+    # > the 20s SQS long-poll, so an idle worker can finish its poll and exit cleanly on SIGTERM
+    stop_grace_period: 120s
     depends_on:
       db:
         condition: service_healthy

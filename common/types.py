@@ -223,6 +223,13 @@ class TranscriptionReadyMessageData(BaseModel):
     duration_seconds: float = Field(description="Duration of the converted audio in seconds")
 
 
+class AudioWorkerMessage(BaseModel):
+    user_id: uuid.UUID
+    transcription_id: uuid.UUID
+    minute_id: uuid.UUID
+    s3_file_key: str  # audio file
+
+
 class WorkerMessage(BaseModel):
     id: uuid.UUID
     type: TaskType

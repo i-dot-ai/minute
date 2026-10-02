@@ -28,7 +28,7 @@ import pytest
 import ray
 import requests
 
-from audio_worker.worker_service import AudioWorkerService
+from audio_worker.worker_service import AudioWorker
 from common.database.postgres_models import ContentSource, JobStatus, Minute, MinuteVersion, Transcription
 from common.services.queue_services import get_queue_service
 from common.services.template_manager import TemplateManager
@@ -58,8 +58,8 @@ def worker_service() -> Generator[WorkerService, Any, None]:
 
 
 @pytest.fixture
-def audio_worker_service() -> AudioWorkerService:
-    return AudioWorkerService()
+def audio_worker_service() -> AudioWorker:
+    return AudioWorker()
 
 
 @pytest.fixture(autouse=True)
@@ -125,7 +125,7 @@ async def load_db_test_instance(file_type: FileTypeTests) -> set[UUID]:
 @pytest.mark.asyncio(loop_scope="session")
 async def test_e2e(worker_service, audio_worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
-    audio_worker_task = asyncio.create_task(audio_worker_service.run())
+    audio_worker_task = start_audio_worker(audio_worker_service)
     transcription_ids = await load_db_test_instance(FileTypeTests.NORMAL)
 
     for transcription_id in transcription_ids:
@@ -143,7 +143,7 @@ async def test_e2e(worker_service, audio_worker_service):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_e2e_chat(worker_service, audio_worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
-    audio_worker_task = asyncio.create_task(audio_worker_service.run())
+    audio_worker_task = start_audio_worker(audio_worker_service)
 
     # needed to ensure sqs queue is purged (not sure if this long is needed for ministack)
     await asyncio.sleep(1)
@@ -166,7 +166,7 @@ async def test_e2e_chat(worker_service, audio_worker_service):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_e2e_zero_bytes(worker_service, audio_worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
-    audio_worker_task = asyncio.create_task(audio_worker_service.run())
+    audio_worker_task = start_audio_worker(audio_worker_service)
     transcription_ids = await load_db_test_instance(FileTypeTests.ZERO_BYTES)
     for transcription_id in transcription_ids:
         await assert_transcription(
@@ -180,7 +180,7 @@ async def test_e2e_zero_bytes(worker_service, audio_worker_service):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_e2e_corrupted(worker_service, audio_worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
-    audio_worker_task = asyncio.create_task(audio_worker_service.run())
+    audio_worker_task = start_audio_worker(audio_worker_service)
     transcription_ids = await load_db_test_instance(FileTypeTests.CORRUPTED)
 
     for transcription_id in transcription_ids:
@@ -209,11 +209,22 @@ async def create_versions_for_ai_edit(transcription_id: UUID):
                 assert response.status_code == 200
 
 
+# Set by the tests that run the audio worker so every polling helper also notices if it dies.
+_audio_worker_task: asyncio.Task | None = None
+
+
+def start_audio_worker(audio_worker_service: AudioWorker) -> asyncio.Task:
+    global _audio_worker_task  # noqa: PLW0603
+    _audio_worker_task = asyncio.create_task(audio_worker_service.run())
+    return _audio_worker_task
+
+
 async def check_worker(receive_task):
-    """If the worker stops running, it's probably thrown an exception. Fail the test."""
+    """If a worker stops running, it's probably thrown an exception. Fail the test."""
     await asyncio.sleep(1)
-    if receive_task.done():
-        pytest.fail(receive_task.result())
+    for task in (receive_task, _audio_worker_task):
+        if task is not None and task.done() and not task.cancelled():
+            pytest.fail(f"worker task exited unexpectedly: {task.exception() or task.result()!r}")
 
 
 async def assert_minute_edit_succeeds(transcription_id: UUID, receive_task: asyncio.Task) -> None:

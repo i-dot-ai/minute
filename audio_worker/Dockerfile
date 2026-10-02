@@ -10,7 +10,7 @@ ENV UV_NO_SYNC=1
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Install system dependencies (ffmpeg lives here now, not in the Ray worker)
-RUN apt-get update && apt-get install -y ffmpeg curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg curl && rm -rf /var/lib/apt/lists/*
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
@@ -21,7 +21,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock README.md ./
 
 # Install project dependencies (without the project itself) for the audio worker
-RUN uv sync --frozen --no-install-project --no-group dev
+RUN uv sync --frozen --no-install-project --no-default-groups --group audio-worker
 
 # Copy the application code
 COPY common common
@@ -31,6 +31,11 @@ COPY audio_worker audio_worker
 # Install the project itself now that the source is present
 RUN uv sync --frozen --no-default-groups --group audio-worker
 
-RUN chmod +x audio_worker/entrypoint.sh
+RUN addgroup --system app && adduser --system --ingroup app app \
+    && mkdir -p /healthcheck \
+    && chown -R app:app /app /healthcheck \
+    && chmod +x audio_worker/entrypoint.sh
+
+USER app
 
 CMD [ "audio_worker/entrypoint.sh" ]

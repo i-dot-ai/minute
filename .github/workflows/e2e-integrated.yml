@@ -41,7 +41,7 @@ jobs:
           EOF
 
       - name: Start the stack
-        run: docker compose up -d --wait db ministack backend worker frontend
+        run: docker compose up -d --wait db ministack backend worker audio_worker frontend
 
       - name: Install Playwright (chromium)
         working-directory: frontend
@@ -60,7 +60,7 @@ jobs:
 
       - name: Dump service logs on failure
         if: failure()
-        run: docker compose logs backend worker
+        run: docker compose logs backend worker audio_worker
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}

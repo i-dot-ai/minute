@@ -9,12 +9,15 @@ Requires the docker-compose Postgres (`make run`).
 
 import uuid
 from datetime import UTC, datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
+from fastapi import HTTPException
 from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from backend.api.routes.transcriptions import create_transcription
 from common.auth import get_user_info
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import (
@@ -25,6 +28,7 @@ from common.database.postgres_models import (
     Transcription,
     User,
 )
+from common.types import AudioWorkerMessage, TranscriptionCreateRequest
 from tests.utils import get_test_client
 
 SEED_TIME = datetime.now(UTC) - timedelta(minutes=10)
@@ -138,25 +142,29 @@ async def test_retry_resets_existing_transcription(failed_transcription, publish
 
     async with AsyncSession(async_engine) as session:
         transcription = await session.get(Transcription, transcription_id)
+        assert transcription is not None
         assert transcription.status == JobStatus.AWAITING_START
         assert transcription.error is None
         assert transcription.dialogue_entries is None
         assert transcription.created_datetime > SEED_TIME
 
         minute = await session.get(Minute, minute_id)
+        assert minute is not None
         assert minute.template_name == "New template"
         assert minute.agenda == "New agenda"
 
         version = await session.get(MinuteVersion, failed_transcription["minute_version_id"])
+        assert version is not None
         assert version.status == JobStatus.AWAITING_START
         assert version.error is None
         assert version.html_content == ""
 
     published = published_messages
     assert len(published) == 1
-    # The audio worker is now the entrypoint: retry enqueues a CONVERT job keyed by
-    # the transcription id (not the minute id).
-    assert published[0].id == transcription_id
+    assert isinstance(published[0], AudioWorkerMessage)
+    assert published[0].transcription_id == transcription_id
+    assert published[0].minute_id == minute_id
+    assert published[0].user_id == transcription.user_id
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -193,3 +201,76 @@ async def test_retry_rejects_minute_with_multiple_versions(published_messages):
         assert published_messages == []
     finally:
         await _delete_transcription(ids["transcription_id"])
+
+
+@pytest.mark.asyncio
+async def test_create_preserves_enqueue_error_when_failure_status_commit_fails(monkeypatch):
+    user = MagicMock()
+    user.id = uuid.uuid4()
+    user.email = "test@example.com"
+    recording = Recording(
+        id=uuid.uuid4(),
+        user_id=user.id,
+        s3_file_key="restricted/user-uploads/test@example.com/audio.mp3",
+    )
+    session = MagicMock()
+    session.get = AsyncMock(return_value=recording)
+    session.commit = AsyncMock(side_effect=[None, RuntimeError("transaction aborted")])
+    session.rollback = AsyncMock()
+    session.exec = AsyncMock()
+
+    async def object_exists(_key: str) -> bool:
+        return True
+
+    monkeypatch.setattr("backend.api.routes.transcriptions.storage_service.check_object_exists", object_exists)
+
+    def publish_failure(_message):
+        msg = "queue unavailable"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr("backend.api.routes.transcriptions.audio_queue_service.publish_message", publish_failure)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await create_transcription(
+            TranscriptionCreateRequest(recording_id=recording.id, template_name="General"),
+            session,
+            user,
+        )
+
+    assert exc_info.value.status_code == 503
+    assert exc_info.value.detail == "Could not enqueue transcription"
+    assert isinstance(exc_info.value.__cause__, RuntimeError)
+    assert str(exc_info.value.__cause__) == "queue unavailable"
+    assert session.rollback.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_create_does_not_reuse_session_when_initial_commit_fails(monkeypatch, published_messages):
+    user = MagicMock()
+    user.id = uuid.uuid4()
+    user.email = "test@example.com"
+    recording = Recording(
+        id=uuid.uuid4(),
+        user_id=user.id,
+        s3_file_key="restricted/user-uploads/test@example.com/audio.mp3",
+    )
+    session = MagicMock()
+    session.get = AsyncMock(return_value=recording)
+    session.commit = AsyncMock(side_effect=RuntimeError("database unavailable"))
+    session.rollback = AsyncMock()
+
+    async def object_exists(_key: str) -> bool:
+        return True
+
+    monkeypatch.setattr("backend.api.routes.transcriptions.storage_service.check_object_exists", object_exists)
+
+    with pytest.raises(RuntimeError, match="database unavailable"):
+        await create_transcription(
+            TranscriptionCreateRequest(recording_id=recording.id, template_name="General"),
+            session,
+            user,
+        )
+
+    assert session.commit.await_count == 1
+    session.rollback.assert_not_awaited()
+    assert published_messages == []

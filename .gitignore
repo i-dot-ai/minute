@@ -116,8 +116,9 @@ config/google-credentials.json
 certs/
 .tmp/
 
-# Worker scratch dir (host bind for container /tmp, see docker-compose.yaml)
+# Worker scratch dirs (host binds for container /tmp, see docker-compose.yaml)
 .worker-tmp/
+.audio-worker-tmp/
 
 # Local-only Compose overrides (never committed)
 docker-compose.override.yaml

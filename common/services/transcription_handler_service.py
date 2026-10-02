@@ -14,7 +14,7 @@ from common.services.posthog_client import capture_event
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.settings import get_settings, get_structured_logger
 from common.templates.citations import combine_consecutive_citations
-from common.types import DialogueEntry, TranscriptionJobMessageData
+from common.types import DialogueEntry, TranscriptionJobMessageData, TranscriptionReadyMessageData
 
 settings = get_settings()
 transcription_manager = TranscriptionServiceManager()
@@ -148,7 +148,7 @@ class TranscriptionHandlerService:
     async def process_transcription(
         cls,
         minute_id: UUID,
-        async_transcription_message_data: TranscriptionJobMessageData | None = None,
+        message_data: TranscriptionJobMessageData | TranscriptionReadyMessageData | None = None,
     ) -> TranscriptionJobMessageData:
         """Process a transcription job and save results. Returns True if job is complete, False otherwise."""
         slogger.set_context_field("minute_id", str(minute_id))
@@ -160,15 +160,21 @@ class TranscriptionHandlerService:
             raise TranscriptionFailedError from e
 
         try:
-            if async_transcription_message_data:
+            if isinstance(message_data, TranscriptionJobMessageData):
+                # polling an in-flight async job
                 transcription_job = await transcription_manager.check_transcription(
-                    adapter_name=async_transcription_message_data.transcription_service,
-                    async_transcription_message_data=async_transcription_message_data,
+                    adapter_name=message_data.transcription_service,
+                    async_transcription_message_data=message_data,
+                )
+            elif isinstance(message_data, TranscriptionReadyMessageData):
+                # a freshly converted recording handed over by the audio worker
+                cls.update_transcription(transcription.id, JobStatus.IN_PROGRESS)
+                transcription_job = await transcription_manager.perform_transcription_steps(
+                    transcription=transcription, duration_seconds=message_data.duration_seconds
                 )
             else:
-                # it's a new transcription job
-                cls.update_transcription(transcription.id, JobStatus.IN_PROGRESS)
-                transcription_job = await transcription_manager.perform_transcription_steps(transcription=transcription)
+                msg = f"Unexpected transcription message data for minute id {minute_id}: {message_data!r}"
+                raise TranscriptionFailedError(msg)
 
             if transcription_job.transcript:
                 dialogue_entries = await cls.identify_speakers(transcription_job.transcript)

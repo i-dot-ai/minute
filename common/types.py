@@ -192,11 +192,14 @@ class MeetingCheck(BaseModel):
 
 
 class TaskType(IntEnum):
-    # messages have a natural ordering in which we want them to happen
+    # messages have a natural ordering in which we want them to happen.
+    # CONVERT is appended (rather than slotted before TRANSCRIPTION) so existing
+    # persisted/in-flight values keep their meaning; the ordering here is cosmetic.
     TRANSCRIPTION = 1
     MINUTE = 2
     EDIT = 3
     INTERACTIVE = 4
+    CONVERT = 5
 
 
 class EditMessageData(BaseModel):
@@ -212,10 +215,25 @@ class TranscriptionJobMessageData(BaseModel):
     transcript: list[DialogueEntry] | None = Field(description="Transcript of the transcription", default=None)
 
 
+class TranscriptionReadyMessageData(BaseModel):
+    """Handed from the audio worker to the Ray transcription worker once a recording has been
+    converted to mono mp3. Carries the audio duration so the transcription worker can pick an
+    adapter without re-running ffprobe."""
+
+    duration_seconds: float = Field(description="Duration of the converted audio in seconds")
+
+
+class AudioWorkerMessage(BaseModel):
+    user_id: uuid.UUID
+    transcription_id: uuid.UUID
+    minute_id: uuid.UUID
+    s3_file_key: str  # audio file
+
+
 class WorkerMessage(BaseModel):
     id: uuid.UUID
     type: TaskType
-    data: EditMessageData | TranscriptionJobMessageData | None = Field(default=None)
+    data: EditMessageData | TranscriptionJobMessageData | TranscriptionReadyMessageData | None = Field(default=None)
 
 
 class LLMHallucination(BaseModel):

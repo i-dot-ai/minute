@@ -22,3 +22,9 @@ jobs:
     with:
       service: worker
     secrets: inherit
+  audio-worker:
+    permissions: write-all
+    uses: ./.github/workflows/build-one.yml
+    with:
+      service: audio_worker
+    secrets: inherit

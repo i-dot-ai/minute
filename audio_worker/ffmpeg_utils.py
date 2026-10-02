@@ -24,23 +24,16 @@ def convert_to_mp3(input_file_path: Path) -> Path:
             logger.error(msg)
             raise RuntimeError(msg)
 
-        # Open the input file
         input_stream = ffmpeg.input(input_file_path)
-
-        # Set up the output stream with the desired parameters
         output_args = {
-            "acodec": "libmp3lame",  # Use LAME MP3 encoder
-            "loglevel": "warning",  # Show warnings and errors
+            "acodec": "libmp3lame",
+            "loglevel": "warning",
             "audio_bitrate": "192k",
             "ac": 1,
         }
-
         output_stream = ffmpeg.output(input_stream, output_file.as_posix(), **output_args)
-
-        # Run the FFmpeg command
         ffmpeg.run(output_stream, overwrite_output=True)
         logger.info("FFmpeg command completed successfully")
-
     except Exception:
         logger.exception("Unexpected error occurred in MP3 conversion")
         raise
@@ -73,15 +66,11 @@ def get_num_audio_channels(file_path: Path) -> int:
             msg = f"ffprobe command failed with return code {result.returncode}. ffprobe stderr: {result.stderr}"
             logger.error(msg)
             return 2
-        channels = result.stdout.strip()
-        channels = int(channels)
-        msg = f"Successfully got number of channels using ffprobe: {channels=}"
-        logger.info(msg)
+        channels = int(result.stdout.strip())
+        logger.info("Successfully got number of channels using ffprobe: channels=%s", channels)
         return channels
-
     except Exception:
-        msg = "Failed to get number of channels"
-        logger.exception(msg)
+        logger.exception("Failed to get number of channels")
         return 2
 
 
@@ -110,13 +99,9 @@ def get_duration(file_path: Path) -> float:
             msg = f"ffprobe command failed with return code {result.returncode},ffprobe stderr: {result.stderr}"
             logger.error(msg)
             return 2
-        duration = result.stdout.strip()
-        duration = float(duration)
-        msg = f"Successfully got duration using ffprobe: {duration=}"
-        logger.info(msg)
+        duration = float(result.stdout.strip())
+        logger.info("Successfully got duration using ffprobe: duration=%s", duration)
         return duration
-
-    except Exception as e:
-        msg = f"Failed to get duration: {e!s}"
-        logger.exception(msg)
+    except Exception as exc:
+        logger.exception("Failed to get duration: %s", exc)
         return 14400.0

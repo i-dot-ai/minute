@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import aioboto3
-import aiofiles
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
@@ -43,13 +42,12 @@ class S3StorageService(StorageService):
 
     @classmethod
     async def upload(cls, key: str, path: Path) -> None:
-        async with (
-            aiofiles.open(path, "rb") as file,
-            _create_boto3_s3_client() as session,
-        ):
-            file_content = await file.read()
-
-            await session.put_object(Bucket=settings.DATA_S3_BUCKET, Key=key, Body=file_content)
+        # Stream from disk via the managed transfer (automatic multipart) rather than
+        # reading the whole file into memory. This keeps the audio worker's memory flat
+        # regardless of file size and is required for objects >5GB, which exceed the
+        # single-request put_object limit.
+        async with _create_boto3_s3_client() as session:
+            await session.upload_file(str(path), settings.DATA_S3_BUCKET, key)
 
     @classmethod
     async def download(cls, key: str, path: Path) -> None:
@@ -93,6 +91,6 @@ class S3StorageService(StorageService):
                 return True
 
     @classmethod
-    async def delete_object(cls, key: str) -> None:
+    async def delete(cls, key: str) -> None:
         async with _create_boto3_s3_client() as session:
-            session.delete_object(Bucket=settings.DATA_S3_BUCKET, Key=key)
+            await session.delete_object(Bucket=settings.DATA_S3_BUCKET, Key=key)

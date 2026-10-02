@@ -6,11 +6,16 @@ env:
   DOCKER_BUILDKIT: 1
 
 on:
+  pull_request:
   push:
     paths:
       - backend/**
       - common/**
       - worker/**
+      - audio_worker/**
+      - docker-compose.yaml
+      - terraform/**
+      - .github/workflows/**
       - tests/**
       - alembic/**
       - frontend/**
@@ -23,6 +28,7 @@ on:
     branches:
       - "main"
       - "feature/**"
+      - "feat/**"
       - "chore/**"
       - "bugfix/**"
       - "hotfix/**"

@@ -46,8 +46,13 @@ backend = [
 worker = [
     "google-genai>=1.10.0,<2",
     "openai>=1.42.0,<2",
-    "ffmpeg-python>=0.2.0,<0.3",
     "ray[default]>=2.53.0,<3",
+    "azure-storage-blob>=12.26.0,<13",
+    "azure-identity>=1.23.1,<2",
+    "posthog>=6.6.1,<7",
+]
+audio-worker = [
+    "ffmpeg-python>=0.2.0,<0.3",
     "azure-storage-blob>=12.26.0,<13",
     "azure-identity>=1.23.1,<2",
     "posthog>=6.6.1,<7",
@@ -91,6 +96,7 @@ testpaths = [
 [tool.hatch.build.targets.sdist]
 include = [
     "worker",
+    "audio_worker",
     "backend",
     "common",
 ]
@@ -98,6 +104,7 @@ include = [
 [tool.hatch.build.targets.wheel]
 include = [
     "worker",
+    "audio_worker",
     "backend",
     "common",
 ]

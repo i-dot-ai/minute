@@ -1,14 +1,11 @@
 import logging
 import tempfile
-import uuid
 from pathlib import Path
 
 import sentry_sdk
 
-from common.audio.ffmpeg import convert_to_mp3, get_duration, get_num_audio_channels
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
-from common.database.postgres_database import SessionLocal
-from common.database.postgres_models import Recording, Transcription
+from common.database.postgres_models import Transcription
 from common.services.exceptions import TranscriptionFailedError
 from common.services.storage_services import get_storage_service
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
@@ -21,7 +18,6 @@ from common.types import TranscriptionJobMessageData
 logger = logging.getLogger(__name__)
 
 settings = get_settings()
-SUPPORTED_FORMATS = {".mp3"}
 # add any new adapters here
 _adapters = {
     adapter.name: adapter for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter, AzureBatchTranscriptionAdapter]
@@ -72,15 +68,19 @@ class TranscriptionServiceManager:
                 entry["text"] = convert_american_to_british_spelling(entry["text"])
         return transcription_job
 
-    async def perform_transcription_steps(self, transcription: Transcription) -> TranscriptionJobMessageData:
+    async def perform_transcription_steps(
+        self, transcription: Transcription, duration_seconds: float
+    ) -> TranscriptionJobMessageData:
+        """Transcribe an already-converted recording.
+
+        The audio worker has already converted the source to a mono mp3 and created the
+        corresponding Recording row, so recordings[0] is transcription-ready and the duration
+        is supplied by the caller (no ffprobe here).
+        """
         recording = transcription.recordings[0]
-        file_extension = Path(recording.s3_file_key).suffix.lower()
         with tempfile.TemporaryDirectory() as tempdir:
-            temp_file_path = Path(tempdir) / Path(recording.s3_file_key).name
-            await storage_service.download(recording.s3_file_key, temp_file_path)
-            recording, file_path, duration_seconds = await self.get_recording_to_process(
-                recording=recording, temp_file_path=temp_file_path, file_extension=file_extension
-            )
+            file_path = Path(tempdir) / Path(recording.s3_file_key).name
+            await storage_service.download(recording.s3_file_key, file_path)
             with sentry_sdk.start_transaction(
                 op="process", name="collect_file_metadata_before_transcription"
             ) as transaction:
@@ -100,33 +100,3 @@ class TranscriptionServiceManager:
         if not transcription_job.transcript:
             transcription_job = await self.check_transcription(adapter.name, transcription_job)
         return transcription_job
-
-    @classmethod
-    async def get_recording_to_process(
-        cls, recording: Recording, temp_file_path: Path, file_extension: str
-    ) -> tuple[Recording, Path, float]:
-        num_channels = get_num_audio_channels(temp_file_path)
-        if file_extension in SUPPORTED_FORMATS and num_channels == 1:
-            duration = get_duration(temp_file_path)
-            return recording, temp_file_path, duration
-
-        with sentry_sdk.start_transaction(op="process", name="convert_mp3") as transaction:
-            transaction.set_data("file_extension", file_extension)
-            new_file_path = convert_to_mp3(temp_file_path)
-
-        duration = get_duration(new_file_path)
-
-        new_recording_id = uuid.uuid4()
-        new_s3_key = str(Path(recording.s3_file_key).with_name(f"{new_recording_id}.mp3"))
-        await storage_service.upload(new_s3_key, new_file_path)
-        with SessionLocal() as session:
-            new_recording = Recording(
-                id=new_recording_id,
-                s3_file_key=new_s3_key,
-                user_id=recording.user_id,
-                transcription_id=recording.transcription_id,
-            )
-            session.add(new_recording)
-            session.commit()
-            session.refresh(new_recording)
-        return new_recording, new_file_path, duration

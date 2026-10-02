@@ -38,6 +38,8 @@ jobs:
         working-directory: frontend
         env:
           CI: "true"
+          ENVIRONMENT: local
+          AUTH_API_URL: placeholder
         run: npm run test:e2e:mocked
 
       - name: Upload Playwright report

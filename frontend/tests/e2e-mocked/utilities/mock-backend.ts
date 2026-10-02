@@ -1,13 +1,50 @@
-import { readFileSync } from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import type { Page } from '@playwright/test'
 import type {
   JobStatus,
   MinuteListItem,
+  MinuteVersionResponse,
+  RecordingCreateResponse,
+  SingleRecording,
+  TranscriptionCreateResponse,
   TranscriptionGetResponse,
 } from '@/lib/client/types.gen'
 
+import { meeting1 } from '../mocked-responses/mock-meeting-1'
+import { meeting1Minutes } from '../mocked-responses/mock-meeting-1.minutes'
+import { meeting1Recordings } from '../mocked-responses/mock-meeting-1.recordings'
+import { meeting1Versions } from '../mocked-responses/mock-meeting-1.versions'
+import { meeting2 } from '../mocked-responses/mock-meeting-2'
+import { meeting2Minutes } from '../mocked-responses/mock-meeting-2.minutes'
+import { meeting2Recordings } from '../mocked-responses/mock-meeting-2.recordings'
+import { meeting2Versions } from '../mocked-responses/mock-meeting-2.versions'
+import { templates } from '../mocked-responses/templates'
+import { transcriptions } from '../mocked-responses/transcriptions'
+import { usersMe } from '../mocked-responses/users.me'
+import { userTemplates } from '../mocked-responses/user-templates'
+
+type Scenario = {
+  transcription: TranscriptionGetResponse
+  minutes: Array<MinuteListItem>
+  versions: Array<MinuteVersionResponse>
+  recordings: Array<SingleRecording>
+}
+
+const SCENARIOS = {
+  'meeting-1': {
+    transcription: meeting1,
+    minutes: meeting1Minutes,
+    versions: meeting1Versions,
+    recordings: meeting1Recordings,
+  },
+  'meeting-2': {
+    transcription: meeting2,
+    minutes: meeting2Minutes,
+    versions: meeting2Versions,
+    recordings: meeting2Recordings,
+  },
+} satisfies Record<string, Scenario>
+
+type ScenarioName = keyof typeof SCENARIOS
 
 type Mock = {
   method: string
@@ -16,48 +53,18 @@ type Mock = {
   response: unknown
 }
 
-type Scenario = {
-  transcription: string
-  minutes: string
-  versions: string
-  recordings: string
-}
-
-type ScenarioName = keyof typeof SCENARIOS
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const RESPONSES_DIR = path.resolve(__dirname, '../mocked-responses')
-
 const UPLOAD_URL = 'https://blob.test.local/upload'
-
-const SCENARIOS: Record<string, Scenario> = {
-  'meeting-1': {
-    transcription: 'mock-meeting-1.json',
-    minutes: 'mock-meeting-1.minutes.json',
-    versions: 'mock-meeting-1.versions.json',
-    recordings: 'mock-meeting-1.recordings.json',
-  },
-  'meeting-2': {
-    transcription: 'mock-meeting-2.json',
-    minutes: 'mock-meeting-2.minutes.json',
-    versions: 'mock-meeting-2.versions.json',
-    recordings: 'mock-meeting-2.recordings.json',
-  },
-}
-
-function fixture<T = unknown>(file: string): T {
-  return JSON.parse(readFileSync(path.join(RESPONSES_DIR, file), 'utf-8')) as T
-}
 
 export async function mockBackend(
   page: Page,
-  scenario:  ScenarioName = 'meeting-1',
+  scenario: ScenarioName = 'meeting-1',
   status?: JobStatus
 ): Promise<void> {
   const files = SCENARIOS[scenario]
 
-  const transcription = fixture<TranscriptionGetResponse>(files.transcription)
-  const minutes = fixture<MinuteListItem[]>(files.minutes)
+  // Clone so per-call status overrides don't mutate the shared fixture.
+  const transcription: TranscriptionGetResponse = { ...files.transcription }
+  const minutes = files.minutes
   const transcriptionId = transcription.id
   const minuteId = minutes[0]?.id
 
@@ -72,31 +79,34 @@ export async function mockBackend(
       method: 'GET',
       path: '/templates',
       status: 200,
-      response: fixture('templates.json'),
+      response: templates,
     },
     {
       method: 'GET',
       path: '/user-templates',
       status: 200,
-      response: fixture('user-templates.json'),
+      response: userTemplates,
     },
     {
       method: 'GET',
       path: '/users/me',
       status: 200,
-      response: fixture('users.me.json'),
+      response: usersMe,
     },
     {
       method: 'POST',
       path: '/recordings',
       status: 200,
-      response: { id: `${scenario}-recording`, upload_url: UPLOAD_URL },
+      response: {
+        id: `${scenario}-recording`,
+        upload_url: UPLOAD_URL,
+      } satisfies RecordingCreateResponse,
     },
     {
       method: 'POST',
       path: '/transcriptions',
       status: 201,
-      response: { id: transcriptionId },
+      response: { id: transcriptionId } satisfies TranscriptionCreateResponse,
     },
     {
       method: 'GET',
@@ -114,19 +124,19 @@ export async function mockBackend(
       method: 'GET',
       path: `/minutes/${minuteId}/versions`,
       status: 200,
-      response: fixture(files.versions),
+      response: files.versions,
     },
     {
       method: 'GET',
       path: `/transcriptions/${transcriptionId}/recordings`,
       status: 200,
-      response: fixture(files.recordings),
+      response: files.recordings,
     },
     {
       method: 'GET',
       path: '/transcriptions',
       status: 200,
-      response: fixture('transcriptions.json'),
+      response: transcriptions,
     },
   ]
 

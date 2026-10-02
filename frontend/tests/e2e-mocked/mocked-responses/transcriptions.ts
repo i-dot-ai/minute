@@ -1,4 +1,6 @@
-{
+import type { PaginatedTranscriptionsResponse } from '@/lib/client/types.gen'
+
+export const transcriptions = {
   "items": [
     {
       "id": "36aaf663-9e0a-4dc9-beb5-7aa2a51d57c3",
@@ -37,4 +39,4 @@
   "page": 1,
   "page_size": 20,
   "total_pages": 1
-}
+} satisfies PaginatedTranscriptionsResponse

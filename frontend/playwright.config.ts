@@ -55,7 +55,21 @@ export default defineConfig({
     {
       name: 'e2e-mocked-chromium',
       testDir: './tests/e2e-mocked',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        // Grant mic access up front and feed a synthetic audio device so the
+        // in-person recording flow never hits the native permission prompt
+        // (which Playwright can't drive) and getUserMedia resolves with a fake
+        // stream. Chromium-only flags — the mic-dependent spec is pinned to
+        // this project (see @chromium-only tag) for that reason.
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+          ],
+        },
+      },
     },
     {
       name: 'e2e-mocked-firefox',

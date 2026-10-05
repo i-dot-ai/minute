@@ -10,7 +10,9 @@ const sampleMeeting = path.resolve(
   '../../fixtures/sample-meeting.mp3'
 )
 
-const template = userTemplates.find((t) => t.name === 'Project kickoff')!
+const template = userTemplates.find(
+  (userTemplate) => userTemplate.name === 'Project kickoff'
+)!
 
 test.beforeEach(async ({ page }) => {
   await mockBackend(page)

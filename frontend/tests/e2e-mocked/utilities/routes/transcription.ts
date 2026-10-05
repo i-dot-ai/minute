@@ -1,9 +1,25 @@
-import type { Page } from '@playwright/test'
+import type { Page, Request } from '@playwright/test'
 import type {
   MinuteListItem,
   TranscriptionGetResponse,
 } from '@/lib/client/types.gen'
-import { json } from './http'
+import { json } from './general'
+
+export function waitForTranscriptPatch(page: Page): Promise<Request> {
+  return page.waitForRequest(
+    (request) =>
+      request.method() === 'PATCH' &&
+      /\/transcriptions\/[^/]+$/.test(request.url())
+  )
+}
+
+export function waitForSummaryRegenerate(page: Page): Promise<Request> {
+  return page.waitForRequest(
+    (request) =>
+      request.method() === 'POST' &&
+      /\/transcription\/[^/]+\/minutes$/.test(request.url())
+  )
+}
 
 export async function routeTranscription(
   page: Page,

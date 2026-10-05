@@ -3,7 +3,7 @@ import type {
   ContentSource,
   MinuteVersionResponse,
 } from '@/lib/client/types.gen'
-import { json } from './http'
+import { json } from './general'
 
 export async function routeMinuteVersions(
   page: Page,

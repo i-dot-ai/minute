@@ -3,6 +3,10 @@ import {
   goToTranscriptPage,
   enterEditMode,
 } from '@/tests/e2e-mocked/utilities/navigation'
+import {
+  waitForTranscriptPatch,
+  waitForSummaryRegenerate,
+} from '@/tests/e2e-mocked/utilities/routes/transcription'
 import { meeting1 } from '@/tests/e2e-mocked/mocked-responses/mock-meeting-1'
 import { test, expect } from '@playwright/test'
 
@@ -17,14 +21,11 @@ test('editing a transcript entry persists the change', async ({ page }) => {
   const newText = 'Edited transcript entry text'
   await page.getByLabel('Transcript text for entry 1').fill(newText)
 
-  const savePatch = page.waitForRequest(
-    (req) =>
-      req.method() === 'PATCH' && /\/transcriptions\/[^/]+$/.test(req.url())
-  )
+  const savePatch = waitForTranscriptPatch(page)
   await page.getByRole('button', { name: 'Save' }).click()
 
-  const request = await savePatch
-  const body = request.postDataJSON() as {
+  const patchRequest = await savePatch
+  const body = patchRequest.postDataJSON() as {
     dialogue_entries: Array<{ text: string }>
   }
   expect(body.dialogue_entries[0].text).toBe(newText)
@@ -45,24 +46,17 @@ test('renaming all speakers persists and regenerates the summary', async ({
     await page.getByLabel(`Speaker ${index + 1}`).fill(name)
   }
 
-  const savePatch = page.waitForRequest(
-    (req) =>
-      req.method() === 'PATCH' && /\/transcriptions\/[^/]+$/.test(req.url())
-  )
-  const regeneratePost = page.waitForRequest(
-    (req) =>
-      req.method() === 'POST' &&
-      /\/transcription\/[^/]+\/minutes$/.test(req.url())
-  )
+  const savePatch = waitForTranscriptPatch(page)
+  const regeneratePost = waitForSummaryRegenerate(page)
   await page
     .getByRole('button', { name: 'Save and create new summary' })
     .click()
 
-  const patch = await savePatch
-  const body = patch.postDataJSON() as {
+  const patchRequest = await savePatch
+  const body = patchRequest.postDataJSON() as {
     dialogue_entries: Array<{ speaker: string }>
   }
-  const speakers = new Set(body.dialogue_entries.map((e) => e.speaker))
+  const speakers = new Set(body.dialogue_entries.map((entry) => entry.speaker))
   expect(speakers).toEqual(new Set(renames))
 
   await regeneratePost

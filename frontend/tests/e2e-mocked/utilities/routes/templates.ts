@@ -3,7 +3,7 @@ import type { TemplateMetadata, TemplateResponse } from '@/lib/client/types.gen'
 import { templates } from '../../mocked-responses/templates'
 import { userTemplates } from '../../mocked-responses/user-templates'
 import { usersMe } from '../../mocked-responses/users.me'
-import { json } from './http'
+import { json } from './general'
 
 export async function routeTemplates(page: Page): Promise<void> {
   const systemTemplates: TemplateMetadata[] = structuredClone(templates)
@@ -23,7 +23,7 @@ export async function routeTemplates(page: Page): Promise<void> {
     if (route.request().method() !== 'GET') return route.fallback()
     const { pathname } = new URL(route.request().url())
     const id = pathname.split('/').at(-1)
-    const found = userTemplatesState.find((t) => t.id === id)
+    const found = userTemplatesState.find((template) => template.id === id)
     if (!found) return route.fallback()
     return route.fulfill(json(200, found))
   })
@@ -34,9 +34,10 @@ export async function routeTemplates(page: Page): Promise<void> {
       template_id?: string | null
       template_name?: string | null
     }
-    for (const t of userTemplatesState) t.is_default = t.id === body.template_id
-    for (const t of systemTemplates)
-      t.is_default = t.name === body.template_name
+    for (const template of userTemplatesState)
+      template.is_default = template.id === body.template_id
+    for (const template of systemTemplates)
+      template.is_default = template.name === body.template_name
     return route.fulfill(json(200, usersMe))
   })
 }

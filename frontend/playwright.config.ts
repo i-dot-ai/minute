@@ -12,6 +12,7 @@ import { defineConfig, devices } from '@playwright/test'
  */
 
 const BASE_URL = 'http://localhost:3000'
+const PW_WEBSERVER_CMD = process.env.PW_WEBSERVER_CMD
 
 export default defineConfig({
   testDir: './tests',
@@ -64,7 +65,7 @@ export default defineConfig({
   webServer: process.env.PW_NO_WEBSERVER
     ? undefined
     : {
-        command: 'npm run build && npm run start',
+        command: PW_WEBSERVER_CMD ?? 'npm run dev',
         url: 'http://localhost:3000',
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

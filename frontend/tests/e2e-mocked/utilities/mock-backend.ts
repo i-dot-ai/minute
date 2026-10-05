@@ -21,8 +21,12 @@ import { transcriptions } from '../mocked-responses/transcriptions'
 import { usersMe } from '../mocked-responses/users.me'
 
 import { routeMinuteVersions } from './routes/versions'
-import { routeStatic, type StaticMock } from './routes/static'
-import { routeStorage, UPLOAD_URL } from './routes/storage'
+import {
+  routeStatic,
+  type StaticMock,
+  routeStorage,
+  UPLOAD_URL,
+} from './routes/general'
 import { routeTemplates } from './routes/templates'
 import { routeTranscription } from './routes/transcription'
 
@@ -55,13 +59,15 @@ export async function mockBackend(
   scenario: ScenarioName = 'meeting-1',
   status?: JobStatus
 ): Promise<void> {
-  const files = SCENARIOS[scenario]
+  const scenarioData = SCENARIOS[scenario]
 
-  const transcription: TranscriptionGetResponse = { ...files.transcription }
-  const minutes = files.minutes
+  const transcription: TranscriptionGetResponse = {
+    ...scenarioData.transcription,
+  }
+  const minutes = scenarioData.minutes
   const transcriptionId = transcription.id
   const minuteId = minutes[0]?.id
-  const versions: MinuteVersionResponse[] = [...files.versions]
+  const versions: MinuteVersionResponse[] = [...scenarioData.versions]
 
   if (status) {
     transcription.status = status
@@ -102,7 +108,7 @@ export async function mockBackend(
       method: 'GET',
       path: `/transcriptions/${transcriptionId}/recordings`,
       status: 200,
-      response: files.recordings,
+      response: scenarioData.recordings,
     },
     {
       method: 'GET',

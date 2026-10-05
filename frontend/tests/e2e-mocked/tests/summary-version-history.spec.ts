@@ -31,7 +31,7 @@ test('switching between summaries navigates to the selected one', async ({
 
   const nav = page.getByRole('navigation', { name: 'Summaries and transcript' })
   const executive = meeting2Minutes.find(
-    (m) => m.template_name === 'Executive summary'
+    (minute) => minute.template_name === 'Executive summary'
   )!
 
   await nav.getByRole('link', { name: 'Executive summary' }).first().click()

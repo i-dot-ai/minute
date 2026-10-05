@@ -36,6 +36,7 @@ jobs:
           CI: "true"
           ENVIRONMENT: local
           AUTH_API_URL: placeholder
+          PW_WEBSERVER_CMD: npm run build && npm run start
         run: npm run test:e2e:mocked
 
       - name: Upload Playwright report

@@ -36,7 +36,8 @@ jobs:
           CI: "true"
           ENVIRONMENT: local
           AUTH_API_URL: placeholder
-          PW_WEBSERVER_CMD: npm run build && npm run start
+          BACKEND_HOST: http://localhost:8080 # To prevent warnings in the lgos but not actually used
+          PW_WEBSERVER_CMD: npm run build && node .next/standalone/server.js
         run: npm run test:e2e:mocked
 
       - name: Upload Playwright report

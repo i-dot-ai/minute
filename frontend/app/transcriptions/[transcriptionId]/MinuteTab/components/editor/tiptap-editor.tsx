@@ -129,6 +129,12 @@ function SimpleEditor({
       CitationExtension,
       HardBreak,
     ],
+    editorProps: {
+      attributes: {
+        'aria-label': 'Summary editor',
+        role: 'textbox',
+      },
+    },
     onUpdate: ({ editor }) => {
       onContentChange(editor.getHTML())
     },

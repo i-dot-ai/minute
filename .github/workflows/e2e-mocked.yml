@@ -1,9 +1,7 @@
 name: E2E Mocked
 
 on:
-  pull_request:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   e2e-mocked:

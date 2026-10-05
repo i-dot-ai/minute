@@ -37,7 +37,7 @@ jobs:
           ENVIRONMENT: local
           AUTH_API_URL: placeholder
           BACKEND_HOST: http://localhost:8080 # To prevent warnings in the lgos but not actually used
-          PW_WEBSERVER_CMD: npm run build && next run start
+          PW_WEBSERVER_CMD: npm run build && npm run start
         run: npm run test:e2e:mocked
 
       - name: Upload Playwright report

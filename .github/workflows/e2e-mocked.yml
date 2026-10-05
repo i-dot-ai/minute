@@ -1,7 +1,9 @@
 name: E2E Mocked
 
 on:
-  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main]
 
 jobs:
   e2e-mocked:
@@ -35,7 +37,7 @@ jobs:
           ENVIRONMENT: local
           AUTH_API_URL: placeholder
           BACKEND_HOST: http://localhost:8080 # To prevent warnings in the lgos but not actually used
-          PW_WEBSERVER_CMD: npm run build && node .next/standalone/server.js
+          PW_WEBSERVER_CMD: npm run build && next run start
         run: npm run test:e2e:mocked
 
       - name: Upload Playwright report

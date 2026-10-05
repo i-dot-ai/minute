@@ -31,7 +31,11 @@ export default function RecordPage() {
 
   if (missingSession) return null
 
-  const handleStarted = (id: string) => router.push(`/new/status/${id}`)
+  // use window.location.assign instead of router.push to avoid
+  // hang if a redeployment happens during your meeting
+  const handleStarted = (id: string) =>
+    window.location.assign(`/new/status/${id}`)
+
   const handleDiscard = () => {
     reset()
     router.push('/')

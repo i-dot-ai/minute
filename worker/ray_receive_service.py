@@ -23,7 +23,7 @@ from common.types import (
     TranscriptionReadyMessageData,
     WorkerMessage,
 )
-from worker.healthcheck import HEARTBEAT_DIR, ensure_heartbeat_dir
+from common.worker_healthcheck import HEARTBEAT_DIR, ensure_heartbeat_dir
 
 ray_logger = logging.getLogger("ray")
 ray_logger.setLevel(logging.WARNING)

@@ -3,12 +3,12 @@ import threading
 from pathlib import Path
 
 from audio_worker.audio_service import AudioConversionFailedError, AudioService
-from audio_worker.healthcheck import HEARTBEAT_DIR
 from audio_worker.signal_handler import SignalHandler
 from common.services.queue_services import get_queue_service
 from common.services.queue_services.base import QueueService
 from common.settings import get_settings, get_structured_logger
 from common.types import AudioWorkerMessage
+from common.worker_healthcheck import HEARTBEAT_DIR
 
 settings = get_settings()
 

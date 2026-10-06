@@ -55,12 +55,42 @@ export async function routeTemplates(page: Page): Promise<void> {
   })
 
   await page.route('**/api/proxy/user-templates/*', (route) => {
-    if (route.request().method() !== 'GET') return route.fallback()
+    const method = route.request().method()
     const { pathname } = new URL(route.request().url())
     const id = pathname.split('/').at(-1)
-    const found = userTemplatesState.find((template) => template.id === id)
-    if (!found) return route.fallback()
-    return route.fulfill(json(200, found))
+    const index = userTemplatesState.findIndex((template) => template.id === id)
+    if (index === -1) return route.fallback()
+
+    if (method === 'GET') {
+      return route.fulfill(json(200, userTemplatesState[index]!))
+    }
+    if (method !== 'PATCH') return route.fallback()
+
+    const body = route.request().postDataJSON() as CreateUserTemplateRequest
+    const existing = userTemplatesState[index]!
+    const questions: Question[] | null =
+      existing.type === 'form'
+        ? (body.questions ?? [])
+            .slice()
+            .sort((a, b) => a.position - b.position)
+            .map((question, questionIndex) => ({
+              id: `${existing.id}-question-${questionIndex}`,
+              position: question.position,
+              title: question.title,
+              description: question.description,
+            }))
+        : null
+
+    const updated: TemplateResponse = {
+      ...existing,
+      name: body.name,
+      content: body.content,
+      description: body.description,
+      questions,
+      updated_datetime: new Date().toISOString(),
+    }
+    userTemplatesState[index] = updated
+    return route.fulfill(json(200, updated))
   })
 
   await page.route('**/api/proxy/users/default-template', (route) => {

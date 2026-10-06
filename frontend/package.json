@@ -17,6 +17,7 @@
     "public-site:build": "npm run build:css && node scripts/build-public-site.mjs"
   },
   "dependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@hey-api/client-next": "^0.5.1",
     "@i-dot-ai-npm/utilities-auth": "^1.0.0-EN-1538.1",
     "@radix-ui/react-alert-dialog": "^1.1.2",

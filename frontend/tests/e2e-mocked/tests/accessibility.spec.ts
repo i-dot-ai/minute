@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { meeting1 } from '../mocked-responses/mock-meeting-1'
 import { meeting1Minutes } from '../mocked-responses/mock-meeting-1.minutes'

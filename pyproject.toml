@@ -23,6 +23,7 @@ dependencies = [
     "boto3>=1.35.3,<2",
     "fastapi>=0.112.0",
     "sentry-sdk[fastapi]>=2.18.0,<3",
+    "jinja2>=3.1,<4",
     "sqlalchemy[asyncio]>=2.0.42,<3",
     "asyncpg>=0.30.0,<0.31",
     "markdownify>=1.2.0,<2",

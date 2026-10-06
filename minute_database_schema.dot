@@ -1,0 +1,32 @@
+digraph schema {
+  graph [bgcolor="#1f2023", rankdir=TB, pad=0.25, nodesep=0.6, ranksep=0.9, splines=ortho]
+  node [shape=record, style=filled, fillcolor="#3b3d40", color="#73767c", fontcolor="#eeeeee", fontname="Helvetica", margin="0.15,0.1"]
+  edge [dir=none, color="#b8bcc4", fontcolor="#d5d7dc", fontname="Helvetica", fontsize=9]
+
+  user [label="{user|PK  id : uuid\lcreated_datetime : timestamptz\lupdated_datetime : timestamptz\lemail : varchar\ldata_retention_days : integer?\lFK  default_template_id : uuid?\ldefault_template_name : varchar?\l}"]
+  transcription [label="{transcription|PK  id : uuid\lcreated_datetime : timestamptz\lupdated_datetime : timestamptz\ltitle : varchar?\ldialogue_entries : jsonb?\lstatus : jobstatus\lerror : varchar?\lFK  user_id : uuid?\lminute_versions : jsonb?  [legacy, unused]\l}"]
+  recording [label="{recording|PK  id : uuid\lcreated_datetime : timestamptz\lFK  user_id : uuid\ls3_file_key : varchar\lFK  transcription_id : uuid?\l}"]
+  minute [label="{minute|PK  id : uuid\lcreated_datetime : timestamptz\lupdated_datetime : timestamptz\lFK  transcription_id : uuid\ltemplate_name : varchar\lFK  user_template_id : uuid?\lagenda : varchar?\l}"]
+  minute_version [label="{minute_version|PK  id : uuid\lcreated_datetime : timestamptz\lupdated_datetime : timestamptz\lFK  minute_id : uuid\lhtml_content : varchar\lstatus : jobstatus\lerror : varchar?\lai_edit_instructions : varchar?\lcontent_source : contentsource\l}"]
+  user_template [label="{user_template|PK  id : uuid\lcreated_datetime : timestamptz\lupdated_datetime : timestamptz\lname : varchar\lcontent : varchar\ldescription : varchar\ltype : templatetype\lFK  user_id : uuid?\l}"]
+  template_question [label="{template_question|PK  id : uuid\lposition : integer\ltitle : varchar\ldescription : varchar\lFK  user_template_id : uuid\l}"]
+  chat [fillcolor="#343538", fontcolor="#aeb1b7", label="{chat  [unused; removal deferred]|PK  id : uuid\lcreated_datetime : timestamptz\lupdated_datetime : timestamptz\lFK  transcription_id : uuid\luser_content : varchar\lassistant_content : varchar?\lstatus : jobstatus\lerror : varchar?\l}"]
+  hallucination [fillcolor="#343538", fontcolor="#aeb1b7", label="{hallucination  [unused; removal deferred]|PK  id : uuid\lcreated_datetime : timestamptz\lupdated_datetime : timestamptz\lFK  minute_version_id : uuid\lhallucination_type : hallucinationtype\lhallucination_text : varchar?\lhallucination_reason : varchar?\l}"]
+  alembic_version [label="{alembic_version|PK  version_num : varchar(32)\l}"]
+
+  { rank=same; transcription; user_template }
+  { rank=same; recording; minute; chat; template_question }
+  { rank=same; minute_version; alembic_version }
+
+  user -> transcription [label="user_id → id"]
+  user -> recording [label="user_id → id"]
+  user -> user_template [label="user_id → id"]
+  user -> user_template [label="default_template_id → id", style=dashed, constraint=false]
+  transcription -> recording [label="transcription_id → id"]
+  transcription -> minute [label="transcription_id → id"]
+  transcription -> chat [label="transcription_id → id"]
+  user_template -> minute [label="user_template_id → id", constraint=false]
+  user_template -> template_question [label="user_template_id → id"]
+  minute -> minute_version [label="minute_id → id"]
+  minute_version -> hallucination [label="minute_version_id → id"]
+}

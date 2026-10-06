@@ -37,23 +37,13 @@ def get_ai_edit_initial_messages(
     ]
 
 
-def get_chat_with_transcript_system_message(transcript: list[DialogueEntry]) -> dict[str, str]:
-    return {
-        "role": "system",
-        "content": f"""You are given a transcript of a meeting. Your role is to respond to the user's requests about the transcript.
-Your answers should only use the information contained in the transcript. Do not reference anything outside of the transcript.
-You should add citations where necessary. Each citation should be of the form [n] where n is the index of the transcript item. Each citation should be one number surrounded by square brackets. For example, you must do [80][81] not [80, 81]
-Here is the meeting transcript:\n{transcript_as_index_speaker_and_utterance(transcript)}""",
-    }
-
-
 def get_basic_minutes_prompt(
     transcript: list[DialogueEntry],
 ) -> list[dict[str, str]]:
     """
     A function to generate a basic meeting minutes prompt based on a provided transcript of dialogues. It combines
     a generic prompt with the transcript entries to create a structured message list. Intended to be used
-    as a fall back when no other summary type is suitable, due to the likelihood of hallucinations.
+    as a fallback when no other summary type is suitable.
     """
     prompt = """Provide a simple summary of the meeting."""
     return [
@@ -90,15 +80,6 @@ def get_meeting_detection_prompt(transcript: list[DialogueEntry]) -> list[dict[s
             " Return True if the transcript appears to be a long meeting, and False if it appears to be a short meeting.",
         },
         get_transcript_messages(transcript),
-    ]
-
-
-def get_hallucination_detection_messages() -> list[dict[str, str]]:
-    return [
-        {
-            "role": "user",
-            "content": """Is your above output consistent with the instructions you were given, or is there evidence of hallucination?""",
-        }
     ]
 
 

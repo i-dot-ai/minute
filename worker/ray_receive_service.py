@@ -5,7 +5,7 @@ from typing import Any
 import ray
 
 from common.sentry import init_sentry
-from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
+from common.services.exceptions import TranscriptionFailedError
 from common.services.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
 from common.services.queue_services.base import QueueService
 from common.services.transcription_handler_service import TranscriptionHandlerService
@@ -106,8 +106,6 @@ class RayLlmService:
                         tasks.append(asyncio.create_task(self.process_minute_task(message, receipt_handle)))
                     case TaskType.EDIT:
                         tasks.append(asyncio.create_task(self.process_edit_task(message, receipt_handle)))
-                    case TaskType.INTERACTIVE:
-                        tasks.append(asyncio.create_task(self.process_interactive_task(message, receipt_handle)))
                     case _:
                         slogger.warning("Unknown task type: {task_type}", task_type=str(message.type))
                         self.queue_service.deadletter_message(message, receipt_handle)
@@ -149,19 +147,6 @@ class RayLlmService:
             slogger.info("Minute edit complete for MinuteVersion")
         except MinuteGenerationFailedError:
             slogger.exception("Minute edit for MinuteVersion failed")
-            self.queue_service.complete_message(receipt_handle=receipt_handle)
-        else:
-            self.queue_service.complete_message(receipt_handle=receipt_handle)
-
-    async def process_interactive_task(self, message: WorkerMessage, receipt_handle: Any) -> None:
-        slogger.refresh_context()
-        slogger.set_context_field("chat_id", str(message.id))
-        try:
-            slogger.info("Received interactive mode message")
-            await TranscriptionHandlerService.process_interactive_message(message.id)
-            slogger.info("Interaction complete")
-        except InteractionFailedError:
-            slogger.exception("Interaction failed")
             self.queue_service.complete_message(receipt_handle=receipt_handle)
         else:
             self.queue_service.complete_message(receipt_handle=receipt_handle)

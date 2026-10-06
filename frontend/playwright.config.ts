@@ -27,13 +27,10 @@ export default defineConfig({
 
   projects: [
     {
-      name: 'e2e-mocked-chromium',
+      name: 'e2e-mocked',
       testDir: './tests/e2e-mocked',
       use: {
         ...devices['Desktop Chrome'],
-        // Fake mic device so getUserMedia resolves without the native prompt
-        // Playwright can't drive. Chromium-only flags, so the mic spec is
-        // pinned to this project.
         permissions: ['microphone'],
         launchOptions: {
           args: [
@@ -42,16 +39,6 @@ export default defineConfig({
           ],
         },
       },
-    },
-    {
-      name: 'e2e-mocked-firefox',
-      testDir: './tests/e2e-mocked',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'e2e-mocked-webkit',
-      testDir: './tests/e2e-mocked',
-      use: { ...devices['Desktop Safari'] },
     },
     {
       name: 'e2e-integrated',

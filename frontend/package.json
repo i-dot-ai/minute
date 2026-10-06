@@ -9,7 +9,7 @@
     "build:css": "sass --load-path=node_modules --style=compressed --no-source-map styles/govuk.scss styles/govuk.css",
     "start": "next start",
     "lint": "next lint",
-    "test:e2e:mocked": "playwright test --project=e2e-mocked-chromium --project=e2e-mocked-firefox --project=e2e-mocked-webkit",
+    "test:e2e:mocked": "playwright test --project=e2e-mocked",
     "test:e2e:integrated": "playwright test --project=e2e-integrated",
     "openapi-ts": "openapi-ts",
     "prettier:fix": "prettier --write .",

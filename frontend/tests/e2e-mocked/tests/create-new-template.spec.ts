@@ -14,17 +14,19 @@ test.beforeEach(async ({ page }) => {
   await mockBackend(page)
 })
 
-const createNewTemplate = async (page: Page) => {
+const createNewTemplate = async (
+  page: Page,
+  templateType = 'Blank template'
+) => {
   await page.goto('/')
   await page.getByRole('link', { name: 'Templates' }).click()
 
   await expect(page).toHaveURL(/\/templates$/)
   await page.getByRole('button', { name: 'Create new template' }).click()
 
-  await page.getByRole('radio', { name: 'Blank template' }).check()
+  await page.getByRole('radio', { name: templateType }).check()
   await page.getByRole('button', { name: 'Continue' }).click()
-
-  await expect(page).toHaveURL(/\/templates\/create$/)
+  await expect(page).toHaveURL(/\/templates\/create/)
 }
 
 const checkNewTemplateInList = async (page: Page, templateName: string) => {
@@ -83,4 +85,19 @@ test('create a Q&A template persists and is available when recording a new meeti
   await page.getByRole('button', { name: 'Save template' }).click()
 
   await checkNewTemplateInList(page, 'Q&A test template')
+})
+
+test('create a template from an example and it is available when recording a new meeting', async ({
+  page,
+}) => {
+  await createNewTemplate(page, 'My general')
+
+  const templateName = page.getByRole('textbox', { name: 'Template name' })
+  await expect(templateName).toHaveValue('My general')
+
+  await templateName.fill('My general - updated for testing')
+
+  await page.getByRole('button', { name: 'Save template' }).click()
+
+  await checkNewTemplateInList(page, 'My general - updated for testing')
 })

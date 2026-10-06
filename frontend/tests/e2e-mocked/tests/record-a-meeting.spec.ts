@@ -26,11 +26,7 @@ test.beforeEach(async ({ page }) => {
   })
 })
 
-test('In person meeting to summary', async ({ page, browserName }) => {
-  test.skip(
-    browserName !== 'chromium',
-    'Mic/screen capture relies on Chromium fake-media-device flags'
-  )
+test('In person meeting to summary', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('radio', { name: 'In person' }).check()
 
@@ -45,11 +41,7 @@ test('In person meeting to summary', async ({ page, browserName }) => {
   await statusToSummaryFlow(page)
 })
 
-test('Virtual meeting to summary', async ({ page, browserName }) => {
-  test.skip(
-    browserName !== 'chromium',
-    'Mic/screen capture relies on Chromium fake-media-device flags'
-  )
+test('Virtual meeting to summary', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('radio', { name: 'Virtual meeting' }).check()
 

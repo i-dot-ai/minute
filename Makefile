@@ -118,6 +118,20 @@ check_docker_tag_exists:
 		echo "Error: ECR tag $(IMAGE_TAG) does not exist." && exit 1; \
 	fi
 
+wait_for_deploy_images:
+	@for attempt in $$(seq 1 120); do \
+		missing=""; \
+		for service in backend frontend worker; do \
+			repo="$(APP_NAME)-$$service"; \
+			aws ecr describe-images --repository-name "$$repo" --image-ids imageTag=$(IMAGE_TAG) >/dev/null 2>&1 || missing="$$missing $$repo"; \
+		done; \
+		if [ -z "$$missing" ]; then echo "All deploy images are available for $(IMAGE_TAG)."; exit 0; fi; \
+		echo "Waiting for deploy images:$$missing"; \
+		sleep 10; \
+	done; \
+	echo "Timed out waiting for deploy images for $(IMAGE_TAG)." >&2; \
+	exit 1
+
 docker_update_tag: ## Tag the docker image with the specified tag
 	# repo and tag variable are set from git-hub core workflow. example: repo=ecr-repo-name, tag=dev
 	if make docker_tag_is_present_on_image 2>/dev/null; then echo "Image already tagged with $(tag)" && exit 0; fi && \
@@ -171,7 +185,7 @@ tf_apply:
 
 .PHONY: tf_auto_apply
 tf_auto_apply:  ## Auto apply terraform
-	make check_docker_tag_exists repo=$(ECR_REPO_NAME)
+	make wait_for_deploy_images
 	make tf_init_and_set_workspace && \
 	terraform -chdir=./terraform/ apply  ${tf_build_args} ${args} -auto-approve
 

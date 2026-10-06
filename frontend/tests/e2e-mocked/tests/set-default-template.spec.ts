@@ -1,6 +1,7 @@
 import { mockBackend } from '@/tests/e2e-mocked/utilities/mock-backend'
 import { userTemplates } from '@/tests/e2e-mocked/mocked-responses/user-templates'
 import { test, expect } from '@playwright/test'
+import { uploadAudioFlow } from '@/tests/e2e-mocked/utilities/navigation'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -30,12 +31,7 @@ test('setting a default template applies it in the upload flow', async ({
     page.getByRole('button', { name: 'Remove default' })
   ).toBeVisible()
 
-  await page.goto('/')
-  await page.getByRole('radio', { name: 'Upload a file' }).check()
-  await page
-    .locator('input[type="file"][name="file"]')
-    .setInputFiles(sampleMeeting)
-  await page.getByRole('button', { name: 'Upload file' }).click()
+  await uploadAudioFlow(page, sampleMeeting)
 
   const select = page.getByLabel('Choose a template:')
   await expect(select).toBeVisible()

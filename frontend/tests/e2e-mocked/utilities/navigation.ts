@@ -57,3 +57,12 @@ export const statusToSummaryFlow = async (page: Page) => {
     page.getByRole('heading', { level: 1, name: meeting1.title! })
   ).toBeVisible()
 }
+
+export const uploadAudioFlow = async (page: Page, sampleMeeting: string) => {
+  await page.goto('/')
+  await page.getByRole('radio', { name: 'Upload a file' }).check()
+  await page
+    .locator('input[type="file"][name="file"]')
+    .setInputFiles(sampleMeeting)
+  await page.getByRole('button', { name: 'Upload file' }).click()
+}

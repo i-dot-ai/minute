@@ -12,6 +12,28 @@ from pathlib import Path
 import requests
 
 
+def check_response(response: requests.Response, step: str) -> None:
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as error:
+        msg = f"{step} failed ({response.status_code}): {response.text[:500]}"
+        raise RuntimeError(msg) from error
+
+
+def response_json(response: requests.Response, step: str, *required_fields: str) -> dict:
+    check_response(response, step)
+    try:
+        data = response.json()
+    except requests.JSONDecodeError as error:
+        msg = f"{step} returned non-JSON ({response.status_code}): {response.text[:500]}"
+        raise RuntimeError(msg) from error
+    missing = [field for field in required_fields if field not in data]
+    if missing:
+        msg = f"{step} response missing {', '.join(missing)}: {data}"
+        raise RuntimeError(msg)
+    return data
+
+
 def upload_a_file(fp: Path, cookie: str) -> dict:
     api = "https://minute.dev.i.ai.gov.uk/api/proxy"
     sess = requests.Session()
@@ -27,26 +49,28 @@ def upload_a_file(fp: Path, cookie: str) -> dict:
     t0 = time.monotonic()
     j = {"file_extension": fp.suffix.lstrip(".").lower()}
     rsp = sess.post(f"{api}/recordings", json=j, headers=headers, timeout=60)
-    r = rsp.json()  # recording
+    recording = response_json(rsp, "Create recording", "id", "upload_url")
     timeline = {"post_recordings": time.monotonic() - t0}
 
     t0 = time.monotonic()
-    _data = fp.read_bytes()  # -> S3
-    rsp = sess.put(r["upload_url"], data=_data, timeout=300)
+    with fp.open("rb") as audio:
+        rsp = sess.put(recording["upload_url"], data=audio, timeout=300)
+    check_response(rsp, "Upload recording")
     timeline["upload_to_s3"] = time.monotonic() - t0
 
     t0 = time.monotonic()
-    j = {"recording_id": r["id"], "template_name": "General"}  # start
+    j = {"recording_id": recording["id"], "template_name": "General"}  # start
     rsp = sess.post(f"{api}/transcriptions", json=j, headers=headers, timeout=60)
+    transcription = response_json(rsp, "Create transcription", "id")
     timeline["post_transcriptions"] = time.monotonic() - t0
 
     t0 = time.monotonic()
     status = "unknown_error"
-    transcription_id = rsp.json()["id"]
+    transcription_id = transcription["id"]
     for _ in range(1, 60 + 1):  # 10 mins
         _url = f"{api}/transcriptions/{transcription_id}"
         rsp = sess.get(url=_url, headers=headers, timeout=60)
-        _status = rsp.json().get("status")
+        _status = response_json(rsp, "Get transcription", "status")["status"]
         if _status in ("completed", "failed"):
             status = _status
             break
@@ -104,15 +128,16 @@ def get_results(files: list[Path], cookie: str) -> list[dict]:
 
 def main(argv: list[str]) -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scenario")
-    parser.add_argument("--n", type=int)
-    parser.add_argument("--cookie")
+    parser.add_argument("--scenario", required=True)
+    parser.add_argument("--n", "--num", type=int, required=True)
+    parser.add_argument("--cookie", required=True)
     args = parser.parse_args(argv)
 
-    if args.scenario.lower().replace("_", "-") == "bbc-podcasting-house":
+    scenario = args.scenario.lower().replace("_", "-")
+    if scenario in {"bbc-podcasting-house", "bbc-broadcasting-house"}:
         _dir = Path(__file__).parent / ".downloads" / "bbc_podcasting_house"
         files = random.sample(list(_dir.glob("*.wav")), args.n)
-    elif args.scenario.lower().replace("_", "") == "all-these-fancy-pens":
+    elif scenario == "all-these-fancy-pens":
         # FROM=https://huggingface.co/datasets/edinburghcstr/ami
         fp = Path(__file__).parent / ".downloads" / "all_these_fancy_pens.wav"
         files = [fp for _ in range(args.n)]  # repeat _num_ times
@@ -147,25 +172,19 @@ def main(argv: list[str]) -> None:
     # --- metrics
     print("\n\n---\n")  # noqa: T201
 
-    data = [_ for r in results if (_ := r.get("wav_duration"))]
-    q = statistics.quantiles(data, n=10, method="inclusive")
-    p10, p90 = q[0], q[8]  # low-res
-    print(f"Wav (p10/90): [{p10:.2f}s, {p90:.2f}s]")  # noqa: T201
-
-    data = [_ for r in results if (_ := r.get("start_time"))]
-    q = statistics.quantiles(data, n=10, method="inclusive")
-    p10, p90 = q[0], q[8]  # low-res
-    print(f"Start time (delta): {p90 - p10:.2f}s")  # noqa: T201
-
-    data = [_ for r in results if (_ := r.get("end_time"))]
-    q = statistics.quantiles(data, n=10, method="inclusive")
-    p10, p90 = q[0], q[8]  # low-res
-    print(f"End time (delta): {p90 - p10:.2f}s")  # noqa: T201
-
-    data = [_ for r in results if (_ := r.get("duration"))]
-    q = statistics.quantiles(data, n=10, method="inclusive")
-    p10, p90 = q[0], q[8]  # low-res
-    print(f"Duration (p10/90): [{p10:.2f}s, {p90:.2f}s]")  # noqa: T201
+    metrics = {
+        "Wav (p10/90)": ("wav_duration", "range"),
+        "Start time (delta)": ("start_time", "delta"),
+        "End time (delta)": ("end_time", "delta"),
+        "Duration (p10/90)": ("duration", "range"),
+    }
+    for label, (key, display) in metrics.items():
+        data = [value for result in results if (value := result.get(key)) is not None]
+        if not data:
+            continue
+        p10, p90 = (data[0], data[0]) if len(data) == 1 else statistics.quantiles(data, n=10, method="inclusive")[:9:8]
+        value = f"[{p10:.2f}s, {p90:.2f}s]" if display == "range" else f"{p90 - p10:.2f}s"
+        print(f"{label}: {value}")  # noqa: T201
 
     print()  # noqa: T201
 

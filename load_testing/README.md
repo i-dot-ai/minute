@@ -14,11 +14,11 @@ The load testing script authenticates by reusing your own logged-in browser sess
 
 ```bash
 # bbc-podcasting-house
-uv run python load_testing/download_bcc_podcasting_house.py  # -> .downloads/*.mp3 [*.wav]
-uv run python load_testing/run.py --scenario=bbc-podcasting-house --num=16 --cookie=X-Amzn-Oidc-Data-0=tHXL...
+uv run python load_testing/download_bbc_podcasting_house.py
+uv run python load_testing/run.py --scenario=bbc-podcasting-house --n=16 --cookie='Cookie copied from the browser'
 
-# all these fancy pens (1s)
-uv run python load_testing/run.py --scenario=bbc-podcasting-house --num=16 --cookie=X-Amzn-Oidc-Data-0=tHXL...
+# all these fancy pens
+uv run python load_testing/run.py --scenario=all-these-fancy-pens --n=16 --cookie='Cookie copied from the browser'
 ```
 
 ## Health and Metrics

@@ -95,11 +95,11 @@ The worker reads from the queue and executes transcription/file conversion/llm c
 
 #### Architecture diagram
 
-Minute was developed to run on AWS and/or Azure, with abstractions available for message queues and cloud storage.
+Minute runs on AWS, with SQS for message queues and S3 for cloud storage.
 
 <img src="minute_architecture_diagram.png" height="800" alt="Minute architecture diagram"/>
 
-#### Database Schema
+#### Database schema
 
 <img src="minute_database_schema.png" height="800" alt="Minute database schema" />
 
@@ -147,6 +147,5 @@ different tests (see [test_queues_e2e.py](tests/test_queues_e2e.py) for an examp
 
 ## Adding custom templates
 
-You can add your own templates by implementing either the `SimpleTemplate` or `SectionTemplate` protocols (see [here](backend/templates/types.py))
-Simply put them in the [templates](backend/templates) directory, and they will automatically be discovered when the backend starts.
-
+You can add your own templates by implementing either the `SimpleTemplate` or `SectionTemplate` protocols (see [here](common/templates/types.py)).
+Add them under [common/templates](common/templates) and register them in `TemplateManager`.

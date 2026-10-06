@@ -3,9 +3,6 @@
 import type { Client, Options as Options2, TDataShape } from './client'
 import { client } from './client.gen'
 import type {
-  CreateChatTranscriptionsTranscriptionIdChatPostData,
-  CreateChatTranscriptionsTranscriptionIdChatPostErrors,
-  CreateChatTranscriptionsTranscriptionIdChatPostResponses,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostData,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostErrors,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostResponses,
@@ -21,12 +18,6 @@ import type {
   CreateUserTemplateUserTemplatesPostData,
   CreateUserTemplateUserTemplatesPostErrors,
   CreateUserTemplateUserTemplatesPostResponses,
-  DeleteChatsTranscriptionsTranscriptionIdChatDeleteData,
-  DeleteChatsTranscriptionsTranscriptionIdChatDeleteErrors,
-  DeleteChatsTranscriptionsTranscriptionIdChatDeleteResponses,
-  DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteData,
-  DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteErrors,
-  DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteResponses,
   DeleteMinuteMinutesMinuteIdDeleteData,
   DeleteMinuteMinutesMinuteIdDeleteErrors,
   DeleteMinuteMinutesMinuteIdDeleteResponses,
@@ -45,9 +36,6 @@ import type {
   EditUserTemplateUserTemplatesTemplateIdPatchData,
   EditUserTemplateUserTemplatesTemplateIdPatchErrors,
   EditUserTemplateUserTemplatesTemplateIdPatchResponses,
-  GetChatTranscriptionsTranscriptionIdChatChatIdGetData,
-  GetChatTranscriptionsTranscriptionIdChatChatIdGetErrors,
-  GetChatTranscriptionsTranscriptionIdChatChatIdGetResponses,
   GetMinuteMinutesMinutesIdGetData,
   GetMinuteMinutesMinutesIdGetErrors,
   GetMinuteMinutesMinutesIdGetResponses,
@@ -74,9 +62,6 @@ import type {
   GetUserUsersMeGetResponses,
   HealthcheckHealthcheckGetData,
   HealthcheckHealthcheckGetResponses,
-  ListChatTranscriptionsTranscriptionIdChatGetData,
-  ListChatTranscriptionsTranscriptionIdChatGetErrors,
-  ListChatTranscriptionsTranscriptionIdChatGetResponses,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetData,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetErrors,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetResponses,
@@ -628,97 +613,3 @@ export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost = <
     DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostErrors,
     ThrowOnError
   >({ url: '/user-templates/{template_id}/duplicate', ...options })
-
-/**
- * Delete Chats
- */
-export const deleteChatsTranscriptionsTranscriptionIdChatDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DeleteChatsTranscriptionsTranscriptionIdChatDeleteData,
-    ThrowOnError
-  >
-) =>
-  (options.client ?? client).delete<
-    DeleteChatsTranscriptionsTranscriptionIdChatDeleteResponses,
-    DeleteChatsTranscriptionsTranscriptionIdChatDeleteErrors,
-    ThrowOnError
-  >({ url: '/transcriptions/{transcription_id}/chat', ...options })
-
-/**
- * List Chat
- */
-export const listChatTranscriptionsTranscriptionIdChatGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    ListChatTranscriptionsTranscriptionIdChatGetData,
-    ThrowOnError
-  >
-) =>
-  (options.client ?? client).get<
-    ListChatTranscriptionsTranscriptionIdChatGetResponses,
-    ListChatTranscriptionsTranscriptionIdChatGetErrors,
-    ThrowOnError
-  >({ url: '/transcriptions/{transcription_id}/chat', ...options })
-
-/**
- * Create Chat
- */
-export const createChatTranscriptionsTranscriptionIdChatPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    CreateChatTranscriptionsTranscriptionIdChatPostData,
-    ThrowOnError
-  >
-) =>
-  (options.client ?? client).post<
-    CreateChatTranscriptionsTranscriptionIdChatPostResponses,
-    CreateChatTranscriptionsTranscriptionIdChatPostErrors,
-    ThrowOnError
-  >({
-    url: '/transcriptions/{transcription_id}/chat',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  })
-
-/**
- * Delete Chat
- *
- * Delete a specific transcription by ID.
- */
-export const deleteChatTranscriptionsTranscriptionIdChatChatIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteData,
-    ThrowOnError
-  >
-) =>
-  (options.client ?? client).delete<
-    DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteResponses,
-    DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteErrors,
-    ThrowOnError
-  >({ url: '/transcriptions/{transcription_id}/chat/{chat_id}', ...options })
-
-/**
- * Get Chat
- */
-export const getChatTranscriptionsTranscriptionIdChatChatIdGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    GetChatTranscriptionsTranscriptionIdChatChatIdGetData,
-    ThrowOnError
-  >
-) =>
-  (options.client ?? client).get<
-    GetChatTranscriptionsTranscriptionIdChatChatIdGetResponses,
-    GetChatTranscriptionsTranscriptionIdChatChatIdGetErrors,
-    ThrowOnError
-  >({ url: '/transcriptions/{transcription_id}/chat/{chat_id}', ...options })

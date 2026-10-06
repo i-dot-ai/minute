@@ -70,7 +70,6 @@ async def delete_orphan_records():
                 exists = await storage_service.check_object_exists(recording.s3_file_key)
                 if exists:
                     await storage_service.delete(recording.s3_file_key)
-                await storage_service.delete(recording.s3_file_key)
             except Exception as e:  # noqa: BLE001
                 msg = f"Error deleting recording {recording.id}. Will keep record in database: {e}"
                 logger.error(msg)

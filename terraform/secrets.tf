@@ -7,10 +7,6 @@ locals {
       value = module.app_bucket.id
     },
     {
-      name  = "EXAMPLE_VAR"
-      value = "placeholder" # Update value in SSM - Do not hardcode
-    },
-    {
       name  = "AZURE_OPENAI_ENDPOINT"
       value = "placeholder" # Update value in SSM - Do not hardcode
     },
@@ -60,10 +56,6 @@ locals {
     },
     {
       name  = "GOOGLE_CLOUD_LOCATION"
-      value = "placeholder" # Update value in SSM - Do not hardcode
-    },
-    {
-      name  = "AZURE_BLOB_CONNECTION_STRING"
       value = "placeholder" # Update value in SSM - Do not hardcode
     },
     {

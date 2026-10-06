@@ -4,7 +4,7 @@ from enum import IntEnum, StrEnum, auto
 
 from pydantic import BaseModel, Field
 
-from common.database.postgres_models import ContentSource, DialogueEntry, HallucinationType, JobStatus, TemplateType
+from common.database.postgres_models import ContentSource, DialogueEntry, JobStatus, TemplateType
 
 
 class TranscriptionListFilter(StrEnum):
@@ -67,27 +67,6 @@ class TranscriptionConfirmResponse(BaseModel):
 class TranscriptionPatchRequest(BaseModel):
     title: str | None = None
     dialogue_entries: list[DialogueEntry] | None = None
-
-
-class ChatCreateRequest(BaseModel):
-    user_content: str
-
-
-class ChatGetResponse(BaseModel):
-    id: uuid.UUID
-    created_datetime: datetime
-    updated_datetime: datetime
-    user_content: str
-    assistant_content: str | None
-    status: JobStatus
-
-
-class ChatGetAllResponse(BaseModel):
-    chat: list[ChatGetResponse]
-
-
-class ChatCreateResponse(BaseModel):
-    id: uuid.UUID
 
 
 class GetUserResponse(BaseModel):
@@ -196,7 +175,6 @@ class TaskType(IntEnum):
     TRANSCRIPTION = 1
     MINUTE = 2
     EDIT = 3
-    INTERACTIVE = 4
 
 
 class EditMessageData(BaseModel):
@@ -216,15 +194,6 @@ class WorkerMessage(BaseModel):
     id: uuid.UUID
     type: TaskType
     data: EditMessageData | TranscriptionJobMessageData | None = Field(default=None)
-
-
-class LLMHallucination(BaseModel):
-    hallucination_type: HallucinationType = Field(description="Type of hallucination")
-    hallucination_text: str | None = Field(description="Text of hallucination", default=None)
-    hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
-
-
-MinuteAndHallucinations = tuple[str, list[LLMHallucination] | None]
 
 
 class MeetingType(StrEnum):

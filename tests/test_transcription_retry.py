@@ -147,6 +147,7 @@ async def test_retry_resets_existing_transcription(failed_transcription, publish
         assert transcription.error is None
         assert transcription.dialogue_entries is None
         assert transcription.created_datetime > SEED_TIME
+        assert transcription.run_id is not None
 
         minute = await session.get(Minute, minute_id)
         assert minute is not None
@@ -165,6 +166,7 @@ async def test_retry_resets_existing_transcription(failed_transcription, publish
     assert published[0].transcription_id == transcription_id
     assert published[0].minute_id == minute_id
     assert published[0].user_id == transcription.user_id
+    assert published[0].run_id == transcription.run_id
 
 
 @pytest.mark.asyncio(loop_scope="session")

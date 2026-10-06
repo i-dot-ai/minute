@@ -161,6 +161,7 @@ class Transcription(BaseTableMixin, table=True):
     status: JobStatus = Field(
         default=JobStatus.AWAITING_START, sa_column_kwargs={"server_default": JobStatus.AWAITING_START.name}
     )
+    run_id: UUID | None = Field(default=None, nullable=True)
     error: str | None = Field(default=None)
     user: User | None = Relationship(back_populates="transcriptions")
     user_id: UUID | None = Field(default=None, foreign_key="user.id")

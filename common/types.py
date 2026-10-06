@@ -224,6 +224,7 @@ class TranscriptionReadyMessageData(BaseModel):
 
 
 class AudioWorkerMessage(BaseModel):
+    run_id: uuid.UUID | None = None
     user_id: uuid.UUID
     transcription_id: uuid.UUID
     minute_id: uuid.UUID
@@ -234,6 +235,7 @@ class WorkerMessage(BaseModel):
     id: uuid.UUID
     type: TaskType
     data: EditMessageData | TranscriptionJobMessageData | TranscriptionReadyMessageData | None = Field(default=None)
+    run_id: uuid.UUID | None = None
 
 
 class LLMHallucination(BaseModel):

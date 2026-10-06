@@ -6,6 +6,10 @@ class TranscriptionAlreadyStartedError(Exception):
     """A duplicate ready message arrived after transcription had already started."""
 
 
+class StaleTranscriptionRunError(Exception):
+    """A queued message belongs to an older transcription run."""
+
+
 class InteractionFailedError(Exception):
     """Exception raised when a transcription fails."""
 

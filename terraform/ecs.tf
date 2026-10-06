@@ -258,14 +258,6 @@ module "audio_worker" {
   }
 
   http_healthcheck = false
-  container_healthcheck = {
-    # Direct interpreter call (the venv is first on PATH in the image), matching docker-compose.
-    command     = ["CMD-SHELL", "python audio_worker/healthcheck.py"]
-    interval    = 60
-    retries     = 3
-    startPeriod = 60
-    timeout     = 5
-  }
 }
 
 resource "aws_service_discovery_private_dns_namespace" "private_dns_namespace" {

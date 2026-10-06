@@ -4,9 +4,11 @@ from typing import Any
 
 import ray
 
+from common.database.postgres_models import JobStatus
 from common.sentry import init_sentry
 from common.services.exceptions import (
     InteractionFailedError,
+    StaleTranscriptionRunError,
     TranscriptionAlreadyStartedError,
     TranscriptionFailedError,
 )
@@ -23,7 +25,7 @@ from common.types import (
     TranscriptionReadyMessageData,
     WorkerMessage,
 )
-from common.worker_healthcheck import HEARTBEAT_DIR, ensure_heartbeat_dir
+from worker.healthcheck import HEARTBEAT_DIR, ensure_heartbeat_dir
 
 ray_logger = logging.getLogger("ray")
 ray_logger.setLevel(logging.WARNING)
@@ -84,10 +86,11 @@ class RayTranscriptionService:
                         continue
                     transcription_job = await TranscriptionHandlerService.process_transcription(
                         minute_id=message.id,  # message.id -> minute_id
+                        run_id=message.run_id,
                         message_data=message.data,
                     )
-                except TranscriptionAlreadyStartedError:
-                    slogger.warning("Ignoring duplicate transcription-ready message")
+                except (StaleTranscriptionRunError, TranscriptionAlreadyStartedError):
+                    slogger.warning("Ignoring duplicate or stale transcription message")
                 except TranscriptionFailedError:
                     slogger.exception("Transcription failed for minute id")
                 else:
@@ -102,7 +105,12 @@ class RayTranscriptionService:
                     else:
                         slogger.info("Async transcription job not ready yet. Re-queueing minute id")
                         self.transcription_queue_service.publish_message(
-                            WorkerMessage(id=message.id, type=TaskType.TRANSCRIPTION, data=transcription_job)
+                            WorkerMessage(
+                                id=message.id,
+                                type=TaskType.TRANSCRIPTION,
+                                data=transcription_job,
+                                run_id=message.run_id,
+                            )
                         )
                 # Delete the message to prevent repeated processing
                 self.transcription_queue_service.complete_message(receipt_handle)
@@ -111,6 +119,10 @@ class RayTranscriptionService:
     def _reroute_to_audio_queue(self, message: WorkerMessage, receipt_handle: Any) -> None:
         try:
             transcription = TranscriptionHandlerService.get_transcription_from_minute_id(message.id)
+            if transcription.run_id != message.run_id or transcription.status != JobStatus.AWAITING_START:
+                slogger.warning("Ignoring stale legacy transcription message")
+                self.transcription_queue_service.complete_message(receipt_handle)
+                return
             if transcription.user_id is None:
                 msg = f"transcription id {transcription.id} has no user"
                 raise ValueError(msg)
@@ -128,6 +140,7 @@ class RayTranscriptionService:
                     transcription_id=transcription.id,
                     minute_id=message.id,
                     s3_file_key=recording.s3_file_key,
+                    run_id=message.run_id,
                 )
             )
         except Exception:

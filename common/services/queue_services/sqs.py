@@ -7,6 +7,11 @@ from common.services.queue_services.base import MessageT, QueueService
 from common.settings import get_settings
 from common.types import WorkerMessage
 
+# The visibility timeout has a maximum limit of 12 hours
+# from when the message is first received. Extending the
+# timeout doesn't reset this 12-hour limit.
+MAX_VISIBILITY_TIMEOUT = 12 * 60 * 60  # 12 hours
+
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
@@ -75,6 +80,23 @@ class SQSQueueService(QueueService[MessageT], Generic[MessageT]):
             out.append((worker_message, receipt_handle))
         return out
 
+    def receive_deadletter_message(self, max_messages: int = 10) -> list[tuple[MessageT, Any]]:
+        response = self.sqs.receive_message(
+            QueueUrl=self.dead_letter_queue_url,
+            MaxNumberOfMessages=max_messages,
+            WaitTimeSeconds=0,
+        )
+        out = []
+        for message in response.get("Messages", []):
+            try:
+                worker_message = self.message_model.model_validate_json(message["Body"])
+            except Exception:
+                logger.exception("invalid message payload in dead-letter queue; deleting it")
+                self.complete_deadletter_message(message["ReceiptHandle"])
+                continue
+            out.append((worker_message, message["ReceiptHandle"]))
+        return out
+
     def publish_message(self, message: MessageT):
         self.sqs.send_message(QueueUrl=self.queue_url, MessageBody=message.model_dump_json())
 
@@ -85,20 +107,38 @@ class SQSQueueService(QueueService[MessageT], Generic[MessageT]):
             logger.exception("failed to complete message")
             raise
 
-    def deadletter_message(self, message: MessageT, receipt_handle: Any):
-        try:
-            self.sqs.send_message(QueueUrl=self.dead_letter_queue_url, MessageBody=message.model_dump_json())
-            self.sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=receipt_handle)
-        except self.sqs.exceptions.ReceiptHandleIsInvalid:
-            logger.warning("ReceiptHandleIsInvalid raised when deadlettering message. Message=%s", message.model_dump())
+    def complete_deadletter_message(self, receipt_handle: Any):
+        self.sqs.delete_message(QueueUrl=self.dead_letter_queue_url, ReceiptHandle=receipt_handle)
 
-    def abandon_message(self, receipt_handle: Any):
+    def deadletter_message(self, message: MessageT, receipt_handle: Any):
+        self.sqs.send_message(QueueUrl=self.dead_letter_queue_url, MessageBody=message.model_dump_json())
+        self.sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=receipt_handle)
+
+    def abandon_message(self, receipt_handle: Any, delay_seconds: int = 0):
+        if delay_seconds < 0 or delay_seconds > MAX_VISIBILITY_TIMEOUT:
+            msg = f"Delay must be between 0 and {MAX_VISIBILITY_TIMEOUT}"
+            raise ValueError(msg)
         try:
             self.sqs.change_message_visibility(
-                QueueUrl=self.queue_url, ReceiptHandle=receipt_handle, VisibilityTimeout=0
+                QueueUrl=self.queue_url,
+                ReceiptHandle=receipt_handle,
+                VisibilityTimeout=delay_seconds,
             )
         except Exception:
             logger.exception("failed to abandon message")
+
+    def abandon_deadletter_message(self, receipt_handle: Any, delay_seconds: int = 0):
+            if delay_seconds < 0 or delay_seconds > MAX_VISIBILITY_TIMEOUT:
+                msg = f"Delay must be between 0 and {MAX_VISIBILITY_TIMEOUT}"
+                raise ValueError(msg)
+            try:
+                self.sqs.change_message_visibility(
+                    QueueUrl=self.dead_letter_queue_url,
+                    ReceiptHandle=receipt_handle,
+                    VisibilityTimeout=delay_seconds,
+                )
+            except Exception:
+                logger.exception("failed to abandon dead-letter message")
 
     def purge_messages(self):
         self.sqs.purge_queue(QueueUrl=self.queue_url)

@@ -12,5 +12,5 @@ class SignalHandler:
         signal.signal(signal.SIGINT, self._handle_signal)
 
     def _handle_signal(self, signum, _frame):
-        slogger.info("Received signal {signum}, initiating graceful shutdown...", signum=str(signum))
+        slogger.info("Received signal {signum}, initiating graceful shutdown...", signum=signum)
         self.signal_received = True

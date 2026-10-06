@@ -5,9 +5,9 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from tenacity import retry, stop_after_attempt, wait_none
 
-from audio_worker.audio_service import AudioConversionFailedError, AudioService
-from audio_worker.worker_service import AudioWorker
+from audio_worker import handler
 from common.types import AudioWorkerMessage, TaskType, TranscriptionReadyMessageData
 
 
@@ -17,193 +17,185 @@ def _message(s3_file_key: str = "uploads/original.mp3") -> AudioWorkerMessage:
         transcription_id=uuid.uuid4(),
         minute_id=uuid.uuid4(),
         s3_file_key=s3_file_key,
+        run_id=uuid.uuid4(),
     )
 
 
-@pytest.fixture
-def queues():
-    audio_queue = MagicMock()
-    transcription_queue = MagicMock()
-    return audio_queue, transcription_queue
-
-
-@pytest.fixture
-def service(queues):
-    audio_queue, transcription_queue = queues
-    return AudioService(audio_queue_service=audio_queue, transcription_queue_service=transcription_queue)
+retry_without_wait = retry(stop=stop_after_attempt(4), wait=wait_none(), reraise=True)
 
 
 @pytest.mark.asyncio
-async def test_process_message_mono_mp3_skips_conversion(service, queues):
-    _, transcription_queue = queues
+async def test_mono_mp3_hands_off_once_with_run_id() -> None:
     message = _message()
+    input_queue = MagicMock()
+    output_queue = MagicMock()
+    storage = MagicMock(download=AsyncMock())
 
-    with (
-        patch("audio_worker.audio_service.storage_service") as storage,
-        patch("audio_worker.audio_service.ffmpeg_utils") as ffmpeg,
-        patch("audio_worker.audio_service.SessionLocal") as session_local,
-    ):
-        storage.download = AsyncMock()
-        storage.upload = AsyncMock()
-        ffmpeg.get_num_audio_channels.return_value = 1
-        ffmpeg.get_duration.return_value = 123.0
-
-        await service.process_message(message)
+    with patch("audio_worker.handler.ffmpeg") as ffmpeg:
+        ffmpeg.get_num_channels.return_value = 1
+        ffmpeg.get_duration.return_value = 10.0
+        await handler.handle_message(message, "receipt", input_queue, output_queue, storage)
 
     ffmpeg.convert_to_mp3.assert_not_called()
-    storage.upload.assert_not_awaited()
-    session_local.assert_not_called()
-    published = transcription_queue.publish_message.call_args.args[0]
+    published = output_queue.publish_message.call_args.kwargs["message"]
     assert published.id == message.minute_id
     assert published.type == TaskType.TRANSCRIPTION
     assert isinstance(published.data, TranscriptionReadyMessageData)
-    assert published.data.duration_seconds == 123.0
+    assert published.data.duration_seconds == 10.0
+    assert published.run_id == message.run_id
+    input_queue.complete_message.assert_called_once_with("receipt")
 
 
 @pytest.mark.asyncio
-async def test_process_message_converts_and_creates_deterministic_recording(service, queues):
-    _, transcription_queue = queues
+async def test_conversion_hands_off_with_run_id() -> None:
     message = _message("uploads/original.wav")
-    expected_id = uuid.uuid5(uuid.NAMESPACE_URL, f"minute:converted-recording:{message.transcription_id}")
+    input_queue = MagicMock()
+    output_queue = MagicMock()
+    storage = MagicMock(download=AsyncMock(), upload=AsyncMock())
 
     with (
-        patch("audio_worker.audio_service.storage_service") as storage,
-        patch("audio_worker.audio_service.ffmpeg_utils") as ffmpeg,
-        patch("audio_worker.audio_service.SessionLocal") as session_local,
+        patch("audio_worker.handler.ffmpeg") as ffmpeg,
+        patch("audio_worker.handler.repository.add_recording") as add_recording,
     ):
-        storage.download = AsyncMock()
-        storage.upload = AsyncMock()
-        ffmpeg.get_num_audio_channels.return_value = 2
-        ffmpeg.convert_to_mp3.return_value = Path("/tmp/original_converted.mp3")  # noqa: S108
-        ffmpeg.get_duration.return_value = 456.0
-        session = MagicMock()
-        session_local.return_value.__enter__.return_value = session
+        ffmpeg.get_num_channels.return_value = 2
+        ffmpeg.get_duration.return_value = 20.0
+        ffmpeg.convert_to_mp3.return_value = Path("converted.mp3")
+        await handler.handle_message(message, "receipt", input_queue, output_queue, storage)
 
-        await service.process_message(message)
-
-    storage.upload.assert_awaited_once()
-    insert_statement = session.exec.call_args.args[0]
-    assert insert_statement.compile().params["id"] == expected_id
-    assert transcription_queue.publish_message.call_args.args[0].data.duration_seconds == 456.0
+    add_recording.assert_called_once()
+    published = output_queue.publish_message.call_args.kwargs["message"]
+    assert published.data.duration_seconds == 20.0
+    assert published.run_id == message.run_id
+    input_queue.complete_message.assert_called_once_with("receipt")
 
 
 @pytest.mark.asyncio
-async def test_database_failure_removes_uploaded_conversion(service):
-    message = _message("uploads/original.wav")
-    with (
-        patch("audio_worker.audio_service.storage_service") as storage,
-        patch("audio_worker.audio_service.ffmpeg_utils.get_num_audio_channels", return_value=2),
-        patch(
-            "audio_worker.audio_service.ffmpeg_utils.convert_to_mp3",
-            return_value=Path("/tmp/original_converted.mp3"),  # noqa: S108
-        ),
-        patch("audio_worker.audio_service.ffmpeg_utils.get_duration", return_value=10.0),
-        patch("audio_worker.audio_service.SessionLocal") as session_local,
-    ):
-        storage.download = AsyncMock()
-        storage.upload = AsyncMock()
-        storage.delete = AsyncMock()
-        session = MagicMock()
-        session.commit.side_effect = RuntimeError("database unavailable")
-        session_local.return_value.__enter__.return_value = session
-
-        with pytest.raises(RuntimeError, match="database unavailable"):
-            await service.process_message(message)
-
-    storage.delete.assert_awaited_once()
-
-
-@pytest.mark.asyncio
-async def test_invalid_media_marks_transcription_failed(service, queues):
-    _, transcription_queue = queues
-    message = _message("uploads/original.wav")
-    with (
-        patch("audio_worker.audio_service.storage_service") as storage,
-        patch("audio_worker.audio_service.ffmpeg_utils.get_num_audio_channels") as channels,
-        patch("audio_worker.audio_service.ffmpeg_utils.convert_to_mp3", side_effect=RuntimeError("invalid audio")),
-        patch.object(AudioService, "_mark_transcription_failed", return_value=True) as mark_failed,
-        patch("audio_worker.audio_service.capture_event"),
-    ):
-        storage.download = AsyncMock()
-        channels.return_value = 2
-        with pytest.raises(AudioConversionFailedError) as exc_info:
-            await service.process_message(message)
-
-    assert exc_info.value.marked_failed is True
-    mark_failed.assert_called_once_with(message.transcription_id, str(exc_info.value))
-    transcription_queue.publish_message.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_transient_handoff_failure_is_retried(service, queues):
-    _, transcription_queue = queues
+async def test_download_failure_marks_failed_and_deadletters() -> None:
     message = _message()
-    transcription_queue.publish_message.side_effect = RuntimeError("queue unavailable")
+    input_queue = MagicMock()
+    output_queue = MagicMock()
+    storage = MagicMock(download=AsyncMock(side_effect=RuntimeError("storage unavailable")))
+
     with (
-        patch("audio_worker.audio_service.storage_service") as storage,
-        patch("audio_worker.audio_service.ffmpeg_utils") as ffmpeg,
-        patch.object(AudioService, "_mark_transcription_failed") as mark_failed,
+        patch("audio_worker.handler.retry_four_times", retry_without_wait),
+        patch("audio_worker.handler.repository.mark_transcription_failed", return_value=True) as mark_failed,
+        patch("audio_worker.handler.capture_event") as capture,
     ):
-        storage.download = AsyncMock()
-        ffmpeg.get_num_audio_channels.return_value = 1
+        await handler.handle_message(message, "receipt", input_queue, output_queue, storage)
+
+    assert storage.download.await_count == 4
+    mark_failed.assert_called_once()
+    capture.assert_called_once()
+    input_queue.deadletter_message.assert_called_once_with(message, "receipt")
+    input_queue.abandon_message.assert_not_called()
+    input_queue.complete_message.assert_not_called()
+    output_queue.publish_message.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_download_transient_failure_succeeds_on_fourth_attempt() -> None:
+    message = _message()
+    input_queue = MagicMock()
+    output_queue = MagicMock()
+    storage = MagicMock(
+        download=AsyncMock(side_effect=[RuntimeError("one"), RuntimeError("two"), RuntimeError("three"), None])
+    )
+
+    with (
+        patch("audio_worker.handler.retry_four_times", retry_without_wait),
+        patch("audio_worker.handler.ffmpeg") as ffmpeg,
+        patch("audio_worker.handler.repository.mark_transcription_failed") as mark_failed,
+    ):
+        ffmpeg.get_num_channels.return_value = 1
         ffmpeg.get_duration.return_value = 10.0
-        with pytest.raises(RuntimeError, match="queue unavailable"):
-            await service.process_message(message)
+        await handler.handle_message(message, "receipt", input_queue, output_queue, storage)
 
+    assert storage.download.await_count == 4
     mark_failed.assert_not_called()
-
-
-@pytest.fixture
-def worker(tmp_path, queues):
-    audio_queue, transcription_queue = queues
-    with patch("audio_worker.worker_service.SignalHandler"):
-        audio_worker = AudioWorker(
-            audio_queue_service=audio_queue,
-            transcription_queue_service=transcription_queue,
-            heartbeat_path=tmp_path / "audio_worker_main.heartbeat",
-        )
-        audio_worker.signal_handler.signal_received = False
-        yield audio_worker
+    output_queue.publish_message.assert_called_once()
+    input_queue.complete_message.assert_called_once_with("receipt")
 
 
 @pytest.mark.asyncio
-async def test_worker_completes_message_on_success(worker, queues):
-    audio_queue, _ = queues
-    with patch.object(worker.audio_service, "process_message", AsyncMock()):
-        await worker.handle_message(_message(), "receipt")
-    audio_queue.complete_message.assert_called_once_with("receipt")
+async def test_publish_failure_retries_then_marks_failed_and_deadletters() -> None:
+    message = _message()
+    input_queue = MagicMock()
+    output_queue = MagicMock()
+    output_queue.publish_message.side_effect = RuntimeError("queue unavailable")
+    storage = MagicMock(download=AsyncMock())
+
+    with (
+        patch("audio_worker.handler.retry_four_times", retry_without_wait),
+        patch("audio_worker.handler.ffmpeg") as ffmpeg,
+        patch("audio_worker.handler.repository.mark_transcription_failed", return_value=True) as mark_failed,
+    ):
+        ffmpeg.get_num_channels.return_value = 1
+        ffmpeg.get_duration.return_value = 10.0
+        await handler.handle_message(message, "receipt", input_queue, output_queue, storage)
+
+    assert output_queue.publish_message.call_count == 4
+    mark_failed.assert_called_once()
+    input_queue.deadletter_message.assert_called_once_with(message, "receipt")
+    input_queue.complete_message.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_worker_completes_terminal_media_failure(worker, queues):
-    audio_queue, _ = queues
-    error = AudioConversionFailedError("invalid audio", marked_failed=True)
-    with patch.object(worker.audio_service, "process_message", AsyncMock(side_effect=error)):
-        await worker.handle_message(_message(), "receipt")
-    audio_queue.complete_message.assert_called_once_with("receipt")
+async def test_completion_failure_after_publish_is_not_terminal() -> None:
+    message = _message()
+    input_queue = MagicMock()
+    input_queue.complete_message.side_effect = RuntimeError("delete failed")
+    output_queue = MagicMock()
+    storage = MagicMock(download=AsyncMock())
+
+    with (
+        patch("audio_worker.handler.retry_four_times", retry_without_wait),
+        patch("audio_worker.handler.ffmpeg") as ffmpeg,
+        patch("audio_worker.handler.repository.mark_transcription_failed") as mark_failed,
+    ):
+        ffmpeg.get_num_channels.return_value = 1
+        ffmpeg.get_duration.return_value = 10.0
+        await handler.handle_message(message, "receipt", input_queue, output_queue, storage)
+
+    output_queue.publish_message.assert_called_once()
+    assert input_queue.complete_message.call_count == 4
+    mark_failed.assert_not_called()
+    input_queue.deadletter_message.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_worker_retries_transient_failure_after_current_lease(worker, queues):
-    audio_queue, _ = queues
-    with patch.object(worker.audio_service, "process_message", AsyncMock(side_effect=RuntimeError("S3 down"))):
-        await worker.handle_message(_message(), "receipt")
-    audio_queue.abandon_message.assert_not_called()
-    audio_queue.complete_message.assert_not_called()
+async def test_status_failure_leaves_message_for_sqs_redelivery() -> None:
+    message = _message()
+    input_queue = MagicMock()
+    output_queue = MagicMock()
+    storage = MagicMock(download=AsyncMock(side_effect=RuntimeError("storage unavailable")))
+
+    with (
+        patch("audio_worker.handler.retry_four_times", retry_without_wait),
+        patch(
+            "audio_worker.handler.repository.mark_transcription_failed",
+            side_effect=RuntimeError("database unavailable"),
+        ),
+        pytest.raises(RuntimeError, match="database unavailable"),
+    ):
+        await handler.handle_message(message, "receipt", input_queue, output_queue, storage)
+
+    input_queue.deadletter_message.assert_not_called()
+    input_queue.complete_message.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_worker_abandons_message_received_during_shutdown(worker, queues):
-    audio_queue, _ = queues
-    audio_queue.receive_message.return_value = [(_message(), "receipt")]
-    worker.signal_handler.signal_received = True
-    with patch.object(worker.audio_service, "process_message", AsyncMock()) as process:
-        await worker.poll_once()
-    process.assert_not_awaited()
-    audio_queue.abandon_message.assert_called_once_with("receipt")
+async def test_deadletter_failure_is_raised_for_sqs_redelivery() -> None:
+    message = _message()
+    input_queue = MagicMock()
+    input_queue.deadletter_message.side_effect = RuntimeError("DLQ unavailable")
+    output_queue = MagicMock()
+    storage = MagicMock(download=AsyncMock(side_effect=RuntimeError("storage unavailable")))
 
+    with (
+        patch("audio_worker.handler.retry_four_times", retry_without_wait),
+        patch("audio_worker.handler.repository.mark_transcription_failed", return_value=True),
+        pytest.raises(RuntimeError, match="DLQ unavailable"),
+    ):
+        await handler.handle_message(message, "receipt", input_queue, output_queue, storage)
 
-def test_heartbeat_touches_file(worker):
-    worker.heartbeat_path.unlink()
-    worker.beat()
-    assert worker.heartbeat_path.exists()
+    assert input_queue.deadletter_message.call_count == 4

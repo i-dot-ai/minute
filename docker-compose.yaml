@@ -115,12 +115,6 @@ services:
         condition: service_healthy
       ministack:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "python audio_worker/healthcheck.py"]
-      interval: 60s
-      retries: 3
-      start_period: 60s
-      timeout: 5s
     develop:
       watch:
         - path: ./audio_worker

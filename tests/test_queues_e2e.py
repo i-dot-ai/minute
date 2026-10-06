@@ -28,7 +28,7 @@ import pytest
 import ray
 import requests
 
-from audio_worker.worker_service import AudioWorker
+from audio_worker.main import run as run_audio_worker
 from common.database.postgres_models import ContentSource, JobStatus, Minute, MinuteVersion, Transcription
 from common.services.queue_services import get_queue_service
 from common.services.template_manager import TemplateManager
@@ -55,11 +55,6 @@ def worker_service() -> Generator[WorkerService, Any, None]:
     worker_service = create_worker_service()
     yield worker_service
     ray.shutdown()
-
-
-@pytest.fixture
-def audio_worker_service() -> AudioWorker:
-    return AudioWorker()
 
 
 @pytest.fixture(autouse=True)
@@ -123,9 +118,9 @@ async def load_db_test_instance(file_type: FileTypeTests) -> set[UUID]:
 
 @pytest.mark.requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
-async def test_e2e(worker_service, audio_worker_service):
+async def test_e2e(worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
-    audio_worker_task = start_audio_worker(audio_worker_service)
+    audio_worker_task = start_audio_worker()
     transcription_ids = await load_db_test_instance(FileTypeTests.NORMAL)
 
     for transcription_id in transcription_ids:
@@ -141,9 +136,9 @@ async def test_e2e(worker_service, audio_worker_service):
 
 @pytest.mark.requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
-async def test_e2e_chat(worker_service, audio_worker_service):
+async def test_e2e_chat(worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
-    audio_worker_task = start_audio_worker(audio_worker_service)
+    audio_worker_task = start_audio_worker()
 
     # needed to ensure sqs queue is purged (not sure if this long is needed for ministack)
     await asyncio.sleep(1)
@@ -164,9 +159,9 @@ async def test_e2e_chat(worker_service, audio_worker_service):
 
 @pytest.mark.requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
-async def test_e2e_zero_bytes(worker_service, audio_worker_service):
+async def test_e2e_zero_bytes(worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
-    audio_worker_task = start_audio_worker(audio_worker_service)
+    audio_worker_task = start_audio_worker()
     transcription_ids = await load_db_test_instance(FileTypeTests.ZERO_BYTES)
     for transcription_id in transcription_ids:
         await assert_transcription(
@@ -178,9 +173,9 @@ async def test_e2e_zero_bytes(worker_service, audio_worker_service):
 
 @pytest.mark.requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
-async def test_e2e_corrupted(worker_service, audio_worker_service):
+async def test_e2e_corrupted(worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
-    audio_worker_task = start_audio_worker(audio_worker_service)
+    audio_worker_task = start_audio_worker()
     transcription_ids = await load_db_test_instance(FileTypeTests.CORRUPTED)
 
     for transcription_id in transcription_ids:
@@ -213,9 +208,9 @@ async def create_versions_for_ai_edit(transcription_id: UUID):
 _audio_worker_task: asyncio.Task | None = None
 
 
-def start_audio_worker(audio_worker_service: AudioWorker) -> asyncio.Task:
+def start_audio_worker() -> asyncio.Task:
     global _audio_worker_task  # noqa: PLW0603
-    _audio_worker_task = asyncio.create_task(audio_worker_service.run())
+    _audio_worker_task = asyncio.create_task(run_audio_worker())
     return _audio_worker_task
 
 

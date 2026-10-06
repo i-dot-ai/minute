@@ -4,7 +4,7 @@ digraph schema {
   edge [dir=none, color="#b8bcc4", fontcolor="#d5d7dc", fontname="Helvetica", fontsize=9]
 
   user [label="{user|PK  id : uuid\lcreated_datetime : timestamptz\lupdated_datetime : timestamptz\lemail : varchar\ldata_retention_days : integer?\lFK  default_template_id : uuid?\ldefault_template_name : varchar?\l}"]
-  transcription [label="{transcription|PK  id : uuid\lcreated_datetime : timestamptz\lupdated_datetime : timestamptz\ltitle : varchar?\ldialogue_entries : jsonb?\lstatus : jobstatus\lerror : varchar?\lFK  user_id : uuid?\lminute_versions : jsonb?  [legacy, unused]\l}"]
+  transcription [label="{transcription|PK  id : uuid\lcreated_datetime : timestamptz\lupdated_datetime : timestamptz\ltitle : varchar?\ldialogue_entries : jsonb?\lstatus : jobstatus\lrun_id : uuid?  [unused]\lerror : varchar?\lFK  user_id : uuid?\lminute_versions : jsonb?  [legacy, unused]\l}"]
   recording [label="{recording|PK  id : uuid\lcreated_datetime : timestamptz\lFK  user_id : uuid\ls3_file_key : varchar\lFK  transcription_id : uuid?\l}"]
   minute [label="{minute|PK  id : uuid\lcreated_datetime : timestamptz\lupdated_datetime : timestamptz\lFK  transcription_id : uuid\ltemplate_name : varchar\lFK  user_template_id : uuid?\lagenda : varchar?\l}"]
   minute_version [label="{minute_version|PK  id : uuid\lcreated_datetime : timestamptz\lupdated_datetime : timestamptz\lFK  minute_id : uuid\lhtml_content : varchar\lstatus : jobstatus\lerror : varchar?\lai_edit_instructions : varchar?\lcontent_source : contentsource\l}"]

@@ -78,6 +78,12 @@ module "backend" {
   memory         = terraform.workspace == "prod" ? 8192 : 4096
   cpu            = terraform.workspace == "prod" ? 4096 : 2048
 
+  wait_for_ready_state = true
+  deployment_circuit_breaker = {
+    enable   = true
+    rollback = true
+  }
+
   http_healthcheck = false
   container_healthcheck = {
     command     = ["CMD-SHELL", "curl --fail http://localhost:8080/healthcheck"]
@@ -186,6 +192,12 @@ module "worker" {
   memory            = terraform.workspace == "prod" ? 8192 : 4096
   cpu               = terraform.workspace == "prod" ? 4096 : 2048
   ephemeral_storage = 40
+
+  wait_for_ready_state = true
+  deployment_circuit_breaker = {
+    enable   = true
+    rollback = true
+  }
 
   http_healthcheck = false
   container_healthcheck = {

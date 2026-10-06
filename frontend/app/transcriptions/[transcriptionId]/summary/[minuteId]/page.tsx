@@ -358,6 +358,9 @@ export default function SummaryPage({
         </div>
       </div>
       <div
+        tabIndex={0}
+        role="region"
+        aria-label="Summary content"
         className={`min-h-0 flex-1 overflow-y-auto ${
           editState?.isEditable
             ? 'govuk-!-padding-4 bg-(--govuk-surface-background-colour)'

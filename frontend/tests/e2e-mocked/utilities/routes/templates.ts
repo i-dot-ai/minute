@@ -1,5 +1,10 @@
 import type { Page } from '@playwright/test'
-import type { TemplateMetadata, TemplateResponse } from '@/lib/client/types.gen'
+import type {
+  CreateUserTemplateRequest,
+  Question,
+  TemplateMetadata,
+  TemplateResponse,
+} from '@/lib/client/types.gen'
 import { templates } from '../../mocked-responses/templates'
 import { userTemplates } from '../../mocked-responses/user-templates'
 import { usersMe } from '../../mocked-responses/users.me'
@@ -15,8 +20,38 @@ export async function routeTemplates(page: Page): Promise<void> {
   })
 
   await page.route('**/api/proxy/user-templates', (route) => {
-    if (route.request().method() !== 'GET') return route.fallback()
-    return route.fulfill(json(200, userTemplatesState))
+    const method = route.request().method()
+
+    if (method === 'GET') return route.fulfill(json(200, userTemplatesState))
+    if (method !== 'POST') return route.fallback()
+
+    const body = route.request().postDataJSON() as CreateUserTemplateRequest
+    const now = new Date().toISOString()
+    const questions: Question[] | null =
+      body.type === 'form'
+        ? (body.questions ?? [])
+            .slice()
+            .sort((a, b) => a.position - b.position)
+            .map((question, index) => ({
+              id: `user-template-question-${userTemplatesState.length}-${index}`,
+              position: question.position,
+              title: question.title,
+              description: question.description,
+            }))
+        : null
+
+    const created: TemplateResponse = {
+      id: `user-template-${userTemplatesState.length}`,
+      updated_datetime: now,
+      name: body.name,
+      content: body.content,
+      description: body.description,
+      type: body.type,
+      questions,
+      is_default: false,
+    }
+    userTemplatesState.unshift(created)
+    return route.fulfill(json(200, created))
   })
 
   await page.route('**/api/proxy/user-templates/*', (route) => {

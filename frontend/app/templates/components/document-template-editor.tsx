@@ -49,6 +49,12 @@ const ControlledEditor = ({
 }) => {
   const editor = useEditor({
     extensions: [StarterKit, Document, Paragraph, Text, HardBreak],
+    editorProps: {
+      attributes: {
+        'aria-label': 'Template content editor',
+        role: 'textbox',
+      },
+    },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML())
     },

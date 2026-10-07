@@ -5,19 +5,27 @@ on:
   push:
     branches: "**"
 
+permissions: {}
+
 jobs:
   frontend:
-    permissions: write-all
+    permissions:
+      contents: read
+      id-token: write
     uses: ./.github/workflows/build-fe.yml
     secrets: inherit
   backend:
-    permissions: write-all
+    permissions:
+      contents: read
+      id-token: write
     uses: ./.github/workflows/build-one.yml
     with:
       service: backend
     secrets: inherit
   worker:
-    permissions: write-all
+    permissions:
+      contents: read
+      id-token: write
     uses: ./.github/workflows/build-one.yml
     with:
       service: worker

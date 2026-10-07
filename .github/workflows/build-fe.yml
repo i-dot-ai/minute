@@ -26,9 +26,13 @@ on:
 env:
   ECR_REPO_URL: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/minute-frontend
 
+permissions: {}
+
 jobs:
   set-vars:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       app-name: ${{ steps.export.outputs.app-name }}
       ec2-instance-type: ${{ steps.export.outputs.ec2-instance-type }}
@@ -40,6 +44,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - id: export
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
@@ -56,7 +62,8 @@ jobs:
   start-runner:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
     needs: set-vars
-    permissions: write-all
+    permissions:
+      id-token: write
     with:
       EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
       RUNNER_SIZE: ${{ needs.set-vars.outputs.runner-size }}
@@ -72,7 +79,9 @@ jobs:
     needs:
       - set-vars
       - start-runner
-    permissions: write-all
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ${{ needs.start-runner.outputs.label }}
     steps:
       - name: Checkout
@@ -80,7 +89,8 @@ jobs:
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
-      
+          persist-credentials: false
+
       - name: AWS Authentication
         uses: i-dot-ai/i-dot-ai-core-github-actions/.github/actions/authenticate-aws@main
         with:
@@ -140,7 +150,8 @@ jobs:
       - set-vars
       - start-runner
       - build-image
-    permissions: write-all
+    permissions:
+      id-token: write
     with:
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
       EC2_INSTANCE_ID: ${{ needs.start-runner.outputs.ec2-instance-id }}

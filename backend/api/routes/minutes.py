@@ -7,7 +7,7 @@ from sqlmodel import col, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription
-from common.services.queue_services.sqs import SQSQueueService
+from common.services.queue_services import get_queue_service
 from common.settings import get_settings
 from common.types import (
     EditMessageData,
@@ -21,7 +21,9 @@ from common.types import (
 
 settings = get_settings()
 
-llm_queue_service = SQSQueueService(settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME)
+llm_queue_service = get_queue_service(
+    settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
+)
 
 minutes_router = APIRouter(tags=["Minutes"])
 

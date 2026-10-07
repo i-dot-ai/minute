@@ -122,6 +122,11 @@ class Settings(BaseSettings):
     # if using s3
     DATA_S3_BUCKET: str | None = Field(description="S3 bucket name for data storage", default=None)
 
+    QUEUE_SERVICE_NAME: str = Field(
+        description="Queue service type to communicate with worker. Currently supported: sqs",
+        default="sqs",
+    )
+
     # if running the worker inside a docker container (use "0.0.0.0" )
     RAY_DASHBOARD_HOST: str = Field(description="Ray dashboard host IP address", default="127.0.0.1")
 

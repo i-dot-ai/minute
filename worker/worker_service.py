@@ -3,8 +3,8 @@ import logging
 
 import ray
 
+from common.services.queue_services import get_queue_service
 from common.services.queue_services.base import QueueService
-from common.services.queue_services.sqs import SQSQueueService
 from common.settings import get_settings
 from worker.ray_receive_service import HasBeenStopped, RayLlmService, RayTranscriptionService
 from worker.signal_handler import SignalHandler
@@ -77,10 +77,12 @@ def create_worker_service() -> WorkerService:
         settings.BEST_LLM_PROVIDER,
         settings.BEST_LLM_MODEL_NAME,
     )
-    transcription_sqs_service = SQSQueueService(
-        settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
+    transcription_sqs_service = get_queue_service(
+        settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
     )
-    llm_sqs_service = SQSQueueService(settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME)
+    llm_sqs_service = get_queue_service(
+        settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
+    )
     # max concurrent ray processes
     # +4 as we need 2 for the ray Queues, 1 for the HasBeenStopped Actor, plus one 'spare'
     # we init ray here so we can handle its init in testing

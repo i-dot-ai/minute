@@ -15,7 +15,7 @@ import ray
 import requests
 
 from common.database.postgres_models import ContentSource, JobStatus, Minute, MinuteVersion, Transcription
-from common.services.queue_services.sqs import SQSQueueService
+from common.services.queue_services import get_queue_service
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings
 from common.types import (
@@ -43,7 +43,9 @@ def worker_service() -> Generator[WorkerService, Any, None]:
 @pytest.fixture(autouse=True)
 async def transcription_queue_service():
     settings = get_settings()
-    queue_service = SQSQueueService(settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME)
+    queue_service = get_queue_service(
+        settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
+    )
     queue_service.purge_messages()
     # needed to ensure sqs queue is purged (not sure if this long is needed for ministack)
     await asyncio.sleep(1)
@@ -53,7 +55,9 @@ async def transcription_queue_service():
 @pytest.fixture(autouse=True)
 async def llm_queue_service():
     settings = get_settings()
-    queue_service = SQSQueueService(settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME)
+    queue_service = get_queue_service(
+        settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
+    )
     queue_service.purge_messages()
     # needed to ensure sqs queue is purged (not sure if this long is needed for ministack)
     await asyncio.sleep(1)

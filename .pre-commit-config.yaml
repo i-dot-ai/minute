@@ -25,7 +25,7 @@ repos:
 
       - id: npm-format
         name: Format frontend files
-        entry: bash -c 'cd frontend && npm i && npm run prettier:fix'
+        entry: bash -c 'cd frontend && npm ci && npm run prettier:fix'
         language: system
         pass_filenames: false
         files: ^frontend/

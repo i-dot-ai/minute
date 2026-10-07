@@ -9,15 +9,21 @@ concurrency:
   group: e2e-integrated-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   e2e-integrated:
     name: Upload → transcribe → summary (real backend)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node
         uses: actions/setup-node@v4

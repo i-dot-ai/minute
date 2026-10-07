@@ -12,12 +12,17 @@ on:
   # during meeting recordings
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   set-vars:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       app-name: ${{ steps.export.outputs.app-name }}
       ec2-instance-type: ${{ steps.export.outputs.ec2-instance-type }}
+      runner-size: ${{ steps.export.outputs.runner-size }}
       version: ${{ steps.export.outputs.version }}
       repo: ${{ steps.export.outputs.repo }}
       infra-config-repo: ${{ steps.export.outputs.infra-config-repo }}
@@ -27,11 +32,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - id: export
         run: |
           . ./.github/.github.env
           echo "ec2-instance-type=${EC2_INSTANCE_TYPE}" >> $GITHUB_OUTPUT
+          echo "runner-size=${RUNNER_SIZE}" >> $GITHUB_OUTPUT
           echo "app-name=${APP_NAME}" >> $GITHUB_OUTPUT
           echo "aws-region=${AWS_REGION}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
@@ -55,7 +63,8 @@ jobs:
   start-runner:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
     needs: set-vars
-    permissions: write-all
+    permissions:
+      id-token: write
     with:
       EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
       RUNNER_SIZE: ${{ needs.set-vars.outputs.runner-size }}
@@ -72,7 +81,9 @@ jobs:
     needs:
       - set-vars
       - start-runner
-    permissions: write-all
+    permissions:
+      id-token: write
+      contents: read
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
@@ -90,6 +101,7 @@ jobs:
 
   notify-slack:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/slack-notify.yml@main
+    permissions: {}
     needs:
       - set-vars
       - start-runner
@@ -108,7 +120,9 @@ jobs:
       - start-runner
       - apply-infra
       - notify-slack
-    permissions: write-all
+    permissions:
+      id-token: write
+      contents: read
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main
     if: needs.start-runner.outputs.use-persisted == 0 && always()
     with:

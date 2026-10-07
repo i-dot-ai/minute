@@ -3,15 +3,21 @@ name: E2E Mocked
 on:
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   e2e-mocked:
     name: Mocked E2E (chromium/firefox/webkit)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node
         uses: actions/setup-node@v4

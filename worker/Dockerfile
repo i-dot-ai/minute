@@ -39,4 +39,12 @@ RUN uv sync --frozen --no-default-groups --group worker
 
 RUN chmod +x worker/entrypoint.sh
 
+# Run as a non-root user. chown /app so the entrypoint can write runtime files
+# (e.g. /app/config/google-credentials.json); --create-home gives Ray a writable HOME.
+# /healthcheck is the heartbeat dir (worker/healthcheck.py) and must be writable too.
+RUN useradd --create-home appuser \
+    && mkdir -p /healthcheck \
+    && chown -R appuser /app /healthcheck
+USER appuser
+
 CMD [ "worker/entrypoint.sh" ]

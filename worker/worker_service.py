@@ -90,8 +90,8 @@ def create_worker_service() -> WorkerService:
         log_to_driver=True,
         num_cpus=(settings.MAX_TRANSCRIPTION_PROCESSES + settings.MAX_LLM_PROCESSES + 4),
         configure_logging=True,
-        dashboard_host=settings.RAY_DASHBOARD_HOST,
-        dashboard_port=8265,
+        object_store_memory=200 * 1024 * 1024, # SQS used for comms, DEFAULT: system_memory * 0.3 ~= 1.2GB
+        include_dashboard=False,  # Dashboard not used in production, saves memory and CPU
         # Setting a logging config stops Ray prefixing forwarded actor logs with "(Actor pid=...)",
         # so structured JSON logs stay valid for CloudWatch.
         logging_config=ray.LoggingConfig(encoding="JSON", log_level="INFO"),

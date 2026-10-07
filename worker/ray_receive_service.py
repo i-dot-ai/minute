@@ -6,9 +6,7 @@ import ray
 
 from common.sentry import init_sentry
 from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
-from common.services.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
 from common.services.queue_services.base import QueueService
-from common.services.transcription_handler_service import TranscriptionHandlerService
 from common.settings import get_settings, get_structured_logger
 from common.types import TaskType, WorkerMessage
 from worker.healthcheck import HEARTBEAT_DIR, ensure_heartbeat_dir
@@ -49,6 +47,9 @@ class RayTranscriptionService:
         slogger.debug("Ray Transcription receive service initialised")
 
     async def process(self) -> None:
+        from common.services.minute_handler_service import MinuteHandlerService
+        from common.services.transcription_handler_service import TranscriptionHandlerService
+
         while not await self.stopped.get.remote():
             slogger.debug("Receiving transcription messages")
             messages = self.transcription_queue_service.receive_message(max_messages=1)
@@ -122,6 +123,8 @@ class RayLlmService:
             self.heartbeat_path.touch()
 
     async def process_minute_task(self, message: WorkerMessage, receipt_handle: Any) -> None:
+        from common.services.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
+
         slogger.refresh_context()
         slogger.set_context_field("minute_version_id", str(message.id))
         try:
@@ -138,6 +141,8 @@ class RayLlmService:
             self.queue_service.complete_message(receipt_handle)
 
     async def process_edit_task(self, message: WorkerMessage, receipt_handle: Any) -> None:
+        from common.services.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
+
         slogger.refresh_context()
         slogger.set_context_field("minute_version_id", str(message.id))
         try:
@@ -154,6 +159,8 @@ class RayLlmService:
             self.queue_service.complete_message(receipt_handle=receipt_handle)
 
     async def process_interactive_task(self, message: WorkerMessage, receipt_handle: Any) -> None:
+        from common.services.transcription_handler_service import TranscriptionHandlerService
+
         slogger.refresh_context()
         slogger.set_context_field("chat_id", str(message.id))
         try:

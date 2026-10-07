@@ -17,7 +17,7 @@ const PAGES_TO_TEST = [
   `/transcriptions/${meeting1.id}/transcript`,
   '/templates',
   '/templates/create',
-  '/templates/create?/templates/create?example=my-general',
+  '/templates/create?example=my-general',
   `/templates/system/${templates[0].name}`,
   `/templates/${userTemplates[0].id}`,
   '/support',
@@ -52,7 +52,7 @@ for (const url of PAGES_WITH_EDIT_MODE) {
 
     await page.getByText('Loading...').waitFor({ state: 'detached' })
 
-    await page.getByRole('button', { name: 'Edit' }).click()
+    await page.getByRole('button', { name: 'Edit', exact: true }).click()
 
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze()
     expect(accessibilityScanResults.violations).toEqual([])

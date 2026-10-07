@@ -33,7 +33,8 @@ def upload_a_file(fp: Path, cookie: str) -> dict:
     t0 = time.monotonic()
     _data = fp.read_bytes()  # -> S3
     _headers = {"x-ms-blob-type": "BlockBlob"}
-    rsp = sess.put(r["upload_url"], data=_data, headers=_headers, timeout=300)
+    with fp.open("rb") as _data:
+        rsp = sess.put(r["upload_url"], data=_data, headers=_headers, timeout=300)
     timeline["upload_to_s3"] = time.monotonic() - t0
 
     t0 = time.monotonic()

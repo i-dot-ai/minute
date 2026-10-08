@@ -2,9 +2,11 @@ from pathlib import Path
 
 import pytest
 
-from common.audio.ffmpeg import convert_to_mp3, get_duration, get_num_audio_channels
 from tests.marks import requires_audio_data
 from tests.utils import FileTypeTests
+from worker.actions.prepare_audio import _convert_to_mp3 as convert_to_mp3
+from worker.actions.prepare_audio import _duration as get_duration
+from worker.actions.prepare_audio import _num_audio_channels as get_num_audio_channels
 
 pytestmark = [requires_audio_data]
 

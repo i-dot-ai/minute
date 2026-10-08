@@ -1,22 +1,19 @@
-"""End-to-end tests for the transcription and minute generation queues.
+"""End-to-end tests for the single worker queue.
 
 Storage and queues are served by MiniStack, so these never touch dev AWS. The worker
 downloads recordings from MiniStack and sends their bytes to synchronous Azure Speech.
 """
 
 import asyncio
-from collections.abc import Generator
+from contextlib import suppress
 from pathlib import Path
-from typing import Any
 from uuid import UUID
 
 import pytest
-import ray
 import requests
 
 from common.database.postgres_models import ContentSource, JobStatus, Minute, MinuteVersion, Transcription
 from common.services.queue_services import get_queue_service
-from common.services.template_manager import TemplateManager
 from common.settings import get_settings
 from common.types import (
     AgendaUsage,
@@ -28,35 +25,18 @@ from common.types import (
 )
 from tests.marks import costs_money
 from tests.utils import FileTypeTests, get_test_client
-from worker.worker_service import WorkerService, create_worker_service
+from worker.consumer import Consumer
+from worker.signal_handler import SignalHandler
+from worker.templates import TEMPLATES
 
 pytestmark = [costs_money]
 
 
-@pytest.fixture
-def worker_service() -> Generator[WorkerService, Any, None]:
-    worker_service = create_worker_service()
-    yield worker_service
-    ray.shutdown()
-
-
 @pytest.fixture(autouse=True)
-async def transcription_queue_service():
+async def worker_queue():
     settings = get_settings()
     queue_service = get_queue_service(
-        settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
-    )
-    queue_service.purge_messages()
-    # needed to ensure sqs queue is purged (not sure if this long is needed for ministack)
-    await asyncio.sleep(1)
-    return queue_service
-
-
-@pytest.fixture(autouse=True)
-async def llm_queue_service():
-    settings = get_settings()
-    queue_service = get_queue_service(
-        settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
+        settings.QUEUE_SERVICE_NAME, settings.WORKER_QUEUE_NAME, settings.WORKER_DEADLETTER_QUEUE_NAME
     )
     queue_service.purge_messages()
     # needed to ensure sqs queue is purged (not sure if this long is needed for ministack)
@@ -66,7 +46,7 @@ async def llm_queue_service():
 
 async def load_db_test_instance(file_type: FileTypeTests) -> set[UUID]:
     # Note, needs MP3 files at the specified location. Keep them under the
-    # `azure_stt_synchronous` duration limit.
+    # Azure synchronous duration limit.
     async with get_test_client() as ac:
         test_audio_dir = Path(".data").joinpath("test_audio").joinpath(file_type.value)
         test_ids = set()
@@ -86,45 +66,62 @@ async def load_db_test_instance(file_type: FileTypeTests) -> set[UUID]:
     return test_ids
 
 
-@pytest.mark.requires_audio_data
-@pytest.mark.asyncio(loop_scope="session")
-async def test_e2e(worker_service):
-    worker_service_task = asyncio.create_task(worker_service.run())
-    transcription_ids = await load_db_test_instance(FileTypeTests.NORMAL)
+def start_consumer(queue_service) -> asyncio.Task:
+    consumer = Consumer(queue_service=queue_service, signal_handler=SignalHandler())
+    return asyncio.create_task(consumer.run())
 
-    for transcription_id in transcription_ids:
-        await assert_transcription_succeeds(transcription_id=transcription_id, receive_task=worker_service_task)
-        await create_template_minutes(transcription_id)
-        await assert_minute_templates_succeeds(transcription_id=transcription_id, receive_task=worker_service_task)
 
-        await create_versions_for_ai_edit(transcription_id=transcription_id)
-        await assert_minute_edit_succeeds(transcription_id=transcription_id, receive_task=worker_service_task)
-    worker_service_task.cancel()
+async def stop_consumer(task: asyncio.Task) -> None:
+    task.cancel()
+    with suppress(asyncio.CancelledError):
+        await task
 
 
 @pytest.mark.requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
-async def test_e2e_zero_bytes(worker_service):
-    worker_service_task = asyncio.create_task(worker_service.run())
-    transcription_ids = await load_db_test_instance(FileTypeTests.ZERO_BYTES)
-    for transcription_id in transcription_ids:
-        await assert_transcription(
-            transcription_id, worker_service_task, loop_while_not=JobStatus.FAILED, fail_if=JobStatus.COMPLETED
-        )
-    worker_service_task.cancel()
+async def test_e2e(worker_queue):
+    consumer_task = start_consumer(worker_queue)
+    try:
+        transcription_ids = await load_db_test_instance(FileTypeTests.NORMAL)
+
+        for transcription_id in transcription_ids:
+            await assert_transcription_succeeds(transcription_id=transcription_id, consumer_task=consumer_task)
+            await create_template_minutes(transcription_id)
+            await assert_minute_templates_succeeds(transcription_id=transcription_id, consumer_task=consumer_task)
+
+            await create_versions_for_ai_edit(transcription_id=transcription_id)
+            await assert_minute_edit_succeeds(transcription_id=transcription_id, consumer_task=consumer_task)
+    finally:
+        await stop_consumer(consumer_task)
 
 
 @pytest.mark.requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
-async def test_e2e_corrupted(worker_service):
-    worker_service_task = asyncio.create_task(worker_service.run())
-    transcription_ids = await load_db_test_instance(FileTypeTests.CORRUPTED)
+async def test_e2e_zero_bytes(worker_queue):
+    consumer_task = start_consumer(worker_queue)
+    try:
+        transcription_ids = await load_db_test_instance(FileTypeTests.ZERO_BYTES)
+        for transcription_id in transcription_ids:
+            await assert_transcription(
+                transcription_id, consumer_task, loop_while_not=JobStatus.FAILED, fail_if=JobStatus.COMPLETED
+            )
+    finally:
+        await stop_consumer(consumer_task)
 
-    for transcription_id in transcription_ids:
-        await assert_transcription(
-            transcription_id, worker_service_task, loop_while_not=JobStatus.FAILED, fail_if=JobStatus.COMPLETED
-        )
-    worker_service_task.cancel()
+
+@pytest.mark.requires_audio_data
+@pytest.mark.asyncio(loop_scope="session")
+async def test_e2e_corrupted(worker_queue):
+    consumer_task = start_consumer(worker_queue)
+    try:
+        transcription_ids = await load_db_test_instance(FileTypeTests.CORRUPTED)
+
+        for transcription_id in transcription_ids:
+            await assert_transcription(
+                transcription_id, consumer_task, loop_while_not=JobStatus.FAILED, fail_if=JobStatus.COMPLETED
+            )
+    finally:
+        await stop_consumer(consumer_task)
 
 
 async def create_versions_for_ai_edit(transcription_id: UUID):
@@ -145,17 +142,17 @@ async def create_versions_for_ai_edit(transcription_id: UUID):
                 assert response.status_code == 200
 
 
-async def check_worker(receive_task):
-    """If the worker stops running, it's probably thrown an exception. Fail the test."""
+async def check_worker(consumer_task: asyncio.Task):
+    """If the consumer stops running, it's probably thrown an exception. Fail the test."""
     await asyncio.sleep(1)
-    if receive_task.done():
-        pytest.fail(receive_task.result())
+    if consumer_task.done():
+        pytest.fail(str(consumer_task.exception()))
 
 
-async def assert_minute_edit_succeeds(transcription_id: UUID, receive_task: asyncio.Task) -> None:
+async def assert_minute_edit_succeeds(transcription_id: UUID, consumer_task: asyncio.Task) -> None:
     completed = set()
     minutes = await get_minutes(transcription_id)
-    assert len(minutes) == len(TemplateManager.templates), "Unexpected number of minutes"
+    assert len(minutes) == len(TEMPLATES), "Unexpected number of minutes"
     while len(completed) != len(minutes):
         print(f"AI Edit completed count: {len(completed)}, total required: {len(minutes)}")  # noqa: T201
         for minute in await get_minutes(transcription_id):
@@ -170,17 +167,17 @@ async def assert_minute_edit_succeeds(transcription_id: UUID, receive_task: asyn
                 pytest.fail(f"Edit version {new.id} failed with error {new.error}")
         await asyncio.sleep(1)
 
-        await check_worker(receive_task)
+        await check_worker(consumer_task)
 
 
-async def assert_minute_templates_succeeds(transcription_id: UUID, receive_task: asyncio.Task) -> None:
+async def assert_minute_templates_succeeds(transcription_id: UUID, consumer_task: asyncio.Task) -> None:
     minutes = await get_minutes(transcription_id)
-    assert len(minutes) == len(TemplateManager.templates)
+    assert len(minutes) == len(TEMPLATES)
     completed_version_ids = set()
-    while len(completed_version_ids) != len(TemplateManager.templates):
+    while len(completed_version_ids) != len(TEMPLATES):
         print(  # noqa: T201
             f"""initial template completed count: {len(completed_version_ids)},
-total required: {len(TemplateManager.templates)}"""
+total required: {len(TEMPLATES)}"""
         )
         for minute in minutes:
             minute_versions = await get_minute_versions(minute.id)
@@ -193,12 +190,12 @@ total required: {len(TemplateManager.templates)}"""
                     case JobStatus.FAILED:
                         pytest.fail(f"Minute version {minute_version.id} failed: {minute_version.error}")
             await asyncio.sleep(1)
-        await check_worker(receive_task)
+        await check_worker(consumer_task)
 
 
 async def create_template_minutes(transcription_id: UUID) -> None:
     async with get_test_client() as test_client:
-        for template in TemplateManager.templates.values():
+        for template in TEMPLATES.values():
             # the General template is created by default after the initial transcription
             if template.name != "General":
                 agenda = (
@@ -213,14 +210,14 @@ async def create_template_minutes(transcription_id: UUID) -> None:
                 assert response.status_code == 200
 
 
-async def assert_transcription_succeeds(transcription_id: UUID, receive_task: asyncio.Task) -> None:
+async def assert_transcription_succeeds(transcription_id: UUID, consumer_task: asyncio.Task) -> None:
     transcription = await get_transcription(transcription_id)
     while transcription.status is not JobStatus.COMPLETED:
         transcription = await get_transcription(transcription_id)
         assert transcription.status is not JobStatus.FAILED
-        # need to sleep here in order for worker threads to execute during test
+        # need to sleep here in order for the consumer to process during the test
         await asyncio.sleep(1)
-        await check_worker(receive_task)
+        await check_worker(consumer_task)
 
 
 async def get_transcription(transcription_id: UUID) -> Transcription:
@@ -254,7 +251,7 @@ async def get_minute_versions(minute_id: UUID) -> list[MinuteVersion]:
 
 async def assert_transcription(
     transcription_id: UUID,
-    receive_task: asyncio.Task,
+    consumer_task: asyncio.Task,
     loop_while_not: JobStatus,
     fail_if: JobStatus,
 ) -> None:
@@ -263,6 +260,6 @@ async def assert_transcription(
     while transcription.status is not loop_while_not:
         transcription = await get_transcription(transcription_id)
         assert transcription.status is not fail_if
-        # need to sleep here in order for worker threads to execute during test
+        # need to sleep here in order for the consumer to process during the test
         await asyncio.sleep(1)
-        await check_worker(receive_task)
+        await check_worker(consumer_task)

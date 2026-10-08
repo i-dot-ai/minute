@@ -4,8 +4,8 @@ locals {
 
   additional_policy_arns = { for idx, arn in [aws_iam_policy.ecs_exec_custom_policy.arn] : idx => arn }
 
-  MAX_TRANSCRIPTION_PROCESSES = terraform.workspace == "prod" ? 4 : 2
-  MAX_LLM_PROCESSES           = terraform.workspace == "prod" ? 8 : 4
+  MAX_CONCURRENT_TRANSCRIPTIONS = terraform.workspace == "prod" ? 4 : 2
+  MAX_CONCURRENT_LLM            = terraform.workspace == "prod" ? 8 : 4
 
   shared_environment_variables = {
     "ENVIRONMENT" : terraform.workspace,
@@ -14,13 +14,10 @@ locals {
     "AWS_ACCOUNT_ID" : data.aws_caller_identity.current.account_id,
     "POSTGRES_HOST" : module.rds.db_instance_address,
     "AZURE_OPENAI_API_VERSION" : "2024-10-21"
-    "TRANSCRIPTION_QUEUE_NAME" : aws_sqs_queue.transcription_queue.name
-    "TRANSCRIPTION_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name
-    "LLM_QUEUE_NAME" : aws_sqs_queue.llm_queue.name
-    "LLM_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.llm_queue_deadletter.name
-    "TRANSCRIPTION_SERVICES" : "[\"azure_stt_synchronous\"]"
-    "MAX_TRANSCRIPTION_PROCESSES" : local.MAX_TRANSCRIPTION_PROCESSES
-    "MAX_LLM_PROCESSES" : local.MAX_LLM_PROCESSES
+    "WORKER_QUEUE_NAME" : aws_sqs_queue.worker_queue.name
+    "WORKER_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.worker_queue_deadletter.name
+    "MAX_CONCURRENT_TRANSCRIPTIONS" : local.MAX_CONCURRENT_TRANSCRIPTIONS
+    "MAX_CONCURRENT_LLM" : local.MAX_CONCURRENT_LLM
     "FAST_LLM_PROVIDER"   = "gemini"
     "FAST_LLM_MODEL_NAME" = "gemini-3.5-flash"
     "BEST_LLM_PROVIDER"   = "gemini"

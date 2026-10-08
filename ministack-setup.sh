@@ -23,58 +23,30 @@ export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-eu-west-2}"
 AWS="aws --endpoint-url $AWS_ENDPOINT_URL"
 
 ################################
-## TRANSCRIPTION QUEUE
+## WORKER QUEUE
 ################################
 
-TRANSCRIPTION_QUEUE_URL=$($AWS sqs create-queue --queue-name "$TRANSCRIPTION_QUEUE_NAME" --query QueueUrl --output text)
-TRANSCRIPTION_DEADLETTER_QUEUE_URL=$($AWS sqs create-queue --queue-name "$TRANSCRIPTION_DEADLETTER_QUEUE_NAME" --query QueueUrl --output text)
-echo "Main queue URL: $TRANSCRIPTION_QUEUE_URL"
-echo "Dead letter queue URL: $TRANSCRIPTION_DEADLETTER_QUEUE_URL"
+WORKER_QUEUE_URL=$($AWS sqs create-queue --queue-name "$WORKER_QUEUE_NAME" --query QueueUrl --output text)
+WORKER_DEADLETTER_QUEUE_URL=$($AWS sqs create-queue --queue-name "$WORKER_DEADLETTER_QUEUE_NAME" --query QueueUrl --output text)
+echo "Worker queue URL: $WORKER_QUEUE_URL"
+echo "Dead letter queue URL: $WORKER_DEADLETTER_QUEUE_URL"
 
-echo "Purging $TRANSCRIPTION_QUEUE_URL"
-$AWS sqs purge-queue --queue-url "$TRANSCRIPTION_QUEUE_URL"
-
-# Derive the dead-letter ARN from the created queue rather than hardcoding the
-# account id, so the redrive policy points at the real queue.
-TRANSCRIPTION_DEADLETTER_ARN=$($AWS sqs get-queue-attributes \
-  --queue-url "$TRANSCRIPTION_DEADLETTER_QUEUE_URL" \
-  --attribute-names QueueArn \
-  --query 'Attributes.QueueArn' --output text)
-
-echo "Dead letter queue ARN: $TRANSCRIPTION_DEADLETTER_ARN"
-
-$AWS sqs set-queue-attributes \
---queue-url "$TRANSCRIPTION_QUEUE_URL" \
---attributes "{
-    \"RedrivePolicy\": \"{\\\"deadLetterTargetArn\\\":\\\"$TRANSCRIPTION_DEADLETTER_ARN\\\",\\\"maxReceiveCount\\\":\\\"4\\\"}\"
-}"
-
-##############################
-## LLM QUEUE
-##############################
-
-LLM_QUEUE_URL=$($AWS sqs create-queue --queue-name "$LLM_QUEUE_NAME" --query QueueUrl --output text)
-LLM_DEADLETTER_QUEUE_URL=$($AWS sqs create-queue --queue-name "$LLM_DEADLETTER_QUEUE_NAME" --query QueueUrl --output text)
-
-echo "LLM queue URL: $LLM_QUEUE_URL"
-echo "LLM Dead letter queue URL: $LLM_DEADLETTER_QUEUE_URL"
-
-echo "Purging $LLM_QUEUE_URL"
-$AWS sqs purge-queue --queue-url "$LLM_QUEUE_URL"
+echo "Purging $WORKER_QUEUE_URL"
+$AWS sqs purge-queue --queue-url "$WORKER_QUEUE_URL"
 
 # Derive the dead-letter ARN from the created queue rather than hardcoding the
 # account id, so the redrive policy points at the real queue.
-LLM_DEADLETTER_ARN=$($AWS sqs get-queue-attributes \
-  --queue-url "$LLM_DEADLETTER_QUEUE_URL" \
+WORKER_DEADLETTER_ARN=$($AWS sqs get-queue-attributes \
+  --queue-url "$WORKER_DEADLETTER_QUEUE_URL" \
   --attribute-names QueueArn \
   --query 'Attributes.QueueArn' --output text)
 
-echo "LLM Dead letter queue ARN: $LLM_DEADLETTER_ARN"
+echo "Dead letter queue ARN: $WORKER_DEADLETTER_ARN"
 
 $AWS sqs set-queue-attributes \
---queue-url "$LLM_QUEUE_URL" \
+--queue-url "$WORKER_QUEUE_URL" \
 --attributes "{
-    \"RedrivePolicy\": \"{\\\"deadLetterTargetArn\\\":\\\"$LLM_DEADLETTER_ARN\\\",\\\"maxReceiveCount\\\":\\\"4\\\"}\"
+    \"RedrivePolicy\": \"{\\\"deadLetterTargetArn\\\":\\\"$WORKER_DEADLETTER_ARN\\\",\\\"maxReceiveCount\\\":\\\"10\\\"}\"
 }"
 
 ##############################

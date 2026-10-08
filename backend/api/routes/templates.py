@@ -8,8 +8,8 @@ from sqlmodel import col, select
 from backend.api.dependencies import UserDep
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.database.postgres_models import TemplateQuestion, TemplateType, UserTemplate
-from common.services.template_manager import TemplateManager
 from common.settings import get_settings
+from common.template_catalog import TEMPLATE_CATALOG
 from common.types import (
     CreateUserTemplateRequest,
     PatchUserTemplateRequest,
@@ -19,7 +19,7 @@ from common.types import (
 )
 
 templates_router = APIRouter(tags=["Templates"])
-all_template_metadata = TemplateManager.get_template_metadata()
+all_template_metadata = TEMPLATE_CATALOG
 beta_templates = get_settings().BETA_TEMPLATE_NAMES
 ga_only_template_metadata = [template for template in all_template_metadata if template.name not in beta_templates]
 

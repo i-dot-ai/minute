@@ -12,9 +12,9 @@ import pytest
 from structlog.testing import capture_logs
 from tenacity import RetryError
 
-from common.services.exceptions import TranscriptionFailedError
-from common.services.transcription_services import azure
-from common.services.transcription_services.azure import AzureSpeechAdapter, AzureSpeechRegion, _configured_regions
+from worker.actions import transcribe as azure
+from worker.actions.transcribe import AzureSpeechRegion, _configured_regions
+from worker.errors import TranscriptionFailedError
 
 PRIMARY = AzureSpeechRegion(region="uksouth", key="primary-key")
 FALLBACK_1 = AzureSpeechRegion(region="westeurope", key="fallback-1-key")
@@ -78,7 +78,7 @@ def backoffs(monkeypatch) -> list[float]:
     async def record_sleep(seconds: float) -> None:
         waits.append(seconds)
 
-    monkeypatch.setattr(AzureSpeechAdapter.start.retry, "sleep", record_sleep)
+    monkeypatch.setattr(azure._azure_transcribe.retry, "sleep", record_sleep)
     return waits
 
 
@@ -129,9 +129,9 @@ async def test_transcribes(
 ):
     transport = azure_responses(responses, regions)
 
-    result = await AzureSpeechAdapter.start(audio_file)
+    result = await azure._azure_transcribe(audio_file)
 
-    assert result.transcript == EXPECTED_TRANSCRIPT
+    assert result == EXPECTED_TRANSCRIPT
     assert transport.requests == [sent_to(region) for region in expected_requests]
     assert transport.audio_sizes == [1024] * len(expected_requests)
     assert len(backoffs) == expected_backoffs
@@ -142,7 +142,7 @@ async def test_gives_up_after_five_sweeps_of_every_region(azure_responses, audio
     transport = azure_responses([error(429) for _ in range(15)])
 
     with pytest.raises(RetryError):
-        await AzureSpeechAdapter.start(audio_file)
+        await azure._azure_transcribe(audio_file)
 
     assert len(transport.requests) == 15
     assert len(backoffs) == 4
@@ -153,7 +153,7 @@ async def test_client_error_fails_without_trying_other_regions(azure_responses, 
     transport = azure_responses([error(400)])
 
     with pytest.raises(TranscriptionFailedError, match="HTTP 400"):
-        await AzureSpeechAdapter.start(audio_file)
+        await azure._azure_transcribe(audio_file)
 
     assert transport.requests == [sent_to(PRIMARY)]
     assert backoffs == []

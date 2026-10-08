@@ -18,6 +18,7 @@ from common.database.postgres_models import (
     Recording,
     Transcription,
 )
+from common.database.repository import reset_transcription_for_retry, reset_version_for_retry
 from common.services.queue_services import get_queue_service
 from common.services.storage_services import get_storage_service
 from common.settings import get_settings
@@ -44,7 +45,7 @@ storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 transcriptions_router = APIRouter(tags=["Transcriptions"])
 transcription_queue_service = get_queue_service(
-    settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
+    settings.QUEUE_SERVICE_NAME, settings.WORKER_QUEUE_NAME, settings.WORKER_DEADLETTER_QUEUE_NAME
 )
 
 logger = logging.getLogger(__name__)
@@ -182,7 +183,7 @@ async def create_transcription(
     session.add(minute_version)
     recording.transcription_id = transcription.id
     await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
+    transcription_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
 
     return TranscriptionCreateResponse(id=transcription.id)
 
@@ -223,29 +224,24 @@ async def retry_transcription(
     minute = transcription.minutes[0] if transcription.minutes else None
     if not minute:
         raise HTTPException(400, detail="Transcription has no minute to retry")
-    # The worker's transcription path expects the queued minute to hold exactly
-    # one version (its initial generation). A failed transcription always meets
-    # this, but guard explicitly so a multi-version minute is never re-queued
-    # into a state the worker cannot process.
+    # The worker's pipeline expects the queued minute to hold exactly one version
+    # (its initial generation). A failed transcription always meets this, but guard
+    # explicitly so a multi-version minute is never re-queued into a state the
+    # worker cannot process.
     if len(minute.minute_versions) != 1:
         raise HTTPException(400, detail="Transcription cannot be retried in its current state")
 
-    transcription.status = JobStatus.AWAITING_START
-    transcription.error = None
-    transcription.dialogue_entries = None
+    minute_version = minute.minute_versions[0]
+    await reset_transcription_for_retry(session, transcription.id)
+    await reset_version_for_retry(session, minute_version.id)
     transcription.created_datetime = datetime.now(UTC)
 
     minute.template_name = request.template_name
     minute.user_template_id = request.template_id
     minute.agenda = request.agenda
 
-    minute_version = minute.minute_versions[0]
-    minute_version.status = JobStatus.AWAITING_START
-    minute_version.error = None
-    minute_version.html_content = ""
-
     await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
+    transcription_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
 
     return TranscriptionCreateResponse(id=transcription.id)
 

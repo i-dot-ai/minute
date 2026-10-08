@@ -29,10 +29,10 @@ CA_SH = if [ -f "$(CA_BUNDLE)" ]; then \
 	GRPC_DEFAULT_SSL_ROOTS_FILE_PATH="$(CA_BUNDLE)"; \
 	fi;
 
-# The worker's Ray actors write heartbeats to HEARTBEAT_DIR, which defaults to
+# The worker's consumer writes heartbeats to HEARTBEAT_DIR, which defaults to
 # /healthcheck. That path exists in the worker container but the macOS root volume
-# is read-only, so the actors die on creation and silently consume nothing. Point
-# it somewhere writable for host-run tests.
+# is read-only, so the worker dies on startup when host-run. Point it somewhere
+# writable for host-run tests.
 HEARTBEAT_SH = HEARTBEAT_DIR="$(CURDIR)/.worker-tmp/healthcheck";
 
 # Source .env via the shell (not make's `export`, which keeps the literal quotes
@@ -61,7 +61,7 @@ run_backend:
 	uv run uvicorn backend.main:app --reload --port 8080
 
 run_worker:
-	uv run python backend/services/queue_service.py
+	uv run python worker/main.py
 
 run:
 	docker compose up -d --wait

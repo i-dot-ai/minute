@@ -171,29 +171,18 @@ class MeetingCheck(BaseModel):
 
 
 class TaskType(IntEnum):
-    # messages have a natural ordering in which we want them to happen
-    TRANSCRIPTION = 1
-    MINUTE = 2
-    EDIT = 3
+    MINUTE = 1
+    EDIT = 2
 
 
 class EditMessageData(BaseModel):
     source_id: uuid.UUID = Field(description="ID of the source message")
 
 
-class TranscriptionJobMessageData(BaseModel):
-    transcription_service: str = Field(description="Name of the transcription service")
-    job_name: str = Field(
-        description="job name to identify asynchronous jobs. Not used in case of synchronous jobs",
-        default="synchronous",
-    )
-    transcript: list[DialogueEntry] | None = Field(description="Transcript of the transcription", default=None)
-
-
 class WorkerMessage(BaseModel):
     id: uuid.UUID
     type: TaskType
-    data: EditMessageData | TranscriptionJobMessageData | None = Field(default=None)
+    data: EditMessageData | None = Field(default=None)
 
 
 class MeetingType(StrEnum):

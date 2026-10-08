@@ -16,7 +16,7 @@ import pytest_asyncio
 from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from common.auth import get_user_info
+from backend.auth import get_user_info
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import JobStatus, Transcription, User
 from tests.utils import get_test_client

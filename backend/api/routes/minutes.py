@@ -22,7 +22,7 @@ from common.types import (
 settings = get_settings()
 
 llm_queue_service = get_queue_service(
-    settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
+    settings.QUEUE_SERVICE_NAME, settings.WORKER_QUEUE_NAME, settings.WORKER_DEADLETTER_QUEUE_NAME
 )
 
 minutes_router = APIRouter(tags=["Minutes"])
@@ -61,6 +61,10 @@ async def create_minute(
     transcription = await session.get(Transcription, transcription_id)
     if not transcription or transcription.user_id != user.id:
         raise HTTPException(404, "Not found")
+    # Minutes are generated from a transcript; composing from a missing/failed
+    # transcription would produce garbage, so require a completed one.
+    if transcription.status != JobStatus.COMPLETED:
+        raise HTTPException(422, "Minutes can only be generated from a completed transcription")
     if request.source_minute_id:
         source_minute = await session.get(Minute, request.source_minute_id)
         if not source_minute or source_minute.transcription_id != transcription_id:

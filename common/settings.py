@@ -17,9 +17,9 @@ DOT_ENV_PATH = ".env"
 
 dotenv_detected = dotenv.load_dotenv(dotenv_path=DOT_ENV_PATH)
 if dotenv_detected:
-    logger.info("A .env file was detected and loaded. Values from it will override environment variables")
+    logger.debug("A .env file was detected and loaded. Values from it will override environment variables")
 else:
-    logger.info("No .env file was detected. Using environment variables as is")
+    logger.debug("No .env file was detected. Using environment variables as is")
 
 
 class Settings(BaseSettings):
@@ -59,10 +59,8 @@ class Settings(BaseSettings):
         self.LOGGING_FORMAT = LogOutputFormat.TEXT if is_local else LogOutputFormat.JSON
         return self
 
-    TRANSCRIPTION_QUEUE_NAME: str = Field(description="SQS transcription queue name")
-    TRANSCRIPTION_DEADLETTER_QUEUE_NAME: str = Field(description="SQS transcription dead-letter queue name")
-    LLM_QUEUE_NAME: str = Field(description="SQS LLM queue name")
-    LLM_DEADLETTER_QUEUE_NAME: str = Field(description="SQS LLM dead-letter queue name")
+    WORKER_QUEUE_NAME: str = Field(description="SQS queue the worker consumes jobs from")
+    WORKER_DEADLETTER_QUEUE_NAME: str = Field(description="SQS dead-letter queue for the worker queue")
 
     AZURE_SPEECH_KEY: str = Field(description="Azure STT speech key for API")
     AZURE_SPEECH_REGION: str = Field(description="Region for Azure STT")
@@ -72,8 +70,27 @@ class Settings(BaseSettings):
     AZURE_SPEECH_FALLBACK_2_KEY: str | None = Field(description="Azure STT speech key for fallback 2", default=None)
     AZURE_SPEECH_FALLBACK_2_REGION: str | None = Field(description="Region for Azure STT fallback 2", default=None)
 
-    MAX_TRANSCRIPTION_PROCESSES: int = Field(description="the number of transcription workers per node", default=1)
-    MAX_LLM_PROCESSES: int = Field(description="the number of LLM workers per node", default=1)
+    MAX_CONCURRENT_TRANSCRIPTIONS: int = Field(
+        description="Concurrent transcription-phase jobs (audio download/convert + STT call) per worker task",
+        default=2,
+    )
+    MAX_CONCURRENT_LLM: int = Field(
+        description="Concurrent LLM-phase jobs (speakers, title, minute generation, edits) per worker task",
+        default=4,
+    )
+    JOB_VISIBILITY_TIMEOUT_SECS: int = Field(
+        description="SQS visibility timeout applied when a message is received/extended; the consumer heartbeat "
+        "re-extends it while a job is alive",
+        default=300,
+    )
+    JOB_HEARTBEAT_INTERVAL_SECS: int = Field(
+        description="How often the consumer extends a job's SQS visibility while it is processing",
+        default=120,
+    )
+    JOB_STALE_SECONDS: int = Field(
+        description="A claim whose claimed_at is older than this is stealable on redelivery (worker died)",
+        default=600,
+    )
 
     # if using Azure OpenAI
     AZURE_DEPLOYMENT: str | None = Field(description="Azure deployment for openAI", default=None)
@@ -88,11 +105,6 @@ class Settings(BaseSettings):
     USE_MINISTACK: bool = Field(description="Use MiniStack for local AWS services emulation in dev", default=True)
     MINISTACK_URL: str = Field(
         description="MiniStack service URL for local AWS services emulation", default="http://localhost:4566"
-    )
-
-    TRANSCRIPTION_SERVICES: list[str] = Field(
-        description="List of service names to use for transcription. See common/services/transcription_services",
-        default_factory=list,
     )
 
     FAST_LLM_PROVIDER: str = Field(
@@ -126,9 +138,6 @@ class Settings(BaseSettings):
         description="Queue service type to communicate with worker. Currently supported: sqs",
         default="sqs",
     )
-
-    # if running the worker inside a docker container (use "0.0.0.0" )
-    RAY_DASHBOARD_HOST: str = Field(description="Ray dashboard host IP address", default="127.0.0.1")
 
     BETA_TEMPLATE_NAMES: list[str] = Field(
         description="List of template names hidden from users",

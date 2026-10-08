@@ -2,8 +2,8 @@
 
 import mistune
 
-from common.services.minute_handler_service import strip_document_code_fence
-from common.templates.citations import (
+from worker.actions.compose_minutes import strip_document_code_fence
+from worker.templates.citations import (
     combine_consecutive_citations,
     strip_preamble,
     unwrap_backticked_citations,

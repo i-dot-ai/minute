@@ -54,6 +54,9 @@ class MinuteVersion(BaseTableMixin, table=True):
     __tablename__ = "minute_version"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    # Lease timestamp written only by the worker's claim CAS; staleness of this
+    # column is what makes a crashed worker's job re-claimable.
+    claimed_at: datetime | None = Field(default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True))
     minute_id: UUID = Field(foreign_key="minute.id", ondelete="CASCADE")
     minute: Mapped["Minute"] = Relationship(back_populates="minute_versions")
     html_content: str = Field(default="", sa_column_kwargs={"server_default": ""})
@@ -125,6 +128,9 @@ class Transcription(BaseTableMixin, table=True):
     )
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    # Lease timestamp written only by the worker's claim CAS; staleness of this
+    # column is what makes a crashed worker's job re-claimable.
+    claimed_at: datetime | None = Field(default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True))
     title: str | None = Field(default=None)
     dialogue_entries: list[DialogueEntry] | None = Field(default=None, sa_column=Column(JSONB))
     status: JobStatus = Field(

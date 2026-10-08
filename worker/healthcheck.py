@@ -42,8 +42,6 @@ def healthcheck() -> tuple[bool, str]:
 
 if __name__ == "__main__":
     healthy, msg = healthcheck()
-    if healthy:
-        logger.info(msg)
-    else:
+    if not healthy:
         logger.warning(msg)
         sys.exit(msg)

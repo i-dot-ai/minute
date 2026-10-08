@@ -42,15 +42,8 @@ services:
     build:
       context: .
       dockerfile: ./worker/Dockerfile
-    shm_size: 4gb
-    deploy: # Make sure the worker has a couple of CPUS
-      resources:
-        limits:
-          cpus: "2.0" # Set CPU limit to 2 cores
     env_file:
       - .env
-    ports:
-      - "8265:8265"
     volumes:
       - ${WORKER_TMP:-./.worker-tmp}:/tmp
       - type: bind
@@ -58,19 +51,16 @@ services:
         target: /static
     environment:
       - POSTGRES_HOST=db
-      - RAY_DASHBOARD_HOST=0.0.0.0
       - MINISTACK_URL=http://ministack:4566
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
-    stop_grace_period: 10s
+    stop_grace_period: 30s
     depends_on:
       db:
         condition: service_healthy
       ministack:
         condition: service_healthy
     healthcheck:
-      # Direct interpreter call (venv is on PATH); avoids `uv run` touching
-      # /app/.venv on a timer while Ray is running off the same venv.
       test: ["CMD-SHELL", "python worker/healthcheck.py"]
       interval: 60s
       retries: 3

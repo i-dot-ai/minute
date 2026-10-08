@@ -5,8 +5,8 @@ from sqlmodel import select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from common.database.postgres_models import User, UserTemplate
-from common.services.template_manager import TemplateManager
 from common.settings import get_settings
+from common.template_catalog import TEMPLATE_CATALOG
 from common.types import DataRetentionUpdateResponse, GetUserResponse, SetDefaultTemplateRequest
 
 users_router = APIRouter(tags=["Users"])
@@ -90,9 +90,7 @@ async def update_default_template(
         user.default_template_name = None
     elif data.template_name is not None:
         valid_names = {
-            template.name
-            for template in TemplateManager.get_template_metadata()
-            if template.name not in get_settings().BETA_TEMPLATE_NAMES
+            template.name for template in TEMPLATE_CATALOG if template.name not in get_settings().BETA_TEMPLATE_NAMES
         }
         if data.template_name not in valid_names:
             raise HTTPException(404, detail="System template not found")

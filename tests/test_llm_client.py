@@ -1,8 +1,8 @@
 import pytest
 from pydantic import BaseModel
 
-from common.llm.client import create_chatbot
 from tests.marks import costs_money
+from worker.llm.client import create_chatbot
 
 pytestmark = [costs_money]
 structured_chat_prompt_1 = [

@@ -5,9 +5,8 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import func
 
 from backend.api.dependencies.get_session import SQLSessionDep
-from common.auth import get_user_info
+from backend.auth import MissingAuthTokenError, get_user_info
 from common.database.postgres_models import User
-from common.services.exceptions import MissingAuthTokenError
 from common.settings import get_settings, get_structured_logger
 
 settings = get_settings()

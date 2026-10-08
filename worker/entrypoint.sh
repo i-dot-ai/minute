@@ -6,10 +6,8 @@ echo $GOOGLE_APPLICATION_CREDENTIALS_BASE64 | base64 -d > /app/config/google-cre
 export GOOGLE_APPLICATION_CREDENTIALS=/app/config/google-credentials.json
 
 # Main execution
-echo "Starting queue service..."
+echo "Starting worker..."
 
 # Run the venv interpreter directly (it is first on PATH from the Dockerfile)
-# rather than via `uv run`. Ray starts a local cluster here and spawns many
-# long-lived subprocesses off sys.executable; keeping uv out of the runtime path
-# guarantees it can never re-sync/mutate /app/.venv while those processes are live.
+# rather than via `uv run`, so uv can never re-sync/mutate /app/.venv at runtime.
 exec python worker/main.py

@@ -1,13 +1,13 @@
 import logging
 from datetime import UTC, datetime, timedelta
-from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from sqlmodel import and_, col, func, null, select, update
+from sqlmodel import col, func, null, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.database.postgres_database import async_engine
-from common.database.postgres_models import JobStatus, MinuteVersion, Recording, Transcription, User
+from common.database.postgres_models import Recording, Transcription, User
+from common.database.repository import finalize_stale_transcriptions, finalize_stale_versions
 from common.services.storage_services import get_storage_service
 from common.settings import get_settings
 
@@ -20,22 +20,17 @@ storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
 async def cleanup_failed_records():
-    """clear records based on each user's retention period setting."""
+    """Finalise jobs stuck IN_PROGRESS past the lease horizon (worker died and was never re-claimed)."""
     logger.info("Starting stalled object cleanup process")
     async with AsyncSession(async_engine) as session:
-        for object_type in [MinuteVersion, Transcription]:
+        for finalize, label in [
+            (finalize_stale_versions, "MinuteVersion"),
+            (finalize_stale_transcriptions, "Transcription"),
+        ]:
             # delete after 24 hrs if not successful
-            cutoff_date = datetime.now(tz=ZoneInfo("Europe/London")) - timedelta(days=1)
-            update_stmt = (
-                update(object_type)
-                .where(and_(object_type.created_datetime < cutoff_date, object_type.status == JobStatus.IN_PROGRESS))
-                .values(status=JobStatus.FAILED, error="Unknown error. Job finalised by cleanup process")
-            )
-            result = await session.exec(update_stmt)
+            result = await finalize(session, older_than=timedelta(days=1))
             await session.commit()
-            logger.info(
-                f"updated {result.rowcount} old {object_type.__qualname__} that were not successfully processed"  # noqa: G004
-            )
+            logger.info(f"updated {result} old {label} that were not successfully processed")  # noqa: G004
 
     logger.info("Stalled record cleanup process completed")
 

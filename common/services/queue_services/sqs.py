@@ -1,14 +1,13 @@
-import logging
 from typing import Any
 
 import boto3
 
 from common.services.queue_services.base import QueueService
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 from common.types import WorkerMessage
 
+slogger = get_structured_logger()
 settings = get_settings()
-logger = logging.getLogger(__name__)
 
 
 def get_sqs_client():
@@ -39,6 +38,7 @@ class SQSQueueService(QueueService):
         self.queue_url = self.sqs.get_queue_url(QueueName=self.queue_name)["QueueUrl"]
         self.dead_letter_queue_url = self.sqs.get_queue_url(QueueName=self.deadletter_queue_name)["QueueUrl"]
         self.polling_interval = polling_interval
+        self.visibility_timeout = settings.JOB_VISIBILITY_TIMEOUT_SECS
 
     def __reduce__(self):
         """Required so that Ray can deserialize the queue service by instantiated a new one."""
@@ -58,11 +58,11 @@ class SQSQueueService(QueueService):
             try:
                 worker_message = WorkerMessage.model_validate_json(message["Body"])
                 self.sqs.change_message_visibility(
-                    QueueUrl=self.queue_url, ReceiptHandle=receipt_handle, VisibilityTimeout=1800
+                    QueueUrl=self.queue_url, ReceiptHandle=receipt_handle, VisibilityTimeout=self.visibility_timeout
                 )
                 out.append((worker_message, receipt_handle))
             except Exception:
-                logger.exception("failed to process message")
+                slogger.exception("Failed to parse worker message")
         return out
 
     def publish_message(self, message: WorkerMessage):
@@ -72,14 +72,24 @@ class SQSQueueService(QueueService):
         try:
             self.sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=receipt_handle)
         except self.sqs.exceptions.ReceiptHandleIsInvalid:
-            logger.warning("ReceiptHandleIsInvalid raised when completing message")
+            slogger.warning("ReceiptHandleIsInvalid raised when completing message")
+
+    def extend_message(self, receipt_handle: Any, visibility_seconds: int):
+        try:
+            self.sqs.change_message_visibility(
+                QueueUrl=self.queue_url, ReceiptHandle=receipt_handle, VisibilityTimeout=visibility_seconds
+            )
+        except self.sqs.exceptions.ReceiptHandleIsInvalid:
+            slogger.warning("ReceiptHandleIsInvalid raised when extending message")
 
     def deadletter_message(self, message: WorkerMessage, receipt_handle: Any):
         try:
             self.sqs.send_message(QueueUrl=self.dead_letter_queue_url, MessageBody=message.model_dump_json())
             self.sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=receipt_handle)
         except self.sqs.exceptions.ReceiptHandleIsInvalid:
-            logger.warning("ReceiptHandleIsInvalid raised when deadlettering message. Message=%s", message.model_dump())
+            slogger.warning(
+                "ReceiptHandleIsInvalid raised when deadlettering message: {message}", message=str(message.model_dump())
+            )
 
     def abandon_message(self, receipt_handle: Any):
         try:
@@ -87,7 +97,7 @@ class SQSQueueService(QueueService):
                 QueueUrl=self.queue_url, ReceiptHandle=receipt_handle, VisibilityTimeout=0
             )
         except self.sqs.exceptions.ReceiptHandleIsInvalid:
-            logger.warning("ReceiptHandleIsInvalid raised when abandoning message")
+            slogger.warning("ReceiptHandleIsInvalid raised when abandoning message")
 
     def purge_messages(self):
         self.sqs.purge_queue(QueueUrl=self.queue_url)

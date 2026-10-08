@@ -15,7 +15,7 @@ import pytest_asyncio
 from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from common.auth import get_user_info
+from backend.auth import get_user_info
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import (
     JobStatus,
@@ -25,6 +25,7 @@ from common.database.postgres_models import (
     Transcription,
     User,
 )
+from common.types import TaskType
 from tests.utils import get_test_client
 
 SEED_TIME = datetime.now(UTC) - timedelta(minutes=10)
@@ -154,7 +155,8 @@ async def test_retry_resets_existing_transcription(failed_transcription, publish
 
     published = published_messages
     assert len(published) == 1
-    assert published[0].id == minute_id
+    assert published[0].id == failed_transcription["minute_version_id"]
+    assert published[0].type == TaskType.MINUTE
 
 
 @pytest.mark.asyncio(loop_scope="session")

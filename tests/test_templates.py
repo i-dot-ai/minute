@@ -2,8 +2,8 @@ import uuid
 
 import pytest
 
-from common.services.template_manager import TemplateManager
 from tests.utils import get_test_client
+from worker.templates import TEMPLATES
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -12,7 +12,7 @@ async def test_get_templates_success(expected_status_code):
     async with get_test_client() as ac:
         response = await ac.get("/templates")
         assert response.status_code == expected_status_code
-        assert len(response.json()) == len(TemplateManager.templates)
+        assert len(response.json()) == len(TEMPLATES)
 
 
 async def _create_user_template(ac, name: str) -> str:

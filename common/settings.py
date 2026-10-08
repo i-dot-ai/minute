@@ -148,9 +148,6 @@ class Settings(BaseSettings):
     # if using azure-service-bus
     AZURE_SB_CONNECTION_STRING: str | None = Field(description="Azure service bus connection string", default=None)
 
-    # if running the worker inside a docker container (use "0.0.0.0" )
-    RAY_DASHBOARD_HOST: str = Field(description="Ray dashboard host IP address", default="127.0.0.1")
-
     BETA_TEMPLATE_NAMES: list[str] = Field(
         description="List of template names available in beta. These are currently made available via a Posthog feature"
         " flag",

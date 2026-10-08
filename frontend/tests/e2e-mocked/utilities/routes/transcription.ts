@@ -1,6 +1,7 @@
 import type { Page, Request } from '@playwright/test'
 import type {
   MinuteListItem,
+  PaginatedTranscriptionsResponse,
   TranscriptionGetResponse,
 } from '@/lib/client/types.gen'
 import { json } from './general'
@@ -52,4 +53,37 @@ export async function routeTranscription(
       return route.fulfill(json(200, minutes[0]))
     }
   )
+}
+
+/**
+ * Stateful transcription list + delete routes.
+ *
+ * Register AFTER mockBackend(page) so these take precedence over the static
+ * list route. A DELETE removes the item from a local copy of the list so the
+ * row disappears when the UI invalidates and refetches.
+ */
+export async function routeDeleteTranscription(
+  page: Page,
+  { transcriptions }: { transcriptions: PaginatedTranscriptionsResponse }
+): Promise<void> {
+  const list: PaginatedTranscriptionsResponse = {
+    ...transcriptions,
+    items: [...transcriptions.items],
+  }
+
+  await page.route('**/api/proxy/transcriptions/*', (route) => {
+    if (route.request().method() !== 'DELETE') return route.fallback()
+    const id = new URL(route.request().url()).pathname.split('/').at(-1)
+    const index = list.items.findIndex((item) => item.id === id)
+    if (index !== -1) {
+      list.items.splice(index, 1)
+      list.total_count = Math.max(0, list.total_count - 1)
+    }
+    return route.fulfill(json(200, {}))
+  })
+
+  await page.route('**/api/proxy/transcriptions', (route) => {
+    if (route.request().method() !== 'GET') return route.fallback()
+    return route.fulfill(json(200, list))
+  })
 }

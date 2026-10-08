@@ -59,14 +59,10 @@ class Settings(BaseSettings):
         self.LOGGING_FORMAT = LogOutputFormat.TEXT if is_local else LogOutputFormat.JSON
         return self
 
-    TRANSCRIPTION_QUEUE_NAME: str = Field(description="queue name to use for SQS/Azure Service Bus queues")
-    TRANSCRIPTION_DEADLETTER_QUEUE_NAME: str = Field(
-        description="deadletter queue name to use for SQS. Ignored if using Azure Service Bus "
-    )
-    LLM_QUEUE_NAME: str = Field(description="queue name to use for SQS/Azure Service Bus queues")
-    LLM_DEADLETTER_QUEUE_NAME: str = Field(
-        description="deadletter queue name to use for SQS. Ignored if using Azure Service Bus "
-    )
+    TRANSCRIPTION_QUEUE_NAME: str = Field(description="SQS transcription queue name")
+    TRANSCRIPTION_DEADLETTER_QUEUE_NAME: str = Field(description="SQS transcription dead-letter queue name")
+    LLM_QUEUE_NAME: str = Field(description="SQS LLM queue name")
+    LLM_DEADLETTER_QUEUE_NAME: str = Field(description="SQS LLM dead-letter queue name")
 
     AZURE_SPEECH_KEY: str = Field(description="Azure STT speech key for API")
     AZURE_SPEECH_REGION: str = Field(description="Region for Azure STT")
@@ -85,11 +81,7 @@ class Settings(BaseSettings):
     AZURE_OPENAI_ENDPOINT: str | None = Field(description="Azure OpenAI service endpoint URL", default=None)
     AZURE_OPENAI_API_VERSION: str | None = Field(description="Azure OpenAI API version", default=None)
 
-    # if using Gemini
-    GOOGLE_APPLICATION_CREDENTIALS: str | None = Field(
-        description="Path to Google Cloud service account credentials JSON file", default=None
-    )
-    GOOGLE_CLOUD_PROJECT: str | None = Field(description="Google Cloud project ID", default=None)
+    # GOOGLE_APPLICATION_CREDENTIALS and GOOGLE_CLOUD_PROJECT are read directly by the Google SDK.
     GOOGLE_CLOUD_LOCATION: str | None = Field(description="Google Cloud region/location", default=None)
 
     # if using MiniStack for development (recommended)
@@ -99,7 +91,7 @@ class Settings(BaseSettings):
     )
 
     TRANSCRIPTION_SERVICES: list[str] = Field(
-        description="List of service names to use for transcription. See backend/services/transcription_services",
+        description="List of service names to use for transcription. See common/services/transcription_services",
         default_factory=list,
     )
 
@@ -124,48 +116,28 @@ class Settings(BaseSettings):
     )
 
     STORAGE_SERVICE_NAME: str = Field(
-        description="Storage service type to use for file uploads. Currently supported are: s3, azure-blob",
+        description="Storage service type to use for file uploads. Currently supported are: s3, local",
         default="s3",
     )
     # if using s3
     DATA_S3_BUCKET: str | None = Field(description="S3 bucket name for data storage", default=None)
-    # if using Azure blob
-    AZURE_BLOB_CONNECTION_STRING: str | None = Field(description="Azure Blob Storage connection string", default=None)
-    AZURE_UPLOADS_CONTAINER_NAME: str | None = Field(
-        description="Azure container name for uploaded files", default=None
-    )
-    # if using azure_stt_batch
-    AZURE_TRANSCRIPTION_CONTAINER_NAME: str | None = Field(
-        description="Azure container name for transcription result files. Note that Azure Batch transcription requires "
-        "this.",
-        default=None,
-    )
 
     QUEUE_SERVICE_NAME: str = Field(
-        description="Queue service type to communicate with worker. Currently supported are: sqs, azure-service-bus",
+        description="Queue service type to communicate with worker. Currently supported: sqs",
         default="sqs",
     )
-    # if using azure-service-bus
-    AZURE_SB_CONNECTION_STRING: str | None = Field(description="Azure service bus connection string", default=None)
 
     # if running the worker inside a docker container (use "0.0.0.0" )
     RAY_DASHBOARD_HOST: str = Field(description="Ray dashboard host IP address", default="127.0.0.1")
 
     BETA_TEMPLATE_NAMES: list[str] = Field(
-        description="List of template names available in beta. These are currently made available via a Posthog feature"
-        " flag",
+        description="List of template names hidden from users",
         default_factory=list,
     )
 
     # if using posthog
     POSTHOG_API_KEY: str | None = Field(description="PostHog API key for analytics", default=None)
     POSTHOG_HOST: str = Field(description="PostHog service host URL", default="https://eu.i.posthog.com")
-
-    HALLUCINATION_CHECK: bool = Field(
-        description="Should the LLM check for hallucinations? Note that the results of"
-        " this are currently not surfaced in the UI",
-        default=False,
-    )
 
     MIN_WORD_COUNT_FOR_SUMMARY: int = Field(
         default=200, description="Transcript must have at least this many words to be passed to summary stage"

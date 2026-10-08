@@ -29,7 +29,6 @@ dependencies = [
     "markdownify>=1.2.0,<2",
     "python-multipart>=0.0.20,<0.0.21",
     "i-dot-ai-utilities>=0.4.4,<0.5",
-    "azure-servicebus>=7.14.2,<8",
 ]
 
 [tool.ruff]
@@ -49,8 +48,6 @@ worker = [
     "openai>=1.42.0,<2",
     "ffmpeg-python>=0.2.0,<0.3",
     "ray[default]>=2.53.0,<3",
-    "azure-storage-blob>=12.26.0,<13",
-    "azure-identity>=1.23.1,<2",
     "posthog>=6.6.1,<7",
 ]
 dev = [

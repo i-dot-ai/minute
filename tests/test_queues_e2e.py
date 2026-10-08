@@ -1,21 +1,7 @@
 """End-to-end tests for the transcription and minute generation queues.
 
-Storage and queues are served by MiniStack, so these never touch dev AWS. That covers
-the synchronous Azure speech-to-text path only, and it is worth knowing why:
-
-  - `azure_stt_synchronous` works because the worker downloads the recording from
-    MiniStack to a local temp file and POSTs the bytes to Azure itself. Nothing outside
-    this machine ever needs to reach the storage endpoint.
-  - `azure_stt_batch` works the other way round. It presigns a GET URL and hands it to
-    Azure in `contentUrls` for Azure's own servers to fetch. Against MiniStack that URL
-    is http://localhost:4566/..., which Azure cannot reach, so the batch path cannot
-    work locally without exposing MiniStack publicly.
-
-`TranscriptionServiceManager.select_adaptor` picks the first service whose
-`max_audio_length` covers the recording, and `azure_stt_synchronous` caps at 17999s. The
-fixture in .data/test_audio/normal is ~1950s, so these tests stay on the synchronous
-side of that threshold. Swapping in a fixture of five hours or more would select the
-batch adapter and fail for reasons unrelated to the code under test.
+Storage and queues are served by MiniStack, so these never touch dev AWS. The worker
+downloads recordings from MiniStack and sends their bytes to synchronous Azure Speech.
 """
 
 import asyncio
@@ -35,8 +21,6 @@ from common.settings import get_settings
 from common.types import (
     AgendaUsage,
     AiEdit,
-    ChatCreateRequest,
-    ChatGetResponse,
     MinutesCreateRequest,
     MinuteVersionCreateRequest,
     RecordingCreateRequest,
@@ -72,7 +56,7 @@ async def transcription_queue_service():
 async def llm_queue_service():
     settings = get_settings()
     queue_service = get_queue_service(
-        settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
+        settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
     )
     queue_service.purge_messages()
     # needed to ensure sqs queue is purged (not sure if this long is needed for ministack)
@@ -81,9 +65,8 @@ async def llm_queue_service():
 
 
 async def load_db_test_instance(file_type: FileTypeTests) -> set[UUID]:
-    # Note, needs MP3 files at the specified location. Keep them under the 7200s
-    # `azure_stt_synchronous` limit -- see the module docstring on why the batch
-    # adapter cannot work against MiniStack.
+    # Note, needs MP3 files at the specified location. Keep them under the
+    # `azure_stt_synchronous` duration limit.
     async with get_test_client() as ac:
         test_audio_dir = Path(".data").joinpath("test_audio").joinpath(file_type.value)
         test_ids = set()
@@ -116,27 +99,6 @@ async def test_e2e(worker_service):
 
         await create_versions_for_ai_edit(transcription_id=transcription_id)
         await assert_minute_edit_succeeds(transcription_id=transcription_id, receive_task=worker_service_task)
-    worker_service_task.cancel()
-
-
-@pytest.mark.requires_audio_data
-@pytest.mark.asyncio(loop_scope="session")
-async def test_e2e_chat(worker_service):
-    worker_service_task = asyncio.create_task(worker_service.run())
-
-    # needed to ensure sqs queue is purged (not sure if this long is needed for ministack)
-    await asyncio.sleep(1)
-    transcription_ids = await load_db_test_instance(FileTypeTests.NORMAL)
-    for transcription_id in transcription_ids:
-        await assert_transcription_succeeds(transcription_id=transcription_id, receive_task=worker_service_task)
-        chat_create_response = await create_chat(transcription_id)
-        await assert_chat_succeeds(
-            transcription_id=transcription_id,
-            chat_id=chat_create_response,
-            loop_while_not=JobStatus.COMPLETED,
-            fail_if=JobStatus.FAILED,
-        )
-    # cancel the queue receiver
     worker_service_task.cancel()
 
 
@@ -234,21 +196,6 @@ total required: {len(TemplateManager.templates)}"""
         await check_worker(receive_task)
 
 
-async def assert_chat_succeeds(
-    transcription_id: UUID,
-    chat_id: UUID,
-    loop_while_not: JobStatus,
-    fail_if: JobStatus,
-) -> None:
-    chat = await get_chat(transcription_id=transcription_id, chat_id=chat_id)
-
-    while chat.status is not loop_while_not:
-        chat = await get_chat(transcription_id=transcription_id, chat_id=chat_id)
-        assert chat.status is not fail_if
-        # need to sleep here in order for worker threads to execute during test
-        await asyncio.sleep(1)
-
-
 async def create_template_minutes(transcription_id: UUID) -> None:
     async with get_test_client() as test_client:
         for template in TemplateManager.templates.values():
@@ -264,14 +211,6 @@ async def create_template_minutes(transcription_id: UUID) -> None:
                     f"/transcription/{transcription_id}/minutes", content=request.model_dump_json()
                 )
                 assert response.status_code == 200
-
-
-async def create_chat(transcription_id: UUID) -> UUID:
-    async with get_test_client() as test_client:
-        request = ChatCreateRequest(user_content="What did the Heath Minister say?")
-        response = await test_client.post(f"/transcriptions/{transcription_id}/chat", content=request.model_dump_json())
-        assert response.status_code == 201
-        return UUID(response.json()["id"])
 
 
 async def assert_transcription_succeeds(transcription_id: UUID, receive_task: asyncio.Task) -> None:
@@ -303,13 +242,6 @@ async def get_minutes(transcription_id: UUID) -> list[Minute]:
             assert response.status_code == 200
             minutes_without_version.minute_versions = [MinuteVersion.model_validate(x) for x in response.json()]
         return minutes_without_versions
-
-
-async def get_chat(transcription_id: UUID, chat_id: UUID) -> ChatGetResponse:
-    async with get_test_client() as test_client:
-        chat_response = await test_client.get(f"/transcriptions/{transcription_id}/chat/{chat_id}")
-        assert chat_response.status_code == 200
-        return ChatGetResponse.model_validate(chat_response.json())
 
 
 async def get_minute_versions(minute_id: UUID) -> list[MinuteVersion]:

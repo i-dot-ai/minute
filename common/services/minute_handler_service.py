@@ -1,6 +1,5 @@
 import logging
 import re
-import uuid
 from typing import cast
 from uuid import UUID
 
@@ -9,7 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
-from common.database.postgres_models import DialogueEntry, Hallucination, JobStatus, Minute, MinuteVersion, UserTemplate
+from common.database.postgres_models import DialogueEntry, JobStatus, Minute, MinuteVersion, UserTemplate
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import (
@@ -20,11 +19,7 @@ from common.services.posthog_client import capture_event
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings, get_structured_logger
 from common.templates.user_template import generate_user_template
-from common.types import (
-    LLMHallucination,
-    MeetingType,
-    MinuteAndHallucinations,
-)
+from common.types import MeetingType
 
 settings = get_settings()
 
@@ -51,24 +46,11 @@ def strip_document_code_fence(markdown: str) -> str:
 
 class MinuteHandlerService:
     @staticmethod
-    def convert_llm_hallucination_to_db_hallucination(
-        llm_hallucination: LLMHallucination, minute_version_id: UUID
-    ) -> Hallucination:
-        return Hallucination(
-            id=uuid.uuid4(),
-            hallucination_text=llm_hallucination.hallucination_text,
-            hallucination_reason=llm_hallucination.hallucination_reason,
-            hallucination_type=llm_hallucination.hallucination_type,
-            minute_version_id=minute_version_id,
-        )
-
-    @staticmethod
     def update_minute_version(
         minute_version_id: UUID,
         html_content: str | None = None,
         status: JobStatus | None = None,
         error: str | None = None,
-        hallucinations: list[LLMHallucination] | None = None,
     ) -> None:
         with SessionLocal() as session:
             minute_version = session.get(MinuteVersion, minute_version_id)
@@ -82,11 +64,6 @@ class MinuteHandlerService:
                 minute_version.status = status
             if error is not None:
                 minute_version.error = error
-            if hallucinations:
-                minute_version.hallucinations = [
-                    MinuteHandlerService.convert_llm_hallucination_to_db_hallucination(hallucination, minute_version_id)
-                    for hallucination in hallucinations
-                ]
             session.add(minute_version)
             session.commit()
 
@@ -151,11 +128,10 @@ class MinuteHandlerService:
             cls.update_minute_version(minute_version.id, status=JobStatus.IN_PROGRESS)
             meeting_type = cls.predict_meeting(minute_version.minute.transcription.dialogue_entries)
             slogger.info("Predicted meeting type {meeting_type}", meeting_type=str(meeting_type))
-            html_content, hallucinations = await cls.generate_minutes(meeting_type, minute_version.minute)
+            html_content = await cls.generate_minutes(meeting_type, minute_version.minute)
             cls.update_minute_version(
                 minute_version.id,
                 html_content=html_content,
-                hallucinations=hallucinations,
                 status=JobStatus.COMPLETED,
             )
             capture_event(
@@ -192,7 +168,7 @@ class MinuteHandlerService:
 
         try:
             cls.update_minute_version(target_minute_version.id, status=JobStatus.IN_PROGRESS)
-            edited_string, hallucinations = await cls.edit_minutes_with_ai(
+            edited_string = await cls.edit_minutes_with_ai(
                 minutes=source_minute_version.html_content,
                 edit_instructions=target_minute_version.ai_edit_instructions,
                 transcript=source_minute_version.minute.transcription.dialogue_entries,
@@ -201,7 +177,6 @@ class MinuteHandlerService:
                 minute_version_id=target_minute_version.id,
                 status=JobStatus.COMPLETED,
                 html_content=edited_string,
-                hallucinations=hallucinations,
             )
 
         except Exception as e:
@@ -219,57 +194,50 @@ class MinuteHandlerService:
             msg = f"No template with id {minute.user_template_id}"
             raise RuntimeError(msg)
         logger.info("%s: Found template id=%s, name=%s", minute.id, template.id, template.name)
-        minutes, hallucinations = await generate_user_template(template=template, transcription=minute.transcription)
-        return minutes, hallucinations
+        return await generate_user_template(template=template, transcription=minute.transcription)
 
     @classmethod
     async def generate_minutes(
         cls,
         meeting_type: MeetingType,
         minute: Minute,
-    ) -> MinuteAndHallucinations:
+    ) -> str:
         match meeting_type:
             case MeetingType.too_short:
-                result, hallucinations = cls.handle_bad_transcript(minute.transcription.dialogue_entries)
+                result = cls.handle_bad_transcript(minute.transcription.dialogue_entries)
             case MeetingType.short:
-                result, hallucinations = await cls.generate_basic_minutes(minute.transcription.dialogue_entries)
+                result = await cls.generate_basic_minutes(minute.transcription.dialogue_entries)
             case _:
-                result, hallucinations = await cls.generate_full_minutes(minute)
+                result = await cls.generate_full_minutes(minute)
         result = mistune.html(strip_document_code_fence(result))
-        return cast(str, result), hallucinations
+        return cast(str, result)
 
     @classmethod
-    async def generate_full_minutes(cls, minute: Minute) -> MinuteAndHallucinations:
+    async def generate_full_minutes(cls, minute: Minute) -> str:
         if minute.user_template_id is not None:
             logger.info(
                 "%s: Generating minute from user template user_template_id=%s", minute.id, minute.user_template_id
             )
-            result, hallucinations = await cls.generate_minute_from_user_template(minute)
+            result = await cls.generate_minute_from_user_template(minute)
         else:
             logger.info("%s: Generating minute from default template: %s", minute.id, minute.template_name)
             template = TemplateManager.get_template(minute.template_name)
-            result, hallucinations = await template.generate(minute)
+            result = await template.generate(minute)
         logger.info("%s: Successfully generated minute", minute.id)
-        result = convert_american_to_british_spelling(result)
-        return result, hallucinations
+        return convert_american_to_british_spelling(result)
 
     @classmethod
-    def handle_bad_transcript(cls, transcript: list[DialogueEntry]) -> MinuteAndHallucinations:
-        return (
-            f"""Short meeting detected. Minutes not available.
-         Please try again with a longer meeting. Transcript is: {transcript_as_speaker_and_utterance(transcript)}""",
-            [],
-        )
+    def handle_bad_transcript(cls, transcript: list[DialogueEntry]) -> str:
+        return f"""Short meeting detected. Minutes not available.
+         Please try again with a longer meeting. Transcript is: {transcript_as_speaker_and_utterance(transcript)}"""
 
     @classmethod
     async def generate_basic_minutes(
         cls,
         transcript: list[DialogueEntry],
-    ) -> MinuteAndHallucinations:
+    ) -> str:
         chatbot = create_default_chatbot(FastOrBestLLM.FAST)
-        choice = await chatbot.chat(messages=get_basic_minutes_prompt(transcript))
-        hallucinations = await chatbot.hallucination_check()
-        return choice, hallucinations
+        return await chatbot.chat(messages=get_basic_minutes_prompt(transcript))
 
     @classmethod
     def predict_meeting(cls, dialogue_entries: list[DialogueEntry]) -> MeetingType:
@@ -288,12 +256,9 @@ class MinuteHandlerService:
         minutes: str,
         edit_instructions: str,
         transcript: list[DialogueEntry],
-    ) -> MinuteAndHallucinations:
+    ) -> str:
         chatbot = create_default_chatbot(FastOrBestLLM.FAST)
         edited_minutes = await chatbot.chat(
             messages=get_ai_edit_initial_messages(minutes, edit_instructions, transcript)
         )
-        edited_minutes = edited_minutes.removeprefix("```html").removesuffix("```")
-        hallucinations = await chatbot.hallucination_check()
-
-        return edited_minutes, hallucinations
+        return edited_minutes.removeprefix("```html").removesuffix("```")

@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import aiofiles
 import httpx
 import sentry_sdk
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
@@ -95,6 +94,7 @@ class AzureSpeechAdapter(TranscriptionAdapter):
         errors: list[httpx.HTTPStatusError | httpx.TimeoutException] = []
         for index, region in enumerate(regions):
             try:
+                files["audio"][1].seek(0)
                 start_time = time.monotonic()
                 response = await client.post(region.url, headers=region.headers, files=files, params=API_PARAMS)
                 duration_ms = int((time.monotonic() - start_time) * 1000)
@@ -139,21 +139,24 @@ class AzureSpeechAdapter(TranscriptionAdapter):
         Async version of transcribe audio using Azure Speech-to-Text API
         """
 
-        with sentry_sdk.start_transaction(op="process", name="read_file_before_azure_transcribe") as transaction:
-            async with aiofiles.open(audio_file_path_or_recording, "rb") as audio_file:
-                audio_content = await audio_file.read()
-                files: Any = {
-                    "audio": ("audio.wav", audio_content),
-                    "definition": (
-                        None,
-                        '{"locales":["en-GB"],"diarization":{"enabled":true},"profanityFilterMode":"None"}',
-                    ),
-                }
-            transaction.set_data("file_size", audio_file_path_or_recording.stat().st_size)
-            transaction.set_data("file_type", audio_file_path_or_recording.suffix.lower())
+        if not isinstance(audio_file_path_or_recording, Path):
+            msg = "Synchronous transcription requires a local audio file"
+            raise TypeError(msg)
+        audio_file_path = audio_file_path_or_recording
 
-        with sentry_sdk.start_transaction(op="process", name="post_file_to_azure_transcribe") as transaction:
-            transaction.set_data("file_size", audio_file_path_or_recording.stat().st_size)
+        with (
+            sentry_sdk.start_transaction(op="process", name="post_file_to_azure_transcribe") as transaction,
+            audio_file_path.open("rb") as audio_file,
+        ):
+            files: Any = {
+                "audio": ("audio.wav", audio_file),
+                "definition": (
+                    None,
+                    '{"locales":["en-GB"],"diarization":{"enabled":true},"profanityFilterMode":"None"}',
+                ),
+            }
+            transaction.set_data("file_size", audio_file_path.stat().st_size)
+            transaction.set_data("file_type", audio_file_path.suffix.lower())
             async with httpx.AsyncClient(timeout=TIMEOUT) as client:
                 response, region_index = await cls._post_with_failover(client, files)
                 transaction.set_data("azure_region", regions[region_index].region)

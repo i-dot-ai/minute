@@ -31,7 +31,6 @@ jobs:
           cp .env.example .env
           cat >> .env <<'EOF'
 
-          DISABLE_AUTH_SIGNATURE_VERIFICATION=true
           TRANSCRIPTION_SERVICES='["azure_stt_synchronous"]'
           AZURE_SPEECH_KEY=${{ secrets.AZURE_SPEECH_KEY }}
           AZURE_SPEECH_REGION=${{ secrets.AZURE_SPEECH_REGION }}

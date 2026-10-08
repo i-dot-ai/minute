@@ -10,21 +10,17 @@ import {
 
 import { client } from '../client.gen'
 import {
-  createChatTranscriptionsTranscriptionIdChatPost,
   createMinuteTranscriptionTranscriptionIdMinutesPost,
   createMinuteVersionMinutesMinuteIdVersionsPost,
   createRecordingRecordingsPost,
   createTranscriptionTranscriptionsPost,
   createUserTemplateUserTemplatesPost,
-  deleteChatsTranscriptionsTranscriptionIdChatDelete,
-  deleteChatTranscriptionsTranscriptionIdChatChatIdDelete,
   deleteMinuteMinutesMinuteIdDelete,
   deleteMinuteVersionMinuteVersionsMinuteVersionIdDelete,
   deleteTranscriptionTranscriptionsTranscriptionIdDelete,
   deleteUserTemplateUserTemplatesTemplateIdDelete,
   duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost,
   editUserTemplateUserTemplatesTemplateIdPatch,
-  getChatTranscriptionsTranscriptionIdChatChatIdGet,
   getMinuteMinutesMinutesIdGet,
   getMinuteVersionMinuteVersionsMinuteVersionIdGet,
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGet,
@@ -34,7 +30,6 @@ import {
   getUserTemplateUserTemplatesTemplateIdGet,
   getUserUsersMeGet,
   healthcheckHealthcheckGet,
-  listChatTranscriptionsTranscriptionIdChatGet,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGet,
   listMinuteVersionsMinutesMinuteIdVersionsGet,
   listTranscriptionsTranscriptionsGet,
@@ -45,9 +40,6 @@ import {
   updateDefaultTemplateUsersDefaultTemplatePatch,
 } from '../sdk.gen'
 import type {
-  CreateChatTranscriptionsTranscriptionIdChatPostData,
-  CreateChatTranscriptionsTranscriptionIdChatPostError,
-  CreateChatTranscriptionsTranscriptionIdChatPostResponse,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostData,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostError,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostResponse,
@@ -62,12 +54,6 @@ import type {
   CreateTranscriptionTranscriptionsPostResponse,
   CreateUserTemplateUserTemplatesPostData,
   CreateUserTemplateUserTemplatesPostError,
-  DeleteChatsTranscriptionsTranscriptionIdChatDeleteData,
-  DeleteChatsTranscriptionsTranscriptionIdChatDeleteError,
-  DeleteChatsTranscriptionsTranscriptionIdChatDeleteResponse,
-  DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteData,
-  DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteError,
-  DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteResponse,
   DeleteMinuteMinutesMinuteIdDeleteData,
   DeleteMinuteMinutesMinuteIdDeleteError,
   DeleteMinuteMinutesMinuteIdDeleteResponse,
@@ -83,9 +69,6 @@ import type {
   DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
   EditUserTemplateUserTemplatesTemplateIdPatchData,
   EditUserTemplateUserTemplatesTemplateIdPatchError,
-  GetChatTranscriptionsTranscriptionIdChatChatIdGetData,
-  GetChatTranscriptionsTranscriptionIdChatChatIdGetError,
-  GetChatTranscriptionsTranscriptionIdChatChatIdGetResponse,
   GetMinuteMinutesMinutesIdGetData,
   GetMinuteMinutesMinutesIdGetError,
   GetMinuteMinutesMinutesIdGetResponse,
@@ -111,9 +94,6 @@ import type {
   GetUserUsersMeGetError,
   GetUserUsersMeGetResponse,
   HealthcheckHealthcheckGetData,
-  ListChatTranscriptionsTranscriptionIdChatGetData,
-  ListChatTranscriptionsTranscriptionIdChatGetError,
-  ListChatTranscriptionsTranscriptionIdChatGetResponse,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetData,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetError,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetResponse,
@@ -1079,153 +1059,3 @@ export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation =
     }
     return mutationOptions
   }
-
-/**
- * Delete Chats
- */
-export const deleteChatsTranscriptionsTranscriptionIdChatDeleteMutation = (
-  options?: Partial<
-    Options<DeleteChatsTranscriptionsTranscriptionIdChatDeleteData>
-  >
-): UseMutationOptions<
-  DeleteChatsTranscriptionsTranscriptionIdChatDeleteResponse,
-  DeleteChatsTranscriptionsTranscriptionIdChatDeleteError,
-  Options<DeleteChatsTranscriptionsTranscriptionIdChatDeleteData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    DeleteChatsTranscriptionsTranscriptionIdChatDeleteResponse,
-    DeleteChatsTranscriptionsTranscriptionIdChatDeleteError,
-    Options<DeleteChatsTranscriptionsTranscriptionIdChatDeleteData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await deleteChatsTranscriptionsTranscriptionIdChatDelete(
-        {
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        }
-      )
-      return data
-    },
-  }
-  return mutationOptions
-}
-
-export const listChatTranscriptionsTranscriptionIdChatGetQueryKey = (
-  options: Options<ListChatTranscriptionsTranscriptionIdChatGetData>
-) => createQueryKey('listChatTranscriptionsTranscriptionIdChatGet', options)
-
-/**
- * List Chat
- */
-export const listChatTranscriptionsTranscriptionIdChatGetOptions = (
-  options: Options<ListChatTranscriptionsTranscriptionIdChatGetData>
-) =>
-  queryOptions<
-    ListChatTranscriptionsTranscriptionIdChatGetResponse,
-    ListChatTranscriptionsTranscriptionIdChatGetError,
-    ListChatTranscriptionsTranscriptionIdChatGetResponse,
-    ReturnType<typeof listChatTranscriptionsTranscriptionIdChatGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listChatTranscriptionsTranscriptionIdChatGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      })
-      return data
-    },
-    queryKey: listChatTranscriptionsTranscriptionIdChatGetQueryKey(options),
-  })
-
-/**
- * Create Chat
- */
-export const createChatTranscriptionsTranscriptionIdChatPostMutation = (
-  options?: Partial<
-    Options<CreateChatTranscriptionsTranscriptionIdChatPostData>
-  >
-): UseMutationOptions<
-  CreateChatTranscriptionsTranscriptionIdChatPostResponse,
-  CreateChatTranscriptionsTranscriptionIdChatPostError,
-  Options<CreateChatTranscriptionsTranscriptionIdChatPostData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CreateChatTranscriptionsTranscriptionIdChatPostResponse,
-    CreateChatTranscriptionsTranscriptionIdChatPostError,
-    Options<CreateChatTranscriptionsTranscriptionIdChatPostData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await createChatTranscriptionsTranscriptionIdChatPost({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      })
-      return data
-    },
-  }
-  return mutationOptions
-}
-
-/**
- * Delete Chat
- *
- * Delete a specific transcription by ID.
- */
-export const deleteChatTranscriptionsTranscriptionIdChatChatIdDeleteMutation = (
-  options?: Partial<
-    Options<DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteData>
-  >
-): UseMutationOptions<
-  DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteResponse,
-  DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteError,
-  Options<DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteResponse,
-    DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteError,
-    Options<DeleteChatTranscriptionsTranscriptionIdChatChatIdDeleteData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } =
-        await deleteChatTranscriptionsTranscriptionIdChatChatIdDelete({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        })
-      return data
-    },
-  }
-  return mutationOptions
-}
-
-export const getChatTranscriptionsTranscriptionIdChatChatIdGetQueryKey = (
-  options: Options<GetChatTranscriptionsTranscriptionIdChatChatIdGetData>
-) =>
-  createQueryKey('getChatTranscriptionsTranscriptionIdChatChatIdGet', options)
-
-/**
- * Get Chat
- */
-export const getChatTranscriptionsTranscriptionIdChatChatIdGetOptions = (
-  options: Options<GetChatTranscriptionsTranscriptionIdChatChatIdGetData>
-) =>
-  queryOptions<
-    GetChatTranscriptionsTranscriptionIdChatChatIdGetResponse,
-    GetChatTranscriptionsTranscriptionIdChatChatIdGetError,
-    GetChatTranscriptionsTranscriptionIdChatChatIdGetResponse,
-    ReturnType<typeof getChatTranscriptionsTranscriptionIdChatChatIdGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getChatTranscriptionsTranscriptionIdChatChatIdGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      })
-      return data
-    },
-    queryKey:
-      getChatTranscriptionsTranscriptionIdChatChatIdGetQueryKey(options),
-  })

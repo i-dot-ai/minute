@@ -43,9 +43,6 @@ export const useStartTranscription = (
         uploadResponse = await fetch(uploadUrl, {
           method: 'PUT',
           body: file,
-          headers: {
-            'x-ms-blob-type': 'BlockBlob',
-          },
         })
       } catch (error) {
         posthog.capture('upload_failed', { failure_type: 'network' })

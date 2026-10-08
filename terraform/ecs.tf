@@ -9,13 +9,10 @@ locals {
 
   shared_environment_variables = {
     "ENVIRONMENT" : terraform.workspace,
-    "PORT" : local.backend_port,
     "REPO" : "minute",
     "APP_URL" : aws_route53_record.type_a_record.fqdn,
     "AWS_ACCOUNT_ID" : data.aws_caller_identity.current.account_id,
-    "DOCKER_BUILDER_CONTAINER" : "minute",
     "POSTGRES_HOST" : module.rds.db_instance_address,
-    "AUTH_PROVIDER_PUBLIC_KEY" : data.aws_ssm_parameter.auth_provider_public_key.value,
     "AZURE_OPENAI_API_VERSION" : "2024-10-21"
     "TRANSCRIPTION_QUEUE_NAME" : aws_sqs_queue.transcription_queue.name
     "TRANSCRIPTION_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name
@@ -24,7 +21,6 @@ locals {
     "TRANSCRIPTION_SERVICES" : "[\"azure_stt_synchronous\"]"
     "MAX_TRANSCRIPTION_PROCESSES" : local.MAX_TRANSCRIPTION_PROCESSES
     "MAX_LLM_PROCESSES" : local.MAX_LLM_PROCESSES
-    "AZURE_TRANSCRIPTION_CONTAINER_NAME" : "transcriptions"
     "FAST_LLM_PROVIDER"   = "gemini"
     "FAST_LLM_MODEL_NAME" = "gemini-3.5-flash"
     "BEST_LLM_PROVIDER"   = "gemini"
@@ -68,7 +64,6 @@ module "backend" {
   ]
 
   environment_variables = merge(local.shared_environment_variables, {
-    "APP_NAME" : "${local.name}-backend",
     "AUTH_API_URL" : data.aws_ssm_parameter.auth_api_invoke_url.value,
   })
 
@@ -116,11 +111,9 @@ module "frontend" {
 
   environment_variables = {
     "ENVIRONMENT" : terraform.workspace,
-    "APP_NAME" : "${local.name}-frontend"
     "PORT" : local.frontend_port,
     "REPO" : "minute",
     "BACKEND_HOST" : "http://${aws_service_discovery_service.service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}:${local.backend_port}"
-    "AUTH_PROVIDER_PUBLIC_KEY" : data.aws_ssm_parameter.auth_provider_public_key.value,
     "AUTH_API_URL" : data.aws_ssm_parameter.auth_api_invoke_url.value,
     "OIDC_CLIENT_ID" : aws_ssm_parameter.oidc_secrets["client_id"].value,
   }
@@ -180,7 +173,6 @@ module "worker" {
   create_listener   = false
 
   environment_variables = merge(local.shared_environment_variables, {
-    "APP_NAME" : "${local.name}-worker",
     "AUTH_API_URL" : "unused", # Worker settings need refactoring so we can remove this
   })
 
@@ -191,8 +183,9 @@ module "worker" {
     }
   ]
 
-  memory = terraform.workspace == "prod" ? 8192 : 4096
-  cpu    = terraform.workspace == "prod" ? 4096 : 2048
+  memory            = terraform.workspace == "prod" ? 8192 : 4096
+  cpu               = terraform.workspace == "prod" ? 4096 : 2048
+  ephemeral_storage = 40
 
   http_healthcheck = false
   container_healthcheck = {

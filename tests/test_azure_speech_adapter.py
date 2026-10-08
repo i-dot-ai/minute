@@ -50,9 +50,11 @@ class QueuedTransport(httpx.AsyncBaseTransport):
     def __init__(self, responses: list[httpx.Response | Exception]):
         self.responses = list(responses)
         self.requests: list[tuple[str, str]] = []
+        self.audio_sizes: list[int] = []
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
-        await request.aread()
+        body = await request.aread()
+        self.audio_sizes.append(body.count(b"\0"))
         self.requests.append((request.url.host, request.headers["Ocp-Apim-Subscription-Key"]))
         response = self.responses.pop(0)
         if isinstance(response, Exception):
@@ -131,6 +133,7 @@ async def test_transcribes(
 
     assert result.transcript == EXPECTED_TRANSCRIPT
     assert transport.requests == [sent_to(region) for region in expected_requests]
+    assert transport.audio_sizes == [1024] * len(expected_requests)
     assert len(backoffs) == expected_backoffs
 
 

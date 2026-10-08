@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from sqlalchemy import update
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
@@ -9,12 +10,17 @@ from common.database.postgres_models import Chat, JobStatus, Minute, Transcripti
 from common.generate_meeting_title import generate_meeting_title
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_chat_with_transcript_system_message
-from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
+from common.services.exceptions import (
+    InteractionFailedError,
+    StaleTranscriptionRunError,
+    TranscriptionAlreadyStartedError,
+    TranscriptionFailedError,
+)
 from common.services.posthog_client import capture_event
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.settings import get_settings, get_structured_logger
 from common.templates.citations import combine_consecutive_citations
-from common.types import DialogueEntry, TranscriptionJobMessageData
+from common.types import DialogueEntry, TranscriptionJobMessageData, TranscriptionReadyMessageData
 
 settings = get_settings()
 transcription_manager = TranscriptionServiceManager()
@@ -123,32 +129,76 @@ class TranscriptionHandlerService:
     def update_transcription(
         cls,
         transcription_id: UUID,
+        run_id: UUID | None,
+        expected_status: JobStatus,
         status: JobStatus | None = None,
         transcript: list[DialogueEntry] | None = None,
         title: str | None = None,
         error: str | None = None,
-    ) -> None:
+    ) -> bool:
         with SessionLocal() as session:
-            transcription = session.get(Transcription, transcription_id)
-            if not transcription:
-                msg = f"transcription id {transcription_id} not found"
-                raise ValueError(msg)
+            values = {}
             if status:
-                transcription.status = status
+                values["status"] = status
             if transcript:
-                transcription.dialogue_entries = transcript
+                values["dialogue_entries"] = transcript
             if error:
-                transcription.error = error
+                values["error"] = error
             if title:
-                transcription.title = title
-            session.add(transcription)
+                values["title"] = title
+            result = session.exec(
+                update(Transcription)
+                .where(
+                    col(Transcription.id) == transcription_id,
+                    col(Transcription.run_id) == run_id,
+                    col(Transcription.status) == expected_status,
+                )
+                .values(**values)
+            )
+            session.commit()
+            return result.rowcount == 1
+
+    @classmethod
+    def claim_transcription(cls, transcription_id: UUID, run_id: UUID | None) -> None:
+        with SessionLocal() as session:
+            result = session.exec(
+                update(Transcription)
+                .where(
+                    col(Transcription.id) == transcription_id,
+                    col(Transcription.run_id) == run_id,
+                    col(Transcription.status) == JobStatus.AWAITING_START,
+                )
+                .values(status=JobStatus.IN_PROGRESS)
+            )
+            if result.rowcount != 1:
+                raise TranscriptionAlreadyStartedError
             session.commit()
 
     @classmethod
-    async def process_transcription(
+    def is_current_transcription(
+        cls,
+        transcription_id: UUID,
+        run_id: UUID | None,
+        status: JobStatus,
+    ) -> bool:
+        with SessionLocal() as session:
+            return (
+                session.exec(
+                    select(Transcription.id).where(
+                        col(Transcription.id) == transcription_id,
+                        col(Transcription.run_id) == run_id,
+                        col(Transcription.status) == status,
+                    )
+                ).first()
+                is not None
+            )
+
+    @classmethod
+    async def process_transcription(  # noqa: C901, PLR0912
         cls,
         minute_id: UUID,
-        async_transcription_message_data: TranscriptionJobMessageData | None = None,
+        run_id: UUID | None,
+        message_data: TranscriptionJobMessageData | TranscriptionReadyMessageData | None = None,
     ) -> TranscriptionJobMessageData:
         """Process a transcription job and save results. Returns True if job is complete, False otherwise."""
         slogger.set_context_field("minute_id", str(minute_id))
@@ -160,41 +210,70 @@ class TranscriptionHandlerService:
             raise TranscriptionFailedError from e
 
         try:
-            if async_transcription_message_data:
+            if isinstance(message_data, TranscriptionJobMessageData):
+                # polling an in-flight async job
+                if not cls.is_current_transcription(
+                    transcription.id,
+                    run_id,
+                    JobStatus.IN_PROGRESS,
+                ):
+                    raise StaleTranscriptionRunError
                 transcription_job = await transcription_manager.check_transcription(
-                    adapter_name=async_transcription_message_data.transcription_service,
-                    async_transcription_message_data=async_transcription_message_data,
+                    adapter_name=message_data.transcription_service,
+                    async_transcription_message_data=message_data,
+                )
+            elif isinstance(message_data, TranscriptionReadyMessageData):
+                # a freshly converted recording handed over by the audio worker
+                cls.claim_transcription(transcription.id, run_id)
+                transcription_job = await transcription_manager.perform_transcription_steps(
+                    transcription=transcription, duration_seconds=message_data.duration_seconds
                 )
             else:
-                # it's a new transcription job
-                cls.update_transcription(transcription.id, JobStatus.IN_PROGRESS)
-                transcription_job = await transcription_manager.perform_transcription_steps(transcription=transcription)
+                msg = f"Unexpected transcription message data for minute id {minute_id}: {message_data!r}"
+                raise TranscriptionFailedError(msg)
 
             if transcription_job.transcript:
                 dialogue_entries = await cls.identify_speakers(transcription_job.transcript)
                 meeting_title = await generate_meeting_title(transcript=dialogue_entries)
-                cls.update_transcription(
-                    transcription.id, status=JobStatus.COMPLETED, transcript=dialogue_entries, title=meeting_title
+                updated = cls.update_transcription(
+                    transcription.id,
+                    run_id,
+                    JobStatus.IN_PROGRESS,
+                    status=JobStatus.COMPLETED,
+                    transcript=dialogue_entries,
+                    title=meeting_title,
                 )
+                if not updated:
+                    raise StaleTranscriptionRunError
                 capture_event(
                     transcription.user_id,
                     "transcription_succeeded",
                     {"transcriptionId": str(transcription.id)},
                 )
 
+        except (StaleTranscriptionRunError, TranscriptionAlreadyStartedError):
+            raise
         except Exception as e:
             # Primary failure is logged once at the actor boundary (RayTranscriptionService.process).
             msg = f"Transcription failed: {e!s}"
             try:
-                cls.update_transcription(transcription.id, status=JobStatus.FAILED, error=msg)
+                updated = cls.update_transcription(
+                    transcription.id,
+                    run_id,
+                    JobStatus.IN_PROGRESS,
+                    status=JobStatus.FAILED,
+                    error=msg,
+                )
             except Exception:
                 slogger.exception("Error updating transcription status. Maybe it doesn't exist?")
-
-            capture_event(
-                transcription.user_id,
-                "transcription_failed",
-                {"transcriptionId": str(transcription.id)},
-            )
+            else:
+                if not updated:
+                    raise StaleTranscriptionRunError from e
+                capture_event(
+                    transcription.user_id,
+                    "transcription_failed",
+                    {"transcriptionId": str(transcription.id)},
+                )
             raise TranscriptionFailedError from e
         else:
             return transcription_job

@@ -1,7 +1,8 @@
-import logging
 import signal
 
-logger = logging.getLogger(__name__)
+from common.settings import get_structured_logger
+
+slogger = get_structured_logger()
 
 
 class SignalHandler:
@@ -11,5 +12,5 @@ class SignalHandler:
         signal.signal(signal.SIGINT, self._handle_signal)
 
     def _handle_signal(self, signum, _frame):
-        logger.info("Received signal %d, initiating graceful shutdown...", signum)
+        slogger.info("Received signal {signum}, initiating graceful shutdown...", signum=signum)
         self.signal_received = True

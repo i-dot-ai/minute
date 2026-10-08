@@ -67,9 +67,13 @@ class Settings(BaseSettings):
     LLM_DEADLETTER_QUEUE_NAME: str = Field(
         description="deadletter queue name to use for SQS. Ignored if using Azure Service Bus "
     )
+    AUDIO_QUEUE_NAME: str = Field(description="queue name for the audio (ffmpeg) worker")
+    AUDIO_DEADLETTER_QUEUE_NAME: str = Field(
+        description="deadletter queue name for the audio worker. Ignored if using Azure Service Bus "
+    )
 
-    AZURE_SPEECH_KEY: str = Field(description="Azure STT speech key for API")
-    AZURE_SPEECH_REGION: str = Field(description="Region for Azure STT")
+    AZURE_SPEECH_KEY: str | None = Field(description="Azure STT speech key for API", default=None)
+    AZURE_SPEECH_REGION: str | None = Field(description="Region for Azure STT", default=None)
     # optional extra Azure STT regions, tried in order when a region returns 429 or 5xx
     AZURE_SPEECH_FALLBACK_1_KEY: str | None = Field(description="Azure STT speech key for fallback 1", default=None)
     AZURE_SPEECH_FALLBACK_1_REGION: str | None = Field(description="Region for Azure STT fallback 1", default=None)

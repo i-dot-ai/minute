@@ -67,10 +67,8 @@ async def delete_orphan_records():
         logger.info("Found %d Recordings with no Transcription.", len(recordings))
         for recording in recordings:
             try:
-                exists = await storage_service.check_object_exists(recording.s3_file_key)
-                if exists:
+                if await storage_service.check_object_exists(recording.s3_file_key):
                     await storage_service.delete(recording.s3_file_key)
-                await storage_service.delete(recording.s3_file_key)
             except Exception as e:  # noqa: BLE001
                 msg = f"Error deleting recording {recording.id}. Will keep record in database: {e}"
                 logger.error(msg)

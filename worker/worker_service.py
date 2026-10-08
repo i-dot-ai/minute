@@ -6,8 +6,8 @@ import ray
 from common.services.queue_services import get_queue_service
 from common.services.queue_services.base import QueueService
 from common.settings import get_settings
+from common.signal_handler import SignalHandler
 from worker.ray_receive_service import HasBeenStopped, RayLlmService, RayTranscriptionService
-from worker.signal_handler import SignalHandler
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

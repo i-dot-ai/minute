@@ -7,7 +7,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy.orm import selectinload
-from sqlmodel import col, func, or_, select
+from sqlmodel import col, func, or_, select, update
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.get_file_s3_key import get_file_s3_key
@@ -22,11 +22,11 @@ from common.services.queue_services import get_queue_service
 from common.services.storage_services import get_storage_service
 from common.settings import get_settings
 from common.types import (
+    AudioWorkerMessage,
     PaginatedTranscriptionsResponse,
     RecordingCreateRequest,
     RecordingCreateResponse,
     SingleRecording,
-    TaskType,
     TranscriptionCreateRequest,
     TranscriptionCreateResponse,
     TranscriptionGetResponse,
@@ -34,7 +34,6 @@ from common.types import (
     TranscriptionMetadata,
     TranscriptionPatchRequest,
     TranscriptionRetryRequest,
-    WorkerMessage,
 )
 
 settings = get_settings()
@@ -43,11 +42,47 @@ storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
 transcriptions_router = APIRouter(tags=["Transcriptions"])
-transcription_queue_service = get_queue_service(
-    settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
+audio_queue_service = get_queue_service(
+    queue_service_name=settings.QUEUE_SERVICE_NAME,
+    queue_name=settings.AUDIO_QUEUE_NAME,
+    deadletter_queue_name=settings.AUDIO_DEADLETTER_QUEUE_NAME,
+    message_model=AudioWorkerMessage,
 )
 
 logger = logging.getLogger(__name__)
+
+
+async def _record_enqueue_failure(
+    session: SQLSessionDep,
+    transcription_id: uuid.UUID,
+    minute_version_id: uuid.UUID,
+    run_id: uuid.UUID,
+) -> None:
+    error = "Could not enqueue audio processing"
+    try:
+        await session.rollback()
+        result = await session.exec(
+            update(Transcription)
+            .where(
+                col(Transcription.id) == transcription_id,
+                col(Transcription.run_id) == run_id,
+                col(Transcription.status) == JobStatus.AWAITING_START,
+            )
+            .values(status=JobStatus.FAILED, error=error)
+        )
+        if result.rowcount == 1:
+            await session.exec(
+                update(MinuteVersion)
+                .where(col(MinuteVersion.id) == minute_version_id)
+                .values(status=JobStatus.FAILED, error=error)
+            )
+        await session.commit()
+    except Exception:
+        logger.exception("Could not record transcription enqueue failure")
+        try:
+            await session.rollback()
+        except Exception:
+            logger.exception("Could not roll back failed enqueue status update")
 
 
 def _next_cleanup_cutoff(retention_days: int) -> datetime:
@@ -162,7 +197,7 @@ async def create_transcription(
     recording = await session.get(Recording, request.recording_id)
     if not recording or recording.user_id != current_user.id:
         raise HTTPException(404, detail="Recording not found")
-    transcription = Transcription(user_id=current_user.id, title=request.title)
+    transcription = Transcription(user_id=current_user.id, title=request.title, run_id=uuid.uuid4())
 
     if not await storage_service.check_object_exists(recording.s3_file_key):
         raise HTTPException(
@@ -182,7 +217,24 @@ async def create_transcription(
     session.add(minute_version)
     recording.transcription_id = transcription.id
     await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
+    try:
+        audio_queue_service.publish_message(
+            AudioWorkerMessage(
+                user_id=current_user.id,
+                transcription_id=transcription.id,
+                minute_id=minute.id,
+                s3_file_key=recording.s3_file_key,
+                run_id=transcription.run_id,
+            )
+        )
+    except Exception as exc:
+        await _record_enqueue_failure(
+            session,
+            transcription.id,
+            minute_version.id,
+            transcription.run_id,
+        )
+        raise HTTPException(status_code=503, detail="Could not enqueue transcription") from exc
 
     return TranscriptionCreateResponse(id=transcription.id)
 
@@ -230,10 +282,19 @@ async def retry_transcription(
     if len(minute.minute_versions) != 1:
         raise HTTPException(400, detail="Transcription cannot be retried in its current state")
 
+    await session.refresh(
+        transcription,
+        attribute_names=["status", "run_id"],
+        with_for_update=True,
+    )
+    if transcription.status != JobStatus.FAILED:
+        raise HTTPException(400, detail="Only failed transcriptions can be retried")
+
     transcription.status = JobStatus.AWAITING_START
     transcription.error = None
     transcription.dialogue_entries = None
     transcription.created_datetime = datetime.now(UTC)
+    transcription.run_id = uuid.uuid4()
 
     minute.template_name = request.template_name
     minute.user_template_id = request.template_id
@@ -245,7 +306,24 @@ async def retry_transcription(
     minute_version.html_content = ""
 
     await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
+    try:
+        audio_queue_service.publish_message(
+            AudioWorkerMessage(
+                user_id=current_user.id,
+                transcription_id=transcription.id,
+                minute_id=minute.id,
+                s3_file_key=recording.s3_file_key,
+                run_id=transcription.run_id,
+            )
+        )
+    except Exception as exc:
+        await _record_enqueue_failure(
+            session,
+            transcription.id,
+            minute_version.id,
+            transcription.run_id,
+        )
+        raise HTTPException(status_code=503, detail="Could not enqueue transcription") from exc
 
     return TranscriptionCreateResponse(id=transcription.id)
 

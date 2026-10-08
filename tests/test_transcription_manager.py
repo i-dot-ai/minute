@@ -1,4 +1,3 @@
-import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -16,7 +15,8 @@ class MockStorageService(StorageService):
     """Mock storage service for testing."""
 
     async def download(self, s3_file_key: str, local_file_path: str) -> None:  # noqa: ARG002
-        return None
+        # Create the destination file so perform_transcription_steps can stat it.
+        Path(local_file_path).write_bytes(b"test audio bytes")
 
     async def upload(self, local_file_path: str, s3_file_key: str) -> None:  # noqa: ARG002
         return None
@@ -217,31 +217,25 @@ class TestTranscriptionServiceManager:
         self,
         mock_storage_service,  # noqa: ARG002
         manager,
-        mock_recording,
+        mock_recording,  # noqa: ARG002
         mock_transcription,
     ):
         """Test perform_transcription_steps with synchronous adapter."""
-        with (
-            tempfile.NamedTemporaryFile(suffix=".mp3") as temp_file,
-            patch.object(manager, "get_recording_to_process") as mock_get_recording,
-        ):
-            # Setup mocks
-            mock_duration = 1500.0
-            mock_get_recording.return_value = (mock_recording, Path(temp_file.name), mock_duration)
-            mock_adapter = manager.select_adaptor(int(mock_duration))
+        mock_duration = 1500.0
+        mock_adapter = manager.select_adaptor(int(mock_duration))
 
-            with patch.object(mock_adapter, "start") as mock_start:
-                mock_start.return_value = TranscriptionJobMessageData(
-                    job_name="test_job",
-                    transcript=[{"text": "Test transcript", "speaker": "Speaker1", "start_time": 0.0, "end_time": 1.0}],
-                    transcription_service=mock_adapter.name,
-                )
+        with patch.object(mock_adapter, "start") as mock_start:
+            mock_start.return_value = TranscriptionJobMessageData(
+                job_name="test_job",
+                transcript=[{"text": "Test transcript", "speaker": "Speaker1", "start_time": 0.0, "end_time": 1.0}],
+                transcription_service=mock_adapter.name,
+            )
 
-                result = await manager.perform_transcription_steps(mock_transcription)
+            result = await manager.perform_transcription_steps(mock_transcription, duration_seconds=mock_duration)
 
-                assert result.job_name == "test_job"
-                assert result.transcript is not None
-                mock_start.assert_called_once()
+            assert result.job_name == "test_job"
+            assert result.transcript is not None
+            mock_start.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_perform_transcription_steps_asynchronous(
@@ -252,14 +246,9 @@ class TestTranscriptionServiceManager:
         mock_transcription,
     ):
         """Test perform_transcription_steps with asynchronous adapter."""
-        with (
-            tempfile.NamedTemporaryFile(suffix=".mp3") as temp_file,
-            patch.object(manager, "get_recording_to_process") as mock_get_recording,
-            patch.object(manager, "check_transcription") as mock_check_transcription,
-        ):
-            # Setup mocks
-            mock_duration = 3500.0  # Should trigger async adapter
-            mock_get_recording.return_value = (mock_recording, Path(temp_file.name), mock_duration)
+        with patch.object(manager, "check_transcription") as mock_check_transcription:
+            # Duration that should trigger the async adapter
+            mock_duration = 3500.0
             mock_adapter = manager.select_adaptor(int(mock_duration))
             assert mock_adapter.adapter_type == AdapterType.ASYNC
 
@@ -274,7 +263,7 @@ class TestTranscriptionServiceManager:
                     transcription_service=mock_adapter.name,
                 )
 
-                result = await manager.perform_transcription_steps(mock_transcription)
+                result = await manager.perform_transcription_steps(mock_transcription, duration_seconds=mock_duration)
 
                 assert result.job_name == "test_job"
                 assert result.transcript is not None
@@ -286,22 +275,15 @@ class TestTranscriptionServiceManager:
         self,
         mock_storage_service,  # noqa: ARG002
         manager,
-        mock_recording,
+        mock_recording,  # noqa: ARG002
         mock_transcription,
     ):
         """Test perform_transcription_steps with unknown adapter type."""
-        with (
-            tempfile.NamedTemporaryFile(suffix=".mp3") as temp_file,
-            patch.object(manager, "get_recording_to_process") as mock_get_recording,
-            patch.object(manager, "select_adaptor") as mock_select_adaptor,
-        ):
-            # Setup mocks
-            mock_get_recording.return_value = (mock_recording, Path(temp_file.name), 1500)
-
+        with patch.object(manager, "select_adaptor") as mock_select_adaptor:
             # Create adapter with unknown type
             mock_adapter = Mock()
             mock_adapter.adapter_type = "UNKNOWN_TYPE"
             mock_select_adaptor.return_value = mock_adapter
 
             with pytest.raises(RuntimeError, match="adapter not recognised"):
-                await manager.perform_transcription_steps(mock_transcription)
+                await manager.perform_transcription_steps(mock_transcription, duration_seconds=1500.0)

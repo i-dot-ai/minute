@@ -87,6 +87,45 @@ services:
         - path: ./uv.lock
           action: rebuild
 
+  audio_worker:
+    build:
+      context: .
+      dockerfile: ./audio_worker/Dockerfile
+    deploy: # One ffmpeg process; scale horizontally by adding tasks/replicas.
+      resources:
+        limits:
+          cpus: "1.0"
+    env_file:
+      - .env
+    # Local bind-mounted recordings are created by other containers with host ownership.
+    user: root
+    volumes:
+      - type: bind
+        source: ./.data
+        target: /static
+    environment:
+      - POSTGRES_HOST=db
+      - MINISTACK_URL=http://ministack:4566
+      - STORAGE_SERVICE_NAME=local
+      - LOCAL_STORAGE_PATH=/static
+    # > the 20s SQS long-poll, so an idle worker can finish its poll and exit cleanly on SIGTERM
+    stop_grace_period: 120s
+    depends_on:
+      db:
+        condition: service_healthy
+      ministack:
+        condition: service_healthy
+    develop:
+      watch:
+        - path: ./audio_worker
+          target: /app/audio_worker
+          action: sync+restart
+        - path: ./common
+          target: /app/common
+          action: sync+restart
+        - path: ./uv.lock
+          action: rebuild
+
   frontend:
     build:
       context: .

@@ -78,6 +78,34 @@ $AWS sqs set-queue-attributes \
 }"
 
 ##############################
+## AUDIO QUEUE
+##############################
+
+AUDIO_QUEUE_URL=$($AWS sqs create-queue --queue-name "$AUDIO_QUEUE_NAME" --query QueueUrl --output text)
+AUDIO_DEADLETTER_QUEUE_URL=$($AWS sqs create-queue --queue-name "$AUDIO_DEADLETTER_QUEUE_NAME" --query QueueUrl --output text)
+
+echo "Audio queue URL: $AUDIO_QUEUE_URL"
+echo "Audio Dead letter queue URL: $AUDIO_DEADLETTER_QUEUE_URL"
+
+echo "Purging $AUDIO_QUEUE_URL"
+$AWS sqs purge-queue --queue-url "$AUDIO_QUEUE_URL"
+
+# Derive the dead-letter ARN from the created queue rather than hardcoding the
+# account id, so the redrive policy points at the real queue.
+AUDIO_DEADLETTER_ARN=$($AWS sqs get-queue-attributes \
+  --queue-url "$AUDIO_DEADLETTER_QUEUE_URL" \
+  --attribute-names QueueArn \
+  --query 'Attributes.QueueArn' --output text)
+
+echo "Audio Dead letter queue ARN: $AUDIO_DEADLETTER_ARN"
+
+$AWS sqs set-queue-attributes \
+--queue-url "$AUDIO_QUEUE_URL" \
+--attributes "{
+    \"RedrivePolicy\": \"{\\\"deadLetterTargetArn\\\":\\\"$AUDIO_DEADLETTER_ARN\\\",\\\"maxReceiveCount\\\":\\\"4\\\"}\"
+}"
+
+##############################
 ## DATA BUCKET
 ##############################
 

@@ -7,11 +7,10 @@ on:
     tags:
       - release-dev-**
       - release-preprod-**
-
-  workflow_run:
-    workflows: [build-push]
-    types: [completed]
-    branches: [main]
+  
+  # Move to manual release until we are confident we can handle deploys 
+  # during meeting recordings
+  workflow_dispatch:
 
 jobs:
   set-vars:

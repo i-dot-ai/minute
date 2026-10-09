@@ -64,6 +64,10 @@ export async function routeTemplates(page: Page): Promise<void> {
     if (method === 'GET') {
       return route.fulfill(json(200, userTemplatesState[index]!))
     }
+    if (method === 'DELETE') {
+      userTemplatesState.splice(index, 1)
+      return route.fulfill(json(200, {}))
+    }
     if (method !== 'PATCH') return route.fallback()
 
     const body = route.request().postDataJSON() as CreateUserTemplateRequest

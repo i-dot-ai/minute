@@ -29,6 +29,7 @@ import {
 } from './routes/general'
 import { routeTemplates } from './routes/templates'
 import { routeTranscription } from './routes/transcription'
+import { routeUser } from './routes/user'
 
 type Scenario = {
   transcription: TranscriptionGetResponse
@@ -123,4 +124,5 @@ export async function mockBackend(
   await routeMinuteVersions(page, { minuteId, versions, scenario })
   await routeTranscription(page, { transcription, minutes })
   await routeStatic(page, staticMocks)
+  await routeUser(page)
 }

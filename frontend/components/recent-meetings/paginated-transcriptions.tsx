@@ -363,7 +363,7 @@ export const PaginatedTranscriptions = () => {
               <p className="govuk-body govuk-!-margin-bottom-1">
                 No transcriptions found
               </p>
-              <Link href="/transcriptions" className="govuk-button">
+              <Link href="/" className="govuk-button">
                 Start a new recording
               </Link>
             </>

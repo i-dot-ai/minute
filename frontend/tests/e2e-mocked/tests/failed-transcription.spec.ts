@@ -37,9 +37,7 @@ test('a no-audio failure shows the no usable audio message', async ({
 
   await page.goto(`/transcriptions/${meeting1.id}`)
 
-  await expect(
-    page.getByText('No usable audio detected.')
-  ).toBeVisible()
+  await expect(page.getByText('No usable audio detected.')).toBeVisible()
 })
 
 test('a legacy failed transcription with no recording shows the empty meeting page', async ({

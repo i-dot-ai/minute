@@ -116,13 +116,10 @@ export async function routeFailedTranscription(
     return route.fulfill(json(200, failed))
   })
 
-  await page.route(
-    `**/api/proxy/transcriptions/${id}/recordings`,
-    (route) => {
-      if (route.request().method() !== 'GET') return route.fallback()
-      return route.fulfill(json(200, recordings))
-    }
-  )
+  await page.route(`**/api/proxy/transcriptions/${id}/recordings`, (route) => {
+    if (route.request().method() !== 'GET') return route.fallback()
+    return route.fulfill(json(200, recordings))
+  })
 
   await page.route(`**/api/proxy/transcriptions/${id}/retry`, (route) => {
     if (route.request().method() !== 'POST') return route.fallback()

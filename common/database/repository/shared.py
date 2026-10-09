@@ -1,7 +1,6 @@
-from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum, auto
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
 from sqlalchemy import CursorResult, and_, func, or_, update
 from sqlmodel import col, select
@@ -58,13 +57,14 @@ async def claim_for_processing(
         .where(model.id == entity_id, _claimable(model, stale_seconds))
         .values(status=JobStatus.IN_PROGRESS, claimed_at=func.now())
     )
-    result = cast(CursorResult, await session.execute(stmt))
+    result = cast(CursorResult, await session.exec(stmt))
     if result.rowcount:
         return ClaimState.CLAIMED
-    row = (await session.execute(select(model.status).where(model.id == entity_id))).first()
-    if row is None:
+    # SQLModel's select() returns a SelectOfScalar for a single column, so exec()
+    # yields the value itself (a JobStatus), not a Row - do not index it.
+    status = (await session.exec(select(model.status).where(model.id == entity_id))).first()
+    if status is None:
         return ClaimState.MISSING
-    status = row[0]
     return {
         JobStatus.AWAITING_START: ClaimState.IN_PROGRESS,  # unclaimable yet somehow unclaimed
         JobStatus.IN_PROGRESS: ClaimState.IN_PROGRESS,
@@ -73,7 +73,11 @@ async def claim_for_processing(
     }[status]
 
 
-def make_finalizer(model: type, error_message: str) -> Callable[[AsyncSession, timedelta], Awaitable[int]]:
+class StaleFinalizer(Protocol):
+    async def __call__(self, session: AsyncSession, older_than: timedelta) -> int: ...
+
+
+def make_finalizer(model: type, error_message: str) -> StaleFinalizer:
     """Bulk-sweep rows stuck IN_PROGRESS past the lease horizon (worker died and
     nothing ever re-claimed them) so users can hit retry instead of waiting forever."""
 
@@ -91,7 +95,7 @@ def make_finalizer(model: type, error_message: str) -> Callable[[AsyncSession, t
             )
             .values(status=JobStatus.FAILED, error=error_message)
         )
-        result = cast(CursorResult, await session.execute(stmt))
+        result = cast(CursorResult, await session.exec(stmt))
         return result.rowcount
 
     return finalize_stale
@@ -106,7 +110,7 @@ async def refresh_job_leases(session: AsyncSession, minute_version_id: Any) -> N
     Rows in terminal states are never touched (status-guarded), which also makes this
     a no-op for whichever phase has already completed.
     """
-    await session.execute(
+    await session.exec(
         update(MinuteVersion)
         .where(col(MinuteVersion.id) == minute_version_id, col(MinuteVersion.status) == JobStatus.IN_PROGRESS)
         .values(claimed_at=func.now())
@@ -118,7 +122,7 @@ async def refresh_job_leases(session: AsyncSession, minute_version_id: Any) -> N
         .join(Transcription, col(Transcription.id) == col(Minute.transcription_id))
         .where(col(MinuteVersion.id) == minute_version_id)
     )
-    await session.execute(
+    await session.exec(
         update(Transcription)
         .where(col(Transcription.id).in_(transcription_ids), col(Transcription.status) == JobStatus.IN_PROGRESS)
         .values(claimed_at=func.now())

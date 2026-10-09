@@ -12,7 +12,7 @@ from worker.templates.default.general import General
 from worker.templates.default.planning_committee import PlanningCommittee
 from worker.templates.types import Template
 
-TEMPLATES: dict[str, Template] = {
+TEMPLATES: dict[str, type[Template]] = {
     template.name: template
     for template in [Cabinet, CareAssessmentV2, Delivery, ExecutiveSummary, General, PlanningCommittee]
 }
@@ -22,7 +22,7 @@ class TemplateNotFoundError(Exception):
     """Exception raised when a template is not found."""
 
 
-def get_template(name: str) -> Template:
+def get_template(name: str) -> type[Template]:
     try:
         return TEMPLATES[name]
     except KeyError as e:

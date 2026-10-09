@@ -10,6 +10,7 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 import sqlmodel
+import sqlmodel.sql.sqltypes
 
 from alembic import op
 
@@ -25,7 +26,7 @@ def _user_columns() -> set[str]:
 
 
 def _user_foreign_keys() -> set[str]:
-    return {fk["name"] for fk in sa.inspect(op.get_bind()).get_foreign_keys("user")}
+    return {fk["name"] for fk in sa.inspect(op.get_bind()).get_foreign_keys("user") if fk["name"] is not None}
 
 
 def upgrade() -> None:

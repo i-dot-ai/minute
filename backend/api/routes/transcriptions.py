@@ -3,7 +3,7 @@ import math
 import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy.orm import selectinload
@@ -19,8 +19,8 @@ from common.database.postgres_models import (
     Transcription,
 )
 from common.database.repository import reset_transcription_for_retry, reset_version_for_retry
-from common.services.queue_services import get_queue_service
-from common.services.storage_services import get_storage_service
+from common.services.messaging import SQS
+from common.services.storage import S3
 from common.settings import get_settings
 from common.types import (
     PaginatedTranscriptionsResponse,
@@ -40,13 +40,11 @@ from common.types import (
 
 settings = get_settings()
 
-storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
+storage_service = S3()
 
 
 transcriptions_router = APIRouter(tags=["Transcriptions"])
-transcription_queue_service = get_queue_service(
-    settings.QUEUE_SERVICE_NAME, settings.WORKER_QUEUE_NAME, settings.WORKER_DEADLETTER_QUEUE_NAME
-)
+transcription_queue_service = SQS(settings.WORKER_QUEUE_NAME, settings.WORKER_DEADLETTER_QUEUE_NAME)
 
 logger = logging.getLogger(__name__)
 
@@ -81,11 +79,12 @@ async def list_transcriptions(
     if filter_by == TranscriptionListFilter.EXPIRING_SOON and expiry_cutoff is None:
         return PaginatedTranscriptionsResponse(items=[], total_count=0, page=page, page_size=page_size, total_pages=1)
 
-    filters = [Transcription.user_id == current_user.id]
-    if filter_by == TranscriptionListFilter.EXPIRING_SOON:  # expiry_cutoff is not None here
-        filters.append(Transcription.created_datetime < expiry_cutoff)
+    filters = [col(Transcription.user_id) == current_user.id]
+    if filter_by == TranscriptionListFilter.EXPIRING_SOON:
+        # The early return above guarantees expiry_cutoff is set on this branch.
+        filters.append(col(Transcription.created_datetime) < cast(datetime, expiry_cutoff))
     elif filter_by == TranscriptionListFilter.FAILED:
-        filters.append(Transcription.status == JobStatus.FAILED)
+        filters.append(col(Transcription.status) == JobStatus.FAILED)
 
     search_term = search.strip() if search else None
     if search_term:
@@ -183,7 +182,8 @@ async def create_transcription(
     session.add(minute_version)
     recording.transcription_id = transcription.id
     await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
+    message = WorkerMessage(id=minute_version.id, type=TaskType.MINUTE)
+    transcription_queue_service.publish_message(message.model_dump(mode="json"))
 
     return TranscriptionCreateResponse(id=transcription.id)
 
@@ -206,7 +206,7 @@ async def retry_transcription(
             .where(Transcription.id == transcription_id)
             .options(
                 selectinload(Transcription.recordings),
-                selectinload(Transcription.minutes).selectinload(Minute.minute_versions),
+                selectinload(Transcription.minutes).selectinload(Minute.minute_versions),  # pyright: ignore[reportArgumentType]
             )
         )
     ).first()
@@ -241,7 +241,8 @@ async def retry_transcription(
     minute.agenda = request.agenda
 
     await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
+    message = WorkerMessage(id=minute_version.id, type=TaskType.MINUTE)
+    transcription_queue_service.publish_message(message.model_dump(mode="json"))
 
     return TranscriptionCreateResponse(id=transcription.id)
 

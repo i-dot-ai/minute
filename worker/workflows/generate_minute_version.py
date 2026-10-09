@@ -35,14 +35,15 @@ from common.database.repository import (
     mark_version_failed,
 )
 from common.services.posthog_client import capture_event
+from common.services.stt import get_transcription_service
 from common.settings import get_structured_logger
 from worker.actions.compose_minutes import compose_minutes
 from worker.actions.identify_speakers import identify_speakers
 from worker.actions.prepare_audio import prepare_audio
 from worker.actions.title_transcript import generate_meeting_title
-from worker.actions.transcribe import transcribe_audio
 
 slogger = get_structured_logger()
+transcription_service = get_transcription_service()
 
 Outcome = Literal["delete", "rehide"]
 
@@ -111,7 +112,7 @@ async def _transcription_phase(
                     transcription = await get_transcription_with_recordings(session, transcription_id)
                 user_id = transcription.user_id
                 prepared = await prepare_audio(transcription, work_dir=Path(tempdir))
-                entries = await transcribe_audio(prepared.file_path)
+                entries = await transcription_service.transcribe(prepared.file_path)
         async with llm_slot:
             entries = await identify_speakers(entries)
             title = await generate_meeting_title(entries)

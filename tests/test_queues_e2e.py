@@ -10,10 +10,11 @@ from pathlib import Path
 from uuid import UUID
 
 import pytest
+import pytest_asyncio
 import requests
 
 from common.database.postgres_models import ContentSource, JobStatus, Minute, MinuteVersion, Transcription
-from common.services.queue_services import get_queue_service
+from common.services.messaging import SQS
 from common.settings import get_settings
 from common.types import (
     AgendaUsage,
@@ -23,7 +24,7 @@ from common.types import (
     RecordingCreateRequest,
     TranscriptionCreateRequest,
 )
-from tests.marks import costs_money
+from tests.marks import costs_money, requires_audio_data
 from tests.utils import FileTypeTests, get_test_client
 from worker.consumer import Consumer
 from worker.signal_handler import SignalHandler
@@ -32,12 +33,10 @@ from worker.templates import TEMPLATES
 pytestmark = [costs_money]
 
 
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 async def worker_queue():
     settings = get_settings()
-    queue_service = get_queue_service(
-        settings.QUEUE_SERVICE_NAME, settings.WORKER_QUEUE_NAME, settings.WORKER_DEADLETTER_QUEUE_NAME
-    )
+    queue_service = SQS(settings.WORKER_QUEUE_NAME, settings.WORKER_DEADLETTER_QUEUE_NAME)
     queue_service.purge_messages()
     # needed to ensure sqs queue is purged (not sure if this long is needed for ministack)
     await asyncio.sleep(1)
@@ -52,14 +51,14 @@ async def load_db_test_instance(file_type: FileTypeTests) -> set[UUID]:
         test_ids = set()
         for test_file in test_audio_dir.iterdir():
             request = RecordingCreateRequest(file_extension="mp3")
-            response = await ac.post("/recordings", content=request.model_dump_json())
+            response = await ac.post("/recordings", json=request.model_dump(mode="json"))
             assert response.status_code == 200, f"failed to create recording for  {request.model_dump_json()}"
             response_json = response.json()
             with test_file.open("rb") as f:
                 http_response = requests.put(response_json["upload_url"], data=f.read(), timeout=60)  # noqa: ASYNC210
                 assert http_response.status_code == 200, f"failed to upload recording for {response_json['upload_url']}"
                 request = TranscriptionCreateRequest(recording_id=response_json["id"], template_name="General")
-                response = await ac.post("/transcriptions", content=request.model_dump_json())
+                response = await ac.post("/transcriptions", json=request.model_dump(mode="json"))
                 assert response.status_code == 201, f"failed to create transcription for {request.model_dump_json()}"
 
                 test_ids.add(response.json()["id"])
@@ -67,7 +66,7 @@ async def load_db_test_instance(file_type: FileTypeTests) -> set[UUID]:
 
 
 def start_consumer(queue_service) -> asyncio.Task:
-    consumer = Consumer(queue_service=queue_service, signal_handler=SignalHandler())
+    consumer = Consumer(queue=queue_service, signal_handler=SignalHandler())
     return asyncio.create_task(consumer.run())
 
 
@@ -77,7 +76,7 @@ async def stop_consumer(task: asyncio.Task) -> None:
         await task
 
 
-@pytest.mark.requires_audio_data
+@requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
 async def test_e2e(worker_queue):
     consumer_task = start_consumer(worker_queue)
@@ -95,7 +94,7 @@ async def test_e2e(worker_queue):
         await stop_consumer(consumer_task)
 
 
-@pytest.mark.requires_audio_data
+@requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
 async def test_e2e_zero_bytes(worker_queue):
     consumer_task = start_consumer(worker_queue)
@@ -109,7 +108,7 @@ async def test_e2e_zero_bytes(worker_queue):
         await stop_consumer(consumer_task)
 
 
-@pytest.mark.requires_audio_data
+@requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
 async def test_e2e_corrupted(worker_queue):
     consumer_task = start_consumer(worker_queue)
@@ -137,7 +136,7 @@ async def create_versions_for_ai_edit(transcription_id: UUID):
                     ),
                 )
                 response = await test_client.post(
-                    f"/minutes/{minute_version.minute.id}/versions", content=request.model_dump_json()
+                    f"/minutes/{minute_version.minute.id}/versions", json=request.model_dump(mode="json")
                 )
                 assert response.status_code == 200
 
@@ -189,6 +188,8 @@ total required: {len(TEMPLATES)}"""
                         completed_version_ids.add(minute.id)
                     case JobStatus.FAILED:
                         pytest.fail(f"Minute version {minute_version.id} failed: {minute_version.error}")
+                    case _:
+                        pass  # still pending; the outer loop polls until it completes or fails
             await asyncio.sleep(1)
         await check_worker(consumer_task)
 
@@ -205,7 +206,7 @@ async def create_template_minutes(transcription_id: UUID) -> None:
                 )
                 request = MinutesCreateRequest(template_name=template.name, agenda=agenda)
                 response = await test_client.post(
-                    f"/transcription/{transcription_id}/minutes", content=request.model_dump_json()
+                    f"/transcription/{transcription_id}/minutes", json=request.model_dump(mode="json")
                 )
                 assert response.status_code == 200
 

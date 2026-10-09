@@ -1,3 +1,6 @@
+# pyright: reportAssignmentType=false
+# SQLModel's declarative magic (model_config, __tablename__) is typed as declared_attr,
+# which pyright cannot reconcile with the literal assignments below.
 from datetime import datetime
 from enum import StrEnum, auto
 from typing import TypedDict

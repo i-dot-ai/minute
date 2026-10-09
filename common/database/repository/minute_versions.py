@@ -36,7 +36,7 @@ async def claim_version_for_processing(
 
 
 async def mark_version_completed(session: AsyncSession, minute_version_id: UUID, html_content: str) -> None:
-    await session.execute(
+    await session.exec(
         update(MinuteVersion)
         .where(col(MinuteVersion.id) == minute_version_id)
         .values(html_content=html_content, status=JobStatus.COMPLETED, error=None)
@@ -44,7 +44,7 @@ async def mark_version_completed(session: AsyncSession, minute_version_id: UUID,
 
 
 async def mark_version_failed(session: AsyncSession, minute_version_id: UUID, error: str) -> None:
-    await session.execute(
+    await session.exec(
         update(MinuteVersion)
         .where(col(MinuteVersion.id) == minute_version_id)
         .values(status=JobStatus.FAILED, error=error)
@@ -52,7 +52,7 @@ async def mark_version_failed(session: AsyncSession, minute_version_id: UUID, er
 
 
 async def reset_version_for_retry(session: AsyncSession, minute_version_id: UUID) -> None:
-    await session.execute(
+    await session.exec(
         update(MinuteVersion)
         .where(col(MinuteVersion.id) == minute_version_id)
         .values(status=JobStatus.AWAITING_START, error=None, html_content="", claimed_at=None)

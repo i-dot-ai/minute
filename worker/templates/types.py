@@ -1,9 +1,9 @@
-from typing import Protocol
+from typing import ClassVar, Protocol
 
 from common.database.postgres_models import DialogueEntry, Minute
 from common.settings import get_settings
 from common.types import AgendaUsage
-from worker.llm.client import FastOrBestLLM, create_default_chatbot
+from worker.llm import FastOrBestLLM, create_default_chatbot
 from worker.templates.citations import add_citations_to_minute
 from worker.templates.prompts import get_section_for_agenda_prompt, string_to_system_message
 
@@ -26,11 +26,11 @@ class Template(Protocol):
 
     """
 
-    name: str
-    description: str
-    category: str
-    agenda_usage: AgendaUsage
-    temperature = 0.0
+    name: ClassVar[str]
+    description: ClassVar[str]
+    category: ClassVar[str]
+    agenda_usage: ClassVar[AgendaUsage]
+    temperature: ClassVar[float] = 0.0
 
     @classmethod
     async def generate(
@@ -91,12 +91,11 @@ class SimpleTemplate(Template, Protocol):
         cls,
         minute: Minute,
     ) -> str:
+        transcript = minute.transcription.dialogue_entries or []
         chatbot = create_default_chatbot(FastOrBestLLM.BEST)
-        minutes = await chatbot.chat(cls.prompt(minute.transcription.dialogue_entries, minute.agenda))
+        minutes = await chatbot.chat(cls.prompt(transcript, minute.agenda))
         if cls.citations_required:
-            minutes = await add_citations_to_minute(
-                transcript=minute.transcription.dialogue_entries, initial_draft=minutes
-            )
+            minutes = await add_citations_to_minute(transcript=transcript, initial_draft=minutes)
         return minutes
 
 
@@ -161,7 +160,7 @@ class SectionTemplate(Template, Protocol):
         cls,
         minute: Minute,
     ) -> str:
-        transcript = minute.transcription.dialogue_entries
+        transcript = minute.transcription.dialogue_entries or []
         sections = await cls.sections(transcript, minute.agenda)
         # Generate content for each section
         final_sections = []

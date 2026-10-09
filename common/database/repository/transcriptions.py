@@ -39,7 +39,7 @@ async def mark_transcription_completed(
     transcript: list["DialogueEntry"],
     title: str,
 ) -> None:
-    await session.execute(
+    await session.exec(
         update(Transcription)
         .where(col(Transcription.id) == transcription_id)
         .values(dialogue_entries=transcript, title=title, status=JobStatus.COMPLETED, error=None)
@@ -47,7 +47,7 @@ async def mark_transcription_completed(
 
 
 async def mark_transcription_failed(session: AsyncSession, transcription_id: UUID, error: str) -> None:
-    await session.execute(
+    await session.exec(
         update(Transcription)
         .where(col(Transcription.id) == transcription_id)
         .values(status=JobStatus.FAILED, error=error)
@@ -55,7 +55,7 @@ async def mark_transcription_failed(session: AsyncSession, transcription_id: UUI
 
 
 async def reset_transcription_for_retry(session: AsyncSession, transcription_id: UUID) -> None:
-    await session.execute(
+    await session.exec(
         update(Transcription)
         .where(col(Transcription.id) == transcription_id)
         .values(status=JobStatus.AWAITING_START, error=None, dialogue_entries=None, claimed_at=None)

@@ -9,18 +9,15 @@ services:
       - .env
     environment:
       - POSTGRES_HOST=db
-      - MINISTACK_URL=http://ministack:4566
-      - STORAGE_SERVICE_NAME=local
-      - LOCAL_STORAGE_PATH=/static
+      - AWS_ENDPOINT_URL=http://ministack:4566
+      # Browser-facing endpoint for presigned URLs: MiniStack's published port on the
+      # host, because the browser cannot resolve the compose-internal `ministack` name.
+      - BROWSER_AWS_ENDPOINT_URL=http://localhost:4566
     depends_on:
       db:
         condition: service_healthy
       ministack:
         condition: service_healthy
-    volumes:
-      - type: bind
-        source: ./.data
-        target: /static
     healthcheck:
       test: ["CMD-SHELL", "curl --fail http://localhost:8080/healthcheck"]
       interval: 60s
@@ -46,14 +43,9 @@ services:
       - .env
     volumes:
       - ${WORKER_TMP:-./.worker-tmp}:/tmp
-      - type: bind
-        source: ./.data
-        target: /static
     environment:
       - POSTGRES_HOST=db
-      - MINISTACK_URL=http://ministack:4566
-      - STORAGE_SERVICE_NAME=local
-      - LOCAL_STORAGE_PATH=/static
+      - AWS_ENDPOINT_URL=http://ministack:4566
     stop_grace_period: 30s
     depends_on:
       db:
@@ -140,8 +132,6 @@ services:
       # Here you mount your setup file so it will be executed
       # when the container starts
       - ./ministack-setup.sh:/etc/localstack/init/ready.d/script.sh
-    environment:
-      - AWS_DEFAULT_REGION=eu-west-2
     healthcheck:
       test: ["CMD", "test", "-f", "/ready.txt"]
       interval: 1m30s

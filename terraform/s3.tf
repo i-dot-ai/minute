@@ -27,9 +27,9 @@ data "aws_iam_policy_document" "app_bucket" {
 }
 
 resource "aws_s3_bucket_cors_configuration" "cors" {
+  # expected_bucket_owner is deprecated by the AWS provider; the bucket is in the
+  # same account as this provider configuration, so the ownership check is redundant.
   bucket = module.app_bucket.id
-
-  expected_bucket_owner = data.aws_caller_identity.current.account_id
 
   cors_rule {
     allowed_headers = ["*"]

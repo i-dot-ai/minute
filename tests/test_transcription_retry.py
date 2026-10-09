@@ -139,24 +139,27 @@ async def test_retry_resets_existing_transcription(failed_transcription, publish
 
     async with AsyncSession(async_engine) as session:
         transcription = await session.get(Transcription, transcription_id)
+        assert transcription is not None
         assert transcription.status == JobStatus.AWAITING_START
         assert transcription.error is None
         assert transcription.dialogue_entries is None
         assert transcription.created_datetime > SEED_TIME
 
         minute = await session.get(Minute, minute_id)
+        assert minute is not None
         assert minute.template_name == "New template"
         assert minute.agenda == "New agenda"
 
         version = await session.get(MinuteVersion, failed_transcription["minute_version_id"])
+        assert version is not None
         assert version.status == JobStatus.AWAITING_START
         assert version.error is None
         assert version.html_content == ""
 
     published = published_messages
     assert len(published) == 1
-    assert published[0].id == failed_transcription["minute_version_id"]
-    assert published[0].type == TaskType.MINUTE
+    assert published[0]["id"] == str(failed_transcription["minute_version_id"])
+    assert published[0]["type"] == TaskType.MINUTE
 
 
 @pytest.mark.asyncio(loop_scope="session")

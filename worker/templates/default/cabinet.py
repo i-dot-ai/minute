@@ -5,7 +5,7 @@ from common.types import (
     AgendaUsage,
     DialogueEntry,
 )
-from worker.llm.client import FastOrBestLLM, create_default_chatbot
+from worker.llm import FastOrBestLLM, create_default_chatbot
 from worker.templates.prompts import get_sections_from_transcript_prompt
 from worker.templates.types import SectionTemplate
 from worker.text import transcript_as_speaker_and_utterance
@@ -188,7 +188,7 @@ The transcript for the item you are contributing to is:
     async def sections(cls, transcript: list[DialogueEntry] | None, agenda: str | None) -> list[str]:
         if not agenda:
             chatbot = create_default_chatbot(FastOrBestLLM.FAST)
-            messages = get_sections_from_transcript_prompt(transcript=transcript)
+            messages = get_sections_from_transcript_prompt(transcript=transcript or [])
             response = await chatbot.structured_chat(
                 messages=messages,
                 response_format=MeetingSections,

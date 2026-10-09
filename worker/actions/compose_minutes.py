@@ -10,12 +10,13 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import DialogueEntry, Minute, UserTemplate
 from common.settings import get_settings, get_structured_logger
+from common.spelling import convert_american_to_british_spelling
 from common.types import MeetingType
-from worker.llm.client import FastOrBestLLM, create_default_chatbot
+from worker.llm import FastOrBestLLM, create_default_chatbot
 from worker.templates import get_template
 from worker.templates.prompts import get_transcript_messages
 from worker.templates.user_template import generate_user_template
-from worker.text import convert_american_to_british_spelling, transcript_as_speaker_and_utterance
+from worker.text import transcript_as_speaker_and_utterance
 
 slogger = get_structured_logger()
 settings = get_settings()
@@ -63,7 +64,9 @@ async def _full_minutes(minute: Minute) -> str:
     if minute.user_template_id is not None:
         async with AsyncSession(async_engine) as session:
             template = await session.get(
-                UserTemplate, minute.user_template_id, options=[selectinload(UserTemplate.questions)]
+                UserTemplate,
+                minute.user_template_id,
+                options=[selectinload(UserTemplate.questions)],  # pyright: ignore[reportArgumentType]
             )
         if not template:
             msg = f"No template with id {minute.user_template_id}"

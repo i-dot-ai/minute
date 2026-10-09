@@ -8,7 +8,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import Recording, Transcription, User
 from common.database.repository import finalize_stale_transcriptions, finalize_stale_versions
-from common.services.storage_services import get_storage_service
+from common.services.storage import S3
 from common.settings import get_settings
 
 logger = logging.getLogger()
@@ -16,7 +16,7 @@ logger.setLevel(logging.INFO)
 
 settings = get_settings()
 
-storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
+storage_service = S3()
 
 
 async def cleanup_failed_records():
@@ -41,10 +41,10 @@ async def cleanup_old_records():
     async with AsyncSession(async_engine) as session:
         statement = (
             select(Transcription)
-            .join(User, User.id == Transcription.user_id)
+            .join(User, col(User.id) == col(Transcription.user_id))
             .where(
                 col(User.data_retention_days).is_not(null()),
-                Transcription.created_datetime < func.now() - User.data_retention_days * timedelta(days=1),
+                col(Transcription.created_datetime) < func.now() - col(User.data_retention_days) * timedelta(days=1),
             )
         )
         transcriptions = (await session.exec(statement)).all()

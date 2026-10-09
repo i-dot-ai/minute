@@ -5,7 +5,7 @@ from sqlmodel import SQLModel
 from alembic import context
 
 # import all models here
-from common.database import postgres_models  # noqa: F401
+from common.database import postgres_models  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from common.database.postgres_database import engine
 from common.settings import get_settings
 

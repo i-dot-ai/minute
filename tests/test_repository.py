@@ -56,7 +56,7 @@ async def _delete_transcription(transcription_id) -> None:
 
 async def _set_claimed_at(model, entity_id, claimed_at: datetime | None) -> None:
     async with AsyncSessionLocal() as session:
-        await session.execute(update(model).where(col(model.id) == entity_id).values(claimed_at=claimed_at))
+        await session.exec(update(model).where(col(model.id) == entity_id).values(claimed_at=claimed_at))
         await session.commit()
 
 
@@ -70,6 +70,7 @@ async def test_claim_fresh_row_succeeds_and_stamps_lease():
         assert state == ClaimState.CLAIMED
         async with AsyncSessionLocal() as session:
             row = await session.get(Transcription, transcription.id)
+            assert row is not None
             assert row.status == JobStatus.IN_PROGRESS
             assert row.claimed_at is not None
     finally:
@@ -146,6 +147,8 @@ async def test_mark_and_reset_status_transitions():
         async with AsyncSessionLocal() as session:
             t = await session.get(Transcription, transcription.id)
             v = await session.get(MinuteVersion, version.id)
+            assert t is not None
+            assert v is not None
             assert t.status == JobStatus.COMPLETED
             assert t.title == "T"
             assert v.status == JobStatus.COMPLETED
@@ -158,6 +161,8 @@ async def test_mark_and_reset_status_transitions():
         async with AsyncSessionLocal() as session:
             t = await session.get(Transcription, transcription.id)
             v = await session.get(MinuteVersion, version.id)
+            assert t is not None
+            assert v is not None
             assert t.status == JobStatus.AWAITING_START
             assert t.claimed_at is None
             assert t.dialogue_entries is None
@@ -171,6 +176,7 @@ async def test_mark_and_reset_status_transitions():
             await session.commit()
         async with AsyncSessionLocal() as session:
             v = await session.get(MinuteVersion, version.id)
+            assert v is not None
             assert v.status == JobStatus.FAILED
             assert v.error == "boom"
     finally:
@@ -192,8 +198,12 @@ async def test_finalize_stale_only_touches_expired_leases():
             await finalize_stale_versions(session, older_than=timedelta(days=1))
             await session.commit()
         async with AsyncSessionLocal() as session:
-            assert (await session.get(Transcription, stale.id)).status == JobStatus.FAILED
-            assert (await session.get(Transcription, fresh.id)).status == JobStatus.IN_PROGRESS
+            stale_row = await session.get(Transcription, stale.id)
+            fresh_row = await session.get(Transcription, fresh.id)
+            assert stale_row is not None
+            assert fresh_row is not None
+            assert stale_row.status == JobStatus.FAILED
+            assert fresh_row.status == JobStatus.IN_PROGRESS
     finally:
         await _delete_transcription(stale.id)
         await _delete_transcription(fresh.id)
@@ -244,6 +254,8 @@ async def test_refresh_job_leases_only_touches_in_progress_rows():
         async with AsyncSessionLocal() as session:
             t = await session.get(Transcription, transcription.id)
             v = await session.get(MinuteVersion, version.id)
+            assert t is not None
+            assert v is not None
             assert t.claimed_at is not None  # renewed: status was IN_PROGRESS
             assert t.claimed_at > old
             assert v.claimed_at == old  # untouched: status was AWAITING_START

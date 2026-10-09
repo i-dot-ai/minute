@@ -64,7 +64,7 @@ run_worker:
 	uv run python worker/main.py
 
 run:
-	docker compose up -d --wait
+	docker compose up -d --build --wait
 
 run_watch:
 	docker compose up --watch

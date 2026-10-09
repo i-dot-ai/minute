@@ -23,6 +23,8 @@ else:
 
 
 class Settings(BaseSettings):
+    """Settings."""
+
     POSTGRES_HOST: str = Field(description="PostgreSQL database host")
     POSTGRES_PORT: int = Field(description="PostgreSQL database port")
     POSTGRES_DB: str = Field(description="PostgreSQL database name")
@@ -32,8 +34,18 @@ class Settings(BaseSettings):
     APP_URL: str = Field(description="used for CORS origin validation")
 
     # if using AWS
-    AWS_ACCOUNT_ID: str | None = Field(description="AWS account ID", default=None)
-    AWS_REGION: str | None = Field(description="AWS region", default=None)
+    AWS_DEFAULT_REGION: str | None = Field(description="AWS region", default=None)
+    # Local dev points these at MiniStack; deployed environments leave them unset (no
+    # endpoint, credentials from the ECS task role) so boto3 falls back to its chain.
+    AWS_ACCESS_KEY_ID: str | None = Field(description="AWS access key id", default=None)
+    AWS_SECRET_ACCESS_KEY: str | None = Field(description="AWS secret access key", default=None)
+    AWS_ENDPOINT_URL: str | None = Field(description="Custom AWS endpoint URL (MiniStack locally)", default=None)
+    # Endpoint embedded in presigned URLs handed to the browser. Only needed where the
+    # server-side endpoint is not browser-resolvable (compose: ministack:4566 vs
+    # localhost:4566). Defaults to AWS_ENDPOINT_URL, so deployment is unchanged.
+    BROWSER_AWS_ENDPOINT_URL: str | None = Field(
+        description="Browser-facing S3 endpoint for presigned URLs", default=None
+    )
 
     # if using i.AI Auth API
     REPO: str = Field(description="The name of the GitHub repository")
@@ -55,8 +67,14 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _derive_logging_from_environment(self) -> "Settings":
         is_local = self.ENVIRONMENT.lower() == "local"
-        self.EXECUTION_ENVIRONMENT = ExecutionEnvironmentType.LOCAL if is_local else ExecutionEnvironmentType.FARGATE
-        self.LOGGING_FORMAT = LogOutputFormat.TEXT if is_local else LogOutputFormat.JSON
+        # Uppercase fields are treated as constants by type checkers, but these are derived
+        # instance attributes set from ENVIRONMENT rather than true constants.
+        self.EXECUTION_ENVIRONMENT = (  # pyright: ignore[reportConstantRedefinition]
+            ExecutionEnvironmentType.LOCAL if is_local else ExecutionEnvironmentType.FARGATE
+        )
+        self.LOGGING_FORMAT = (  # pyright: ignore[reportConstantRedefinition]
+            LogOutputFormat.TEXT if is_local else LogOutputFormat.JSON
+        )
         return self
 
     WORKER_QUEUE_NAME: str = Field(description="SQS queue the worker consumes jobs from")
@@ -92,52 +110,21 @@ class Settings(BaseSettings):
         default=600,
     )
 
-    # if using Azure OpenAI
-    AZURE_DEPLOYMENT: str | None = Field(description="Azure deployment for openAI", default=None)
-    AZURE_OPENAI_API_KEY: str | None = Field(description="Azure API key for openAI", default=None)
-    AZURE_OPENAI_ENDPOINT: str | None = Field(description="Azure OpenAI service endpoint URL", default=None)
-    AZURE_OPENAI_API_VERSION: str | None = Field(description="Azure OpenAI API version", default=None)
-
     # GOOGLE_APPLICATION_CREDENTIALS and GOOGLE_CLOUD_PROJECT are read directly by the Google SDK.
     GOOGLE_CLOUD_LOCATION: str | None = Field(description="Google Cloud region/location", default=None)
 
-    # if using MiniStack for development (recommended)
-    USE_MINISTACK: bool = Field(description="Use MiniStack for local AWS services emulation in dev", default=True)
-    MINISTACK_URL: str = Field(
-        description="MiniStack service URL for local AWS services emulation", default="http://localhost:4566"
-    )
-
-    FAST_LLM_PROVIDER: str = Field(
-        description="Fast LLM provider to use. Currently 'openai' or 'gemini' are supported. Note that this should be "
-        "used for low complexity LLM tasks, like AI edits",
-        default="gemini",
-    )
     FAST_LLM_MODEL_NAME: str = Field(
-        description="Fast LLM model name to use. Note that this should be used for low complexity LLM tasks",
+        description="Fast LLM model name to use. Gemini only. Used for low complexity LLM tasks, like AI edits",
         default="gemini-3.5-flash",
     )
-    BEST_LLM_PROVIDER: str = Field(
-        description="Best LLM provider to use. Currently 'openai' or 'gemini' are supported. Note that this should be "
-        "used for higher complexity LLM tasks, like initial minute generation.",
-        default="gemini",
-    )
     BEST_LLM_MODEL_NAME: str = Field(
-        description="Best LLM model name to use. Note that this should be used for higher complexity LLM tasks, like "
+        description="Best LLM model name to use. Gemini only. Used for higher complexity LLM tasks, like "
         "initial minute generation.",
         default="gemini-3.5-flash",
     )
 
-    STORAGE_SERVICE_NAME: str = Field(
-        description="Storage service type to use for file uploads. Currently supported are: s3, local",
-        default="s3",
-    )
     # if using s3
     DATA_S3_BUCKET: str | None = Field(description="S3 bucket name for data storage", default=None)
-
-    QUEUE_SERVICE_NAME: str = Field(
-        description="Queue service type to communicate with worker. Currently supported: sqs",
-        default="sqs",
-    )
 
     BETA_TEMPLATE_NAMES: list[str] = Field(
         description="List of template names hidden from users",
@@ -162,11 +149,6 @@ class Settings(BaseSettings):
     SEARCH_SIMILARITY_THRESHOLD: float = Field(
         default=0.3,
         description="Minimum pg_trgm similarity for a title to count as a fuzzy search match",
-    )
-
-    LOCAL_STORAGE_PATH: str = Field(
-        default="/tmp",  # noqa: S108
-        description="The folder where the data directory is mounted for the local storage service.",
     )
 
     # use a dotenv file for local development

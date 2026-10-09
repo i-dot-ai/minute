@@ -12,11 +12,10 @@ from uuid import uuid4
 import pytest
 
 from common.database.postgres_database import AsyncSessionLocal
-from common.database.postgres_models import Recording, Transcription
+from common.database.postgres_models import Recording, Transcription, User
+from common.services.stt import Azure, TranscriptionFailedError, azure
 from worker.actions import prepare_audio as prepare_audio_module
-from worker.actions import transcribe as transcribe_module
 from worker.actions.prepare_audio import prepare_audio
-from worker.errors import TranscriptionFailedError
 
 ffmpeg_missing = shutil.which("ffmpeg") is None
 requires_ffmpeg = pytest.mark.skipif(ffmpeg_missing, reason="ffmpeg not installed")
@@ -55,6 +54,7 @@ def fake_storage(monkeypatch):
 
 
 @requires_ffmpeg
+@pytest.mark.asyncio
 async def test_reuses_newest_mp3_recording_without_converting(fake_storage, tmp_path):
     mono_mp3 = _synth(tmp_path / "mono.mp3", channels=1)
     original = Recording(id=uuid4(), s3_file_key=f"{uuid4()}.mp3", user_id=uuid4())
@@ -69,15 +69,21 @@ async def test_reuses_newest_mp3_recording_without_converting(fake_storage, tmp_
 
 
 @requires_ffmpeg
+@pytest.mark.asyncio
 async def test_converts_multichannel_upload_and_persists_new_recording(fake_storage, tmp_path):
     stereo_wav = _synth(tmp_path / "stereo.wav", channels=2)
     async with AsyncSessionLocal() as session:
+        user = User(email=f"{uuid4()}@test.co.uk")
         transcription = Transcription(id=uuid4())
+        session.add(user)
         session.add(transcription)
         await session.commit()
-    original = Recording(id=uuid4(), s3_file_key=f"{uuid4()}.wav", user_id=uuid4(), transcription_id=transcription.id)
+        user_id, transcription_id = user.id, transcription.id
+
+    # a transient view of the persisted transcription: prepare_audio only reads .id and .recordings
+    original = Recording(id=uuid4(), s3_file_key=f"{uuid4()}.wav", user_id=user_id, transcription_id=transcription_id)
     fake_storage.files[original.s3_file_key] = stereo_wav.read_bytes()
-    transcription.recordings = [original]
+    transcription = Transcription(id=transcription_id, recordings=[original])
 
     try:
         await prepare_audio(transcription, work_dir=tmp_path)
@@ -91,19 +97,22 @@ async def test_converts_multichannel_upload_and_persists_new_recording(fake_stor
                 await session.exec(select(Recording).where(Recording.s3_file_key == fake_storage.uploads[0]))
             ).first()
             assert inserted is not None
-            assert inserted.transcription_id == transcription.id
+            assert inserted.transcription_id == transcription_id
             await session.delete(inserted)
             await session.commit()
     finally:
         async with AsyncSessionLocal() as session:
-            row = await session.get(Transcription, transcription.id)
+            row = await session.get(Transcription, transcription_id)
             if row:
                 await session.delete(row)
-                await session.commit()
+            user_row = await session.get(User, user_id)
+            if user_row:
+                await session.delete(user_row)
+            await session.commit()
 
 
 @pytest.mark.asyncio
-async def test_transcribe_audio_requires_a_configured_service(monkeypatch):
-    monkeypatch.setattr(transcribe_module.settings, "AZURE_SPEECH_KEY", None)
+async def test_transcribe_requires_a_configured_service(monkeypatch):
+    monkeypatch.setattr(azure.settings, "AZURE_SPEECH_KEY", None)
     with pytest.raises(TranscriptionFailedError, match="No transcription service is configured"):
-        await transcribe_module.transcribe_audio(Path("whatever.mp3"))
+        await Azure().transcribe(Path("whatever.mp3"))

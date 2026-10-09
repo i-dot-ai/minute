@@ -5,21 +5,10 @@ if [ -f /ready.txt ]; then
   rm /ready.txt
 fi
 
-# MiniStack injects AWS_ENDPOINT_URL into init scripts; default it for safety.
-# It bundles the plain `aws` CLI (not `awslocal`), so we point the CLI at the
-# local endpoint explicitly and parse output with --query/--output to avoid
-# depending on jq.
-AWS_ENDPOINT_URL="${AWS_ENDPOINT_URL:-http://localhost:4566}"
-
-# The dev .env is loaded into this container (env_file) and may inject real,
-# often expired, AWS credentials. MiniStack does not validate credentials, so
-# clear any expired session and use dummy creds — otherwise the AWS CLI rejects
-# the env credentials with "refreshed credentials are still expired".
-unset AWS_SESSION_TOKEN AWS_CREDENTIAL_EXPIRATION
-export AWS_ACCESS_KEY_ID=test
-export AWS_SECRET_ACCESS_KEY=test
-export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-eu-west-2}"
-
+# AWS credentials, endpoint, region and the queue/bucket names all come from the dev
+# .env, mounted into this container via env_file. The bundled `aws` CLI is the plain
+# one (not `awslocal`), so point it at the endpoint and parse output with
+# --query/--output to avoid depending on jq.
 AWS="aws --endpoint-url $AWS_ENDPOINT_URL"
 
 ################################

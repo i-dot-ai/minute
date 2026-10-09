@@ -1,4 +1,6 @@
-"""Unit tests for AzureSpeechAdapter failing over between Azure regions.
+# pyright: reportPrivateUsage=false
+# Tests intentionally exercise private helpers of the module under test.
+"""Unit tests for AzureSpeechTranscriptionService failing over between Azure regions.
 
 Nothing here calls Azure. httpx.AsyncClient is swapped for a real client whose transport returns canned responses, the
 audio is a small synthetic file, and tenacity's sleep between retries returns immediately.
@@ -12,9 +14,8 @@ import pytest
 from structlog.testing import capture_logs
 from tenacity import RetryError
 
-from worker.actions import transcribe as azure
-from worker.actions.transcribe import AzureSpeechRegion, _configured_regions
-from worker.errors import TranscriptionFailedError
+from common.services.stt import TranscriptionFailedError, azure
+from common.services.stt.azure import AzureSpeechRegion, _configured_regions
 
 PRIMARY = AzureSpeechRegion(region="uksouth", key="primary-key")
 FALLBACK_1 = AzureSpeechRegion(region="westeurope", key="fallback-1-key")
@@ -78,7 +79,7 @@ def backoffs(monkeypatch) -> list[float]:
     async def record_sleep(seconds: float) -> None:
         waits.append(seconds)
 
-    monkeypatch.setattr(azure._azure_transcribe.retry, "sleep", record_sleep)
+    monkeypatch.setattr(azure._azure_transcribe.retry, "sleep", record_sleep)  # pyright: ignore[reportFunctionMemberAccess]
     return waits
 
 
@@ -173,7 +174,7 @@ def region_settings(**overrides: str | None) -> SimpleNamespace:
 
 
 def test_configured_regions_are_primary_then_fallbacks_in_order():
-    assert _configured_regions(region_settings()) == ALL_REGIONS
+    assert _configured_regions(region_settings()) == ALL_REGIONS  # pyright: ignore[reportArgumentType]
 
 
 @pytest.mark.parametrize(
@@ -189,7 +190,7 @@ def test_configured_regions_warns_about_and_leaves_out_a_missing_or_empty_region
     settings = region_settings(AZURE_SPEECH_FALLBACK_1_REGION=region, AZURE_SPEECH_FALLBACK_1_KEY=key)
 
     with capture_logs() as logs:
-        assert _configured_regions(settings) == [PRIMARY, FALLBACK_2]
+        assert _configured_regions(settings) == [PRIMARY, FALLBACK_2]  # pyright: ignore[reportArgumentType]
 
     assert [(log["log_level"], log["event"]) for log in logs] == [
         (

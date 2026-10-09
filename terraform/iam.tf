@@ -18,22 +18,11 @@ data "aws_iam_policy_document" "ecs_exec_custom_policy" {
   statement {
     effect = "Allow"
     actions = [
-      "transcribe:GetTranscriptionJob",
-      "transcribe:StartTranscriptionJob",
-    ]
-    resources = [
-      "arn:aws:transcribe:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:transcription-job/minute-*"
-    ]
-  }
-
-  statement {
-    effect = "Allow"
-    actions = [
       "ssm:GetParameter",
       "ssm:GetParameters",
     ]
     resources = [
-      "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${local.name}/env_secrets/*"
+      "arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/${local.name}/env_secrets/*"
     ]
   }
 
@@ -60,10 +49,8 @@ data "aws_iam_policy_document" "ecs_exec_custom_policy" {
       "sqs:ChangeMessageVisibility",
     ]
     resources = [
-      aws_sqs_queue.transcription_queue.arn,
-      aws_sqs_queue.transcription_queue_deadletter.arn,
-      aws_sqs_queue.llm_queue.arn,
-      aws_sqs_queue.llm_queue_deadletter.arn
+      aws_sqs_queue.worker_queue.arn,
+      aws_sqs_queue.worker_queue_deadletter.arn,
     ]
   }
 }

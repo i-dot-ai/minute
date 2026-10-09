@@ -1,48 +1,58 @@
+# pyright: reportPrivateUsage=false
+# Tests intentionally exercise private helpers of the module under test.
 """Unit tests for consumer guards that do not need external services."""
 
 from uuid import uuid4
 
 import pytest
 
+from common.services.messaging import Message
 from common.types import TaskType, WorkerMessage
 from worker.consumer import Consumer
 from worker.signal_handler import SignalHandler
 
 
 class FakeQueue:
-    name = "sqs"
+    def __init__(self) -> None:
+        self.dead_lettered: list[dict] = []
+        self.acked: list[str] = []
+        self.visibility_set: list[tuple[str, int]] = []
 
-    def __init__(self, *args, **kwargs) -> None:  # noqa: ARG002
-        self.deadlettered: list[WorkerMessage] = []
-        self.completed: list[str] = []
-        self.extended: list[tuple[str, int]] = []
+    def receive_message(self) -> Message | None:
+        return None
 
-    def receive_message(self, max_messages: int = 10):  # noqa: ARG002
+    def receive_messages(self, max_messages: int) -> list[Message]:  # noqa: ARG002
         return []
 
-    def publish_message(self, message: WorkerMessage) -> None:
+    def publish_message(self, message: dict) -> None:
         pass
 
-    def complete_message(self, receipt_handle) -> None:
-        self.completed.append(receipt_handle)
+    def ack_message(self, receipt_handle: str) -> None:
+        self.acked.append(receipt_handle)
 
-    def extend_message(self, receipt_handle, visibility_seconds: int) -> None:
-        self.extended.append((receipt_handle, visibility_seconds))
+    def set_visibility(self, receipt_handle: str, visibility_seconds: int) -> None:
+        self.visibility_set.append((receipt_handle, visibility_seconds))
 
-    def deadletter_message(self, message: WorkerMessage, receipt_handle) -> None:  # noqa: ARG002
-        self.deadlettered.append(message)
-
-    def abandon_message(self, receipt_handle) -> None:
-        pass
+    def dead_letter_message(self, message: dict, receipt_handle: str) -> None:  # noqa: ARG002
+        self.dead_lettered.append(message)
 
     def purge_messages(self) -> None:
         pass
 
 
+def _consumer(queue: FakeQueue) -> Consumer:
+    # Consumer takes the queue interface; FakeQueue satisfies it structurally.
+    return Consumer(queue, SignalHandler())
+
+
+def _message(body: dict) -> Message:
+    return Message(body=body, receipt_handle="receipt")
+
+
 def test_consumer_builds_the_two_phase_semaphores():
     """Fairness guard: transcription and LLM phases have separate capacity, so eight
     long transcriptions can never starve edits."""
-    consumer = Consumer(FakeQueue(), SignalHandler())
+    consumer = _consumer(FakeQueue())
     assert consumer.transcription_slot._value > 0
     assert consumer.llm_slot._value > 0
     assert consumer.transcription_slot is not consumer.llm_slot
@@ -51,21 +61,24 @@ def test_consumer_builds_the_two_phase_semaphores():
 @pytest.mark.asyncio
 async def test_edit_message_without_source_data_is_deadlettered():
     queue = FakeQueue()
-    consumer = Consumer(queue, SignalHandler())
-    message = WorkerMessage(id=uuid4(), type=TaskType.EDIT, data=None)
+    consumer = _consumer(queue)
+    body = WorkerMessage(id=uuid4(), type=TaskType.EDIT, data=None).model_dump(mode="json")
 
-    await consumer._process(message, "receipt")
+    await consumer._process(_message(body))
 
-    assert queue.deadlettered == [message]
-    assert queue.completed == []
+    assert queue.dead_lettered == [body]
+    assert queue.acked == []
 
 
 @pytest.mark.asyncio
-async def test_unknown_task_type_is_deadlettered():
+async def test_unparseable_body_is_deadlettered():
+    """A body that fails WorkerMessage validation can never be processed, so it is
+    dead-lettered on arrival instead of being rehidden forever."""
     queue = FakeQueue()
-    consumer = Consumer(queue, SignalHandler())
-    message = WorkerMessage.model_construct(id=uuid4(), type=99, data=None)
+    consumer = _consumer(queue)
+    body = {"type": 99}
 
-    await consumer._process(message, "receipt")
+    await consumer._process(_message(body))
 
-    assert queue.deadlettered == [message]
+    assert queue.dead_lettered == [body]
+    assert queue.acked == []

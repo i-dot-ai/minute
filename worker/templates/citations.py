@@ -1,7 +1,7 @@
 import re
 
 from common.database.postgres_models import DialogueEntry
-from worker.llm.client import FastOrBestLLM, create_default_chatbot
+from worker.llm import FastOrBestLLM, create_default_chatbot
 from worker.templates.prompts import get_citations_prompt
 
 

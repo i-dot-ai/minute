@@ -7,7 +7,7 @@ from sqlmodel import col, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription
-from common.services.queue_services import get_queue_service
+from common.services.messaging import SQS
 from common.settings import get_settings
 from common.types import (
     EditMessageData,
@@ -21,9 +21,7 @@ from common.types import (
 
 settings = get_settings()
 
-llm_queue_service = get_queue_service(
-    settings.QUEUE_SERVICE_NAME, settings.WORKER_QUEUE_NAME, settings.WORKER_DEADLETTER_QUEUE_NAME
-)
+llm_queue_service = SQS(settings.WORKER_QUEUE_NAME, settings.WORKER_DEADLETTER_QUEUE_NAME)
 
 minutes_router = APIRouter(tags=["Minutes"])
 
@@ -90,7 +88,8 @@ async def create_minute(
     await session.commit()
     await session.refresh(minute_version)
     await session.refresh(minute)
-    llm_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
+    message = WorkerMessage(id=minute_version.id, type=TaskType.MINUTE)
+    llm_queue_service.publish_message(message.model_dump(mode="json"))
     return MinuteListItem(
         id=minute.id,
         created_datetime=minute.created_datetime,
@@ -181,7 +180,7 @@ async def create_minute_version(
                 id=minute_version.id,
                 data=EditMessageData(source_id=request.ai_edit_instructions.source_id),
                 type=TaskType.EDIT,
-            )
+            ).model_dump(mode="json")
         )
     return MinuteVersionResponse(
         id=minute_version.id,

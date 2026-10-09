@@ -1,3 +1,5 @@
+# pyright: reportPrivateUsage=false
+# Tests intentionally exercise private helpers of the module under test.
 from pathlib import Path
 
 import pytest

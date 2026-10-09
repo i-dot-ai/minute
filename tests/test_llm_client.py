@@ -2,7 +2,7 @@ import pytest
 from pydantic import BaseModel
 
 from tests.marks import costs_money
-from worker.llm.client import create_chatbot
+from worker.llm import create_chatbot
 
 pytestmark = [costs_money]
 structured_chat_prompt_1 = [
@@ -34,17 +34,13 @@ class House(BaseModel):
     bathrooms: int
 
 
-MODELS_TO_TEST = [
-    ("gemini", "gemini-3.5-flash"),
-]
+MODELS_TO_TEST = ["gemini-3.5-flash"]
 
 
 @pytest.mark.asyncio(loop_scope="session")
-@pytest.mark.parametrize("model_type_and_model_name", MODELS_TO_TEST)
-async def test_structured_output_chatbots(model_type_and_model_name) -> None:
-    chatbot = create_chatbot(
-        model_type=model_type_and_model_name[0], model_name=model_type_and_model_name[1], temperature=0.0
-    )
+@pytest.mark.parametrize("model_name", MODELS_TO_TEST)
+async def test_structured_output_chatbots(model_name) -> None:
+    chatbot = create_chatbot(model_name=model_name, temperature=0.0)
     expected_output_1 = House(color="red", size=10, size_unit="meters", bedrooms=3, bathrooms=2)
     result = await chatbot.structured_chat(structured_chat_prompt_1, House)
     assert result == expected_output_1
@@ -54,11 +50,9 @@ async def test_structured_output_chatbots(model_type_and_model_name) -> None:
 
 
 @pytest.mark.asyncio(loop_scope="session")
-@pytest.mark.parametrize("model_type_and_model_name", MODELS_TO_TEST)
-async def test_chat_chatbots(model_type_and_model_name) -> None:
-    chatbot = create_chatbot(
-        model_type=model_type_and_model_name[0], model_name=model_type_and_model_name[1], temperature=0.0
-    )
+@pytest.mark.parametrize("model_name", MODELS_TO_TEST)
+async def test_chat_chatbots(model_name) -> None:
+    chatbot = create_chatbot(model_name=model_name, temperature=0.0)
     result_1 = await chatbot.chat(chat_prompts_1)
     result_2 = await chatbot.chat(chat_prompts_2)
     result_3 = await chatbot.chat(chat_prompts_3)

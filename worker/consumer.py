@@ -1,9 +1,9 @@
 import asyncio
-from typing import Any
+from uuid import UUID
 
 from common.database.postgres_database import AsyncSessionLocal
 from common.database.repository import refresh_job_leases
-from common.services.queue_services.base import QueueService
+from common.services.messaging import Message, Queue
 from common.settings import get_settings, get_structured_logger
 from common.types import TaskType, WorkerMessage
 from worker.healthcheck import HEARTBEAT_DIR, ensure_heartbeat_dir
@@ -23,9 +23,9 @@ class Consumer:
     dies, both signals stop: the message redelivers within one visibility window and
     the claim becomes stealable after the staleness window."""
 
-    def __init__(self, queue_service: QueueService, signal_handler: SignalHandler) -> None:
+    def __init__(self, queue: Queue, signal_handler: SignalHandler) -> None:
         settings = get_settings()
-        self.queue = queue_service
+        self.queue = queue
         self.signal_handler = signal_handler
         self.transcription_slot = asyncio.Semaphore(settings.MAX_CONCURRENT_TRANSCRIPTIONS)
         self.llm_slot = asyncio.Semaphore(settings.MAX_CONCURRENT_LLM)
@@ -61,19 +61,18 @@ class Consumer:
         while not self.signal_handler.signal_received:
             await self.capacity.acquire()
             try:
-                messages = await asyncio.to_thread(self.queue.receive_message, 1)
+                message = await asyncio.to_thread(self.queue.receive_message)
             except Exception:
                 self.capacity.release()
                 slogger.exception("Receiving messages failed")
                 self._touch()
                 await asyncio.sleep(1)
                 continue
-            if not messages:
+            if message is None:
                 self.capacity.release()
                 self._touch()
                 continue
-            message, receipt = messages[0]
-            task = asyncio.create_task(self._process(message, receipt))
+            task = asyncio.create_task(self._process(message))
             self.tasks.add(task)
             task.add_done_callback(self._task_done)
         await self._drain()
@@ -91,7 +90,7 @@ class Consumer:
         if not task.cancelled() and task.exception():
             slogger.error("Job task ended unexpectedly: {error}", error=str(task.exception()))
 
-    async def _heartbeat(self, receipt_handle: Any, minute_version_id: Any) -> None:
+    async def _heartbeat(self, receipt_handle: str, minute_version_id: UUID) -> None:
         """Keep the job alive on both liveness signals while it runs:
         - SQS visibility extension: the message is never redelivered mid-run;
         - claimed_at renewal: the claim can never be stolen by a duplicate message.
@@ -103,7 +102,7 @@ class Consumer:
             while True:
                 await asyncio.sleep(self.heartbeat_interval)
                 try:
-                    await asyncio.to_thread(self.queue.extend_message, receipt_handle, self.visibility_seconds)
+                    await asyncio.to_thread(self.queue.set_visibility, receipt_handle, self.visibility_seconds)
                 except Exception:  # noqa: BLE001 - one failed tick must not kill the heartbeat
                     slogger.warning("SQS visibility extension failed")
                 try:
@@ -115,47 +114,55 @@ class Consumer:
         except asyncio.CancelledError:
             raise
 
-    async def _process(self, message: WorkerMessage, receipt_handle: Any) -> None:
+    async def _process(self, message: Message) -> None:
         # Task-local log context (structlog.contextvars): every log line emitted for
         # this job, including from workflows/actions and the heartbeat task, carries
         # these fields without cross-talk between concurrent jobs.
         slogger.refresh_context()
-        slogger.set_context_field("minute_version_id", str(message.id))
-        slogger.info("Received {task_type} job", task_type=getattr(message.type, "name", str(message.type)))
-        heartbeat = asyncio.create_task(self._heartbeat(receipt_handle, message.id))
+        slogger.set_context_field("minute_version_id", str(message.body.get("id")))
         try:
-            match message.type:
+            job = WorkerMessage.model_validate(message.body)
+        except Exception:
+            # Poison body: it can never parse, so it would redeliver forever.
+            # Dead-letter it immediately instead of looping.
+            slogger.exception("Failed to parse worker message")
+            await asyncio.to_thread(self.queue.dead_letter_message, message.body, message.receipt_handle)
+            self._touch()
+            return
+        slogger.set_context_field("minute_version_id", str(job.id))
+        slogger.info("Received {task_type} job", task_type=getattr(job.type, "name", str(job.type)))
+        heartbeat = asyncio.create_task(self._heartbeat(message.receipt_handle, job.id))
+        try:
+            match job.type:
                 case TaskType.MINUTE:
                     outcome = await generate_minute_version(
-                        message.id, self.transcription_slot, self.llm_slot, self.stale_seconds
+                        job.id, self.transcription_slot, self.llm_slot, self.stale_seconds
                     )
                 case TaskType.EDIT:
-                    if message.data is None:
+                    if job.data is None:
                         slogger.warning("EDIT message missing source data")
-                        await asyncio.to_thread(self.queue.deadletter_message, message, receipt_handle)
+                        await asyncio.to_thread(self.queue.dead_letter_message, message.body, message.receipt_handle)
                         return
-                    outcome = await edit_minute_version(
-                        message.id, message.data.source_id, self.llm_slot, self.stale_seconds
-                    )
+                    outcome = await edit_minute_version(job.id, job.data.source_id, self.llm_slot, self.stale_seconds)
                 case _:
-                    slogger.warning("Unknown task type: {task_type}", task_type=str(message.type))
-                    await asyncio.to_thread(self.queue.deadletter_message, message, receipt_handle)
+                    slogger.warning("Unknown task type: {task_type}", task_type=str(job.type))
+                    await asyncio.to_thread(self.queue.dead_letter_message, message.body, message.receipt_handle)
                     return
         except Exception:
             # Nothing was recorded in the database for this failure (the workflows record
             # and re-raise their own handled failures). Hide the message and let it
             # redeliver; the DLQ redrive catches true poison after repeated attempts.
             slogger.exception("Job processing crashed")
-            await asyncio.to_thread(self.queue.extend_message, receipt_handle, self.visibility_seconds)
+            await asyncio.to_thread(self.queue.set_visibility, message.receipt_handle, self.visibility_seconds)
             return
         finally:
             heartbeat.cancel()
             self._touch()
 
         if outcome == "delete":
-            await asyncio.to_thread(self.queue.complete_message, receipt_handle)
+            await asyncio.to_thread(self.queue.ack_message, message.receipt_handle)
             slogger.info("Job handled: message deleted")
         else:
             # Another consumer owns this job; hide our copy until it finishes.
-            await asyncio.to_thread(self.queue.extend_message, receipt_handle, self.visibility_seconds)
+            await asyncio.to_thread(self.queue.set_visibility, message.receipt_handle, self.visibility_seconds)
             slogger.info("Job owned by another worker: message rehidden")

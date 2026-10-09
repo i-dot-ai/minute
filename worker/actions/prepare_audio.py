@@ -10,12 +10,12 @@ import ffmpeg
 
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import Recording, Transcription
-from common.services.storage_services import get_storage_service
+from common.services.storage import S3
 from common.settings import get_settings, get_structured_logger
 
 slogger = get_structured_logger()
 settings = get_settings()
-storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
+storage_service = S3()
 SUPPORTED_FORMATS = {".mp3"}
 
 # ponytail: idempotency of this action relies on processing always using the NEWEST

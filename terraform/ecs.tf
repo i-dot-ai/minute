@@ -12,15 +12,13 @@ locals {
     "REPO" : "minute",
     "APP_URL" : aws_route53_record.type_a_record.fqdn,
     "AWS_ACCOUNT_ID" : data.aws_caller_identity.current.account_id,
+    "AWS_DEFAULT_REGION" : var.region,
     "POSTGRES_HOST" : module.rds.db_instance_address,
-    "AZURE_OPENAI_API_VERSION" : "2024-10-21"
     "WORKER_QUEUE_NAME" : aws_sqs_queue.worker_queue.name
     "WORKER_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.worker_queue_deadletter.name
     "MAX_CONCURRENT_TRANSCRIPTIONS" : local.MAX_CONCURRENT_TRANSCRIPTIONS
     "MAX_CONCURRENT_LLM" : local.MAX_CONCURRENT_LLM
-    "FAST_LLM_PROVIDER"   = "gemini"
     "FAST_LLM_MODEL_NAME" = "gemini-3.5-flash"
-    "BEST_LLM_PROVIDER"   = "gemini"
     "BEST_LLM_MODEL_NAME" = "gemini-3.5-flash"
   }
 
@@ -129,7 +127,6 @@ module "frontend" {
   health_check = {
     accepted_response   = 200
     path                = "/health"
-    interval            = 60
     timeout             = 70
     healthy_threshold   = 2
     unhealthy_threshold = 5
@@ -214,9 +211,9 @@ resource "aws_service_discovery_service" "service_discovery_service" {
     routing_policy = "MULTIVALUE"
   }
 
-  health_check_custom_config {
-    failure_threshold = 1
-  }
+  # failure_threshold is deprecated by the AWS provider: it is no longer supported by
+  # AWS and is always set to 1, so the empty block alone enables the custom health check.
+  health_check_custom_config {}
 }
 
 module "sns_topic" {

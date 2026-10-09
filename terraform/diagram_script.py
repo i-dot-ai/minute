@@ -1,3 +1,5 @@
+# pyright: reportUnusedExpression=false
+# The diagrams library connects nodes with `>>`/`<<` operators as statements by design.
 from diagrams import Cluster, Diagram, Edge
 from diagrams.aws.compute import ECS
 from diagrams.aws.general import Users

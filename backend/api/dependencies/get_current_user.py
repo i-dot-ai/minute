@@ -51,7 +51,7 @@ async def get_current_user(
             )
             .returning(User)
         )
-        result = await session.execute(stmt)
+        result = await session.exec(stmt)
         await session.commit()
 
         return result.scalar_one()

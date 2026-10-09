@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 from common.database.postgres_models import DialogueEntry
 from common.settings import get_structured_logger
-from worker.llm.client import FastOrBestLLM, create_default_chatbot
+from worker.llm import FastOrBestLLM, create_default_chatbot
 from worker.text import transcript_as_speaker_and_utterance
 
 slogger = get_structured_logger()

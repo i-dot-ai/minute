@@ -69,7 +69,7 @@ async def get_user_template(user: UserDep, session: SQLSessionDep, template_id: 
         await session.exec(
             select(UserTemplate)
             .where(UserTemplate.id == template_id, UserTemplate.user_id == user.id)
-            .options(selectinload(UserTemplate.questions))
+            .options(selectinload(UserTemplate.questions))  # pyright: ignore[reportArgumentType]
         )
     ).first()
 
@@ -183,7 +183,7 @@ async def duplicate_user_template(user: UserDep, session: SQLSessionDep, templat
         await session.exec(
             select(UserTemplate)
             .where(UserTemplate.id == template_id, UserTemplate.user_id == user.id)
-            .options(selectinload(UserTemplate.questions))
+            .options(selectinload(UserTemplate.questions))  # pyright: ignore[reportArgumentType]
         )
     ).first()
 

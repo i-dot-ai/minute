@@ -2,6 +2,7 @@ import type { Page, Request } from '@playwright/test'
 import type {
   MinuteListItem,
   PaginatedTranscriptionsResponse,
+  SingleRecording,
   TranscriptionGetResponse,
 } from '@/lib/client/types.gen'
 import { json } from './general'
@@ -87,5 +88,44 @@ export async function routeDeleteTranscription(
     if (pathname !== '/api/proxy/transcriptions') return route.fallback()
     if (route.request().method() !== 'GET') return route.fallback()
     return route.fulfill(json(200, list))
+  })
+}
+
+export async function routeFailedTranscription(
+  page: Page,
+  {
+    transcription,
+    error,
+    recordings,
+  }: {
+    transcription: TranscriptionGetResponse
+    error: string
+    recordings: SingleRecording[]
+  }
+): Promise<void> {
+  const failed: TranscriptionGetResponse = {
+    ...transcription,
+    status: 'failed',
+    dialogue_entries: null,
+    error,
+  }
+  const id = transcription.id
+
+  await page.route(`**/api/proxy/transcriptions/${id}`, (route) => {
+    if (route.request().method() !== 'GET') return route.fallback()
+    return route.fulfill(json(200, failed))
+  })
+
+  await page.route(
+    `**/api/proxy/transcriptions/${id}/recordings`,
+    (route) => {
+      if (route.request().method() !== 'GET') return route.fallback()
+      return route.fulfill(json(200, recordings))
+    }
+  )
+
+  await page.route(`**/api/proxy/transcriptions/${id}/retry`, (route) => {
+    if (route.request().method() !== 'POST') return route.fallback()
+    return route.fulfill(json(201, { id }))
   })
 }

@@ -30,9 +30,7 @@ test('the old URL shows the notification banner on the unauthorised page', async
   await mockBackend(page)
   await page.goto(`${OLD_URL}/unauthorised`)
 
-  await expect(
-    page.getByText('This is an old Minute address')
-  ).toBeVisible()
+  await expect(page.getByText('This is an old Minute address')).toBeVisible()
 })
 
 test('the normal URL does not show the migration banner', async ({ page }) => {

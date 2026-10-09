@@ -41,7 +41,7 @@ test('cancelling the delete dialog keeps the template', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('link', { name: 'Templates' }).click()
   await expect(page).toHaveURL(/\/templates$/)
-  
+
   const target = userTemplates[0]
   let deleteFired = false
   page.on('request', (req) => {

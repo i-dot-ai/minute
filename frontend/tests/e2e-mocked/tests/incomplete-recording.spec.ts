@@ -60,8 +60,7 @@ test('an incomplete recording can be uploaded and starts transcription', async (
 
   const createTranscription = page.waitForRequest(
     (req) =>
-      req.method() === 'POST' &&
-      /\/api\/proxy\/transcriptions$/.test(req.url())
+      req.method() === 'POST' && /\/api\/proxy\/transcriptions$/.test(req.url())
   )
 
   await uploadButton.click()

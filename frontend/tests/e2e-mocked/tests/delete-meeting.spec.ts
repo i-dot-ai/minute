@@ -66,7 +66,6 @@ test('cancelling the delete dialog keeps the meeting', async ({ page }) => {
   expect(deleteFired).toBe(false)
 })
 
-
 test('select all meetings and delete deletes all meetings and renders button which leads you back to recording more meetings', async ({
   page,
 }) => {
@@ -90,9 +89,7 @@ test('select all meetings and delete deletes all meetings and renders button whi
   await page.getByRole('checkbox', { name: 'Select all' }).check()
   await expect(page.getByRole('checkbox', { name: 'Select all' })).toBeChecked()
 
-  await page
-    .getByRole('button', { name: `Delete ${count} selected` })
-    .click()
+  await page.getByRole('button', { name: `Delete ${count} selected` }).click()
 
   const dialog = page.getByRole('alertdialog')
   await dialog.getByRole('button', { name: `Delete ${count} selected` }).click()

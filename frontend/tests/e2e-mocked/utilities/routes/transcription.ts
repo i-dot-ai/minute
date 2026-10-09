@@ -82,7 +82,9 @@ export async function routeDeleteTranscription(
     return route.fulfill(json(200, {}))
   })
 
-  await page.route('**/api/proxy/transcriptions', (route) => {
+  await page.route('**/api/proxy/transcriptions**', (route) => {
+    const { pathname } = new URL(route.request().url())
+    if (pathname !== '/api/proxy/transcriptions') return route.fallback()
     if (route.request().method() !== 'GET') return route.fallback()
     return route.fulfill(json(200, list))
   })

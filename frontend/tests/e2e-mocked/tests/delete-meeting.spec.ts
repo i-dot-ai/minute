@@ -65,3 +65,42 @@ test('cancelling the delete dialog keeps the meeting', async ({ page }) => {
   await expect(page.getByRole('link', { name: target.title! })).toBeVisible()
   expect(deleteFired).toBe(false)
 })
+
+
+test('select all meetings and delete deletes all meetings and renders button which leads you back to recording more meetings', async ({
+  page,
+}) => {
+  await mockBackend(page)
+  await routeDeleteTranscription(page, { transcriptions })
+
+  await page.goto('/')
+  await page.getByRole('link', { name: 'transcripts' }).click()
+  await expect(page).toHaveURL(/\/transcriptions$/)
+
+  await expect(
+    page.getByRole('link', { name: transcriptions.items[0].title! })
+  ).toBeVisible()
+
+  const count = transcriptions.items.length
+  const deletes: string[] = []
+  page.on('request', (req) => {
+    if (req.method() === 'DELETE' && /\/transcriptions\/[^/]+$/.test(req.url()))
+      deletes.push(req.url())
+  })
+  await page.getByRole('checkbox', { name: 'Select all' }).check()
+  await expect(page.getByRole('checkbox', { name: 'Select all' })).toBeChecked()
+
+  await page
+    .getByRole('button', { name: `Delete ${count} selected` })
+    .click()
+
+  const dialog = page.getByRole('alertdialog')
+  await dialog.getByRole('button', { name: `Delete ${count} selected` }).click()
+  await expect.poll(() => deletes.length).toBe(count)
+
+  for (const item of transcriptions.items) {
+    await expect(page.getByRole('link', { name: item.title! })).toHaveCount(0)
+  }
+  await page.getByRole('link', { name: 'Start a new recording' }).click()
+  await expect(page).toHaveURL('/')
+})

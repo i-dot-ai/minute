@@ -32,10 +32,13 @@ WORKER_DEADLETTER_ARN=$($AWS sqs get-queue-attributes \
 
 echo "Dead letter queue ARN: $WORKER_DEADLETTER_ARN"
 
+# Visibility timeout matches JOB_VISIBILITY_TIMEOUT_SECS (settings.py); the consumer overrides
+# it per message anyway, this just keeps the queue default consistent.
 $AWS sqs set-queue-attributes \
 --queue-url "$WORKER_QUEUE_URL" \
 --attributes "{
-    \"RedrivePolicy\": \"{\\\"deadLetterTargetArn\\\":\\\"$WORKER_DEADLETTER_ARN\\\",\\\"maxReceiveCount\\\":\\\"10\\\"}\"
+    \"RedrivePolicy\": \"{\\\"deadLetterTargetArn\\\":\\\"$WORKER_DEADLETTER_ARN\\\",\\\"maxReceiveCount\\\":\\\"10\\\"}\",
+    \"VisibilityTimeout\": \"${JOB_VISIBILITY_TIMEOUT_SECS:-60}\"
 }"
 
 ##############################

@@ -14,10 +14,10 @@ async def test_upload_streams_from_disk(monkeypatch, tmp_path: Path):
     client = AsyncMock()
 
     @asynccontextmanager
-    async def client_context(*, from_browser: bool = False):  # noqa: ARG001
+    async def client_context(endpoint_url: str | None = None):  # noqa: ARG001
         yield client
 
-    monkeypatch.setattr(s3, "_session", client_context)
+    monkeypatch.setattr(s3, "_client", client_context)
     monkeypatch.setattr(s3.settings, "DATA_S3_BUCKET", "bucket")
 
     await s3.S3().upload("recording.mp3", path)

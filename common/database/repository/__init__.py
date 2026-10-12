@@ -15,6 +15,7 @@ own claimed_at. The heartbeat renews whichever leases are live (refresh_job_leas
 so while a worker is alive its claims cannot be stolen by duplicate messages.
 """
 
+from common.database.repository.claims import ClaimState, refresh_job_leases
 from common.database.repository.minute_versions import (
     claim_version_for_processing,
     finalize_stale_versions,
@@ -23,7 +24,6 @@ from common.database.repository.minute_versions import (
     mark_version_failed,
     reset_version_for_retry,
 )
-from common.database.repository.shared import ClaimState, refresh_job_leases
 from common.database.repository.transcriptions import (
     claim_transcription_for_processing,
     finalize_stale_transcriptions,

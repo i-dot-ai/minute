@@ -113,7 +113,7 @@ def published_messages(monkeypatch):
         return True
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.storage_service.check_object_exists",
+        "backend.api.routes.transcriptions.storage_service.exists",
         _object_exists,
     )
     monkeypatch.setattr(

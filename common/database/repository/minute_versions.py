@@ -6,7 +6,7 @@ from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription
-from common.database.repository.shared import ClaimState, claim_for_processing, make_finalizer
+from common.database.repository.claims import ClaimState, claim_for_processing, make_finalizer
 
 
 async def get_version_with_transcription(session: AsyncSession, minute_version_id: UUID) -> MinuteVersion:

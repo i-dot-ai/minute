@@ -1,8 +1,8 @@
 # flake8: noqa: E501
 """Action: apply user-provided AI edit instructions to an existing minute version."""
 
-from common.database.postgres_models import DialogueEntry
 from common.settings import get_structured_logger
+from common.types import DialogueEntry
 from worker.llm import FastOrBestLLM, create_default_chatbot
 from worker.text import transcript_as_speaker_and_utterance
 

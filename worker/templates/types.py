@@ -1,8 +1,8 @@
 from typing import ClassVar, Protocol
 
-from common.database.postgres_models import DialogueEntry, Minute
+from common.database.postgres_models import Minute
 from common.settings import get_settings
-from common.types import AgendaUsage
+from common.types import AgendaUsage, DialogueEntry
 from worker.llm import FastOrBestLLM, create_default_chatbot
 from worker.templates.citations import add_citations_to_minute
 from worker.templates.prompts import get_section_for_agenda_prompt, string_to_system_message

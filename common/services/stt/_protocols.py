@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Protocol
 
-from common.database.postgres_models import DialogueEntry
+from common.types import DialogueEntry
 
 
 class TranscriptionFailedError(Exception):

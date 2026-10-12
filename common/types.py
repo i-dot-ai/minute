@@ -1,10 +1,34 @@
 import uuid
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
+from typing import TypedDict
 
 from pydantic import BaseModel, Field
 
-from common.database.postgres_models import ContentSource, DialogueEntry, JobStatus, TemplateType
+
+class DialogueEntry(TypedDict):
+    speaker: str
+    text: str
+    start_time: float
+    end_time: float
+
+
+class JobStatus(StrEnum):
+    AWAITING_START = auto()
+    IN_PROGRESS = auto()
+    COMPLETED = auto()
+    FAILED = auto()
+
+
+class ContentSource(StrEnum):
+    MANUAL_EDIT = auto()
+    AI_EDIT = auto()
+    INITIAL_GENERATION = auto()
+
+
+class TemplateType(StrEnum):
+    DOCUMENT = auto()
+    FORM = auto()
 
 
 class TranscriptionListFilter(StrEnum):

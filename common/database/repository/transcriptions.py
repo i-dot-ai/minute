@@ -7,7 +7,7 @@ from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.database.postgres_models import JobStatus, Transcription
-from common.database.repository.shared import ClaimState, claim_for_processing, make_finalizer
+from common.database.repository.claims import ClaimState, claim_for_processing, make_finalizer
 
 if TYPE_CHECKING:
     from common.types import DialogueEntry

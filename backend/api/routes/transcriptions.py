@@ -164,7 +164,7 @@ async def create_transcription(
         raise HTTPException(404, detail="Recording not found")
     transcription = Transcription(user_id=current_user.id, title=request.title)
 
-    if not await storage_service.check_object_exists(recording.s3_file_key):
+    if not await storage_service.exists(recording.s3_file_key):
         raise HTTPException(
             status_code=404,
             detail=f"Recording file not found in S3: {recording.s3_file_key}",
@@ -218,7 +218,7 @@ async def retry_transcription(
     recording = transcription.recordings[0] if transcription.recordings else None
     if not recording:
         raise HTTPException(400, detail="Transcription has no recording to retry")
-    if not await storage_service.check_object_exists(recording.s3_file_key):
+    if not await storage_service.exists(recording.s3_file_key):
         raise HTTPException(404, detail=f"Recording file not found in S3: {recording.s3_file_key}")
 
     minute = transcription.minutes[0] if transcription.minutes else None
@@ -286,7 +286,7 @@ async def get_recordings_for_transcription(
     recordings = {Path(recording.s3_file_key).suffix: recording for recording in recordings}.values()
     signed_recordings: list[SingleRecording] = []
     for recording in recordings:
-        if not await storage_service.check_object_exists(recording.s3_file_key):
+        if not await storage_service.exists(recording.s3_file_key):
             continue
         key_path = Path(recording.s3_file_key)
         filename = f"{transcription.title}{key_path.suffix}" if transcription.title else key_path.name

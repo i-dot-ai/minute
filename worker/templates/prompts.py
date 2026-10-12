@@ -1,6 +1,6 @@
 # flake8: noqa: E501
 
-from common.database.postgres_models import DialogueEntry
+from common.types import DialogueEntry
 from worker.text import transcript_as_index_speaker_and_utterance, transcript_as_speaker_and_utterance
 
 

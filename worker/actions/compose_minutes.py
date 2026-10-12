@@ -8,10 +8,10 @@ from sqlalchemy.orm import selectinload
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.database.postgres_database import async_engine
-from common.database.postgres_models import DialogueEntry, Minute, UserTemplate
+from common.database.postgres_models import Minute, UserTemplate
 from common.settings import get_settings, get_structured_logger
 from common.spelling import convert_american_to_british_spelling
-from common.types import MeetingType
+from common.types import DialogueEntry, MeetingType
 from worker.llm import FastOrBestLLM, create_default_chatbot
 from worker.templates import get_template
 from worker.templates.prompts import get_transcript_messages

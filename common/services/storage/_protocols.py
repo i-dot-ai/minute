@@ -21,6 +21,20 @@ class Storage(Protocol):
         """
         ...
 
+    async def exists(self, key: str) -> bool:
+        """Return whether ``key`` exists.
+
+        :param key: Object key to check.
+        """
+        ...
+
+    async def delete(self, key: str) -> None:
+        """Delete ``key`` if present.
+
+        :param key: Object key to delete.
+        """
+        ...
+
     async def generate_presigned_url_put_object(self, key: str, expiry_seconds: int) -> str:
         """Return a URL the client can PUT ``key`` to.
 
@@ -35,19 +49,5 @@ class Storage(Protocol):
         :param key: Object key to download.
         :param filename: Filename presented to the client.
         :param expiry_seconds: URL lifetime in seconds.
-        """
-        ...
-
-    async def check_object_exists(self, key: str) -> bool:
-        """Return whether ``key`` exists.
-
-        :param key: Object key to check.
-        """
-        ...
-
-    async def delete(self, key: str) -> None:
-        """Delete ``key`` if present.
-
-        :param key: Object key to delete.
         """
         ...

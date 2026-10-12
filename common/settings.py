@@ -1,5 +1,6 @@
 import logging
 from functools import lru_cache
+from typing import Literal
 
 import dotenv
 from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
@@ -46,6 +47,10 @@ class Settings(BaseSettings):
     BROWSER_AWS_ENDPOINT_URL: str | None = Field(
         description="Browser-facing S3 endpoint for presigned URLs", default=None
     )
+    S3_ADDRESSING_STYLE: Literal["auto", "path", "virtual"] = Field(
+        description="S3 addressing style; 'path' for non-AWS S3 (e.g. MiniStack), 'auto' otherwise",
+        default="auto",
+    )
 
     # if using i.AI Auth API
     REPO: str = Field(description="The name of the GitHub repository")
@@ -77,6 +82,20 @@ class Settings(BaseSettings):
         )
         return self
 
+    @model_validator(mode="after")
+    def _validate_lease_timings(self) -> "Settings":
+        # Liveness invariant (see AGENTS.md §5):
+        # - heartbeat < visibility: a live job's message is never redelivered mid-run.
+        # - visibility < stale: a redelivered duplicate finds the lease fresh (rehides)
+        #   rather than stealing a job whose worker is still alive.
+        if not self.JOB_HEARTBEAT_INTERVAL_SECS < self.JOB_VISIBILITY_TIMEOUT_SECS < self.JOB_STALE_SECONDS:
+            msg = (
+                "Require JOB_HEARTBEAT_INTERVAL_SECS < JOB_VISIBILITY_TIMEOUT_SECS < JOB_STALE_SECONDS, got "
+                f"{self.JOB_HEARTBEAT_INTERVAL_SECS} / {self.JOB_VISIBILITY_TIMEOUT_SECS} / {self.JOB_STALE_SECONDS}"
+            )
+            raise ValueError(msg)
+        return self
+
     WORKER_QUEUE_NAME: str = Field(description="SQS queue the worker consumes jobs from")
     WORKER_DEADLETTER_QUEUE_NAME: str = Field(description="SQS dead-letter queue for the worker queue")
 
@@ -98,16 +117,20 @@ class Settings(BaseSettings):
     )
     JOB_VISIBILITY_TIMEOUT_SECS: int = Field(
         description="SQS visibility timeout applied when a message is received/extended; the consumer heartbeat "
-        "re-extends it while a job is alive",
-        default=300,
+        "re-extends it while a job is alive. Must exceed JOB_HEARTBEAT_INTERVAL_SECS and be less than "
+        "JOB_STALE_SECONDS",
+        default=60,
     )
     JOB_HEARTBEAT_INTERVAL_SECS: int = Field(
-        description="How often the consumer extends a job's SQS visibility while it is processing",
-        default=120,
+        description="How often the consumer extends a job's SQS visibility while it is processing. Must be less than "
+        "JOB_VISIBILITY_TIMEOUT_SECS and JOB_STALE_SECONDS, so a live job is never redelivered or stolen",
+        default=15,
     )
     JOB_STALE_SECONDS: int = Field(
-        description="A claim whose claimed_at is older than this is stealable on redelivery (worker died)",
-        default=600,
+        description="A claim whose claimed_at is older than this is stealable on redelivery (worker died). Must exceed "
+        "JOB_VISIBILITY_TIMEOUT_SECS, so a redelivered duplicate finds the lease fresh (rehides) rather than "
+        "stealing a live job",
+        default=120,
     )
 
     # GOOGLE_APPLICATION_CREDENTIALS and GOOGLE_CLOUD_PROJECT are read directly by the Google SDK.

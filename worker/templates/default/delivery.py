@@ -1,8 +1,8 @@
 # flake8: noqa: E501, RUF001
 from pydantic import BaseModel, Field
 
-from common.database.postgres_models import DialogueEntry, Minute
-from common.types import AgendaUsage
+from common.database.postgres_models import Minute
+from common.types import AgendaUsage, DialogueEntry
 from worker.llm import FastOrBestLLM, create_default_chatbot
 from worker.templates.citations import add_citations_to_minute
 from worker.templates.prompts import get_transcript_messages

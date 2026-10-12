@@ -6,6 +6,9 @@ locals {
 
   MAX_CONCURRENT_TRANSCRIPTIONS = terraform.workspace == "prod" ? 4 : 2
   MAX_CONCURRENT_LLM            = terraform.workspace == "prod" ? 8 : 4
+  # Keep in sync with JOB_VISIBILITY_TIMEOUT_SECS in common/settings.py; injected into the
+  # workers and used as the SQS queue's visibility timeout so the two never drift apart.
+  JOB_VISIBILITY_TIMEOUT_SECS = 60
 
   shared_environment_variables = {
     "ENVIRONMENT" : terraform.workspace,
@@ -18,6 +21,7 @@ locals {
     "WORKER_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.worker_queue_deadletter.name
     "MAX_CONCURRENT_TRANSCRIPTIONS" : local.MAX_CONCURRENT_TRANSCRIPTIONS
     "MAX_CONCURRENT_LLM" : local.MAX_CONCURRENT_LLM
+    "JOB_VISIBILITY_TIMEOUT_SECS" : local.JOB_VISIBILITY_TIMEOUT_SECS
     "FAST_LLM_MODEL_NAME" = "gemini-3.5-flash"
     "BEST_LLM_MODEL_NAME" = "gemini-3.5-flash"
   }

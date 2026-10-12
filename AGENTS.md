@@ -55,7 +55,9 @@ imports the `worker` package; the worker never imports `backend`.
 
 ## 2. Data model
 
-Defined in [`common/database/postgres_models.py`](common/database/postgres_models.py).
+Defined in [`common/database/postgres_models.py`](common/database/postgres_models.py); the shared
+enums (`JobStatus`, `ContentSource`, `TemplateType`) and the `DialogueEntry` transcript shape live
+in [`common/types.py`](common/types.py) and are imported by the models.
 
 | Table | Purpose | Key columns |
 |---|---|---|
@@ -167,8 +169,8 @@ Message shape (`common/types.py`):
 | Property | Value | Where |
 |---|---|---|
 | Polling | long-poll, `WaitTimeSeconds=20`, `MaxNumberOfMessages=1` | `sqs.py` |
-| Visibility timeout | `JOB_VISIBILITY_TIMEOUT_SECS` = **300s** | `common/settings.py` |
-| Heartbeat interval | `JOB_HEARTBEAT_INTERVAL_SECS` = **120s** | `common/settings.py` |
+| Visibility timeout | `JOB_VISIBILITY_TIMEOUT_SECS` = **60s** | `common/settings.py` |
+| Heartbeat interval | `JOB_HEARTBEAT_INTERVAL_SECS` = **15s** | `common/settings.py` |
 | Redrive | `maxReceiveCount` = **10** | `terraform/sqs.tf`, `ministack-setup.sh` |
 | Dead-letter | malformed / unknown / EDIT-without-source messages are deadlettered | `worker/consumer.py` |
 
@@ -238,13 +240,14 @@ the claim becomes stealable after the staleness window.
 
 | Knob | Default | Meaning |
 |---|---|---|
-| `JOB_VISIBILITY_TIMEOUT_SECS` | 300 | SQS invisibility per receive/extend |
-| `JOB_HEARTBEAT_INTERVAL_SECS` | 120 | how often the lease/visibility is renewed |
-| `JOB_STALE_SECONDS` | 600 | lease age at which a claim is stealable on redelivery |
+| `JOB_VISIBILITY_TIMEOUT_SECS` | 60 | SQS invisibility per receive/extend |
+| `JOB_HEARTBEAT_INTERVAL_SECS` | 15 | how often the lease/visibility is renewed |
+| `JOB_STALE_SECONDS` | 120 | lease age at which a claim is stealable on redelivery |
 
-> Timing invariant (currently enforced by defaults, not validated): heartbeat interval must be
-> less than both the visibility timeout and the stale window, or a live job can be redelivered
-> and stolen.
+> Timing invariant, enforced by a `Settings` validator: `heartbeat < visibility < stale`. The first
+> half means a live job is never redelivered mid-run; the second means a redelivered duplicate
+> finds the lease fresh (rehides) rather than stealing a job whose worker is still alive.
+> Recovery latency after a worker dies ≈ `stale`.
 
 ### 5.5 Idempotency guarantees
 
@@ -260,23 +263,28 @@ the claim becomes stealable after the staleness window.
 
 ## 6. Storage
 
-`common/services/storage_services/` has a single `S3` backend (`s3`), used everywhere: presigned
-PUT for uploads, presigned GET for downloads, `head_object` for existence checks, `upload_file`/
-`download_file` for server-side transfers. Deployed environments talk to real AWS with the ECS
-task role; local runs point at MiniStack (see below). The `Storage` Protocol in `_protocols.py`
-documents the contract.
+`common/services/storage/` has a single `S3` backend, used everywhere: presigned PUT for uploads,
+presigned GET for downloads, `head_object` for existence checks, `upload_file`/`download_file` for
+server-side transfers. Deployed environments talk to real AWS with the ECS task role; local runs
+point at MiniStack (see below). The `Storage` Protocol in `_protocols.py` documents the contract.
 
-Locally the endpoint is split. Compose containers reach MiniStack at `ministack:4566`, but the
-browser cannot resolve that name, and the browser is what uses the presigned URLs. So presigned
-URLs are generated against `BROWSER_AWS_ENDPOINT_URL` (`http://localhost:4566` in Compose) while the
-server-side client keeps `AWS_ENDPOINT_URL` (`ministack:4566`). `BROWSER_AWS_ENDPOINT_URL` defaults
-to `AWS_ENDPOINT_URL`, so host-run dev and deployment need only one endpoint. MiniStack URLs use
-path-style addressing; virtual-host style would produce `<bucket>.localhost`, which won't resolve.
+`s3.py` contains no environment logic — every difference is a setting. `_client()` builds the S3
+client from `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`AWS_DEFAULT_REGION` and lets botocore
+resolve the endpoint from `AWS_ENDPOINT_URL`; the two presign methods pass `BROWSER_AWS_ENDPOINT_URL`
+instead, because a presigned URL is signed against the endpoint the *browser* will call. Addressing
+style comes from `S3_ADDRESSING_STYLE` (`path` for non-AWS S3 such as MiniStack, `auto` otherwise —
+virtual-host style would produce `<bucket>.localhost`, which won't resolve).
+
+Locally the endpoint is split: Compose containers reach MiniStack at `ministack:4566`, but the
+browser cannot resolve that name, so presigned URLs are generated against `BROWSER_AWS_ENDPOINT_URL`
+(`http://localhost:4566`). When it is unset, the client falls back to `AWS_ENDPOINT_URL`, which is
+already correct for host-run dev and deployment.
 
 | Setting | Host-run | Compose | Deployed |
 |---|---|---|---|
 | `AWS_ENDPOINT_URL` | `http://localhost:4566` | `http://ministack:4566` | unset (real AWS) |
-| `BROWSER_AWS_ENDPOINT_URL` | unset (falls back) | `http://localhost:4566` | unset |
+| `BROWSER_AWS_ENDPOINT_URL` | unset | `http://localhost:4566` | unset |
+| `S3_ADDRESSING_STYLE` | `path` | `path` | `auto` |
 
 ---
 
@@ -370,7 +378,7 @@ async polling, the second queue, and `TranscriptionJobMessageData` are gone.
 - Worker concurrency/lease: `MAX_CONCURRENT_TRANSCRIPTIONS`, `MAX_CONCURRENT_LLM`,
   `JOB_VISIBILITY_TIMEOUT_SECS`, `JOB_HEARTBEAT_INTERVAL_SECS`, `JOB_STALE_SECONDS`
 - Storage: `DATA_S3_BUCKET`, `AWS_ENDPOINT_URL` (server-side), `BROWSER_AWS_ENDPOINT_URL`
-  (browser-facing; defaults to `AWS_ENDPOINT_URL`)
+  (browser-facing; defaults to `AWS_ENDPOINT_URL`), `S3_ADDRESSING_STYLE`
 - Azure STT: `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`, optional fallbacks
 - LLM: `FAST_LLM_PROVIDER/MODEL_NAME`, `BEST_LLM_PROVIDER/MODEL_NAME`, Google credentials
 - Auth: `REPO`, `AUTH_API_URL`
@@ -413,8 +421,6 @@ The backend runs `alembic upgrade head` on container start (`backend/entrypoint.
 
 ## 14. Known issues / follow-ups
 
-- **Lease timing** is enforced only by default values; a `settings` validator for
-  `heartbeat < visibility` and `heartbeat < stale` is not yet present.
 - **Stale cutoff clock**: `_stale_cutoff` uses the app clock while `claimed_at` is written with
   the DB clock (`func.now()`); small skew is tolerated by design.
 - **Dead schema**: `chat`, `hallucination`, `transcriptionjobstate` tables have no models.

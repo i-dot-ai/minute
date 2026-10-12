@@ -12,10 +12,10 @@ from typing import Any
 import httpx
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
-from common.database.postgres_models import DialogueEntry
 from common.services.stt._protocols import STT, TranscriptionFailedError
 from common.settings import Settings, get_settings, get_structured_logger
 from common.spelling import convert_american_to_british_spelling
+from common.types import DialogueEntry
 
 slogger = get_structured_logger()
 settings = get_settings()

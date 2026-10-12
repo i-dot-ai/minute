@@ -42,7 +42,7 @@ class FakeStorage:
         self.uploads.append(key)
         self.files[key] = path.read_bytes()
 
-    async def check_object_exists(self, key: str) -> bool:
+    async def exists(self, key: str) -> bool:
         return key in self.files
 
 

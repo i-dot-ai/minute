@@ -82,3 +82,60 @@ async def test_unparseable_body_is_deadlettered():
 
     assert queue.dead_lettered == [body]
     assert queue.acked == []
+
+
+@pytest.mark.asyncio
+async def test_handled_job_deletes_the_message(monkeypatch):
+    """A handled job ("delete", success or recorded failure) is acked, not requeued."""
+
+    async def handled(*_args, **_kwargs):
+        return "delete"
+
+    monkeypatch.setattr("worker.consumer.generate_minute_version", handled)
+    queue = FakeQueue()
+    consumer = _consumer(queue)
+    body = WorkerMessage(id=uuid4(), type=TaskType.MINUTE).model_dump(mode="json")
+
+    await consumer._process(_message(body))
+
+    assert queue.acked == ["receipt"]
+    assert queue.visibility_set == []
+
+
+@pytest.mark.asyncio
+async def test_job_owned_by_another_worker_is_rehidden(monkeypatch):
+    """When the workflow reports the job is owned elsewhere ("rehide"), the message is
+    hidden (visibility extended) and NOT acked, so it is retried later."""
+
+    async def rehide(*_args, **_kwargs):
+        return "rehide"
+
+    monkeypatch.setattr("worker.consumer.generate_minute_version", rehide)
+    queue = FakeQueue()
+    consumer = _consumer(queue)
+    body = WorkerMessage(id=uuid4(), type=TaskType.MINUTE).model_dump(mode="json")
+
+    await consumer._process(_message(body))
+
+    assert queue.acked == []
+    assert queue.visibility_set == [("receipt", consumer.visibility_seconds)]
+
+
+@pytest.mark.asyncio
+async def test_crash_rehides_without_acking(monkeypatch):
+    """An unexpected exception (nothing recorded in the DB) must not drop the job: the
+    message is hidden and left to redeliver, never acked."""
+
+    async def boom(*_args, **_kwargs):
+        msg = "unexpected"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr("worker.consumer.generate_minute_version", boom)
+    queue = FakeQueue()
+    consumer = _consumer(queue)
+    body = WorkerMessage(id=uuid4(), type=TaskType.MINUTE).model_dump(mode="json")
+
+    await consumer._process(_message(body))
+
+    assert queue.acked == []
+    assert queue.visibility_set == [("receipt", consumer.visibility_seconds)]

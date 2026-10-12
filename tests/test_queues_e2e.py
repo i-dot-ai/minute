@@ -7,6 +7,7 @@ downloads recordings from MiniStack and sends their bytes to synchronous Azure S
 import asyncio
 from contextlib import suppress
 from pathlib import Path
+from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
@@ -29,6 +30,7 @@ from tests.utils import FileTypeTests, get_test_client
 from worker.consumer import Consumer
 from worker.signal_handler import SignalHandler
 from worker.templates import TEMPLATES
+from worker.workflows import generate_minute_version as workflow
 
 pytestmark = [costs_money]
 
@@ -264,3 +266,83 @@ async def assert_transcription(
         # need to sleep here in order for the consumer to process during the test
         await asyncio.sleep(1)
         await check_worker(consumer_task)
+
+
+async def _create_recording_and_transcription() -> UUID:
+    async with get_test_client() as test_client:
+        response = await test_client.post(
+            "/recordings", json=RecordingCreateRequest(file_extension="mp3").model_dump(mode="json")
+        )
+        assert response.status_code == 200
+        recording = response.json()
+        upload = requests.put(recording["upload_url"], data=b"not really audio", timeout=60)  # noqa: ASYNC210
+        assert upload.status_code == 200
+        response = await test_client.post(
+            "/transcriptions",
+            json=TranscriptionCreateRequest(recording_id=recording["id"], template_name="General").model_dump(
+                mode="json"
+            ),
+        )
+        assert response.status_code == 201
+        return response.json()["id"]
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_e2e_failed_transcription_recovers_on_retry(worker_queue, monkeypatch):
+    """Recovery: a transcription that fails is marked FAILED, and a user retry re-runs the
+    pipeline to completion — STT/LLM stubbed, so this is offline and deterministic.
+
+    This is the end-to-end version of the claim/lease recovery: the failed message is
+    acked (never requeued), the user retry resets and republishes, and the worker
+    re-processes from scratch.
+    """
+    attempts = {"n": 0}
+
+    class FlakySTT:
+        async def transcribe(self, _path):
+            attempts["n"] += 1
+            if attempts["n"] == 1:
+                msg = "transient STT failure"
+                raise RuntimeError(msg)
+            return [{"speaker": "1", "text": "hello", "start_time": 0.0, "end_time": 1.0}]
+
+    async def fake_prepare(_transcription, work_dir):
+        return SimpleNamespace(file_path=work_dir / "audio.mp3")
+
+    async def passthrough(entries):
+        return entries
+
+    async def fake_title(_entries):
+        return "Recovered meeting"
+
+    async def fake_compose(_minute):
+        return "<p>ok</p>"
+
+    monkeypatch.setattr(workflow, "transcription_service", FlakySTT())
+    monkeypatch.setattr(workflow, "prepare_audio", fake_prepare)
+    monkeypatch.setattr(workflow, "identify_speakers", passthrough)
+    monkeypatch.setattr(workflow, "generate_meeting_title", fake_title)
+    monkeypatch.setattr(workflow, "compose_minutes", fake_compose)
+    monkeypatch.setattr(workflow, "capture_event", lambda *_args, **_kwargs: None)
+
+    transcription_id = await _create_recording_and_transcription()
+    consumer_task = start_consumer(worker_queue)
+    try:
+        await assert_transcription(
+            transcription_id,
+            consumer_task,
+            loop_while_not=JobStatus.FAILED,
+            fail_if=JobStatus.COMPLETED,
+        )
+        assert attempts["n"] == 1, "transcription should have failed exactly once"
+
+        async with get_test_client() as test_client:
+            response = await test_client.post(
+                f"/transcriptions/{transcription_id}/retry", json={"template_name": "General"}
+            )
+        assert response.status_code == 201, response.json()
+
+        await assert_transcription_succeeds(transcription_id, consumer_task)
+        assert attempts["n"] == 2, "retry should re-run STT exactly once more"
+    finally:
+        await stop_consumer(consumer_task)

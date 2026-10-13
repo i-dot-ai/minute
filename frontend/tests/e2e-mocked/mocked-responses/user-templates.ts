@@ -14,6 +14,19 @@ export const userTemplates = [
     is_default: false,
   },
   {
+    // Seeded stored-XSS payload: legit formatting plus an event-handler sink.
+    // Simulates markup persisted via the API, bypassing the editor's escaping.
+    id: 'c0ffee00-dead-beef-cafe-000000000001',
+    updated_datetime: '2026-08-14T08:56:00.000000Z',
+    name: 'XSS payload',
+    content:
+      '<p>Legit <strong>bold</strong></p><img src=x onerror="window.__xss()">',
+    description: 'Template seeded with a stored-XSS payload for sanitiser tests',
+    type: 'document',
+    questions: null,
+    is_default: false,
+  },
+  {
     id: '1f14032a-0ba8-4ffe-95ab-264cfe6c399f',
     updated_datetime: '2026-08-14T08:55:32.929120Z',
     name: 'My Care',

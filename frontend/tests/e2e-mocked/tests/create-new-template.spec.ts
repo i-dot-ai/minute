@@ -101,3 +101,27 @@ test('create a template from an example and it is available when recording a new
 
   await checkNewTemplateInList(page, 'My general - updated for testing')
 })
+
+test('stored template html is sanitised when viewing', async ({ page }) => {
+  let xssFired = false
+  await page.exposeFunction('__xss', () => {
+    xssFired = true
+  })
+
+  await page.goto('/')
+  await page.getByRole('link', { name: 'Templates' }).click()
+  await expect(page).toHaveURL(/\/templates$/)
+
+  await page.getByRole('link', { name: 'XSS payload' }).click()
+  await expect(page).toHaveURL(/\/templates\/[0-9a-f-]+$/)
+
+  // Legit editor formatting survives sanitisation.
+  await expect(
+    page.getByRole('heading', { name: 'Template content' })
+  ).toBeVisible()
+  await expect(page.locator('.editor-content strong')).toHaveText('bold')
+
+  // Dangerous markup is stripped and its handler never runs.
+  await expect(page.locator('.editor-content img')).toHaveCount(0)
+  expect(xssFired).toBe(false)
+})

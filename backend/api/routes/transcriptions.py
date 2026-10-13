@@ -164,6 +164,10 @@ async def create_transcription(
     recording = await session.get(Recording, request.recording_id)
     if not recording or recording.user_id != current_user.id:
         raise HTTPException(404, detail="Recording not found")
+    # A recording belongs to exactly one transcription: re-submitting it must not
+    # re-link the audio (orphaning the first transcription and re-queueing work).
+    if recording.transcription_id is not None:
+        raise HTTPException(status_code=409, detail="Recording has already been transcribed")
     transcription = Transcription(user_id=current_user.id, title=request.title)
 
     if not await storage_service.check_object_exists(recording.s3_file_key):

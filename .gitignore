@@ -126,3 +126,7 @@ docker-compose.override.yml
 # Strix
 strix_runs
 .source-aware*
+
+# Python coverage artifacts
+.coverage
+htmlcov/

@@ -1,11 +1,9 @@
 import logging
 import re
-from datetime import UTC, datetime
 from typing import cast
 from uuid import UUID
 
 import mistune
-from sqlalchemy import and_, or_, update
 from sqlalchemy.orm import selectinload
 
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
@@ -17,9 +15,10 @@ from common.prompts import (
     get_ai_edit_initial_messages,
     get_basic_minutes_prompt,
 )
+from common.services.job_claim import claim_job
 from common.services.posthog_client import capture_event
 from common.services.template_manager import TemplateManager
-from common.settings import CLAIM_STALE_AFTER, get_settings, get_structured_logger
+from common.settings import get_settings, get_structured_logger
 from common.templates.user_template import generate_user_template
 from common.types import MeetingType
 
@@ -49,27 +48,7 @@ def strip_document_code_fence(markdown: str) -> str:
 class MinuteHandlerService:
     @staticmethod
     def claim_minute_version(minute_version_id: UUID) -> bool:
-        # AWAITING_START -> IN_PROGRESS claim, plus reclaiming a claim older than
-        # CLAIM_STALE_AFTER: it can only be stale if the claiming worker died
-        # (heartbeat kills the container long before this), so it cannot race a live job.
-        stale_before = datetime.now(UTC) - CLAIM_STALE_AFTER
-        with SessionLocal() as session:
-            result = session.exec(
-                update(MinuteVersion)
-                .where(
-                    MinuteVersion.id == minute_version_id,
-                    or_(
-                        MinuteVersion.status == JobStatus.AWAITING_START,
-                        and_(
-                            MinuteVersion.status == JobStatus.IN_PROGRESS,
-                            MinuteVersion.updated_datetime < stale_before,
-                        ),
-                    ),
-                )
-                .values(status=JobStatus.IN_PROGRESS)
-            )
-            session.commit()
-            return result.rowcount == 1
+        return claim_job(MinuteVersion, minute_version_id)
 
     @staticmethod
     def update_minute_version(

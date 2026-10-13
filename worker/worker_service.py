@@ -70,19 +70,17 @@ class WorkerService:
         self.actors.append(actor)
         self.calls.append(actor.process.remote())
 
-    def _create_actor(self, idx: int):
-        """Create a fresh replacement actor of the same kind as the one at `idx`."""
-        if idx < self.num_transcription_actors:
-            return self._create_transcription_actor()
-        return self._create_llm_actor()
-
     def _restart_stale_actors(self) -> None:
         stale = stale_actor_indices(self.actors, HEARTBEAT_DIR, now=time())
         for idx in stale:
             try:
                 logger.error("Actor %s heartbeat older than %ss — restarting it", self.actors[idx], HEARTBEAT_TIMEOUT)
-                old, new = self.actors[idx], self._create_actor(idx)
-                # no_restart: the replacement actor is created below; the wedged actor
+                old = self.actors[idx]
+                if idx < self.num_transcription_actors:
+                    new = self._create_transcription_actor()
+                else:
+                    new = self._create_llm_actor()
+                # no_restart: the replacement actor is created above; the wedged actor
                 # must not resurrect and resume touching its (now-deleted) heartbeat file
                 ray.kill(old, no_restart=True)
                 Path(HEARTBEAT_DIR / f"worker_{old._actor_id.hex()}.heartbeat").unlink(missing_ok=True)  # noqa: SLF001

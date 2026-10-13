@@ -1,7 +1,5 @@
-from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import and_, or_, update
 from sqlalchemy.orm import selectinload
 from sqlmodel import select
 
@@ -10,9 +8,10 @@ from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import JobStatus, Minute, Transcription
 from common.generate_meeting_title import generate_meeting_title
 from common.services.exceptions import TranscriptionFailedError
+from common.services.job_claim import claim_job
 from common.services.posthog_client import capture_event
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
-from common.settings import CLAIM_STALE_AFTER, get_settings, get_structured_logger
+from common.settings import get_settings, get_structured_logger
 from common.types import DialogueEntry, TranscriptionJobMessageData
 
 settings = get_settings()
@@ -85,27 +84,7 @@ class TranscriptionHandlerService:
 
     @staticmethod
     def claim_transcription(transcription_id: UUID) -> bool:
-        # AWAITING_START -> IN_PROGRESS claim, plus reclaiming a claim older than
-        # CLAIM_STALE_AFTER: it can only be stale if the claiming worker died
-        # (heartbeat kills the container long before this), so it cannot race a live job.
-        stale_before = datetime.now(UTC) - CLAIM_STALE_AFTER
-        with SessionLocal() as session:
-            result = session.exec(
-                update(Transcription)
-                .where(
-                    Transcription.id == transcription_id,
-                    or_(
-                        Transcription.status == JobStatus.AWAITING_START,
-                        and_(
-                            Transcription.status == JobStatus.IN_PROGRESS,
-                            Transcription.updated_datetime < stale_before,
-                        ),
-                    ),
-                )
-                .values(status=JobStatus.IN_PROGRESS)
-            )
-            session.commit()
-            return result.rowcount == 1
+        return claim_job(Transcription, transcription_id)
 
     @classmethod
     async def process_transcription(

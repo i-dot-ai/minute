@@ -17,7 +17,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
-from sqlmodel import delete, select
+from sqlmodel import delete
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.database.postgres_database import async_engine
@@ -27,25 +27,19 @@ from common.database.postgres_models import (
     MinuteVersion,
     Recording,
     Transcription,
-    User,
 )
 from common.services.exceptions import TranscriptionFailedError
 from common.services.transcription_handler_service import TranscriptionHandlerService
 from common.settings import CLAIM_STALE_AFTER
 from common.types import TranscriptionJobMessageData
+from tests.utils import get_or_create_user
 
 RECOVERY_EMAIL = "transcription-recovery-test@example.com"
 TRANSCRIPT = [{"speaker": "A", "text": "we survived the crash", "start_time": 0.0, "end_time": 1.0}]
 
 
 async def _current_user_id(session: AsyncSession) -> uuid.UUID:
-    user = (await session.exec(select(User).where(User.email == RECOVERY_EMAIL))).first()
-    if user is None:
-        user = User(email=RECOVERY_EMAIL)
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
-    return user.id
+    return (await get_or_create_user(session, RECOVERY_EMAIL)).id
 
 
 @pytest_asyncio.fixture

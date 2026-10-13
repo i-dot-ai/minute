@@ -13,7 +13,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
-from sqlmodel import col, delete, select
+from sqlmodel import col, delete
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import get_user_info
@@ -24,22 +24,14 @@ from common.database.postgres_models import (
     MinuteVersion,
     Recording,
     Transcription,
-    User,
 )
-from tests.utils import get_test_client
+from tests.utils import get_or_create_user, get_test_client
 
 SEED_TIME = datetime.now(UTC) - timedelta(minutes=10)
 
 
 async def _current_user_id(session: AsyncSession) -> uuid.UUID:
-    email = get_user_info(None).email.lower()
-    user = (await session.exec(select(User).where(User.email == email))).first()
-    if user is None:
-        user = User(email=email)
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
-    return user.id
+    return (await get_or_create_user(session, get_user_info(None).email.lower())).id
 
 
 async def _seed_failed_transcription(

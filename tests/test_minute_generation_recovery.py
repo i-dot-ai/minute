@@ -27,21 +27,16 @@ from common.database.postgres_models import (
     Transcription,
     User,
 )
-from common.services.minute_handler_service import MinuteHandlerService
+from common.services.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
 from common.settings import CLAIM_STALE_AFTER
 from common.types import MeetingType
+from tests.utils import get_or_create_user
 
 RECOVERY_EMAIL = "minute-recovery-test@example.com"
 
 
 async def _current_user_id(session: AsyncSession) -> uuid.UUID:
-    user = (await session.exec(select(User).where(User.email == RECOVERY_EMAIL))).first()
-    if user is None:
-        user = User(email=RECOVERY_EMAIL)
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
-    return user.id
+    return (await get_or_create_user(session, RECOVERY_EMAIL)).id
 
 
 @pytest_asyncio.fixture
@@ -117,3 +112,46 @@ async def test_minute_generation_crashing_halfway_recovers_on_redelivery(minute_
         # too_short generation runs through mistune.html, hence the <p> wrapper
         assert "Short meeting detected" in minute_version.html_content
         assert minute_version.updated_datetime > stale_time
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_edit_rejects_cross_user_source(minute_version_setup, monkeypatch):
+    """Worker-side half of minute_4996 vuln-0002: process_minute_edit_message must
+    refuse a source version owned by a different user than the target."""
+    target_version_id = minute_version_setup["minute_version_id"]
+
+    async with AsyncSession(async_engine, expire_on_commit=False) as session:
+        foreign_user = (await session.exec(select(User).where(User.email == "minute-edit-foreign@example.com"))).first()
+        if foreign_user is None:
+            foreign_user = User(email="minute-edit-foreign@example.com")
+            session.add(foreign_user)
+            await session.flush()
+        foreign_transcription = Transcription(user_id=foreign_user.id, status=JobStatus.COMPLETED)
+        session.add(foreign_transcription)
+        await session.flush()
+        foreign_minute = Minute(template_name="General", transcription_id=foreign_transcription.id)
+        session.add(foreign_minute)
+        await session.flush()
+        foreign_version = MinuteVersion(minute_id=foreign_minute.id, status=JobStatus.COMPLETED)
+        session.add(foreign_version)
+        await session.commit()
+        foreign_ids = (foreign_transcription.id, foreign_minute.id, foreign_version.id)
+
+    async def _ai_edit(cls, *_args, **_kwargs):  # noqa: ARG001
+        msg = "LLM must not be called for a cross-user edit"
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(MinuteHandlerService, "edit_minutes_with_ai", classmethod(_ai_edit))
+
+    try:
+        with pytest.raises(MinuteGenerationFailedError):
+            await MinuteHandlerService.process_minute_edit_message(
+                source_minute_version_id=foreign_version.id,
+                target_minute_version_id=target_version_id,
+            )
+    finally:
+        async with AsyncSession(async_engine) as session:
+            await session.exec(delete(MinuteVersion).where(MinuteVersion.id == foreign_ids[2]))
+            await session.exec(delete(Minute).where(Minute.id == foreign_ids[1]))
+            await session.exec(delete(Transcription).where(Transcription.id == foreign_ids[0]))
+            await session.commit()

@@ -18,19 +18,12 @@ from common.database.postgres_models import (
     MinuteVersion,
     Recording,
     Transcription,
-    User,
 )
-from tests.utils import get_test_client
+from tests.utils import get_or_create_user, get_test_client
 
 
 async def _current_user_id(session: AsyncSession) -> uuid.UUID:
-    user = (await session.exec(select(User).where(User.email == get_user_info(None).email.lower()))).first()
-    if user is None:
-        user = User(email=get_user_info(None).email.lower())
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
-    return user.id
+    return (await get_or_create_user(session, get_user_info(None).email.lower())).id
 
 
 @pytest_asyncio.fixture

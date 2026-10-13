@@ -101,7 +101,7 @@ def test_stale_actor_replaced_and_healthy_actor_untouched(tmp_path, monkeypatch)
     replacement = FakeActor("f" * 32)
     replacement_calls: list[str] = []
     replacement.process = FakeProcessHandle(replacement_calls, "replacement-call")
-    monkeypatch.setattr(service, "_create_actor", lambda idx: replacement)  # noqa: ARG005
+    monkeypatch.setattr(service, "_create_llm_actor", lambda: replacement)
 
     service._restart_stale_actors()  # noqa: SLF001
 

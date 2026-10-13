@@ -12,7 +12,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
-from sqlmodel import delete, select
+from sqlmodel import delete
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.database.postgres_database import async_engine
@@ -22,25 +22,17 @@ from common.database.postgres_models import (
     MinuteVersion,
     Recording,
     Transcription,
-    User,
 )
-from common.settings import CLAIM_STALE_AFTER
 from common.services.minute_handler_service import MinuteHandlerService
 from common.services.transcription_handler_service import TranscriptionHandlerService
+from common.settings import CLAIM_STALE_AFTER
+from tests.utils import get_or_create_user
 
 CUTOFF_NOW = datetime.now(UTC)
 
 
 async def _current_user_id(session: AsyncSession) -> uuid.UUID:
-    user = (
-        await session.exec(select(User).where(User.email == "claim-recovery-test@example.com"))
-    ).first()
-    if user is None:
-        user = User(email="claim-recovery-test@example.com")
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
-    return user.id
+    return (await get_or_create_user(session, "claim-recovery-test@example.com")).id
 
 
 async def _cleanup(session: AsyncSession, ids: dict[str, uuid.UUID]) -> None:
@@ -60,7 +52,11 @@ async def seeded_transcription():
         transcription = Transcription(user_id=user_id, status=JobStatus.AWAITING_START, error=None)
         session.add(transcription)
         await session.flush()
-        session.add(Recording(user_id=user_id, s3_file_key=f"claimtest/{uuid.uuid4().hex}.mp3", transcription_id=transcription.id))
+        session.add(
+            Recording(
+                user_id=user_id, s3_file_key=f"claimtest/{uuid.uuid4().hex}.mp3", transcription_id=transcription.id
+            )
+        )
         await session.commit()
         ids["transcription_id"] = transcription.id
 

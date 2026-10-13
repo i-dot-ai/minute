@@ -120,3 +120,43 @@ async def test_delete_default_template_clears_pointer():
 
         me = (await ac.get("/users/me")).json()
         assert me["default_template_id"] is None
+
+
+_XSS_CONTENT = '<p>Legit <strong>bold</strong></p><img src=x onerror="alert(1)"><script>alert(1)</script>'
+_SANITISED_CONTENT = "<p>Legit <strong>bold</strong></p>"
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_create_user_template_sanitises_content():
+    async with get_test_client() as ac:
+        response = await ac.post(
+            "/user-templates",
+            json={
+                "name": "XSS create",
+                "content": _XSS_CONTENT,
+                "description": "desc",
+                "type": "document",
+                "questions": [],
+            },
+        )
+        assert response.status_code == 200
+        templates = (await ac.get("/user-templates")).json()
+        template = next(t for t in templates if t["name"] == "XSS create")
+        try:
+            assert template["content"] == _SANITISED_CONTENT
+        finally:
+            await ac.delete(f"/user-templates/{template['id']}")
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_edit_user_template_sanitises_content():
+    async with get_test_client() as ac:
+        template_id = await _create_user_template(ac, "XSS patch")
+        try:
+            response = await ac.patch(f"/user-templates/{template_id}", json={"content": _XSS_CONTENT})
+            assert response.status_code == 200
+
+            template = (await ac.get(f"/user-templates/{template_id}")).json()
+            assert template["content"] == _SANITISED_CONTENT
+        finally:
+            await ac.delete(f"/user-templates/{template_id}")

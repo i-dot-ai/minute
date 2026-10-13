@@ -34,6 +34,7 @@
     "@tiptap/starter-kit": "^3.30.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dompurify": "^3.4.17",
     "file-saver": "^2.0.5",
     "fuse.js": "^7.4.2",
     "govuk-frontend": "^6.4.0",

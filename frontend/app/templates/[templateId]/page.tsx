@@ -26,6 +26,7 @@ import { useCallback, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { DeleteConfirmDialog } from '../components/delete-single-template-dialog'
+import { sanitizeTemplateHtml } from '@/lib/sanitise'
 
 export default function EditTemplatePage() {
   const { templateId } = useParams<{ templateId: string }>()
@@ -306,7 +307,7 @@ export default function EditTemplatePage() {
                       <h2 className="govuk-heading-s">Template content</h2>
                       <div
                         className="editor-content"
-                        dangerouslySetInnerHTML={{ __html: template.content }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeTemplateHtml(template.content) }}
                       />
                     </>
                   ) : (
@@ -314,7 +315,7 @@ export default function EditTemplatePage() {
                       <h2 className="govuk-heading-m">Style guide</h2>
                       <div
                         className="govuk-!-margin-bottom-4"
-                        dangerouslySetInnerHTML={{ __html: template.content }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeTemplateHtml(template.content) }}
                       />
                       <h2 className="govuk-heading-m">Questions</h2>
                       <ol className="govuk-list govuk-list--number">

@@ -307,7 +307,9 @@ export default function EditTemplatePage() {
                       <h2 className="govuk-heading-s">Template content</h2>
                       <div
                         className="editor-content"
-                        dangerouslySetInnerHTML={{ __html: sanitizeTemplateHtml(template.content) }}
+                        dangerouslySetInnerHTML={{
+                          __html: sanitizeTemplateHtml(template.content),
+                        }}
                       />
                     </>
                   ) : (
@@ -315,7 +317,9 @@ export default function EditTemplatePage() {
                       <h2 className="govuk-heading-m">Style guide</h2>
                       <div
                         className="govuk-!-margin-bottom-4"
-                        dangerouslySetInnerHTML={{ __html: sanitizeTemplateHtml(template.content) }}
+                        dangerouslySetInnerHTML={{
+                          __html: sanitizeTemplateHtml(template.content),
+                        }}
                       />
                       <h2 className="govuk-heading-m">Questions</h2>
                       <ol className="govuk-list govuk-list--number">

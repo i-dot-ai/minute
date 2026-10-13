@@ -1,5 +1,7 @@
+from datetime import UTC, datetime
 from uuid import UUID
 
+from sqlalchemy import and_, or_, update
 from sqlalchemy.orm import selectinload
 from sqlmodel import select
 
@@ -10,7 +12,7 @@ from common.generate_meeting_title import generate_meeting_title
 from common.services.exceptions import TranscriptionFailedError
 from common.services.posthog_client import capture_event
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
-from common.settings import get_settings, get_structured_logger
+from common.settings import CLAIM_STALE_AFTER, get_settings, get_structured_logger
 from common.types import DialogueEntry, TranscriptionJobMessageData
 
 settings = get_settings()
@@ -81,13 +83,37 @@ class TranscriptionHandlerService:
             session.add(transcription)
             session.commit()
 
+    @staticmethod
+    def claim_transcription(transcription_id: UUID) -> bool:
+        # AWAITING_START -> IN_PROGRESS claim, plus reclaiming a claim older than
+        # CLAIM_STALE_AFTER: it can only be stale if the claiming worker died
+        # (heartbeat kills the container long before this), so it cannot race a live job.
+        stale_before = datetime.now(UTC) - CLAIM_STALE_AFTER
+        with SessionLocal() as session:
+            result = session.exec(
+                update(Transcription)
+                .where(
+                    Transcription.id == transcription_id,
+                    or_(
+                        Transcription.status == JobStatus.AWAITING_START,
+                        and_(
+                            Transcription.status == JobStatus.IN_PROGRESS,
+                            Transcription.updated_datetime < stale_before,
+                        ),
+                    ),
+                )
+                .values(status=JobStatus.IN_PROGRESS)
+            )
+            session.commit()
+            return result.rowcount == 1
+
     @classmethod
     async def process_transcription(
         cls,
         minute_id: UUID,
         async_transcription_message_data: TranscriptionJobMessageData | None = None,
-    ) -> TranscriptionJobMessageData:
-        """Process a transcription job and save results. Returns True if job is complete, False otherwise."""
+    ) -> TranscriptionJobMessageData | None:
+        """Process a transcription job and save results. Returns None if another delivery already owns this job."""
         slogger.set_context_field("minute_id", str(minute_id))
         try:
             transcription = cls.get_transcription_from_minute_id(minute_id)
@@ -103,8 +129,9 @@ class TranscriptionHandlerService:
                     async_transcription_message_data=async_transcription_message_data,
                 )
             else:
-                # it's a new transcription job
-                cls.update_transcription(transcription.id, JobStatus.IN_PROGRESS)
+                # it's a new transcription job; lose concurrent/duplicate deliveries as no-op
+                if not cls.claim_transcription(transcription.id):
+                    return None
                 transcription_job = await transcription_manager.perform_transcription_steps(transcription=transcription)
 
             if transcription_job.transcript:

@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
-from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription
+from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription, UserTemplate
 from common.services.queue_services import get_queue_service
 from common.settings import get_settings
 from common.types import (
@@ -74,6 +74,19 @@ async def create_minute(
         template_name = request.template_name
         user_template_id = request.template_id
         agenda = request.agenda
+        if user_template_id is not None:
+            template = (
+                await session.exec(
+                    select(UserTemplate).where(
+                        UserTemplate.id == user_template_id,
+                        UserTemplate.user_id == user.id,
+                    )
+                )
+            ).first()
+            if template is None:
+                msg = f"User template not found: {user_template_id}"
+                raise HTTPException(status_code=404, detail=msg)
+
     minute = Minute(
         transcription_id=transcription_id,
         template_name=template_name,
@@ -157,6 +170,24 @@ async def create_minute_version(
     minute_id: uuid.UUID, request: MinuteVersionCreateRequest, session: SQLSessionDep, user: UserDep
 ) -> MinuteVersionResponse:
     minute = await get_minute(minute_id, session, user)
+    # An authenticated user CANNOT submit an AI edit for their own minute
+    # while naming another user's minute version as the source.
+    if request.ai_edit_instructions:
+        source_minute_version = (
+            await session.exec(
+                select(MinuteVersion)
+                .where(MinuteVersion.id == request.ai_edit_instructions.source_id)
+                .options(selectinload(MinuteVersion.minute).selectinload(Minute.transcription))
+            )
+        ).first()
+        if (
+            not source_minute_version
+            or not source_minute_version.minute.transcription.user_id
+            or source_minute_version.minute.transcription.user_id != user.id
+        ):
+            msg = "Source minute version not found"
+            raise HTTPException(status_code=404, detail=msg)
+
     minute_version = MinuteVersion(
         id=uuid.uuid4(),
         minute_id=minute.id,

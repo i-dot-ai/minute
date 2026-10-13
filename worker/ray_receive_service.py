@@ -64,8 +64,11 @@ class RayTranscriptionService:
                 except TranscriptionFailedError:
                     slogger.exception("Transcription failed for minute id")
                 else:
+                    if transcription_job is None:
+                        # Another delivery already owns this job — duplicate delivery is a no-op
+                        slogger.info("Transcription already claimed for minute id")
                     # sync jobs should have the transcript available immediately, async jobs may need to go on the queue
-                    if transcription_job.transcript:
+                    elif transcription_job.transcript:
                         slogger.info("Transcription complete for minute id")
                         # create a default minute with the general template after every transcription
                         minute_version = await MinuteHandlerService.get_only_minute_version_for_minute_id(message.id)

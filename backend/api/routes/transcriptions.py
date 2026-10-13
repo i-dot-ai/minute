@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
+from sqlalchemy import update
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, func, or_, select
 
@@ -17,6 +18,7 @@ from common.database.postgres_models import (
     MinuteVersion,
     Recording,
     Transcription,
+    UserTemplate,
 )
 from common.services.queue_services import get_queue_service
 from common.services.storage_services import get_storage_service
@@ -170,6 +172,19 @@ async def create_transcription(
             detail=f"Recording file not found in S3: {recording.s3_file_key}",
         )
 
+    if request.template_id is not None:
+        template = (
+            await session.exec(
+                select(UserTemplate).where(
+                    UserTemplate.id == request.template_id,
+                    UserTemplate.user_id == current_user.id,
+                )
+            )
+        ).first()
+        if template is None:
+            msg = f"User template not found: {request.template_id}"
+            raise HTTPException(status_code=404, detail=msg)
+
     minute = Minute(
         template_name=request.template_name,
         user_template_id=request.template_id,
@@ -230,6 +245,29 @@ async def retry_transcription(
     if len(minute.minute_versions) != 1:
         raise HTTPException(400, detail="Transcription cannot be retried in its current state")
 
+    if request.template_id is not None:
+        template = (
+            await session.exec(
+                select(UserTemplate).where(
+                    UserTemplate.id == request.template_id,
+                    UserTemplate.user_id == current_user.id,
+                )
+            )
+        ).first()
+        if template is None:
+            msg = f"User template not found: {request.template_id}"
+            raise HTTPException(status_code=404, detail=msg)
+
+    # Atomic FAILED -> AWAITING_START transition: only one concurrent retry can
+    # win, so exactly one request ever publishes retry work.
+    retry_claim = await session.exec(
+        update(Transcription)
+        .where(Transcription.id == transcription.id, Transcription.status == JobStatus.FAILED)
+        .values(status=JobStatus.AWAITING_START)
+    )
+    if retry_claim.rowcount != 1:
+        await session.rollback()
+        raise HTTPException(400, detail="Only failed transcriptions can be retried")
     transcription.status = JobStatus.AWAITING_START
     transcription.error = None
     transcription.dialogue_entries = None

@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 from functools import lru_cache
 
 import dotenv
@@ -14,6 +15,13 @@ setup_logger()
 logger = logging.getLogger(__name__)
 
 DOT_ENV_PATH = ".env"
+
+# Worker job claims older than this are considered abandoned and safe to reclaim.
+# Coupling: worker container dies ~11 min after its last heartbeat (HEARTBEAT_TIMEOUT
+# 8 min + healthcheck 3x60s retries), so 13 min claims can only be the result of a
+# crashed claimant, and 15 min SQS visibility guarantees every stale claim is
+# reclaimable on its first redelivery.
+CLAIM_STALE_AFTER = timedelta(minutes=13)
 
 dotenv_detected = dotenv.load_dotenv(dotenv_path=DOT_ENV_PATH)
 if dotenv_detected:

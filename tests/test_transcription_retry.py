@@ -7,6 +7,7 @@ real transcription work.
 Requires the docker-compose Postgres (`make run`).
 """
 
+import asyncio
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -120,6 +121,28 @@ def published_messages(monkeypatch):
         published.append,
     )
     return published
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_retry_concurrent_requests_publish_once(failed_transcription, published_messages):
+    """Vuln-0003 regression: only one of two concurrent retries may reset and publish."""
+    transcription_id = failed_transcription["transcription_id"]
+    minute_id = failed_transcription["minute_id"]
+
+    async with get_test_client() as ac:
+        responses = await asyncio.gather(
+            ac.post(f"/transcriptions/{transcription_id}/retry", json={"template_name": "General"}),
+            ac.post(f"/transcriptions/{transcription_id}/retry", json={"template_name": "General"}),
+        )
+
+    status_codes = sorted(response.status_code for response in responses)
+    assert status_codes == [201, 400]
+    assert len(published_messages) == 1
+    assert published_messages[0].id == minute_id
+
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, transcription_id)
+        assert transcription.status == JobStatus.AWAITING_START
 
 
 @pytest.mark.asyncio(loop_scope="session")

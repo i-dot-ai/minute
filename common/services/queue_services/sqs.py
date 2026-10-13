@@ -7,6 +7,11 @@ from common.services.queue_services.base import QueueService
 from common.settings import get_settings
 from common.types import WorkerMessage
 
+# In-flight window before SQS redelivers an unacked message. Must stay above
+# CLAIM_STALE_AFTER (13 min) so a redelivery can always reclaim a crashed
+# claimant's job instead of treating it as a live duplicate.
+VISIBILITY_TIMEOUT_SECONDS = 900
+
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
@@ -58,7 +63,7 @@ class SQSQueueService(QueueService):
             try:
                 worker_message = WorkerMessage.model_validate_json(message["Body"])
                 self.sqs.change_message_visibility(
-                    QueueUrl=self.queue_url, ReceiptHandle=receipt_handle, VisibilityTimeout=1800
+                    QueueUrl=self.queue_url, ReceiptHandle=receipt_handle, VisibilityTimeout=VISIBILITY_TIMEOUT_SECONDS
                 )
                 out.append((worker_message, receipt_handle))
             except Exception:

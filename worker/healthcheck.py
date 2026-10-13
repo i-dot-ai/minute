@@ -8,7 +8,11 @@ logger = logging.getLogger()
 
 
 HEARTBEAT_DIR = Path(getenv("HEARTBEAT_DIR", "/healthcheck"))
-HEARTBEAT_TIMEOUT = 1200  # 20 minutes
+# 8 minutes: a heartbeat tuck away this long means the receive loop is wedged or a
+# single task is stuck. With 60s checks x 3 retries the container is replaced ~11 min
+# after its last touch. Must stay well under CLAIM_STALE_AFTER and VISIBILITY_TIMEOUT
+# so a capped live task is never mistakenly re-claimed or redelivered.
+HEARTBEAT_TIMEOUT = 480
 
 
 def ensure_heartbeat_dir() -> None:

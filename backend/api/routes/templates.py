@@ -8,6 +8,7 @@ from sqlmodel import col, select
 from backend.api.dependencies import UserDep
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.database.postgres_models import TemplateQuestion, TemplateType, UserTemplate
+from common.services.html_sanitiser import sanitize_template_html
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings
 from common.types import (
@@ -97,7 +98,7 @@ async def get_user_template(user: UserDep, session: SQLSessionDep, template_id: 
 async def create_user_template(user: UserDep, session: SQLSessionDep, request: CreateUserTemplateRequest) -> None:
     template = UserTemplate(
         name=request.name,
-        content=request.content,
+        content=sanitize_template_html(request.content),
         description=request.description,
         user_id=user.id,
         type=request.type,
@@ -129,7 +130,7 @@ async def edit_user_template(
     if request.name is not None:
         template.name = request.name
     if request.content is not None:
-        template.content = request.content
+        template.content = sanitize_template_html(request.content)
     if request.description is not None:
         template.description = request.description
     if request.questions is not None:
@@ -194,7 +195,7 @@ async def duplicate_user_template(user: UserDep, session: SQLSessionDep, templat
         user_id=user.id,
         name=original_template.name + " (Copy)",
         description=original_template.description,
-        content=original_template.content,
+        content=sanitize_template_html(original_template.content),
         type=original_template.type,
         questions=[
             TemplateQuestion(

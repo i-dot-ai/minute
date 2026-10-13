@@ -21,7 +21,8 @@ export const userTemplates = [
     name: 'XSS payload',
     content:
       '<p>Legit <strong>bold</strong></p><img src=x onerror="window.__xss()">',
-    description: 'Template seeded with a stored-XSS payload for sanitiser tests',
+    description:
+      'Template seeded with a stored-XSS payload for sanitiser tests',
     type: 'document',
     questions: null,
     is_default: false,

@@ -52,7 +52,6 @@ services:
     ports:
       - "8265:8265"
     volumes:
-      - ${WORKER_TMP:-./.worker-tmp}:/tmp
       - type: bind
         source: ./.data
         target: /static

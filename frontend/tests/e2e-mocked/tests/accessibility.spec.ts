@@ -3,27 +3,14 @@ import AxeBuilder from '@axe-core/playwright'
 import { meeting1 } from '../mocked-responses/mock-meeting-1'
 import { meeting1Minutes } from '../mocked-responses/mock-meeting-1.minutes'
 import { meeting1Versions } from '../mocked-responses/mock-meeting-1.versions'
-import { templates } from '../mocked-responses/templates'
 import { userTemplates } from '../mocked-responses/user-templates'
 import { mockBackend } from '@/tests/e2e-mocked/utilities/mock-backend'
+import { PAGES_TO_TEST } from '@/tests/e2e-mocked/utilities/common'
 
 test.beforeEach(async ({ page }) => {
   await mockBackend(page)
 })
-const PAGES_TO_TEST = [
-  '/',
-  `/new/status/${meeting1.id}`,
-  `/transcriptions/${meeting1.id}/summary/${meeting1Minutes[0].id}?version=${meeting1Versions[0].id}`,
-  `/transcriptions/${meeting1.id}/transcript`,
-  '/templates',
-  '/templates/create',
-  '/templates/create?example=my-general',
-  `/templates/system/${templates[0].name}`,
-  `/templates/${userTemplates[0].id}`,
-  '/support',
-  '/privacy',
-  '/unauthorised',
-]
+
 
 const PAGES_WITH_EDIT_MODE = [
   `/transcriptions/${meeting1.id}/summary/${meeting1Minutes[0].id}?version=${meeting1Versions[0].id}`,

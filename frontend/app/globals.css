@@ -560,7 +560,23 @@ html body[data-scroll-locked] {
 
 .editor-content {
   /* Add any global styles for your editor here */
+  --citation-display: unset;
+
   line-height: 1.4;
+}
+
+.editor-content.citations-hidden {
+  --citation-display: none;
+}
+
+.editor-content .citation {
+  display: var(--citation-display);
+}
+
+.editor-content .citation-link {
+  color: blue;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 .editor-content p {

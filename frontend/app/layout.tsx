@@ -14,6 +14,7 @@ import { Header } from '@/components/layout/header'
 import ServiceNavigation from '@/components/layout/service-navigation'
 import { TranscriptionSidePanel } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/TranscriptionSidePanel'
 import { Footer } from '@/components/layout/footer'
+import { headers } from 'next/headers'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -25,11 +26,12 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  await headers()
   return (
     <html lang="en" className={`${inter.className} govuk-template sm:h-dvh`}>
       <body className="govuk-template__body govuk-frontend-supported sm:h-full sm:overflow-hidden">

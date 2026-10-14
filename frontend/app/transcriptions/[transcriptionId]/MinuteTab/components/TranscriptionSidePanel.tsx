@@ -78,9 +78,8 @@ export function TranscriptionSidePanel() {
                       >
                         <Link
                           href={href}
-                          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-font-size-16 ml-2"
+                          className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline govuk-!-font-size-16 ml-2 ${isActive ? 'font-bold' : ''}`}
                           aria-current={isActive ? 'page' : undefined}
-                          style={isActive ? { fontWeight: 'bold' } : undefined}
                         >
                           {minute.template_name}
                         </Link>

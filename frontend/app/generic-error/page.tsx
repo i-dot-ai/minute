@@ -2,53 +2,31 @@ import React from 'react'
 
 function genericError(): React.JSX.Element {
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#f9fafb',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        padding: '1rem',
-        font: 'inter',
-        paddingTop: '4rem',
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: 'white',
-          padding: '2rem',
-          borderRadius: '0.5rem',
-          boxShadow:
-            '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-          maxWidth: '28rem',
-          width: '100%',
-          textAlign: 'center',
-          font: 'inter',
-        }}
-      >
-        <h1
-          style={{
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-            color: '#1f2937',
-            marginBottom: '0.75rem',
-            font: 'inter',
-          }}
-        >
-          An Error Occurred
-        </h1>
-
-        <p
-          style={{
-            color: '#4b5563',
-            marginBottom: '1.5rem',
-          }}
-        >
-          Something went wrong when accessing this page. Please try again later,
-          or contact i.AI support if the issue persists.
-        </p>
+    <div className="govuk-main-wrapper govuk-width-container">
+      <div className="govuk-grid-row">
+        <div className="govuk-grid-column-two-thirds">
+          <h1 className="govuk-heading-l">An error occurred</h1>
+          <div
+            role="alert"
+            className="govuk-!-padding-4 govuk-!-margin-bottom-4 govuk-!-margin-top-4 bg-[#e59a9a]"
+            >
+            <div className="govuk-warning-text">
+              <span
+                className="govuk-warning-text__icon"
+                aria-hidden="true"
+                >
+                !
+              </span>
+              <strong className="govuk-warning-text__text">
+                <span className="govuk-visually-hidden">Warning</span>
+                Something went wrong when accessing this page
+              </strong>
+            </div>
+            <p className="govuk-body govuk-!-margin-bottom-0">
+              Please try again later, or contact i.AI support if the issue persists.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )

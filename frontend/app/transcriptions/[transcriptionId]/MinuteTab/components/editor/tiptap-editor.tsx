@@ -77,14 +77,12 @@ function SimpleEditor({
                     const to = from + match[0].length
                     decorations.push(
                       Decoration.inline(from, to, {
-                        style: 'display: var(--citation-display);',
+                        class: 'citation',
                       })
                     )
                     decorations.push(
                       Decoration.inline(from + match[1].length, to, {
                         class: 'citation-link',
-                        style:
-                          'color: blue; cursor: pointer; text-decoration: underline;',
                       })
                     )
                   }

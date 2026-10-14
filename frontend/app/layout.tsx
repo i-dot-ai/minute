@@ -14,7 +14,7 @@ import { Header } from '@/components/layout/header'
 import ServiceNavigation from '@/components/layout/service-navigation'
 import { TranscriptionSidePanel } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/TranscriptionSidePanel'
 import { Footer } from '@/components/layout/footer'
-import { headers } from 'next/headers'
+import { connection } from 'next/server'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -31,7 +31,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  await headers()
+  await connection()
   return (
     <html lang="en" className={`${inter.className} govuk-template sm:h-dvh`}>
       <body className="govuk-template__body govuk-frontend-supported sm:h-full sm:overflow-hidden">

@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription, UserTemplate
@@ -26,6 +27,18 @@ llm_queue_service = get_queue_service(
 )
 
 minutes_router = APIRouter(tags=["Minutes"])
+
+
+async def _enqueue_minute_version(session: AsyncSession, minute_version: MinuteVersion, message: WorkerMessage) -> None:
+    """Commit before publish so workers can always see the job row."""
+    await session.commit()
+    try:
+        llm_queue_service.publish_message(message)
+    except Exception as exc:
+        minute_version.status = JobStatus.FAILED
+        minute_version.error = "Failed to enqueue minute generation"
+        await session.commit()
+        raise HTTPException(status_code=503, detail="Failed to enqueue minute generation") from exc
 
 
 @minutes_router.get("/transcription/{transcription_id}/minutes")
@@ -96,10 +109,9 @@ async def create_minute(
     session.add(minute)
     minute_version = MinuteVersion(id=uuid.uuid4(), minute_id=minute.id)
     session.add(minute_version)
-    await session.commit()
+    await _enqueue_minute_version(session, minute_version, WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
     await session.refresh(minute_version)
     await session.refresh(minute)
-    llm_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
     return MinuteListItem(
         id=minute.id,
         created_datetime=minute.created_datetime,
@@ -200,16 +212,19 @@ async def create_minute_version(
     # the column's onupdate never fires and the list ordering would miss the edit.
     minute.updated_datetime = datetime.now(tz=UTC)
     session.add(minute_version)
-    await session.commit()
-    await session.refresh(minute_version)
     if request.ai_edit_instructions:
-        llm_queue_service.publish_message(
+        await _enqueue_minute_version(
+            session,
+            minute_version,
             WorkerMessage(
                 id=minute_version.id,
                 data=EditMessageData(source_id=request.ai_edit_instructions.source_id),
                 type=TaskType.EDIT,
-            )
+            ),
         )
+    else:
+        await session.commit()
+    await session.refresh(minute_version)
     return MinuteVersionResponse(
         id=minute_version.id,
         minute_id=minute_id,

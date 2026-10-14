@@ -18,11 +18,11 @@ settings = get_settings()
 # How often the supervisor re-stats the actors' heartbeat files. Purely a stat
 # throttle: staleness itself is HEARTBEAT_TIMEOUT, so a wedged actor is detected
 # at most this long after its window expires — short enough that the local
-# watchdog (8 min + 30s) always beats the container healthcheck (~11 min).
-STALE_CHECK_INTERVAL_SECONDS = 30
+# watchdog (~60s + 15s) always beats the container healthcheck (~120s).
+STALE_CHECK_INTERVAL_SECONDS = 15
 
 
-def stale_actor_indices(actors: list, heartbeat_dir: Path, now: float, timeout: int = HEARTBEAT_TIMEOUT) -> list[int]:
+def stale_actor_indices(actors: list, heartbeat_dir: Path, now: float, timeout: float = HEARTBEAT_TIMEOUT) -> list[int]:
     """Indices of actors whose heartbeat file is older than `timeout` seconds.
 
     Actors whose heartbeat file does not exist yet (still starting up) are skipped —
@@ -75,16 +75,25 @@ class WorkerService:
         for idx in stale:
             try:
                 logger.error("Actor %s heartbeat older than %ss — restarting it", self.actors[idx], HEARTBEAT_TIMEOUT)
-                old = self.actors[idx]
                 if idx < self.num_transcription_actors:
                     new = self._create_transcription_actor()
                 else:
                     new = self._create_llm_actor()
+                old = self.actors[idx]
                 # no_restart: the replacement actor is created above; the wedged actor
                 # must not resurrect and resume touching its (now-deleted) heartbeat file
                 ray.kill(old, no_restart=True)
-                Path(HEARTBEAT_DIR / f"worker_{old._actor_id.hex()}.heartbeat").unlink(missing_ok=True)  # noqa: SLF001
-                self.actors[idx], self.calls[idx] = new, new.process.remote()
+                # Replace the actor handle only. The killed actor's still-tracked future
+                # will error (ActorDiedError) and surface in _check_and_restart_tasks,
+                # the single submitter, which starts process() on the replacement exactly
+                # once — submitting here as well would run two loops on the new actor.
+                # Install it before heartbeat cleanup so a failed unlink can never leave
+                # us holding the dead handle and losing the replacement.
+                self.actors[idx] = new
+                try:
+                    Path(HEARTBEAT_DIR / f"worker_{old._actor_id.hex()}.heartbeat").unlink(missing_ok=True)  # noqa: SLF001
+                except OSError:
+                    logger.exception("Failed to remove stale heartbeat file for actor %s", old)
             except Exception:
                 logger.exception("Failed to restart stale worker index=%s", idx)
 
@@ -107,14 +116,22 @@ class WorkerService:
     async def _check_and_restart_tasks(self, futures):
         failed, pending = await asyncio.wait(futures, timeout=1)
         for task in failed:
-            # Manually restart failed jobs
+            # Manually restart failed (or cancelled) jobs. A cancelled future must be
+            # replaced too, otherwise the slot stays idle and never resubmits process().
+            if task.cancelled():
+                logger.error("Worker task was cancelled unexpectedly")
+            else:
+                try:
+                    # Retrieve the exception so the real error is logged here, and so
+                    # asyncio does not emit "Task exception was never retrieved" at GC.
+                    error = task.exception()
+                    logger.error("Task has finished unexpectedly: error %s", error, exc_info=error)
+                except Exception as e:  # noqa: BLE001
+                    logger.error("Could not read failed worker exception: %s", e)
             try:
-                # exc_info=False as this comes from another process
-                logger.error("Task has finished unexpectedly: error %s", task, exc_info=False)
                 idx = futures.index(task)
                 self.calls[idx] = self.actors[idx].process.remote()
                 futures[idx] = asyncio.ensure_future(self.calls[idx])
-
             except Exception as e:  # noqa: BLE001
                 logger.error("Failed to restart worker %s", e)
         if monotonic() - self._last_stale_check >= STALE_CHECK_INTERVAL_SECONDS:

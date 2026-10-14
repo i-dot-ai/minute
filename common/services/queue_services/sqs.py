@@ -7,10 +7,11 @@ from common.services.queue_services.base import QueueService
 from common.settings import get_settings
 from common.types import WorkerMessage
 
-# In-flight window before SQS redelivers an unacked message. Must stay above
-# CLAIM_STALE_AFTER (13 min) so a redelivery can always reclaim a crashed
-# claimant's job instead of treating it as a live duplicate.
-VISIBILITY_TIMEOUT_SECONDS = 900
+# In-flight window before SQS redelivers an unacked message. Bounded below by
+# CLAIM_STALE_AFTER (3 min) so the first redelivery can always reclaim a crashed
+# claimant's job. While a task runs, worker/lease_renewer.py keeps resetting this
+# window, so long tasks are not redelivered; it lapses only when the worker dies.
+VISIBILITY_TIMEOUT_SECONDS = 300
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -78,6 +79,21 @@ class SQSQueueService(QueueService):
             self.sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=receipt_handle)
         except self.sqs.exceptions.ReceiptHandleIsInvalid:
             logger.warning("ReceiptHandleIsInvalid raised when completing message")
+
+    def extend_message_lease(self, receipt_handle: Any) -> bool:
+        """Reset the in-flight window for a message whose task is still running.
+
+        Returns False when the receipt is no longer valid (the message was already
+        completed or handed to another consumer), so the caller can stop renewing.
+        """
+        try:
+            self.sqs.change_message_visibility(
+                QueueUrl=self.queue_url, ReceiptHandle=receipt_handle, VisibilityTimeout=VISIBILITY_TIMEOUT_SECONDS
+            )
+        except self.sqs.exceptions.ReceiptHandleIsInvalid:
+            logger.warning("ReceiptHandleIsInvalid raised when extending message lease")
+            return False
+        return True
 
     def deadletter_message(self, message: WorkerMessage, receipt_handle: Any):
         try:

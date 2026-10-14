@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import update
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, func, or_, select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.get_file_s3_key import get_file_s3_key
@@ -59,6 +60,18 @@ def _next_cleanup_cutoff(retention_days: int) -> datetime:
     if next_run <= now:
         next_run += timedelta(days=1)
     return next_run - timedelta(days=retention_days)
+
+
+async def _enqueue_transcription(session: AsyncSession, transcription: Transcription, minute_id: uuid.UUID) -> None:
+    """Commit before publish so workers can always see the job row."""
+    await session.commit()
+    try:
+        transcription_queue_service.publish_message(WorkerMessage(id=minute_id, type=TaskType.TRANSCRIPTION))
+    except Exception as exc:
+        transcription.status = JobStatus.FAILED
+        transcription.error = "Failed to enqueue transcription"
+        await session.commit()
+        raise HTTPException(status_code=503, detail="Failed to enqueue transcription") from exc
 
 
 @transcriptions_router.get("/transcriptions", response_model=PaginatedTranscriptionsResponse)
@@ -161,7 +174,12 @@ async def create_transcription(
     current_user: UserDep,
 ) -> TranscriptionCreateResponse:
     """Start a transcription job."""
-    recording = await session.get(Recording, request.recording_id)
+    # FOR UPDATE: serialise concurrent creates for this recording (so only one can
+    # claim it) and participate in the orphan-cleanup lock protocol, so cleanup and
+    # this association cannot interleave into a broken transcription.
+    recording = (
+        await session.exec(select(Recording).where(Recording.id == request.recording_id).with_for_update())
+    ).first()
     if not recording or recording.user_id != current_user.id:
         raise HTTPException(404, detail="Recording not found")
     # A recording belongs to exactly one transcription: re-submitting it must not
@@ -200,8 +218,7 @@ async def create_transcription(
     session.add(minute)
     session.add(minute_version)
     recording.transcription_id = transcription.id
-    await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
+    await _enqueue_transcription(session, transcription, minute.id)
 
     return TranscriptionCreateResponse(id=transcription.id)
 
@@ -286,8 +303,7 @@ async def retry_transcription(
     minute_version.error = None
     minute_version.html_content = ""
 
-    await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
+    await _enqueue_transcription(session, transcription, minute.id)
 
     return TranscriptionCreateResponse(id=transcription.id)
 

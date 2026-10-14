@@ -11,7 +11,7 @@ import uuid
 
 import pytest
 import pytest_asyncio
-from sqlmodel import delete
+from sqlmodel import delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import get_user_info
@@ -132,3 +132,51 @@ async def test_create_minute_version_accepts_own_source(tenants, published):
         )
     assert response.status_code == 200
     assert len(published) == 1
+
+
+def _publish_boom(_message):
+    msg = "queue unavailable"
+    raise RuntimeError(msg)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_create_minute_publish_failure_marks_failed(tenants, monkeypatch):
+    """A definite enqueue failure marks the committed version failed."""
+    own = tenants["own"]
+    monkeypatch.setattr("backend.api.routes.minutes.llm_queue_service.publish_message", _publish_boom)
+
+    async with get_test_client() as ac:
+        response = await ac.post(
+            f"/transcription/{own['transcription_id']}/minutes",
+            json={"template_name": "General", "template_id": str(own["template_id"])},
+        )
+
+    assert response.status_code == 503
+    async with AsyncSession(async_engine) as session:
+        versions = (
+            await session.exec(
+                select(MinuteVersion).join(Minute).where(Minute.transcription_id == own["transcription_id"])
+            )
+        ).all()
+    assert any(version.status == JobStatus.FAILED for version in versions)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_create_minute_version_publish_failure_marks_failed(tenants, monkeypatch):
+    """The AI-edit route applies the same enqueue compensation."""
+    own = tenants["own"]
+    monkeypatch.setattr("backend.api.routes.minutes.llm_queue_service.publish_message", _publish_boom)
+
+    async with get_test_client() as ac:
+        response = await ac.post(
+            f"/minutes/{own['minute_id']}/versions",
+            json={
+                "content_source": "ai_edit",
+                "ai_edit_instructions": {"instruction": "Summarise", "source_id": str(own["minute_version_id"])},
+            },
+        )
+
+    assert response.status_code == 503
+    async with AsyncSession(async_engine) as session:
+        versions = (await session.exec(select(MinuteVersion).where(MinuteVersion.minute_id == own["minute_id"]))).all()
+    assert any(version.status == JobStatus.FAILED for version in versions)

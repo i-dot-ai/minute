@@ -172,3 +172,38 @@ async def test_handled_failure_marks_failed_and_stops_redelivery_transcription(t
     )
     assert await TranscriptionHandlerService.process_transcription(minute_id=minute_id) is None
     assert calls["n"] == 1
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_duplicate_async_poll_delivery_is_fenced(transcription_setup):
+    """A duplicate poll carries the active claim token and cannot create a new claim."""
+    transcription_id = transcription_setup["transcription_id"]
+    token = TranscriptionHandlerService.claim_transcription(transcription_id)
+    assert token is not None
+    assert TranscriptionHandlerService.claim_transcription(transcription_id) is None
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_failure_persist_error_is_not_swallowed(transcription_setup, monkeypatch):
+    """Finding 6: if recording FAILED fails, the error must escape as UNHANDLED so the
+    worker does not acknowledge the message and strand the row with no recovery delivery."""
+    minute_id = transcription_setup["minute_id"]
+
+    async def _provider_fails(_transcription):
+        msg = "provider exploded"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(
+        "common.services.transcription_handler_service.transcription_manager.perform_transcription_steps",
+        _provider_fails,
+    )
+
+    def _persist_fails(*_args, **_kwargs):
+        msg = "database down"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(TranscriptionHandlerService, "update_transcription", _persist_fails)
+
+    # RuntimeError (not the handled TranscriptionFailedError the actor acknowledges)
+    with pytest.raises(RuntimeError):
+        await TranscriptionHandlerService.process_transcription(minute_id=minute_id)

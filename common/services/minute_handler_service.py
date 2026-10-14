@@ -1,9 +1,12 @@
 import logging
 import re
+from datetime import datetime
+from enum import StrEnum, auto
 from typing import cast
 from uuid import UUID
 
 import mistune
+from sqlalchemy import update
 from sqlalchemy.orm import selectinload
 
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
@@ -15,7 +18,7 @@ from common.prompts import (
     get_ai_edit_initial_messages,
     get_basic_minutes_prompt,
 )
-from common.services.job_claim import claim_job
+from common.services.job_claim import JobClaimRenewer, claim_job
 from common.services.posthog_client import capture_event
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings, get_structured_logger
@@ -30,6 +33,11 @@ slogger = get_structured_logger()
 
 class MinuteGenerationFailedError(Exception):
     pass
+
+
+class MinuteDelivery(StrEnum):
+    ACK = auto()
+    LEAVE = auto()
 
 
 fenced_document_pattern = re.compile(r"\A\s*```[a-zA-Z]*\n(.*?)\n?```\s*\Z", re.DOTALL)
@@ -47,40 +55,47 @@ def strip_document_code_fence(markdown: str) -> str:
 
 class MinuteHandlerService:
     @staticmethod
-    def claim_minute_version(minute_version_id: UUID) -> bool:
+    def claim_minute_version(minute_version_id: UUID) -> datetime | None:
         return claim_job(MinuteVersion, minute_version_id)
 
     @staticmethod
     def update_minute_version(
         minute_version_id: UUID,
+        claim_token: datetime,
         html_content: str | None = None,
         status: JobStatus | None = None,
         error: str | None = None,
-    ) -> None:
-        with SessionLocal() as session:
-            minute_version = session.get(MinuteVersion, minute_version_id)
-            if not minute_version:
-                err_msg = f"MinuteVersion not found for id: {minute_version_id}"
-                raise ValueError(err_msg)
+    ) -> bool:
+        """Update a minute version only while claim_token still owns it.
 
+        The update is applied only if the row still carries the claim token, so a
+        superseded worker's late write is dropped instead of clobbering the new owner.
+        Returns whether the write was applied.
+        """
+        with SessionLocal() as session:
+            values: dict = {}
             if html_content is not None:
-                minute_version.html_content = html_content
-            if status:
-                minute_version.status = status
+                values["html_content"] = html_content
+            if status is not None:
+                values["status"] = status
             if error is not None:
-                minute_version.error = error
-            session.add(minute_version)
+                values["error"] = error
+            result = session.exec(
+                update(MinuteVersion)
+                .where(
+                    MinuteVersion.id == minute_version_id,
+                    MinuteVersion.updated_datetime == claim_token,
+                )
+                .values(**values)
+            )
             session.commit()
+            return result.rowcount == 1
 
     @classmethod
-    def record_minute_version_failure(cls, minute_version_id: UUID, error: str) -> None:
-        # A failure here must not mask the original error, otherwise the caller raises
-        # something other than MinuteGenerationFailedError and the queue message is
-        # never completed, causing endless redelivery
-        try:
-            cls.update_minute_version(minute_version_id, status=JobStatus.FAILED, error=error)
-        except Exception:
-            logger.exception("Failed to record FAILED status for MinuteVersion %s", minute_version_id)
+    def record_minute_version_failure(cls, minute_version_id: UUID, error: str, claim_token: datetime) -> bool:
+        return cls.update_minute_version(
+            minute_version_id, status=JobStatus.FAILED, error=error, claim_token=claim_token
+        )
 
     @classmethod
     async def get_minute_version(cls, minute_version_id: UUID) -> MinuteVersion:
@@ -121,7 +136,7 @@ class MinuteHandlerService:
             return minute.minute_versions[0]
 
     @classmethod
-    async def process_minute_generation_message(cls, minute_version_id: UUID) -> None:
+    async def process_minute_generation_message(cls, minute_version_id: UUID) -> MinuteDelivery:
         try:
             minute_version = await cls.get_minute_version(minute_version_id=minute_version_id)
             slogger.set_context_field("minute_id", str(minute_version.minute_id))
@@ -129,73 +144,87 @@ class MinuteHandlerService:
             slogger.info("Successfully found MinuteVersion")
         except Exception as e:
             raise MinuteGenerationFailedError from e
+        token = cls.claim_minute_version(minute_version.id)
+        if token is None:
+            current = await cls.get_minute_version(minute_version.id)
+            if current.status in (JobStatus.COMPLETED, JobStatus.FAILED):
+                return MinuteDelivery.ACK
+            return MinuteDelivery.LEAVE
+        renewer = JobClaimRenewer(MinuteVersion, minute_version.id, token)
         try:
-            if not cls.claim_minute_version(minute_version.id):
-                return
-            meeting_type = cls.predict_meeting(minute_version.minute.transcription.dialogue_entries)
-            slogger.info("Predicted meeting type {meeting_type}", meeting_type=str(meeting_type))
-            html_content = await cls.generate_minutes(meeting_type, minute_version.minute)
-            cls.update_minute_version(
+            async with renewer:
+                meeting_type = cls.predict_meeting(minute_version.minute.transcription.dialogue_entries)
+                slogger.info("Predicted meeting type {meeting_type}", meeting_type=str(meeting_type))
+                html_content = await cls.generate_minutes(meeting_type, minute_version.minute)
+            if not cls.update_minute_version(
                 minute_version.id,
                 html_content=html_content,
                 status=JobStatus.COMPLETED,
-            )
+                claim_token=renewer.token,
+            ):
+                return MinuteDelivery.ACK
             capture_event(
                 minute_version.minute.transcription.user_id,
                 "summary_generation_succeeded",
                 {"transcriptionId": str(minute_version.minute.transcription_id)},
             )
         except Exception as e:
-            # Primary failure is logged once at the actor boundary (RayLlmService.process_minute_task).
-            cls.record_minute_version_failure(minute_version.id, error=str(e))
+            if not cls.record_minute_version_failure(minute_version.id, error=str(e), claim_token=renewer.token):
+                return MinuteDelivery.ACK
             capture_event(
                 minute_version.minute.transcription.user_id,
                 "summary_generation_failed",
                 {"transcriptionId": str(minute_version.minute.transcription_id)},
             )
             raise MinuteGenerationFailedError from e
+        return MinuteDelivery.ACK
 
     @classmethod
-    async def process_minute_edit_message(cls, source_minute_version_id: UUID, target_minute_version_id: UUID) -> None:
+    async def process_minute_edit_message(
+        cls, source_minute_version_id: UUID, target_minute_version_id: UUID
+    ) -> MinuteDelivery:
         try:
-            source_minute_version = await cls.get_minute_version(source_minute_version_id)
             target_minute_version = await cls.get_minute_version(target_minute_version_id)
             slogger.set_context_field("minute_id", str(target_minute_version.minute_id))
             slogger.set_context_field("user_id", str(target_minute_version.minute.transcription.user_id))
         except Exception as e:
             raise MinuteGenerationFailedError from e
 
-        if (
-            not source_minute_version.minute.transcription.user_id
-            or source_minute_version.minute.transcription.user_id != target_minute_version.minute.transcription.user_id
-        ):
-            msg = "Source and target minute versions belong to different users"
-            raise MinuteGenerationFailedError(msg)
-
-        if (
-            target_minute_version.ai_edit_instructions is None
-            or str(target_minute_version.ai_edit_instructions).strip() == ""
-        ):
-            msg = "Target minute does not have AI edit instructions"
-            raise MinuteGenerationFailedError(msg)
-
+        token = cls.claim_minute_version(target_minute_version.id)
+        if token is None:
+            current = await cls.get_minute_version(target_minute_version.id)
+            if current.status in (JobStatus.COMPLETED, JobStatus.FAILED):
+                return MinuteDelivery.ACK
+            return MinuteDelivery.LEAVE
+        renewer = JobClaimRenewer(MinuteVersion, target_minute_version.id, token)
         try:
-            if not cls.claim_minute_version(target_minute_version.id):
-                return
-            edited_string = await cls.edit_minutes_with_ai(
-                minutes=source_minute_version.html_content,
-                edit_instructions=target_minute_version.ai_edit_instructions,
-                transcript=source_minute_version.minute.transcription.dialogue_entries,
-            )
+            async with renewer:
+                source_minute_version = await cls.get_minute_version(source_minute_version_id)
+                if (
+                    not source_minute_version.minute.transcription.user_id
+                    or source_minute_version.minute.transcription.user_id
+                    != target_minute_version.minute.transcription.user_id
+                ):
+                    msg = "Source and target minute versions belong to different users"
+                    raise ValueError(msg)
+                if not str(target_minute_version.ai_edit_instructions or "").strip():
+                    msg = "Target minute does not have AI edit instructions"
+                    raise ValueError(msg)
+                edited_string = await cls.edit_minutes_with_ai(
+                    minutes=source_minute_version.html_content,
+                    edit_instructions=target_minute_version.ai_edit_instructions,
+                    transcript=source_minute_version.minute.transcription.dialogue_entries,
+                )
             cls.update_minute_version(
                 minute_version_id=target_minute_version.id,
                 status=JobStatus.COMPLETED,
                 html_content=edited_string,
+                claim_token=renewer.token,
             )
-
+            return MinuteDelivery.ACK
         except Exception as e:
-            # Primary failure is logged once at the actor boundary (RayLlmService.process_edit_task).
-            cls.record_minute_version_failure(target_minute_version.id, error=str(e))
+            if not cls.record_minute_version_failure(target_minute_version.id, error=str(e), claim_token=renewer.token):
+                return MinuteDelivery.ACK
             raise MinuteGenerationFailedError from e
 
     @classmethod

@@ -4,7 +4,9 @@ Rows are seeded straight into Postgres; the S3 existence check and the queue
 publish are patched. Requires the docker-compose Postgres (`make run`).
 """
 
+import asyncio
 import uuid
+from contextlib import suppress
 
 import pytest
 import pytest_asyncio
@@ -14,6 +16,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from common.auth import get_user_info
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import (
+    JobStatus,
     Minute,
     MinuteVersion,
     Recording,
@@ -111,3 +114,86 @@ async def test_fresh_recording_still_creates_transcription(recordings, monkeypat
         assert recording.transcription_id is not None
         transcription = await session.get(Transcription, recording.transcription_id)
         assert transcription is not None
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_concurrent_reuse_creates_and_queues_only_one_transcription(recordings, monkeypatch):
+    """Both requests read the unlinked row before either continues; only one may claim it."""
+    fresh = recordings["fresh"]
+    both_checked_storage = asyncio.Event()
+    checks = 0
+    published: list = []
+
+    async def _object_exists(_key: str) -> bool:
+        nonlocal checks
+        checks += 1
+        if checks == 2:
+            both_checked_storage.set()
+        with suppress(TimeoutError):
+            await asyncio.wait_for(both_checked_storage.wait(), timeout=0.1)
+        return True
+
+    monkeypatch.setattr(
+        "backend.api.routes.transcriptions.storage_service.check_object_exists",
+        _object_exists,
+    )
+    monkeypatch.setattr(
+        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
+        published.append,
+    )
+
+    async with get_test_client() as first, get_test_client() as second:
+        responses = await asyncio.gather(
+            first.post(
+                "/transcriptions",
+                json={"recording_id": str(fresh.id), "template_name": "General", "title": "Concurrent first"},
+            ),
+            second.post(
+                "/transcriptions",
+                json={"recording_id": str(fresh.id), "template_name": "General", "title": "Concurrent second"},
+            ),
+        )
+
+    # Remove the transcription which lost the last-write-wins linkage so this
+    # intentionally failing test remains repeatable. The fixture removes the winner.
+    async with AsyncSession(async_engine) as session:
+        recording = await session.get(Recording, fresh.id)
+        response_ids = {uuid.UUID(response.json()["id"]) for response in responses if response.status_code == 201}
+        for transcription_id in response_ids - {recording.transcription_id}:
+            minute = (await session.exec(select(Minute).where(Minute.transcription_id == transcription_id))).first()
+            if minute:
+                await session.exec(delete(MinuteVersion).where(MinuteVersion.minute_id == minute.id))
+                await session.exec(delete(Minute).where(Minute.id == minute.id))
+            await session.exec(delete(Transcription).where(Transcription.id == transcription_id))
+        await session.commit()
+
+    assert sorted(response.status_code for response in responses) == [201, 409]
+    assert len(published) == 1
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_publish_failure_marks_transcription_failed(recordings, monkeypatch):
+    """A definite enqueue failure leaves the committed job explicitly retryable."""
+    fresh = recordings["fresh"]
+
+    def _boom(_message):
+        msg = "queue unavailable"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(
+        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
+        _boom,
+    )
+
+    async with get_test_client() as ac:
+        response = await ac.post(
+            "/transcriptions",
+            json={"recording_id": str(fresh.id), "template_name": "General", "title": "X"},
+        )
+
+    assert response.status_code == 503
+    async with AsyncSession(async_engine) as session:
+        recording = await session.get(Recording, fresh.id)
+        assert recording.transcription_id is not None
+        transcription = await session.get(Transcription, recording.transcription_id)
+        assert transcription.status == JobStatus.FAILED

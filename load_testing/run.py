@@ -113,10 +113,13 @@ def main(argv: list[str]) -> None:
     if args.scenario.lower().replace("_", "-") == "bbc-podcasting-house":
         _dir = Path(__file__).parent / ".downloads" / "bbc_podcasting_house"
         files = random.sample(list(_dir.glob("*.wav")), args.n)
-    elif args.scenario.lower().replace("_", "") == "all-these-fancy-pens":
+    elif (fn := args.scenario.lower().replace("-", "_")) in (
+        "all_these_fancy_pens",  # 1s
+        "im_just_wondering",  # 10s
+    ):
         # FROM=https://huggingface.co/datasets/edinburghcstr/ami
-        fp = Path(__file__).parent / ".downloads" / "all_these_fancy_pens.wav"
-        files = [fp for _ in range(args.n)]  # repeat _num_ times
+        fp = Path(__file__).parent / ".downloads" / f"{fn}.wav"
+        files = [fp for _ in range(args.n)]  # repeat _n_ times
     else:
         msg = "Scenario not found"
         raise RuntimeError(msg)

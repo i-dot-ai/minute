@@ -206,3 +206,29 @@ async def test_retry_rejects_minute_with_multiple_versions(published_messages):
         assert published_messages == []
     finally:
         await _delete_transcription(ids["transcription_id"])
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_retry_publish_failure_marks_failed(failed_transcription, monkeypatch):
+    """A definite enqueue failure leaves the retry explicitly retryable."""
+    transcription_id = failed_transcription["transcription_id"]
+
+    def _boom(_message):
+        msg = "queue unavailable"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(
+        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
+        _boom,
+    )
+
+    async with get_test_client() as ac:
+        response = await ac.post(
+            f"/transcriptions/{transcription_id}/retry",
+            json={"template_name": "General"},
+        )
+
+    assert response.status_code == 503
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, transcription_id)
+        assert transcription.status == JobStatus.FAILED

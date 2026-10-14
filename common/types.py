@@ -188,6 +188,10 @@ class TranscriptionJobMessageData(BaseModel):
         default="synchronous",
     )
     transcript: list[DialogueEntry] | None = Field(description="Transcript of the transcription", default=None)
+    claim_token: datetime | None = Field(
+        description="Fencing token from the original claim, carried so async poll completions are fenced too",
+        default=None,
+    )
 
 
 class WorkerMessage(BaseModel):

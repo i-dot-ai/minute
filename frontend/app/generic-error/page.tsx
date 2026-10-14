@@ -9,12 +9,9 @@ function genericError(): React.JSX.Element {
           <div
             role="alert"
             className="govuk-!-padding-4 govuk-!-margin-bottom-4 govuk-!-margin-top-4 bg-[#e59a9a]"
-            >
+          >
             <div className="govuk-warning-text">
-              <span
-                className="govuk-warning-text__icon"
-                aria-hidden="true"
-                >
+              <span className="govuk-warning-text__icon" aria-hidden="true">
                 !
               </span>
               <strong className="govuk-warning-text__text">
@@ -23,7 +20,8 @@ function genericError(): React.JSX.Element {
               </strong>
             </div>
             <p className="govuk-body govuk-!-margin-bottom-0">
-              Please try again later, or contact i.AI support if the issue persists.
+              Please try again later, or contact i.AI support if the issue
+              persists.
             </p>
           </div>
         </div>

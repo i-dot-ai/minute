@@ -16,7 +16,8 @@ const PUBLIC_PATHS = [
 
 function applySecurityHeaders(req: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
-  const isDev = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
+  const isDev =
+    process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
 
   const csp = [
     "default-src 'none'",
@@ -24,13 +25,12 @@ function applySecurityHeaders(req: NextRequest) {
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
     "img-src 'self' data:",
-    "media-src 'self' blob:",
-    "connect-src 'self' https://eu.i.posthog.com",
+    "media-src 'self' blob: https://*.s3.eu-west-2.amazonaws.com",
+    "connect-src 'self' https://eu.i.posthog.com https://*.s3.eu-west-2.amazonaws.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "object-src 'none'",
-    "upgrade-insecure-requests",
   ].join('; ')
 
   const requestHeaders = new Headers(req.headers)
@@ -93,7 +93,6 @@ export async function middleware(req: NextRequest) {
       `User ${authResult.email} authorisation result: ${authResult.isAuthorised}`
     )
     return applySecurityHeaders(req)
-
   } catch (error) {
     console.error('Error authorising token:', error)
     return redirectToGenericError(req)

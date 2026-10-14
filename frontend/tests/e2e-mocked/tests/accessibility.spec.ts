@@ -11,7 +11,6 @@ test.beforeEach(async ({ page }) => {
   await mockBackend(page)
 })
 
-
 const PAGES_WITH_EDIT_MODE = [
   `/transcriptions/${meeting1.id}/summary/${meeting1Minutes[0].id}?version=${meeting1Versions[0].id}`,
   `/transcriptions/${meeting1.id}/transcript`,

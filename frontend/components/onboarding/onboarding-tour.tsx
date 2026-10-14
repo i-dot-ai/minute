@@ -94,7 +94,7 @@ export function OnboardingTour() {
   return (
     <>
       {Tour}
-      {tourActive && true && (
+      {tourActive && targetMissing && (
         <div
           role="button"
           aria-label="Close tour"

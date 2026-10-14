@@ -179,12 +179,7 @@ function SimpleEditor({
       >
         <EditorContent
           editor={editorObject}
-          className={cn('editor-content')}
-          style={
-            {
-              '--citation-display': hideCitations ? 'none' : 'unset',
-            } as React.CSSProperties
-          }
+          className={cn('editor-content', hideCitations && 'citations-hidden')}
         />
       </div>
 

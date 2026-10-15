@@ -17,15 +17,17 @@ export type RenameTranscription = {
   status: JobStatus
 }
 
+export function isTranscriptionProcessing(status: JobStatus) {
+  return ['awaiting_start', 'in_progress'].includes(status)
+}
+
 export function getTranscriptionDisplayTitle(
   title: string | null | undefined,
   status: JobStatus
 ) {
   return (
     title ||
-    (['awaiting_start', 'in_progress'].includes(status)
-      ? 'Generating title'
-      : 'No title')
+    (isTranscriptionProcessing(status) ? 'Generating title' : 'No title')
   )
 }
 
@@ -51,6 +53,8 @@ export function useRenameTranscription(transcription: RenameTranscription) {
 
   const save = useCallback(
     (title: string) => {
+      // The API rejects edits while the worker owns the job (409)
+      if (isTranscriptionProcessing(transcription.status)) return
       const newTitle = title.trim() || null
       const currentTitle = transcription.title?.trim() || null
       if (newTitle === currentTitle) return
@@ -59,7 +63,12 @@ export function useRenameTranscription(transcription: RenameTranscription) {
         body: { title: newTitle },
       })
     },
-    [saveTranscription, transcription.id, transcription.title]
+    [
+      saveTranscription,
+      transcription.id,
+      transcription.title,
+      transcription.status,
+    ]
   )
 
   return { save, isPending }

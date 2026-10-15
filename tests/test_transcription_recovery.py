@@ -207,3 +207,130 @@ async def test_failure_persist_error_is_not_swallowed(transcription_setup, monke
     # RuntimeError (not the handled TranscriptionFailedError the actor acknowledges)
     with pytest.raises(RuntimeError):
         await TranscriptionHandlerService.process_transcription(minute_id=minute_id)
+
+
+async def _age_claim(transcription_id: uuid.UUID) -> None:
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, transcription_id)
+        transcription.updated_datetime = datetime.now(UTC) - CLAIM_STALE_AFTER - timedelta(minutes=5)
+        session.add(transcription)
+        await session.commit()
+
+
+def _stub_completion(monkeypatch, deleted: list[str]) -> None:
+    async def _check(adapter_name, async_transcription_message_data):  # noqa: ARG001
+        return async_transcription_message_data.model_copy(
+            update={"transcript": TRANSCRIPT, "transcript_key": "restricted/transcribe-output/x/out.json"}
+        )
+
+    async def _same(entries):
+        return entries
+
+    async def _title(transcript):  # noqa: ARG001
+        return "Recovered poll"
+
+    async def _delete(key):
+        deleted.append(key)
+
+    module = "common.services.transcription_handler_service"
+    monkeypatch.setattr(f"{module}.transcription_manager.check_transcription", _check)
+    monkeypatch.setattr(f"{module}.process_speakers_and_dialogue_entries", _same)
+    monkeypatch.setattr(f"{module}.generate_meeting_title", _title)
+    monkeypatch.setattr(f"{module}.capture_event", lambda *_a, **_k: None)
+    monkeypatch.setattr(f"{module}.storage_service.delete", _delete)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_superseded_poll_token_reclaims_abandoned_job(transcription_setup, monkeypatch):
+    """Finding 1: a poll worker that crashed after rotating the token leaves the
+    redelivered message with a dead token. Once the claim is stale it must reclaim,
+    complete, and only then delete the provider output (finding 3)."""
+    transcription_id = transcription_setup["transcription_id"]
+    old_token = TranscriptionHandlerService.claim_transcription(transcription_id)
+    assert old_token is not None
+    await _age_claim(transcription_id)  # row now ages past the stale window; old_token no longer matches
+
+    deleted: list[str] = []
+    _stub_completion(monkeypatch, deleted)
+    message = TranscriptionJobMessageData(transcription_service="AWSTranscribe", job_name="j", claim_token=old_token)
+
+    job = await TranscriptionHandlerService.process_transcription(
+        minute_id=transcription_setup["minute_id"], async_transcription_message_data=message
+    )
+
+    assert job is not None
+    assert deleted == ["restricted/transcribe-output/x/out.json"]
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, transcription_id)
+        assert transcription.status == JobStatus.COMPLETED
+        assert transcription.dialogue_entries == TRANSCRIPT
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_superseded_poll_token_cannot_steal_live_or_fresh_job(transcription_setup, monkeypatch):
+    """A dead-token poll must not take a live claim, nor start a fresh AWAITING_START job."""
+    transcription_id = transcription_setup["transcription_id"]
+    deleted: list[str] = []
+    _stub_completion(monkeypatch, deleted)
+    message = TranscriptionJobMessageData(
+        transcription_service="AWSTranscribe", job_name="j", claim_token=datetime.now(UTC) - timedelta(days=1)
+    )
+
+    # AWAITING_START (e.g. just retried): not claimable by a poll message
+    assert (
+        await TranscriptionHandlerService.process_transcription(
+            minute_id=transcription_setup["minute_id"], async_transcription_message_data=message
+        )
+        is None
+    )
+    # live IN_PROGRESS claim: not claimable either
+    assert TranscriptionHandlerService.claim_transcription(transcription_id) is not None
+    assert (
+        await TranscriptionHandlerService.process_transcription(
+            minute_id=transcription_setup["minute_id"], async_transcription_message_data=message
+        )
+        is None
+    )
+    assert deleted == []
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_provider_output_kept_when_write_superseded(transcription_setup, monkeypatch):
+    """Finding 3: if the COMPLETED write is rejected, the provider output must survive
+    so the current owner can still read it."""
+    token = TranscriptionHandlerService.claim_transcription(transcription_setup["transcription_id"])
+    deleted: list[str] = []
+    _stub_completion(monkeypatch, deleted)
+    monkeypatch.setattr(TranscriptionHandlerService, "update_transcription", lambda *_a, **_k: False)
+    message = TranscriptionJobMessageData(transcription_service="AWSTranscribe", job_name="j", claim_token=token)
+
+    assert (
+        await TranscriptionHandlerService.process_transcription(
+            minute_id=transcription_setup["minute_id"], async_transcription_message_data=message
+        )
+        is None
+    )
+    assert deleted == []
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_provider_output_delete_failure_does_not_fail_job(transcription_setup, monkeypatch):
+    token = TranscriptionHandlerService.claim_transcription(transcription_setup["transcription_id"])
+    _stub_completion(monkeypatch, [])
+
+    async def _boom(_key):
+        msg = "s3 down"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr("common.services.transcription_handler_service.storage_service.delete", _boom)
+    message = TranscriptionJobMessageData(transcription_service="AWSTranscribe", job_name="j", claim_token=token)
+
+    assert (
+        await TranscriptionHandlerService.process_transcription(
+            minute_id=transcription_setup["minute_id"], async_transcription_message_data=message
+        )
+        is not None
+    )
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, transcription_setup["transcription_id"])
+        assert transcription.status == JobStatus.COMPLETED

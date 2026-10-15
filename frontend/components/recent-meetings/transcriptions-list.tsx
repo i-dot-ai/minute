@@ -3,6 +3,7 @@
 import { DeleteTranscriptionButton } from '@/components/recent-meetings/delete-transcription-button'
 import {
   getTranscriptionDisplayTitle,
+  isTranscriptionProcessing,
   RenameButton,
   RenameTitleInput,
   useRenameTranscription,
@@ -109,7 +110,11 @@ function TranscriptionTableRow({
         <div className="flex items-center justify-end gap-2">
           <RenameButton
             displayTitle={displayTitle}
-            disabled={editing || isPending}
+            disabled={
+              editing ||
+              isPending ||
+              isTranscriptionProcessing(transcription.status)
+            }
             onClick={() => setEditing(true)}
           />
           <DeleteTranscriptionButton

@@ -67,7 +67,9 @@ class AWSTranscribeAdapter(TranscriptionAdapter):
                 audio_segments = transcript_content.get("results", {}).get("audio_segments", [])
 
                 dialogue_entries = cls.convert_to_dialogue_entries(audio_segments)
-                return data.model_copy(update={"transcript": dialogue_entries})
+                # Not deleted here: a crash before the transcript is persisted must leave
+                # it re-readable on redelivery. The handler deletes it after the write.
+                return data.model_copy(update={"transcript": dialogue_entries, "transcript_key": transcript_key})
 
             elif job_status == "FAILED":
                 failure_reason = status["TranscriptionJob"].get("FailureReason", "Unknown error")

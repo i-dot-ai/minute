@@ -192,6 +192,10 @@ class TranscriptionJobMessageData(BaseModel):
         description="Fencing token from the original claim, carried so async poll completions are fenced too",
         default=None,
     )
+    transcript_key: str | None = Field(
+        description="Provider output object to delete once the transcript is persisted",
+        default=None,
+    )
 
 
 class WorkerMessage(BaseModel):

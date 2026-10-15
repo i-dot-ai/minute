@@ -16,20 +16,19 @@ logger = logging.getLogger(__name__)
 CLAIM_RENEW_INTERVAL_SECONDS = 60
 
 
-def claim_job(model: type[SQLModel], job_id: UUID) -> datetime | None:
-    """Claim awaiting or abandoned work and return a completion fencing token."""
+def claim_job(model: type[SQLModel], job_id: UUID, *, include_awaiting: bool = True) -> datetime | None:
+    """Claim awaiting or abandoned work and return a completion fencing token.
+
+    include_awaiting=False only takes over abandoned IN_PROGRESS work, so a stale
+    async poll message can never hijack a fresh (e.g. retried) AWAITING_START job.
+    """
     stale_before = datetime.now(UTC) - CLAIM_STALE_AFTER
+    claimable = [and_(model.status == JobStatus.IN_PROGRESS, model.updated_datetime < stale_before)]
+    if include_awaiting:
+        claimable.append(model.status == JobStatus.AWAITING_START)
     with SessionLocal() as session:
         result = session.exec(
-            update(model)
-            .where(
-                model.id == job_id,
-                or_(
-                    model.status == JobStatus.AWAITING_START,
-                    and_(model.status == JobStatus.IN_PROGRESS, model.updated_datetime < stale_before),
-                ),
-            )
-            .values(status=JobStatus.IN_PROGRESS)
+            update(model).where(model.id == job_id, or_(*claimable)).values(status=JobStatus.IN_PROGRESS)
         )
         session.commit()
         if result.rowcount != 1:

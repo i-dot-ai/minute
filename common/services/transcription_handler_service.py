@@ -13,12 +13,14 @@ from common.generate_meeting_title import generate_meeting_title
 from common.services.exceptions import TranscriptionFailedError
 from common.services.job_claim import JobClaimRenewer, claim_job, refresh_job
 from common.services.posthog_client import capture_event
+from common.services.storage_services import get_storage_service
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.settings import get_settings, get_structured_logger
 from common.types import DialogueEntry, TranscriptionJobMessageData
 
 settings = get_settings()
 transcription_manager = TranscriptionServiceManager()
+storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 slogger = get_structured_logger()
 
 
@@ -83,6 +85,9 @@ class TranscriptionHandlerService:
         The update is applied only if the row still carries the claim token, so a
         superseded worker's late write is dropped instead of clobbering the new owner.
         Returns whether the write was applied.
+
+        updated_datetime IS the claim token, so nothing else may write a processing
+        row (see the 409 guard in PATCH /transcriptions/{id}).
         """
         values: dict = {}
         if status is not None:
@@ -152,11 +157,12 @@ class TranscriptionHandlerService:
         except Exception as e:
             raise TranscriptionFailedError from e
 
-        claim_token = async_transcription_message_data.claim_token if async_transcription_message_data else None
+        message_token = async_transcription_message_data.claim_token if async_transcription_message_data else None
+        claim_token = refresh_job(Transcription, transcription.id, message_token) if message_token else None
         if claim_token is None:
-            claim_token = cls.claim_transcription(transcription.id)
-        else:
-            claim_token = refresh_job(Transcription, transcription.id, claim_token)
+            # A poll whose token was superseded (e.g. its worker crashed after rotating it)
+            # may still take over abandoned work, but never a fresh AWAITING_START job.
+            claim_token = claim_job(Transcription, transcription.id, include_awaiting=message_token is None)
         if claim_token is None:
             return None
         renewer = JobClaimRenewer(Transcription, transcription.id, claim_token)
@@ -188,6 +194,7 @@ class TranscriptionHandlerService:
                 if not applied:
                     slogger.warning("Transcription claim was superseded; result discarded")
                     return None
+                await cls.delete_provider_output(transcription_job.transcript_key)
                 capture_event(
                     transcription.user_id, "transcription_succeeded", {"transcriptionId": str(transcription.id)}
                 )
@@ -215,3 +222,18 @@ class TranscriptionHandlerService:
             # Do not break flow if this step fails
             slogger.exception("Error processing dialogue entries")
         return dialogue_entries
+
+    @classmethod
+    async def delete_provider_output(cls, key: str | None) -> None:
+        """Best-effort removal of the provider's transcript object once it is persisted.
+
+        Must never raise: it runs after the COMPLETED write, and an exception would be
+        caught by process_transcription and overwrite the row as FAILED.
+        """
+        if not key:
+            return
+        try:
+            await storage_service.delete(key)
+        except Exception:
+            # ponytail: logged only; add an S3 lifecycle rule on restricted/transcribe-output/ if these show up
+            slogger.exception("Failed to delete provider transcript output")

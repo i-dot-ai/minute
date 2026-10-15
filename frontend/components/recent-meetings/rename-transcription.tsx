@@ -87,7 +87,7 @@ export function RenameButton({
     <button
       type="button"
       data-module="govuk-button"
-      className="govuk-link govuk-link--no-underline govuk-!-margin-bottom-0 govuk-!-font-size-16 shrink-0 text-(--govuk-link-colour) hover:cursor-pointer"
+      className="govuk-link govuk-link--no-underline govuk-!-margin-bottom-0 govuk-!-font-size-16 shrink-0 text-(--govuk-link-colour) hover:cursor-pointer disabled:pointer-events-none disabled:!text-gray-400"
       onClick={onClick}
       disabled={disabled}
       aria-label={`Rename ${displayTitle}`}

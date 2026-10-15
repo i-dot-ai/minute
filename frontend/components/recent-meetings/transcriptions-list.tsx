@@ -108,15 +108,13 @@ function TranscriptionTableRow({
       </td>
       <td className="govuk-table__cell govuk-!-padding-right-1 whitespace-nowrap">
         <div className="flex items-center justify-end gap-2">
-          <RenameButton
-            displayTitle={displayTitle}
-            disabled={
-              editing ||
-              isPending ||
-              isTranscriptionProcessing(transcription.status)
-            }
-            onClick={() => setEditing(true)}
-          />
+          {!isTranscriptionProcessing(transcription.status) && (
+            <RenameButton
+              displayTitle={displayTitle}
+              disabled={editing || isPending}
+              onClick={() => setEditing(true)}
+            />
+          )}
           <DeleteTranscriptionButton
             transcription={transcription}
             noUnderline={true}

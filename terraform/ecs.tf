@@ -190,8 +190,8 @@ module "worker" {
   http_healthcheck = false
   container_healthcheck = {
     command     = ["CMD-SHELL", "uv run python worker/healthcheck.py"]
-    interval    = 60
-    retries     = 3
+    interval    = 30
+    retries     = 2
     startPeriod = 60
     timeout     = 5
   }

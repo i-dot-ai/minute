@@ -4,9 +4,10 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from backend.api.dependencies import SQLSessionDep, UserDep
-from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription
+from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription, UserTemplate
 from common.services.queue_services import get_queue_service
 from common.settings import get_settings
 from common.types import (
@@ -26,6 +27,18 @@ llm_queue_service = get_queue_service(
 )
 
 minutes_router = APIRouter(tags=["Minutes"])
+
+
+async def _enqueue_minute_version(session: AsyncSession, minute_version: MinuteVersion, message: WorkerMessage) -> None:
+    """Commit before publish so workers can always see the job row."""
+    await session.commit()
+    try:
+        llm_queue_service.publish_message(message)
+    except Exception as exc:
+        minute_version.status = JobStatus.FAILED
+        minute_version.error = "Failed to enqueue minute generation"
+        await session.commit()
+        raise HTTPException(status_code=503, detail="Failed to enqueue minute generation") from exc
 
 
 @minutes_router.get("/transcription/{transcription_id}/minutes")
@@ -74,6 +87,19 @@ async def create_minute(
         template_name = request.template_name
         user_template_id = request.template_id
         agenda = request.agenda
+        if user_template_id is not None:
+            template = (
+                await session.exec(
+                    select(UserTemplate).where(
+                        UserTemplate.id == user_template_id,
+                        UserTemplate.user_id == user.id,
+                    )
+                )
+            ).first()
+            if template is None:
+                msg = f"User template not found: {user_template_id}"
+                raise HTTPException(status_code=404, detail=msg)
+
     minute = Minute(
         transcription_id=transcription_id,
         template_name=template_name,
@@ -83,10 +109,9 @@ async def create_minute(
     session.add(minute)
     minute_version = MinuteVersion(id=uuid.uuid4(), minute_id=minute.id)
     session.add(minute_version)
-    await session.commit()
+    await _enqueue_minute_version(session, minute_version, WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
     await session.refresh(minute_version)
     await session.refresh(minute)
-    llm_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
     return MinuteListItem(
         id=minute.id,
         created_datetime=minute.created_datetime,
@@ -157,6 +182,24 @@ async def create_minute_version(
     minute_id: uuid.UUID, request: MinuteVersionCreateRequest, session: SQLSessionDep, user: UserDep
 ) -> MinuteVersionResponse:
     minute = await get_minute(minute_id, session, user)
+    # An authenticated user CANNOT submit an AI edit for their own minute
+    # while naming another user's minute version as the source.
+    if request.ai_edit_instructions:
+        source_minute_version = (
+            await session.exec(
+                select(MinuteVersion)
+                .where(MinuteVersion.id == request.ai_edit_instructions.source_id)
+                .options(selectinload(MinuteVersion.minute).selectinload(Minute.transcription))
+            )
+        ).first()
+        if (
+            not source_minute_version
+            or not source_minute_version.minute.transcription.user_id
+            or source_minute_version.minute.transcription.user_id != user.id
+        ):
+            msg = "Source minute version not found"
+            raise HTTPException(status_code=404, detail=msg)
+
     minute_version = MinuteVersion(
         id=uuid.uuid4(),
         minute_id=minute.id,
@@ -169,16 +212,19 @@ async def create_minute_version(
     # the column's onupdate never fires and the list ordering would miss the edit.
     minute.updated_datetime = datetime.now(tz=UTC)
     session.add(minute_version)
-    await session.commit()
-    await session.refresh(minute_version)
     if request.ai_edit_instructions:
-        llm_queue_service.publish_message(
+        await _enqueue_minute_version(
+            session,
+            minute_version,
             WorkerMessage(
                 id=minute_version.id,
                 data=EditMessageData(source_id=request.ai_edit_instructions.source_id),
                 type=TaskType.EDIT,
-            )
+            ),
         )
+    else:
+        await session.commit()
+    await session.refresh(minute_version)
     return MinuteVersionResponse(
         id=minute_version.id,
         minute_id=minute_id,

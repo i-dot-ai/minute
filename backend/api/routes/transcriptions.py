@@ -6,8 +6,10 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
+from sqlalchemy import update
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, func, or_, select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.get_file_s3_key import get_file_s3_key
@@ -17,6 +19,7 @@ from common.database.postgres_models import (
     MinuteVersion,
     Recording,
     Transcription,
+    UserTemplate,
 )
 from common.services.queue_services import get_queue_service
 from common.services.storage_services import get_storage_service
@@ -57,6 +60,18 @@ def _next_cleanup_cutoff(retention_days: int) -> datetime:
     if next_run <= now:
         next_run += timedelta(days=1)
     return next_run - timedelta(days=retention_days)
+
+
+async def _enqueue_transcription(session: AsyncSession, transcription: Transcription, minute_id: uuid.UUID) -> None:
+    """Commit before publish so workers can always see the job row."""
+    await session.commit()
+    try:
+        transcription_queue_service.publish_message(WorkerMessage(id=minute_id, type=TaskType.TRANSCRIPTION))
+    except Exception as exc:
+        transcription.status = JobStatus.FAILED
+        transcription.error = "Failed to enqueue transcription"
+        await session.commit()
+        raise HTTPException(status_code=503, detail="Failed to enqueue transcription") from exc
 
 
 @transcriptions_router.get("/transcriptions", response_model=PaginatedTranscriptionsResponse)
@@ -159,9 +174,18 @@ async def create_transcription(
     current_user: UserDep,
 ) -> TranscriptionCreateResponse:
     """Start a transcription job."""
-    recording = await session.get(Recording, request.recording_id)
+    # FOR UPDATE: serialise concurrent creates for this recording (so only one can
+    # claim it) and participate in the orphan-cleanup lock protocol, so cleanup and
+    # this association cannot interleave into a broken transcription.
+    recording = (
+        await session.exec(select(Recording).where(Recording.id == request.recording_id).with_for_update())
+    ).first()
     if not recording or recording.user_id != current_user.id:
         raise HTTPException(404, detail="Recording not found")
+    # A recording belongs to exactly one transcription: re-submitting it must not
+    # re-link the audio (orphaning the first transcription and re-queueing work).
+    if recording.transcription_id is not None:
+        raise HTTPException(status_code=409, detail="Recording has already been transcribed")
     transcription = Transcription(user_id=current_user.id, title=request.title)
 
     if not await storage_service.check_object_exists(recording.s3_file_key):
@@ -169,6 +193,19 @@ async def create_transcription(
             status_code=404,
             detail=f"Recording file not found in S3: {recording.s3_file_key}",
         )
+
+    if request.template_id is not None:
+        template = (
+            await session.exec(
+                select(UserTemplate).where(
+                    UserTemplate.id == request.template_id,
+                    UserTemplate.user_id == current_user.id,
+                )
+            )
+        ).first()
+        if template is None:
+            msg = f"User template not found: {request.template_id}"
+            raise HTTPException(status_code=404, detail=msg)
 
     minute = Minute(
         template_name=request.template_name,
@@ -181,8 +218,7 @@ async def create_transcription(
     session.add(minute)
     session.add(minute_version)
     recording.transcription_id = transcription.id
-    await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
+    await _enqueue_transcription(session, transcription, minute.id)
 
     return TranscriptionCreateResponse(id=transcription.id)
 
@@ -230,6 +266,29 @@ async def retry_transcription(
     if len(minute.minute_versions) != 1:
         raise HTTPException(400, detail="Transcription cannot be retried in its current state")
 
+    if request.template_id is not None:
+        template = (
+            await session.exec(
+                select(UserTemplate).where(
+                    UserTemplate.id == request.template_id,
+                    UserTemplate.user_id == current_user.id,
+                )
+            )
+        ).first()
+        if template is None:
+            msg = f"User template not found: {request.template_id}"
+            raise HTTPException(status_code=404, detail=msg)
+
+    # Atomic FAILED -> AWAITING_START transition: only one concurrent retry can
+    # win, so exactly one request ever publishes retry work.
+    retry_claim = await session.exec(
+        update(Transcription)
+        .where(Transcription.id == transcription.id, Transcription.status == JobStatus.FAILED)
+        .values(status=JobStatus.AWAITING_START)
+    )
+    if retry_claim.rowcount != 1:
+        await session.rollback()
+        raise HTTPException(400, detail="Only failed transcriptions can be retried")
     transcription.status = JobStatus.AWAITING_START
     transcription.error = None
     transcription.dialogue_entries = None
@@ -244,8 +303,7 @@ async def retry_transcription(
     minute_version.error = None
     minute_version.html_content = ""
 
-    await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
+    await _enqueue_transcription(session, transcription, minute.id)
 
     return TranscriptionCreateResponse(id=transcription.id)
 
@@ -314,6 +372,10 @@ async def save_transcription(
     transcription = await session.get(Transcription, transcription_id)
     if not transcription or transcription.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Transcription not found")
+    # updated_datetime is the worker's claim token (common/services/job_claim.py): any
+    # write while the job is processing would silently void the worker's claim.
+    if transcription.status in (JobStatus.AWAITING_START, JobStatus.IN_PROGRESS):
+        raise HTTPException(status_code=409, detail="Transcription cannot be edited while it is processing")
 
     if transcription_data.title is not None:
         transcription.title = transcription_data.title

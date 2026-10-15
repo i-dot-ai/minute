@@ -77,14 +77,12 @@ function SimpleEditor({
                     const to = from + match[0].length
                     decorations.push(
                       Decoration.inline(from, to, {
-                        style: 'display: var(--citation-display);',
+                        class: 'citation',
                       })
                     )
                     decorations.push(
                       Decoration.inline(from + match[1].length, to, {
                         class: 'citation-link',
-                        style:
-                          'color: blue; cursor: pointer; text-decoration: underline;',
                       })
                     )
                   }
@@ -181,12 +179,7 @@ function SimpleEditor({
       >
         <EditorContent
           editor={editorObject}
-          className={cn('editor-content')}
-          style={
-            {
-              '--citation-display': hideCitations ? 'none' : 'unset',
-            } as React.CSSProperties
-          }
+          className={cn('editor-content', hideCitations && 'citations-hidden')}
         />
       </div>
 

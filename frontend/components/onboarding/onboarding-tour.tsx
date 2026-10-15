@@ -98,16 +98,11 @@ export function OnboardingTour() {
         <div
           role="button"
           aria-label="Close tour"
+          className="fixed inset-0 z-1000 cursor-pointer"
           tabIndex={0}
           onClick={finishTour}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') finishTour()
-          }}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 10000,
-            cursor: 'pointer',
           }}
         />
       )}

@@ -7,6 +7,7 @@ publish are patched. Requires the docker-compose Postgres (`make run`).
 import asyncio
 import uuid
 from contextlib import suppress
+from types import SimpleNamespace
 
 import pytest
 import pytest_asyncio
@@ -23,6 +24,15 @@ from common.database.postgres_models import (
     Transcription,
 )
 from tests.utils import get_or_create_user, get_test_client
+
+
+def _recorder(started: list):
+    """Stand-in for temporal.start_transcription_workflow; records the minute id like the old queue message."""
+
+    async def _start(transcription_id, minute_id):
+        started.append(SimpleNamespace(id=minute_id, transcription_id=transcription_id))
+
+    return _start
 
 
 async def _current_user_id(session: AsyncSession) -> uuid.UUID:
@@ -96,8 +106,8 @@ async def test_reused_recording_rejected(recordings):
 async def test_fresh_recording_still_creates_transcription(recordings, monkeypatch):
     published: list = []
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
-        published.append,
+        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
+        _recorder(published),
     )
     fresh = recordings["fresh"]
 
@@ -138,8 +148,8 @@ async def test_concurrent_reuse_creates_and_queues_only_one_transcription(record
         _object_exists,
     )
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
-        published.append,
+        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
+        _recorder(published),
     )
 
     async with get_test_client() as first, get_test_client() as second:
@@ -176,12 +186,12 @@ async def test_publish_failure_marks_transcription_failed(recordings, monkeypatc
     """A definite enqueue failure leaves the committed job explicitly retryable."""
     fresh = recordings["fresh"]
 
-    def _boom(_message):
-        msg = "queue unavailable"
+    async def _boom(_transcription_id, _minute_id):
+        msg = "temporal unavailable"
         raise RuntimeError(msg)
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
+        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
         _boom,
     )
 

@@ -10,6 +10,7 @@ Requires the docker-compose Postgres (`make run`).
 import asyncio
 import uuid
 from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
 
 import pytest
 import pytest_asyncio
@@ -28,6 +29,15 @@ from common.database.postgres_models import (
 from tests.utils import get_or_create_user, get_test_client
 
 SEED_TIME = datetime.now(UTC) - timedelta(minutes=10)
+
+
+def _recorder(started: list):
+    """Stand-in for temporal.start_transcription_workflow; records the minute id like the old queue message."""
+
+    async def _start(transcription_id, minute_id):
+        started.append(SimpleNamespace(id=minute_id, transcription_id=transcription_id))
+
+    return _start
 
 
 async def _current_user_id(session: AsyncSession) -> uuid.UUID:
@@ -109,8 +119,8 @@ def published_messages(monkeypatch):
         _object_exists,
     )
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
-        published.append,
+        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
+        _recorder(published),
     )
     return published
 
@@ -213,12 +223,12 @@ async def test_retry_publish_failure_marks_failed(failed_transcription, monkeypa
     """A definite enqueue failure leaves the retry explicitly retryable."""
     transcription_id = failed_transcription["transcription_id"]
 
-    def _boom(_message):
-        msg = "queue unavailable"
+    async def _boom(_transcription_id, _minute_id):
+        msg = "temporal unavailable"
         raise RuntimeError(msg)
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
+        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
         _boom,
     )
 

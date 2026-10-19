@@ -12,4 +12,5 @@ echo "Starting queue service..."
 # rather than via `uv run`. Ray starts a local cluster here and spawns many
 # long-lived subprocesses off sys.executable; keeping uv out of the runtime path
 # guarantees it can never re-sync/mutate /app/.venv while those processes are live.
-exec python worker/main.py
+# Default: the Ray worker. Pass a script to run something else (e.g. worker/temporal_worker.py).
+exec python "${1:-worker/main.py}"

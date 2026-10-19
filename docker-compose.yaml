@@ -12,10 +12,13 @@ services:
       - MINISTACK_URL=http://ministack:4566
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
+      - TEMPORAL_ADDRESS=temporal:7233
     depends_on:
       db:
         condition: service_healthy
       ministack:
+        condition: service_healthy
+      temporal:
         condition: service_healthy
     volumes:
       - type: bind
@@ -61,6 +64,8 @@ services:
       - MINISTACK_URL=http://ministack:4566
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
+      # Transcription runs on temporal-worker; Ray only runs the LLM actors.
+      - MAX_TRANSCRIPTION_PROCESSES=0
     stop_grace_period: 10s
     depends_on:
       db:
@@ -79,6 +84,58 @@ services:
       watch:
         - path: ./worker
           target: /app/backend
+          action: sync+restart
+        - path: ./common
+          target: /app/common
+          action: sync+restart
+        - path: ./uv.lock
+          action: rebuild
+
+  temporal:
+    # Temporal CLI dev server: SQLite-backed, UI on http://localhost:8233
+    image: temporalio/temporal:1.9.1
+    command: ["server", "start-dev", "--ip", "0.0.0.0", "--db-filename", "/home/temporal/temporal.db"]
+    ports:
+      - "7233:7233"
+      - "8233:8233"
+    volumes:
+      - temporal-data:/home/temporal
+    healthcheck:
+      test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "localhost:7233"]
+      interval: 5s
+      retries: 20
+      start_period: 5s
+      timeout: 5s
+
+  temporal-worker:
+    build:
+      context: .
+      dockerfile: ./worker/Dockerfile
+    command: ["worker/entrypoint.sh", "worker/temporal_worker.py"]
+    env_file:
+      - .env
+    volumes:
+      - type: bind
+        source: ./.data
+        target: /static
+    environment:
+      - POSTGRES_HOST=db
+      - MINISTACK_URL=http://ministack:4566
+      - STORAGE_SERVICE_NAME=local
+      - LOCAL_STORAGE_PATH=/static
+      - TEMPORAL_ADDRESS=temporal:7233
+    stop_grace_period: 30s
+    depends_on:
+      db:
+        condition: service_healthy
+      ministack:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+    develop:
+      watch:
+        - path: ./worker
+          target: /app/worker
           action: sync+restart
         - path: ./common
           target: /app/common
@@ -161,3 +218,4 @@ services:
 volumes:
   local_postgres_data: {}
   next_data: {}
+  temporal-data: {}

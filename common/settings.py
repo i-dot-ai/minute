@@ -82,7 +82,11 @@ class Settings(BaseSettings):
     AZURE_SPEECH_FALLBACK_2_REGION: str | None = Field(description="Region for Azure STT fallback 2", default=None)
 
     MAX_TRANSCRIPTION_PROCESSES: int = Field(description="the number of transcription workers per node", default=1)
-    MAX_LLM_PROCESSES: int = Field(description="the number of LLM workers per node", default=1)
+    MAX_LLM_PROCESSES: int = Field(
+        description="Ray LLM actors per node; also the Temporal 'llm' queue cap (concurrent speaker/title/summary "
+        "steps) per temporal-worker process",
+        default=1,
+    )
 
     # if using Azure OpenAI
     AZURE_DEPLOYMENT: str | None = Field(description="Azure deployment for openAI", default=None)
@@ -134,6 +138,14 @@ class Settings(BaseSettings):
     QUEUE_SERVICE_NAME: str = Field(
         description="Queue service type to communicate with worker. Currently supported: sqs",
         default="sqs",
+    )
+
+    TEMPORAL_ADDRESS: str = Field(description="Temporal frontend gRPC address", default="localhost:7233")
+    TEMPORAL_NAMESPACE: str = Field(description="Temporal namespace", default="default")
+    STT_MAX_CONCURRENCY: int = Field(
+        description="Max concurrent Azure STT calls per Temporal STT worker. The cluster-wide cap is this times "
+        "the number of worker processes polling the 'stt' task queue.",
+        default=4,
     )
 
     # if running the worker inside a docker container (use "0.0.0.0" )

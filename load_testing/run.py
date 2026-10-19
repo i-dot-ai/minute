@@ -13,7 +13,11 @@ import requests
 
 
 def upload_a_file(env: str, fp: Path, cookie: str) -> dict:
-    api = f"https://minute.{env}.i.ai.gov.uk/api/proxy"
+    api = {
+        "dev": "https://minute.dev.i.ai.gov.uk/api/proxy",
+        "preprod": "https://minute.preprod.i.ai.gov.uk/api/proxy",
+        "prod": "https://minute.i.ai.gov.uk/api/proxy",
+    }[env]
     sess = requests.Session()
     headers = {"Cookie": cookie}
 
@@ -105,7 +109,7 @@ def get_results(env: str, files: list[Path], cookie: str) -> list[dict]:
 
 def main(argv: list[str]) -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env", choices=["dev", "preprod"])
+    parser.add_argument("--env", choices=["dev", "preprod", "prod"])
     parser.add_argument("--scenario", required=True)
     parser.add_argument("--n", type=int, required=True)
     parser.add_argument("--cookie", required=True)
@@ -145,8 +149,8 @@ def main(argv: list[str]) -> None:
        `'(_ )_)(_)_)'
     """)  # noqa: T201
 
-    url = "https://minute.dev.i.ai.gov.uk/transcriptions"
-    print(f"Trace: \033]8;;{url}\033\\{url}\033]8;;\033\\\n")  # noqa: T201
+    # url = "https://minute.dev.i.ai.gov.uk/transcriptions"
+    # print(f"Trace: \033]8;;{url}\033\\{url}\033]8;;\033\\\n")
     results = get_results(env=args.env, files=files, cookie=args.cookie)
 
     # --- metrics

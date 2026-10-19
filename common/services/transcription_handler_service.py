@@ -143,12 +143,42 @@ class TranscriptionHandlerService:
         return DuplicateDelivery.ACK
 
     @classmethod
-    async def process_transcription(  # noqa: C901
+    def get_transcription_row(cls, transcription_id: UUID) -> Transcription | None:
+        with SessionLocal() as session:
+            transcription = session.get(Transcription, transcription_id)
+            if transcription:
+                session.expunge(transcription)
+            return transcription
+
+    @classmethod
+    def update_in_progress_transcription(cls, transcription_id: UUID, **values) -> bool:
+        """Write to a transcription only while it is still IN_PROGRESS (not deleted, failed or completed).
+
+        Used by the Temporal post-processing steps, which run after the transcription claim has
+        been released; Temporal guarantees one running step per workflow, so no fencing token.
+        """
+        with SessionLocal() as session:
+            result = session.exec(
+                update(Transcription)
+                .where(Transcription.id == transcription_id, Transcription.status == JobStatus.IN_PROGRESS)
+                .values(**values)
+            )
+            session.commit()
+            return result.rowcount == 1
+
+    @classmethod
+    async def process_transcription(  # noqa: C901, PLR0912
         cls,
         minute_id: UUID,
         async_transcription_message_data: TranscriptionJobMessageData | None = None,
+        *,
+        post_process: bool = True,
     ) -> TranscriptionJobMessageData | None:
-        """Process a transcription job and save results. Returns None if another delivery already owns this job."""
+        """Process a transcription job and save results. Returns None if another delivery already owns this job.
+
+        post_process=False (Temporal) saves only the raw transcript and leaves the row IN_PROGRESS:
+        speaker naming, title and COMPLETED are separate activities.
+        """
         slogger.set_context_field("minute_id", str(minute_id))
         try:
             transcription = cls.get_transcription_from_minute_id(minute_id)
@@ -178,15 +208,17 @@ class TranscriptionHandlerService:
                         transcription=transcription
                     )
                 if transcription_job.transcript:
-                    dialogue_entries = await cls.identify_speakers(transcription_job.transcript)
-                    meeting_title = await generate_meeting_title(transcript=dialogue_entries)
+                    dialogue_entries, meeting_title = transcription_job.transcript, None
+                    if post_process:
+                        dialogue_entries = await cls.identify_speakers(transcription_job.transcript)
+                        meeting_title = await cls.generate_title(dialogue_entries)
             claim_token = renewer.token
             transcription_job.claim_token = claim_token
 
             if transcription_job.transcript:
                 applied = cls.update_transcription(
                     transcription.id,
-                    status=JobStatus.COMPLETED,
+                    status=JobStatus.COMPLETED if post_process else None,
                     transcript=dialogue_entries,
                     title=meeting_title,
                     claim_token=claim_token,
@@ -195,9 +227,10 @@ class TranscriptionHandlerService:
                     slogger.warning("Transcription claim was superseded; result discarded")
                     return None
                 await cls.delete_provider_output(transcription_job.transcript_key)
-                capture_event(
-                    transcription.user_id, "transcription_succeeded", {"transcriptionId": str(transcription.id)}
-                )
+                if post_process:
+                    capture_event(
+                        transcription.user_id, "transcription_succeeded", {"transcriptionId": str(transcription.id)}
+                    )
         except Exception as e:
             msg = f"Transcription failed: {e!s}"
             if not cls.update_transcription(
@@ -222,6 +255,15 @@ class TranscriptionHandlerService:
             # Do not break flow if this step fails
             slogger.exception("Error processing dialogue entries")
         return dialogue_entries
+
+    @classmethod
+    async def generate_title(cls, dialogue_entries: list[DialogueEntry]) -> str:
+        try:
+            return await generate_meeting_title(transcript=dialogue_entries)
+        except Exception:
+            # Do not break flow if this step fails
+            slogger.exception("Error generating meeting title")
+            return ""
 
     @classmethod
     async def delete_provider_output(cls, key: str | None) -> None:

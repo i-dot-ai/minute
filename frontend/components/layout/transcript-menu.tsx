@@ -32,6 +32,8 @@ export function TranscriptMenu() {
   if (!transcriptionId) return null
   const transcriptPage = !pathname.includes('/summary')
 
+  console.log(transcriptPage)
+
   return (
     <div className="w-[200px]">
       <h2 className="govuk-!-margin-left-4 govuk-!-padding-top-2 govuk-!-padding-bottom-2 text-[0.875rem]">
@@ -97,7 +99,17 @@ export function TranscriptMenu() {
                 )
               })}
               {minutes.length === 0 && (
-                <li className="govuk-body-s">No summaries yet</li>
+                <li
+                    className={`govuk-!-padding-left-3 govuk-!-padding-right-2 govuk-!-margin-0 flex-1 border-l-4 border-[#8eb8dc] py-1 ${transcriptPage ? '' : '!border-(--govuk-link-colour) bg-[#d2e2f1] font-bold'}`}
+                >
+                  <Link
+                    href={`/transcriptions/${transcriptionId}/summary`}
+                    className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline text-[0.875rem] ${transcriptPage ? '' : '!text-(--govuk-text-colour)'}`}
+                    aria-current={transcriptPage ? undefined : 'page'}
+                    >
+                    No summary yet
+                  </Link>
+                  </li>
               )}
             </ul>
           )}

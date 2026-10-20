@@ -122,3 +122,11 @@ certs/
 # Local-only Compose overrides (never committed)
 docker-compose.override.yaml
 docker-compose.override.yml
+
+# Strix
+strix_runs
+.source-aware*
+
+# Python coverage artifacts
+.coverage
+htmlcov/

@@ -62,7 +62,7 @@ async def cleanup_old_records():
 async def delete_orphan_records():
     logger.info("Starting recording clean up")
     async with AsyncSession(async_engine) as session:
-        orphan_recording_query = select(Recording).where(col(Recording.transcription_id).is_(None))
+        orphan_recording_query = select(Recording).where(col(Recording.transcription_id).is_(None)).with_for_update()
         recordings = (await session.exec(orphan_recording_query)).all()
         logger.info("Found %d Recordings with no Transcription.", len(recordings))
         for recording in recordings:

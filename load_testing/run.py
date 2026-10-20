@@ -12,8 +12,8 @@ from pathlib import Path
 import requests
 
 
-def upload_a_file(fp: Path, cookie: str) -> dict:
-    api = "https://minute.dev.i.ai.gov.uk/api/proxy"
+def upload_a_file(env: str, fp: Path, cookie: str) -> dict:
+    api = f"https://minute.{env}.i.ai.gov.uk/api/proxy"
     sess = requests.Session()
     headers = {"Cookie": cookie}
 
@@ -67,12 +67,12 @@ def upload_a_file(fp: Path, cookie: str) -> dict:
     }
 
 
-def get_results(files: list[Path], cookie: str) -> list[dict]:
+def get_results(env: str, files: list[Path], cookie: str) -> list[dict]:
     results = {}
     t0 = time.monotonic()
     print("Cooking...", end="", flush=True)  # noqa: T201
     with ThreadPoolExecutor(max_workers=len(files)) as executor:
-        futures = {executor.submit(upload_a_file, file, cookie): file for file in files}
+        futures = {executor.submit(upload_a_file, env, file, cookie): file for file in files}
         for future in as_completed(futures):
             try:
                 err_msg = None
@@ -105,18 +105,22 @@ def get_results(files: list[Path], cookie: str) -> list[dict]:
 
 def main(argv: list[str]) -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scenario")
-    parser.add_argument("--n", type=int)
-    parser.add_argument("--cookie")
+    parser.add_argument("--env", choices=["dev", "preprod"])
+    parser.add_argument("--scenario", required=True)
+    parser.add_argument("--n", type=int, required=True)
+    parser.add_argument("--cookie", required=True)
     args = parser.parse_args(argv)
 
     if args.scenario.lower().replace("_", "-") == "bbc-podcasting-house":
         _dir = Path(__file__).parent / ".downloads" / "bbc_podcasting_house"
         files = random.sample(list(_dir.glob("*.wav")), args.n)
-    elif args.scenario.lower().replace("_", "") == "all-these-fancy-pens":
+    elif (fn := args.scenario.lower().replace("-", "_")) in (
+        "all_these_fancy_pens",  # 1s
+        "im_just_wondering",  # 10s
+    ):
         # FROM=https://huggingface.co/datasets/edinburghcstr/ami
-        fp = Path(__file__).parent / ".downloads" / "all_these_fancy_pens.wav"
-        files = [fp for _ in range(args.n)]  # repeat _num_ times
+        fp = Path(__file__).parent / ".downloads" / f"{fn}.wav"
+        files = [fp for _ in range(args.n)]  # repeat _n_ times
     else:
         msg = "Scenario not found"
         raise RuntimeError(msg)
@@ -143,7 +147,7 @@ def main(argv: list[str]) -> None:
 
     url = "https://minute.dev.i.ai.gov.uk/transcriptions"
     print(f"Trace: \033]8;;{url}\033\\{url}\033]8;;\033\\\n")  # noqa: T201
-    results = get_results(files, args.cookie)
+    results = get_results(env=args.env, files=files, cookie=args.cookie)
 
     # --- metrics
     print("\n\n---\n")  # noqa: T201

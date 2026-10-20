@@ -7,12 +7,13 @@ real transcription work.
 Requires the docker-compose Postgres (`make run`).
 """
 
+import asyncio
 import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
-from sqlmodel import col, delete, select
+from sqlmodel import col, delete
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import get_user_info
@@ -23,22 +24,14 @@ from common.database.postgres_models import (
     MinuteVersion,
     Recording,
     Transcription,
-    User,
 )
-from tests.utils import get_test_client
+from tests.utils import get_or_create_user, get_test_client
 
 SEED_TIME = datetime.now(UTC) - timedelta(minutes=10)
 
 
 async def _current_user_id(session: AsyncSession) -> uuid.UUID:
-    email = get_user_info(None).email.lower()
-    user = (await session.exec(select(User).where(User.email == email))).first()
-    if user is None:
-        user = User(email=email)
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
-    return user.id
+    return (await get_or_create_user(session, get_user_info(None).email.lower())).id
 
 
 async def _seed_failed_transcription(
@@ -123,6 +116,28 @@ def published_messages(monkeypatch):
 
 
 @pytest.mark.asyncio(loop_scope="session")
+async def test_retry_concurrent_requests_publish_once(failed_transcription, published_messages):
+    """Vuln-0003 regression: only one of two concurrent retries may reset and publish."""
+    transcription_id = failed_transcription["transcription_id"]
+    minute_id = failed_transcription["minute_id"]
+
+    async with get_test_client() as ac:
+        responses = await asyncio.gather(
+            ac.post(f"/transcriptions/{transcription_id}/retry", json={"template_name": "General"}),
+            ac.post(f"/transcriptions/{transcription_id}/retry", json={"template_name": "General"}),
+        )
+
+    status_codes = sorted(response.status_code for response in responses)
+    assert status_codes == [201, 400]
+    assert len(published_messages) == 1
+    assert published_messages[0].id == minute_id
+
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, transcription_id)
+        assert transcription.status == JobStatus.AWAITING_START
+
+
+@pytest.mark.asyncio(loop_scope="session")
 async def test_retry_resets_existing_transcription(failed_transcription, published_messages):
     transcription_id = failed_transcription["transcription_id"]
     minute_id = failed_transcription["minute_id"]
@@ -191,3 +206,48 @@ async def test_retry_rejects_minute_with_multiple_versions(published_messages):
         assert published_messages == []
     finally:
         await _delete_transcription(ids["transcription_id"])
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_retry_publish_failure_marks_failed(failed_transcription, monkeypatch):
+    """A definite enqueue failure leaves the retry explicitly retryable."""
+    transcription_id = failed_transcription["transcription_id"]
+
+    def _boom(_message):
+        msg = "queue unavailable"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(
+        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
+        _boom,
+    )
+
+    async with get_test_client() as ac:
+        response = await ac.post(
+            f"/transcriptions/{transcription_id}/retry",
+            json={"template_name": "General"},
+        )
+
+    assert response.status_code == 503
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, transcription_id)
+        assert transcription.status == JobStatus.FAILED
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_patch_rejected_while_processing(in_progress_transcription, failed_transcription):
+    """Finding 2: a PATCH would bump updated_datetime (the worker's claim token) and
+    void the in-flight claim, so it is refused until the job is terminal."""
+    async with get_test_client() as ac:
+        blocked = await ac.patch(
+            f"/transcriptions/{in_progress_transcription['transcription_id']}", json={"title": "renamed"}
+        )
+        allowed = await ac.patch(
+            f"/transcriptions/{failed_transcription['transcription_id']}", json={"title": "renamed"}
+        )
+
+    assert blocked.status_code == 409
+    assert allowed.status_code == 200
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, in_progress_transcription["transcription_id"])
+        assert transcription.title != "renamed"

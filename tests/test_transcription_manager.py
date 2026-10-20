@@ -255,7 +255,6 @@ class TestTranscriptionServiceManager:
         with (
             tempfile.NamedTemporaryFile(suffix=".mp3") as temp_file,
             patch.object(manager, "get_recording_to_process") as mock_get_recording,
-            patch.object(manager, "check_transcription") as mock_check_transcription,
         ):
             # Setup mocks
             mock_duration = 3500.0  # Should trigger async adapter
@@ -264,22 +263,16 @@ class TestTranscriptionServiceManager:
             assert mock_adapter.adapter_type == AdapterType.ASYNC
 
             with patch.object(mock_adapter, "start") as mock_start:
-                # Return transcription job without transcript to trigger check_transcription
+                # Async jobs are persisted and polled by a later queue delivery.
                 mock_start.return_value = TranscriptionJobMessageData(
                     job_name="test_job", transcription_service=mock_adapter.name
-                )
-                mock_check_transcription.return_value = TranscriptionJobMessageData(
-                    job_name="test_job",
-                    transcript=[{"text": "Test transcript", "speaker": "Speaker1", "start_time": 0.0, "end_time": 1.0}],
-                    transcription_service=mock_adapter.name,
                 )
 
                 result = await manager.perform_transcription_steps(mock_transcription)
 
                 assert result.job_name == "test_job"
-                assert result.transcript is not None
+                assert result.transcript is None
                 mock_start.assert_called_once_with(audio_file_path_or_recording=mock_recording)
-                mock_check_transcription.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_perform_transcription_steps_unknown_adapter_type(

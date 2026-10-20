@@ -188,6 +188,14 @@ class TranscriptionJobMessageData(BaseModel):
         default="synchronous",
     )
     transcript: list[DialogueEntry] | None = Field(description="Transcript of the transcription", default=None)
+    claim_token: datetime | None = Field(
+        description="Fencing token from the original claim, carried so async poll completions are fenced too",
+        default=None,
+    )
+    transcript_key: str | None = Field(
+        description="Provider output object to delete once the transcript is persisted",
+        default=None,
+    )
 
 
 class WorkerMessage(BaseModel):

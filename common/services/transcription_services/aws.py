@@ -1,6 +1,5 @@
 import asyncio
 import json
-import logging
 import uuid
 from pathlib import Path
 from typing import Any
@@ -13,7 +12,6 @@ from common.settings import get_settings
 from common.types import TranscriptionJobMessageData
 
 settings = get_settings()
-logger = logging.getLogger(__name__)
 
 
 class AWSTranscribeAdapter(TranscriptionAdapter):
@@ -32,8 +30,10 @@ class AWSTranscribeAdapter(TranscriptionAdapter):
         file_name = uuid.uuid4()
         job_name = f"minute-{settings.ENVIRONMENT}-transcription-job-{file_name}"
         s3_uri = f"s3://{settings.DATA_S3_BUCKET}/{audio_file_path_or_recording.s3_file_key}"
-        # Start transcription job
-        transcribe.start_transcription_job(
+        # Start transcription job. boto3 is synchronous; keep the call off the event
+        # loop so a slow AWS response cannot starve the worker heartbeat/renewers.
+        await asyncio.to_thread(
+            transcribe.start_transcription_job,
             TranscriptionJobName=job_name,
             Media={"MediaFileUri": s3_uri},
             OutputBucketName=settings.DATA_S3_BUCKET,
@@ -52,27 +52,24 @@ class AWSTranscribeAdapter(TranscriptionAdapter):
         for _ in range(retry_count):
             s3 = boto3.client("s3", region_name=settings.AWS_REGION)
             transcribe = boto3.client("transcribe", region_name=settings.AWS_REGION)
-            status = transcribe.get_transcription_job(TranscriptionJobName=data.job_name)
+            status = await asyncio.to_thread(transcribe.get_transcription_job, TranscriptionJobName=data.job_name)
             job_status = status["TranscriptionJob"]["TranscriptionJobStatus"]
 
             if job_status == "COMPLETED":
                 transcript_uri = status["TranscriptionJob"]["Transcript"]["TranscriptFileUri"]
                 transcript_key = transcript_uri.split(f"{settings.DATA_S3_BUCKET}/")[1]
 
-                # Get the transcript JSON from S3
-                response = s3.get_object(Bucket=settings.DATA_S3_BUCKET, Key=transcript_key)
+                # Get the transcript JSON from S3 (off the event loop)
+                response = await asyncio.to_thread(s3.get_object, Bucket=settings.DATA_S3_BUCKET, Key=transcript_key)
                 transcript_content = json.loads(response["Body"].read().decode("utf-8"))
 
                 # Extract and group audio segments
                 audio_segments = transcript_content.get("results", {}).get("audio_segments", [])
 
-                try:
-                    s3.delete_object(Bucket=settings.DATA_S3_BUCKET, Key=transcript_key)
-                except Exception as cleanup_error:  # noqa: BLE001
-                    logger.warning("Failed to delete transcript: %s", cleanup_error)
-
                 dialogue_entries = cls.convert_to_dialogue_entries(audio_segments)
-                return data.model_copy(update={"transcript": dialogue_entries})
+                # Not deleted here: a crash before the transcript is persisted must leave
+                # it re-readable on redelivery. The handler deletes it after the write.
+                return data.model_copy(update={"transcript": dialogue_entries, "transcript_key": transcript_key})
 
             elif job_status == "FAILED":
                 failure_reason = status["TranscriptionJob"].get("FailureReason", "Unknown error")

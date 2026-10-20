@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import tempfile
 import uuid
@@ -94,24 +95,22 @@ class TranscriptionServiceManager:
                     msg = "adapter not recognised"
                     raise RuntimeError(msg)
 
-        if not transcription_job.transcript:
-            transcription_job = await self.check_transcription(adapter.name, transcription_job)
         return transcription_job
 
     @classmethod
     async def get_recording_to_process(
         cls, recording: Recording, temp_file_path: Path, file_extension: str
     ) -> tuple[Recording, Path, float]:
-        num_channels = get_num_audio_channels(temp_file_path)
+        num_channels = await asyncio.to_thread(get_num_audio_channels, temp_file_path)
         if file_extension in SUPPORTED_FORMATS and num_channels == 1:
-            duration = get_duration(temp_file_path)
+            duration = await asyncio.to_thread(get_duration, temp_file_path)
             return recording, temp_file_path, duration
 
         with sentry_sdk.start_transaction(op="process", name="convert_mp3") as transaction:
             transaction.set_data("file_extension", file_extension)
-            new_file_path = convert_to_mp3(temp_file_path)
+            new_file_path = await asyncio.to_thread(convert_to_mp3, temp_file_path)
 
-        duration = get_duration(new_file_path)
+        duration = await asyncio.to_thread(get_duration, new_file_path)
 
         new_recording_id = uuid.uuid4()
         new_s3_key = str(Path(recording.s3_file_key).with_name(f"{new_recording_id}.mp3"))

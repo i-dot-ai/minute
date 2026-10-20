@@ -4,7 +4,7 @@ from enum import IntEnum, StrEnum, auto
 
 from pydantic import BaseModel, Field
 
-from common.database.postgres_models import ContentSource, DialogueEntry, HallucinationType, JobStatus, TemplateType
+from common.database.postgres_models import ContentSource, DialogueEntry, JobStatus, TemplateType
 
 
 class TranscriptionListFilter(StrEnum):
@@ -41,6 +41,12 @@ class TranscriptionCreateRequest(BaseModel):
     title: str | None = None
 
 
+class TranscriptionRetryRequest(BaseModel):
+    template_name: str
+    template_id: uuid.UUID | None = None
+    agenda: str | None = None
+
+
 class RecordingCreateRequest(BaseModel):
     file_extension: str
 
@@ -61,27 +67,6 @@ class TranscriptionConfirmResponse(BaseModel):
 class TranscriptionPatchRequest(BaseModel):
     title: str | None = None
     dialogue_entries: list[DialogueEntry] | None = None
-
-
-class ChatCreateRequest(BaseModel):
-    user_content: str
-
-
-class ChatGetResponse(BaseModel):
-    id: uuid.UUID
-    created_datetime: datetime
-    updated_datetime: datetime
-    user_content: str
-    assistant_content: str | None
-    status: JobStatus
-
-
-class ChatGetAllResponse(BaseModel):
-    chat: list[ChatGetResponse]
-
-
-class ChatCreateResponse(BaseModel):
-    id: uuid.UUID
 
 
 class GetUserResponse(BaseModel):
@@ -109,6 +94,7 @@ class TranscriptionGetResponse(BaseModel):
     dialogue_entries: list[DialogueEntry] | None
     status: JobStatus
     created_datetime: datetime
+    error: str | None = None
 
 
 class SingleRecording(BaseModel):
@@ -189,7 +175,6 @@ class TaskType(IntEnum):
     TRANSCRIPTION = 1
     MINUTE = 2
     EDIT = 3
-    INTERACTIVE = 4
 
 
 class EditMessageData(BaseModel):
@@ -203,21 +188,20 @@ class TranscriptionJobMessageData(BaseModel):
         default="synchronous",
     )
     transcript: list[DialogueEntry] | None = Field(description="Transcript of the transcription", default=None)
+    claim_token: datetime | None = Field(
+        description="Fencing token from the original claim, carried so async poll completions are fenced too",
+        default=None,
+    )
+    transcript_key: str | None = Field(
+        description="Provider output object to delete once the transcript is persisted",
+        default=None,
+    )
 
 
 class WorkerMessage(BaseModel):
     id: uuid.UUID
     type: TaskType
     data: EditMessageData | TranscriptionJobMessageData | None = Field(default=None)
-
-
-class LLMHallucination(BaseModel):
-    hallucination_type: HallucinationType = Field(description="Type of hallucination")
-    hallucination_text: str | None = Field(description="Text of hallucination", default=None)
-    hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
-
-
-MinuteAndHallucinations = tuple[str, list[LLMHallucination] | None]
 
 
 class MeetingType(StrEnum):

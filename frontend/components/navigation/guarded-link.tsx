@@ -3,13 +3,14 @@
 import { useLockNavigationContext } from '@/hooks/use-lock-navigation-context'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import posthog from 'posthog-js'
 import { ComponentProps } from 'react'
 
 type GuardedLinkProps = ComponentProps<typeof Link>
 
 export const GuardedLink = ({ href, onClick, ...props }: GuardedLinkProps) => {
   const router = useRouter()
-  const { requestNavigation } = useLockNavigationContext()
+  const { lockNavigation, requestNavigation } = useLockNavigationContext()
 
   return (
     <Link
@@ -27,6 +28,11 @@ export const GuardedLink = ({ href, onClick, ...props }: GuardedLinkProps) => {
           props.target === '_blank'
         ) {
           return
+        }
+        if (lockNavigation) {
+          posthog.capture('guarded_link_clicked', {
+            destination: String(href),
+          })
         }
         // Always drive navigation through router.push so Link doesn't navigate
         // in parallel; requestNavigation runs it now or defers it behind the guard.

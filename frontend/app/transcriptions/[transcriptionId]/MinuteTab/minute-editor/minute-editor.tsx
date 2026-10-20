@@ -161,6 +161,10 @@ export function MinuteEditor({
     (data: MinuteEditorForm) => {
       setEditBaseline(null)
       if (data.html != minuteVersion?.html_content) {
+        posthog.capture('summary_edited', {
+          transcriptionId: transcription.id,
+          summaryId: minute?.id,
+        })
         saveEdit(
           {
             path: { minute_id: minute.id! },
@@ -175,7 +179,13 @@ export function MinuteEditor({
         setIsEditable(false)
       }
     },
-    [minute.id, minuteVersion?.html_content, onSuccess, saveEdit]
+    [
+      minute.id,
+      minuteVersion?.html_content,
+      onSuccess,
+      saveEdit,
+      transcription.id,
+    ]
   )
   const onCancel = useCallback(async () => {
     const baseline = editBaseline

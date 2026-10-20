@@ -7,6 +7,7 @@ import { AudioDevice } from '@/components/audio/microphone-permission'
 import { useRecordingSession } from '@/providers/recording-session-provider'
 import { Mic, Video, Upload, Info, Settings2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import posthog from 'posthog-js'
 import { useState, useEffect, useRef } from 'react'
 import { useOfflineRecordings } from '@/components/recent-meetings/use-offline-recordings'
 import UrlMigrationBanner from '@/components/url-migration-banner'
@@ -68,6 +69,7 @@ export default function Home() {
         setMicDenied(false)
       } catch (error) {
         console.error(error)
+        posthog.capture('mic_start_failed', { source: 'record_page_init' })
         if (error instanceof DOMException && error.name === 'NotAllowedError') {
           setMicDenied(true)
         }
@@ -86,6 +88,7 @@ export default function Home() {
         session.setScreenStream(stream)
       } catch (error) {
         console.warn('Screen share cancelled or unavailable', error)
+        posthog.capture('screen_share_cancelled')
         return
       }
     }
@@ -242,7 +245,16 @@ export default function Home() {
                         page and allow access to the microphone.
                       </p>
                     </div>
-                    <details className="govuk-details">
+                    <details
+                      className="govuk-details"
+                      onToggle={(e) => {
+                        if (e.currentTarget.open) {
+                          posthog.capture('details_expanded', {
+                            which: 'mic_access_instructions',
+                          })
+                        }
+                      }}
+                    >
                       <summary className="govuk-details__summary">
                         <span className="govuk-details__summary-text">
                           Instructions to enable microphone access if problem
@@ -405,6 +417,13 @@ export default function Home() {
                       <details
                         className="govuk-details"
                         id="virtual-meeting-audio-not-picking-up"
+                        onToggle={(e) => {
+                          if (e.currentTarget.open) {
+                            posthog.capture('details_expanded', {
+                              which: 'audio_screenshare_not_picking_up',
+                            })
+                          }
+                        }}
                       >
                         <summary className="govuk-details__summary">
                           <span className="govuk-details__summary-text">

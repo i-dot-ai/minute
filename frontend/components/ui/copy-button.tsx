@@ -19,11 +19,8 @@ function CopyButton({
   posthogProperties,
   onCopied,
 }: CopyButtonProps) {
-  const stripHtmlTags = (html: string) => {
-    const tmp = document.createElement('DIV')
-    tmp.innerHTML = html
-    return tmp.textContent || tmp.innerText || ''
-  }
+  const stripHtmlTags = (html: string) =>
+    new DOMParser().parseFromString(html, 'text/html').body.textContent ?? ''
 
   const handleCopy = async () => {
     try {

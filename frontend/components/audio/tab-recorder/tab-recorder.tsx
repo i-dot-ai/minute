@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import posthog from 'posthog-js'
+
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
@@ -61,6 +63,7 @@ export const TabRecorderForm = ({
               initialScreenStream={screenStream}
               onDiscard={onDiscard}
               onGenerate={() => setGenerateRequested(true)}
+              isFinishing={isFinishing}
             />
           )}
         />
@@ -87,6 +90,7 @@ function TabRecorder({
   initialScreenStream,
   onDiscard,
   onGenerate,
+  isFinishing,
 }: {
   recordedAudio: Blob | null
   setRecordedAudio: (blob: Blob | null) => void
@@ -95,6 +99,7 @@ function TabRecorder({
   initialScreenStream?: MediaStream | null
   onDiscard?: () => void
   onGenerate?: () => void
+  isFinishing?: boolean
 }) {
   // When a device is handed in pre-resolved (from the home page), permission is
   // already granted upstream — so skip the cold flow and start recording immediately.
@@ -115,7 +120,7 @@ function TabRecorder({
   const streamRef = useRef<MediaStream | null>(null)
   const screenStreamRef = useRef<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
-  useTabCloseWarning(isRecording || !!recordedAudio)
+  useTabCloseWarning((isRecording || !!recordedAudio) && !isFinishing)
 
   const stopAllTracks = useCallback(() => {
     if (streamRef.current) {
@@ -245,6 +250,10 @@ function TabRecorder({
           'Could not access microphone. Recording only tab audio.',
           micError
         )
+        posthog.capture('mic_start_failed', {
+          source: 'tab_recorder',
+          recording_continued: true,
+        })
       }
 
       const composedStream = new MediaStream()

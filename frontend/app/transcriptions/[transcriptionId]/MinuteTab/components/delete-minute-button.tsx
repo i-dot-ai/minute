@@ -16,7 +16,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 export function DeleteMinuteButton({
   minute,
@@ -30,6 +30,7 @@ export function DeleteMinuteButton({
   const [open, setOpen] = useState(false)
   const queryClient = useQueryClient()
   const router = useRouter()
+  const confirmedRef = useRef(false)
   const { mutate: deleteMinute, isPending } = useMutation({
     ...deleteMinuteMinutesMinuteIdDeleteMutation(),
     onSuccess() {
@@ -47,6 +48,17 @@ export function DeleteMinuteButton({
     },
   })
 
+  const handleOpenChange = (next: boolean) => {
+    if (!next && !confirmedRef.current) {
+      posthog.capture('delete_modal_cancelled', {
+        entity_type: 'minute',
+        bulk: false,
+      })
+    }
+    confirmedRef.current = false
+    setOpen(next)
+  }
+
   return (
     <>
       <button
@@ -58,7 +70,7 @@ export function DeleteMinuteButton({
       >
         Delete summary
       </button>
-      <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialog open={open} onOpenChange={handleOpenChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="govuk-heading-l">
@@ -96,7 +108,10 @@ export function DeleteMinuteButton({
               type="button"
               className="govuk-button govuk-button--warning"
               disabled={isPending}
-              onClick={() => deleteMinute({ path: { minute_id: minute.id! } })}
+              onClick={() => {
+                confirmedRef.current = true
+                deleteMinute({ path: { minute_id: minute.id! } })
+              }}
             >
               Delete summary
             </button>

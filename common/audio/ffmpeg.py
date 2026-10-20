@@ -109,7 +109,7 @@ def get_duration(file_path: Path) -> float:
         if result.returncode != 0:
             msg = f"ffprobe command failed with return code {result.returncode},ffprobe stderr: {result.stderr}"
             logger.error(msg)
-            return 2
+            return 14400.0
         duration = result.stdout.strip()
         duration = float(duration)
         msg = f"Successfully got duration using ffprobe: {duration=}"

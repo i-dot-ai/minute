@@ -56,7 +56,6 @@ class MinuteVersion(BaseTableMixin, table=True):
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     minute_id: UUID = Field(foreign_key="minute.id", ondelete="CASCADE")
     minute: Mapped["Minute"] = Relationship(back_populates="minute_versions")
-    hallucinations: list["Hallucination"] = Relationship(back_populates="minute_version", cascade_delete=True)
     html_content: str = Field(default="", sa_column_kwargs={"server_default": ""})
     status: JobStatus = Field(
         default=JobStatus.AWAITING_START, sa_column_kwargs={"server_default": JobStatus.AWAITING_START.name}
@@ -91,25 +90,6 @@ class Minute(BaseTableMixin, table=True):
     )
 
 
-class HallucinationType(StrEnum):
-    FACTUAL_FABRICATION = auto()
-    NONSENSICAL = auto()
-    CONTRADICTION = auto()
-    MISLEADING = auto()
-    OTHER = auto()
-
-
-class Hallucination(BaseTableMixin, table=True):
-    __tablename__ = "hallucination"
-    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
-    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
-    minute_version_id: UUID = Field(foreign_key="minute_version.id", ondelete="CASCADE")
-    minute_version: MinuteVersion = Relationship(back_populates="hallucinations")
-    hallucination_type: HallucinationType = Field(description="Type of hallucination", default=HallucinationType.OTHER)
-    hallucination_text: str | None = Field(description="Text of hallucination", default=None)
-    hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
-
-
 # Main models with table=True for DB tables
 class User(BaseTableMixin, table=True):
     __tablename__ = "user"
@@ -138,22 +118,11 @@ class Recording(BaseTableMixin, table=True):
     transcription: "Transcription" = Relationship(back_populates="recordings")
 
 
-class Chat(BaseTableMixin, table=True):
-    __tablename__ = "chat"
-    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
-    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
-    transcription_id: UUID = Field(foreign_key="transcription.id", ondelete="CASCADE")
-    transcription: Mapped["Transcription"] = Relationship(back_populates="chat")
-    user_content: str = Field(default=None)
-    assistant_content: str | None = Field(default=None)
-    status: JobStatus = Field(
-        default=JobStatus.AWAITING_START, sa_column_kwargs={"server_default": JobStatus.AWAITING_START.name}
-    )
-    error: str | None = Field(default=None)
-
-
 class Transcription(BaseTableMixin, table=True):
     __tablename__ = "transcription"
+    __table_args__ = (
+        Index("ix_transcription_title_trgm", "title", postgresql_using="gin", postgresql_ops={"title": "gin_trgm_ops"}),
+    )
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     title: str | None = Field(default=None)
@@ -169,18 +138,9 @@ class Transcription(BaseTableMixin, table=True):
         cascade_delete=True,
         sa_relationship_kwargs={"order_by": col(Minute.created_datetime).desc()},
     )
-
-    # Kept old minute versions so we can migrate them
-    legacy_minute_versions: list[dict] | None = Field(sa_column=Column(name="minute_versions", type_=JSONB), default=[])
-
     recordings: Mapped[list[Recording]] = Relationship(
         back_populates="transcription",
         sa_relationship_kwargs={"order_by": col(Recording.created_datetime).desc()},
-    )
-    chat: list[Chat] = Relationship(
-        back_populates="transcription",
-        cascade_delete=True,
-        sa_relationship_kwargs={"order_by": col(Chat.created_datetime).desc()},
     )
 
 
@@ -209,7 +169,9 @@ class UserTemplate(BaseTableMixin, table=True):
     content: str
     description: str = ""
 
-    type: TemplateType = TemplateType.DOCUMENT
+    type: TemplateType = Field(
+        default=TemplateType.DOCUMENT, sa_column_kwargs={"server_default": TemplateType.DOCUMENT.name}
+    )
 
     user_id: UUID | None = Field(default=None, foreign_key="user.id")
 

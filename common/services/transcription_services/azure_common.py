@@ -2,8 +2,6 @@ from typing import Any
 
 from common.database.postgres_models import DialogueEntry
 
-TOO_MANY_REQUESTS = 429
-
 
 def convert_to_dialogue_entries(phrases: list[dict[str, Any]]) -> list[DialogueEntry]:
     return [

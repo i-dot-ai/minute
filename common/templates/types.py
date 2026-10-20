@@ -5,7 +5,7 @@ from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_section_for_agenda_prompt, string_to_system_message
 from common.settings import get_settings
 from common.templates.citations import add_citations_to_minute
-from common.types import AgendaUsage, MinuteAndHallucinations
+from common.types import AgendaUsage
 
 settings = get_settings()
 
@@ -14,7 +14,7 @@ class Template(Protocol):
     """Protocol for defining a template.
 
     This class describes the structure and required properties for templates,
-    as well as the necessary method for generating `MinuteAndHallucinations`.
+    as well as the necessary method for generating minutes.
     Templates are categorized with specific metadata such as name, description,
     and category.
 
@@ -36,17 +36,16 @@ class Template(Protocol):
     async def generate(
         cls,
         minute: Minute,
-    ) -> MinuteAndHallucinations:
+    ) -> str:
         """
-        Asynchronously generates a Minute and any potential Hallucinations.
+        Asynchronously generates a minute.
 
         Args:
             minute (Minute): A `Minute` instance containing information for which
                 data is to be generated.
 
         Returns:
-            MinuteAndHallucinations: An object containing the processed Minute data
-                and the generated hallucination-related information.
+            The generated minute.
         """
         ...
 
@@ -56,7 +55,6 @@ class SimpleTemplate(Template, Protocol):
 
     This class defines methods for creating prompts from dialogue entries and optional
     agendas, as well as handling the generation of structured outputs (like minutes)
-    and identifying hallucinations in AI outputs. The class is particularly useful for
     workflows involving AI-generated summaries or structured text construction.
 
     Attributes:
@@ -92,15 +90,14 @@ class SimpleTemplate(Template, Protocol):
     async def generate(
         cls,
         minute: Minute,
-    ) -> MinuteAndHallucinations:
+    ) -> str:
         chatbot = create_default_chatbot(FastOrBestLLM.BEST)
         minutes = await chatbot.chat(cls.prompt(minute.transcription.dialogue_entries, minute.agenda))
-        hallucinations = await chatbot.hallucination_check()
         if cls.citations_required:
             minutes = await add_citations_to_minute(
                 transcript=minute.transcription.dialogue_entries, initial_draft=minutes
             )
-        return minutes, hallucinations
+        return minutes
 
 
 class SectionTemplate(Template, Protocol):
@@ -111,8 +108,8 @@ class SectionTemplate(Template, Protocol):
     entries and agendas, processing them via a chatbot system, and
     optionally incorporating citations. It provides methods for generating
     prompts, creating sections, and generating a final structured draft
-    with additional features like hallucination check and citation
-    inclusion. It is useful for elucidating more detail on the specified sections than the standard SimpleTemplate.
+    with optional citation inclusion. It is useful for elucidating more detail on the specified sections than the
+    standard SimpleTemplate.
 
     Attributes:
         citations_required (bool): Specifies if citations are required for
@@ -163,12 +160,11 @@ class SectionTemplate(Template, Protocol):
     async def generate(
         cls,
         minute: Minute,
-    ) -> MinuteAndHallucinations:
+    ) -> str:
         transcript = minute.transcription.dialogue_entries
         sections = await cls.sections(transcript, minute.agenda)
         # Generate content for each section
         final_sections = []
-        all_hallucinations = []
         chatbot = create_default_chatbot(FastOrBestLLM.BEST)
         for i, section in enumerate(sections):
             if i == 0:
@@ -180,12 +176,9 @@ class SectionTemplate(Template, Protocol):
                     ]
                 )
                 final_sections.append(section_contents)
-                all_hallucinations = await chatbot.hallucination_check()
             else:
                 section_contents = await chatbot.chat([get_section_for_agenda_prompt(section)])
                 final_sections.append(section_contents)
-                hallucinations = await chatbot.hallucination_check()
-                all_hallucinations.extend(hallucinations)
 
         initial_draft = "\n".join(final_sections)
         if cls.citations_required:
@@ -193,4 +186,4 @@ class SectionTemplate(Template, Protocol):
         else:
             final_minutes = initial_draft
 
-        return final_minutes, all_hallucinations
+        return final_minutes

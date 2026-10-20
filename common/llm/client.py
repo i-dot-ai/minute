@@ -12,9 +12,7 @@ from tenacity import (
 )
 
 from common.llm.adapters import GeminiModelAdapter, ModelAdapter, OpenAIModelAdapter
-from common.prompts import get_hallucination_detection_messages
 from common.settings import get_settings
-from common.types import LLMHallucination
 
 settings = get_settings()
 T = TypeVar("T", bound=BaseModel)
@@ -28,13 +26,13 @@ DEFAULT_TEMPERATURE = 1.0
 
 class ChatBot:
     """
-    Represents an interface for engaging in conversational AI tasks, including general chat,
-    structured interactions, and hallucination detection.
+    Represents an interface for engaging in conversational AI tasks, including general chat
+    and structured interactions.
 
     This class provides methods for interacting with an underlying model adapter to perform various
     chat functionalities. It includes support for retry mechanisms to ensure robust performance in
     case of failures, with methods optimized for both general conversation and specific structured
-    responses. The hallucination detection method is available for examining the accuracy of responses.
+    responses.
 
     Attributes:
         adapter (ModelAdapter): The underlying adapter interface that handles communication
@@ -44,13 +42,6 @@ class ChatBot:
     def __init__(self, adapter: ModelAdapter) -> None:
         self.adapter = adapter
         self.messages = []
-
-    async def hallucination_check(self) -> list[LLMHallucination]:
-        if settings.HALLUCINATION_CHECK:
-            return await self.structured_chat(
-                messages=get_hallucination_detection_messages(), response_format=list[LLMHallucination]
-            )
-        return []
 
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
     async def chat(self, messages: list[dict[str, str]]) -> str:

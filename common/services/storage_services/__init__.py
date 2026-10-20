@@ -1,11 +1,9 @@
-from .azure_blob import AzureBlobStorageService
 from .base import StorageService
 from .local.local import LocalStorageService
 from .s3 import S3StorageService
 
 storage_services = {
     S3StorageService.name: S3StorageService,
-    AzureBlobStorageService.name: AzureBlobStorageService,
     LocalStorageService.name: LocalStorageService,
 }
 

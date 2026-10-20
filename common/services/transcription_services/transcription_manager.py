@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import tempfile
 import uuid
@@ -14,7 +15,6 @@ from common.services.storage_services import get_storage_service
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.services.transcription_services.aws import AWSTranscribeAdapter
 from common.services.transcription_services.azure import AzureSpeechAdapter
-from common.services.transcription_services.azure_async import AzureBatchTranscriptionAdapter
 from common.settings import get_settings
 from common.types import TranscriptionJobMessageData
 
@@ -23,9 +23,7 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 SUPPORTED_FORMATS = {".mp3"}
 # add any new adapters here
-_adapters = {
-    adapter.name: adapter for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter, AzureBatchTranscriptionAdapter]
-}
+_adapters = {adapter.name: adapter for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter]}
 storage_service = get_storage_service(get_settings().STORAGE_SERVICE_NAME)
 
 
@@ -97,24 +95,22 @@ class TranscriptionServiceManager:
                     msg = "adapter not recognised"
                     raise RuntimeError(msg)
 
-        if not transcription_job.transcript:
-            transcription_job = await self.check_transcription(adapter.name, transcription_job)
         return transcription_job
 
     @classmethod
     async def get_recording_to_process(
         cls, recording: Recording, temp_file_path: Path, file_extension: str
     ) -> tuple[Recording, Path, float]:
-        num_channels = get_num_audio_channels(temp_file_path)
+        num_channels = await asyncio.to_thread(get_num_audio_channels, temp_file_path)
         if file_extension in SUPPORTED_FORMATS and num_channels == 1:
-            duration = get_duration(temp_file_path)
+            duration = await asyncio.to_thread(get_duration, temp_file_path)
             return recording, temp_file_path, duration
 
         with sentry_sdk.start_transaction(op="process", name="convert_mp3") as transaction:
             transaction.set_data("file_extension", file_extension)
-            new_file_path = convert_to_mp3(temp_file_path)
+            new_file_path = await asyncio.to_thread(convert_to_mp3, temp_file_path)
 
-        duration = get_duration(new_file_path)
+        duration = await asyncio.to_thread(get_duration, new_file_path)
 
         new_recording_id = uuid.uuid4()
         new_s3_key = str(Path(recording.s3_file_key).with_name(f"{new_recording_id}.mp3"))

@@ -36,5 +36,10 @@ COPY alembic.ini alembic.ini
 EXPOSE 8080
 RUN chmod +x backend/entrypoint.sh
 
+# Run as a non-root user. chown /app so the entrypoint can write runtime files
+# (e.g. /app/config/google-credentials.json).
+RUN useradd --create-home appuser && chown -R appuser /app
+USER appuser
+
 # Command to run the FastAPI app using Uvicorn
 ENTRYPOINT ["backend/entrypoint.sh"]

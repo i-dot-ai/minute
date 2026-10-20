@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import posthog from 'posthog-js'
+
 import RecordingControl from './recording-control'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -63,6 +65,7 @@ export function MicRecorderForm({
               onDiscard={onDiscard}
               onGenerate={() => setGenerateRequested(true)}
               onRecordingFailed={onRecordingFailed}
+              isFinishing={isFinishing}
             />
           )}
         />
@@ -89,6 +92,7 @@ function MicRecorderComponent({
   onDiscard,
   onGenerate,
   onRecordingFailed,
+  isFinishing,
 }: {
   recordedAudio: Blob | null
   setRecordedAudio: (blob: Blob | null) => void
@@ -97,6 +101,7 @@ function MicRecorderComponent({
   onDiscard?: () => void
   onGenerate?: () => void
   onRecordingFailed?: () => void
+  isFinishing?: boolean
 }) {
   // When a device is handed in pre-resolved (from the home page), permission is
   // already granted upstream — so skip the cold flow and start recording immediately.
@@ -204,6 +209,7 @@ function MicRecorderComponent({
       setIsRecording(true)
     } catch (micError) {
       console.warn('Error occurred starting audio recording.', micError)
+      posthog.capture('mic_start_failed', { source: 'mic_recorder' })
     }
     // Create a media recorder from the composed stream
   }, [
@@ -262,7 +268,7 @@ function MicRecorderComponent({
     }
   }, [])
 
-  useTabCloseWarning(!!recordedAudio || isRecording)
+  useTabCloseWarning((!!recordedAudio || isRecording) && !isFinishing)
 
   return (
     <div>

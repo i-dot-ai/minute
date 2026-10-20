@@ -6,7 +6,7 @@ from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_transcript_messages
 from common.templates.citations import add_citations_to_minute
 from common.templates.types import Template
-from common.types import AgendaUsage, MinuteAndHallucinations
+from common.types import AgendaUsage
 
 
 class DeliveryMeetingSection(BaseModel):
@@ -73,7 +73,7 @@ The sections should be in the order they appear in the transcript. Typically you
     async def generate(
         cls,
         minute: Minute,
-    ) -> MinuteAndHallucinations:
+    ) -> str:
         chatbot = create_default_chatbot(FastOrBestLLM.BEST)
         initial_messages = cls.get_system_message_for_delivery(minute.transcription.dialogue_entries)
         # meeting sections
@@ -81,7 +81,6 @@ The sections should be in the order they appear in the transcript. Typically you
         sections: DeliveryMeetingSections = await chatbot.structured_chat(
             initial_messages, response_format=DeliveryMeetingSections
         )
-        hallucinations = await chatbot.hallucination_check()
         # attendees
         attendee_list = await chatbot.structured_chat([cls.get_messages_for_attendees()], response_format=AttendeeList)
 
@@ -102,6 +101,6 @@ The sections should be in the order they appear in the transcript. Typically you
                 initial_draft += action_block
                 action_index += 1
 
-        final = header + "\n\n" + initial_draft
-        final = await add_citations_to_minute(transcript=minute.transcription.dialogue_entries, initial_draft=final)
-        return final, hallucinations
+        return await add_citations_to_minute(
+            transcript=minute.transcription.dialogue_entries, initial_draft=header + "\n\n" + initial_draft
+        )

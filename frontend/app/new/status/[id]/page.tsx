@@ -24,6 +24,7 @@ import {
   ProcessingPhase,
 } from '@/lib/processing-estimate'
 import { readRecordingDurationSec } from '@/lib/recording-duration'
+import { getTranscriptionErrorMessage } from '@/lib/transcription-error'
 
 const GENERATING_STATUSES = ['awaiting_start', 'in_progress']
 
@@ -246,7 +247,7 @@ export default function RecordStatusPage({
                   </p>
 
                   <p className="govuk-body">
-                    Please try again. If it continues to fail,{' '}
+                    {getTranscriptionErrorMessage(transcription.error)}
                     <Link href="/support" className="govuk-link">
                       contact support
                     </Link>
@@ -279,9 +280,8 @@ export default function RecordStatusPage({
                     ) : (
                       recordings[0] && (
                         <RetryTranscriptionDialog
-                          recordingId={recordings[0].id}
+                          transcriptionId={id}
                           agenda={minutes[0]?.agenda ?? undefined}
-                          title={transcription.title ?? undefined}
                         />
                       )
                     )}

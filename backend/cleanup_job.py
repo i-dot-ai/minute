@@ -62,7 +62,7 @@ async def cleanup_old_records():
 async def delete_orphan_records():
     logger.info("Starting recording clean up")
     async with AsyncSession(async_engine) as session:
-        orphan_recording_query = select(Recording).where(col(Recording.transcription_id).is_(None))
+        orphan_recording_query = select(Recording).where(col(Recording.transcription_id).is_(None)).with_for_update()
         recordings = (await session.exec(orphan_recording_query)).all()
         logger.info("Found %d Recordings with no Transcription.", len(recordings))
         for recording in recordings:
@@ -70,7 +70,6 @@ async def delete_orphan_records():
                 exists = await storage_service.check_object_exists(recording.s3_file_key)
                 if exists:
                     await storage_service.delete(recording.s3_file_key)
-                await storage_service.delete(recording.s3_file_key)
             except Exception as e:  # noqa: BLE001
                 msg = f"Error deleting recording {recording.id}. Will keep record in database: {e}"
                 logger.error(msg)

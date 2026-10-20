@@ -52,7 +52,6 @@ services:
     ports:
       - "8265:8265"
     volumes:
-      - ${WORKER_TMP:-./.worker-tmp}:/tmp
       - type: bind
         source: ./.data
         target: /static
@@ -72,8 +71,8 @@ services:
       # Direct interpreter call (venv is on PATH); avoids `uv run` touching
       # /app/.venv on a timer while Ray is running off the same venv.
       test: ["CMD-SHELL", "python worker/healthcheck.py"]
-      interval: 60s
-      retries: 3
+      interval: 30s
+      retries: 2
       start_period: 60s
       timeout: 5s
     develop:
@@ -107,6 +106,12 @@ services:
       - NEXT_PUBLIC_POSTHOG_API_KEY=$POSTHOG_API_KEY
     volumes:
       - next_data:/app/.next
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:3000/health || exit 1"]
+      interval: 10s
+      retries: 12
+      start_period: 30s
+      timeout: 5s
     develop:
       watch:
         - path: ./frontend

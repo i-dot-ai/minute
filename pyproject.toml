@@ -10,6 +10,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
+    "certifi>=2026.10.19",
     "cryptography>=44.0.2,<45",
     "pydantic-settings>=2.5.2,<3",
     "alembic>=1.13.3,<2",
@@ -78,6 +79,8 @@ skip = [
 ]
 
 [tool.uv]
+required-version = ">=0.13.5"
+constraint-dependencies = ["pip>=26.2.2"]
 default-groups = "all"
 override-dependencies = [
     "wrapt>=2.4.0",

@@ -3,6 +3,7 @@ revision = 5
 requires-python = "==3.12.*"
 
 [manifest]
+constraints = [{ name = "pip", specifier = ">=26.2.2" }]
 overrides = [{ name = "wrapt", specifier = ">=2.4.0" }]
 
 [[package]]
@@ -1088,6 +1089,7 @@ dependencies = [
     { name = "asyncpg" },
     { name = "boto3" },
     { name = "breame" },
+    { name = "certifi" },
     { name = "cryptography" },
     { name = "fastapi" },
     { name = "httpx" },
@@ -1145,6 +1147,7 @@ requires-dist = [
     { name = "asyncpg", specifier = ">=0.30.0,<0.31" },
     { name = "boto3", specifier = ">=1.35.3,<2" },
     { name = "breame", specifier = ">=0.1.2,<0.2" },
+    { name = "certifi", specifier = ">=2026.10.19" },
     { name = "cryptography", specifier = ">=44.0.2,<45" },
     { name = "fastapi", specifier = ">=0.112.0" },
     { name = "httpx", specifier = ">=0.28.1,<0.29" },

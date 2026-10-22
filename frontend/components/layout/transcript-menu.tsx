@@ -32,17 +32,15 @@ export function TranscriptMenu() {
   if (!transcriptionId) return null
   const transcriptPage = !pathname.includes('/summary')
 
-  console.log(transcriptPage)
-
   return (
-    <div className="w-[200px]">
-      <h2 className="govuk-!-margin-left-4 govuk-!-padding-top-2 govuk-!-padding-bottom-2 text-[0.875rem]">
+    <div className="w-[150px] lg:w-[200px]">
+      <h2 className="ml-2 lg:ml-5 govuk-!-padding-top-2 govuk-!-padding-bottom-2 text-[0.875rem]">
         {transcription?.title}
       </h2>
-      <ul className="govuk-list govuk-!-margin-left-4">
+      <ul className="govuk-list ml-2 lg:ml-5">
         <li
           id="tour-transcript"
-          className={`govuk-!-padding-top-1 govuk-!-padding-bottom-1 flex-1 border-l-4 border-[transparent] pl-4 ${transcriptPage ? '!border-(--govuk-link-colour) bg-[#d2e2f1] font-bold' : ''}`}
+          className={`govuk-!-padding-top-1 rounded-xs govuk-!-padding-bottom-1 flex-1 pl-2 lg:pl-4 ${transcriptPage ? ' bg-[#d2e2f1] font-bold' : ''}`}
         >
           <Link
             href={`/transcriptions/${transcriptionId}/transcript`}
@@ -55,7 +53,7 @@ export function TranscriptMenu() {
         <li id="tour-summaries" className="govuk-!-margin-bottom-0 flex-1">
           <button
             onClick={() => setAreSummariesCollapsed((prev) => !prev)}
-            className="govuk-!-padding-left-4 govuk-!-padding-right-2 govuk-!-padding-top-1 govuk-!-padding-bottom-1 flex w-full cursor-pointer items-center justify-between hover:bg-[#d2e2f1]"
+            className="pl-2 lg:pl-4 govuk-!-padding-right-2 govuk-!-padding-top-1 govuk-!-padding-bottom-1 flex w-full cursor-pointer items-center justify-between hover:bg-[#d2e2f1]"
           >
             <h2 className="govuk-caption-s text-[0.875rem] font-normal text-(--govuk-text-colour)">
               Summaries
@@ -66,7 +64,7 @@ export function TranscriptMenu() {
             </span>
           </button>
           {!areSummariesCollapsed && (
-            <ul className="govuk-list govuk-!-margin-bottom-0 govuk-!-margin-left-4">
+            <ul className="govuk-list govuk-!-margin-bottom-0 ml-2 lg:ml-5">
               {minutes.map((minute) => {
                 const date = new Date(
                   minute.updated_datetime
@@ -82,7 +80,7 @@ export function TranscriptMenu() {
                 return (
                   <li
                     key={minute.id}
-                    className={`govuk-!-padding-left-3 govuk-!-padding-right-2 govuk-!-margin-0 flex-1 border-l-4 border-[#8eb8dc] py-1 ${isActive ? '!border-(--govuk-link-colour) bg-[#d2e2f1] font-bold' : ''}`}
+                    className={`govuk-!-padding-left-3 rounded-xs govuk-!-padding-right-2 govuk-!-margin-0 flex-1 py-1 ${isActive ? 'bg-[#d2e2f1] font-bold' : ''}`}
                   >
                     <Link
                       href={href}
@@ -100,7 +98,7 @@ export function TranscriptMenu() {
               })}
               {minutes.length === 0 && (
                 <li
-                    className={`govuk-!-padding-left-3 govuk-!-padding-right-2 govuk-!-margin-0 flex-1 border-l-4 border-[#8eb8dc] py-1 ${transcriptPage ? '' : '!border-(--govuk-link-colour) bg-[#d2e2f1] font-bold'}`}
+                    className={`govuk-!-padding-left-3 rounded-xs govuk-!-padding-right-2 govuk-!-margin-0 flex-1 py-1 ${transcriptPage ? '' : 'bg-[#d2e2f1] font-bold'}`}
                 >
                   <Link
                     href={`/transcriptions/${transcriptionId}/summary`}

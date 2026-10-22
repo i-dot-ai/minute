@@ -9,8 +9,8 @@ from sqlalchemy import and_, or_, update
 from sqlmodel import SQLModel
 
 from common.database.postgres_database import SessionLocal
-from common.database.postgres_models import JobStatus
 from common.settings import CLAIM_STALE_AFTER
+from common.types import JobStatus
 
 logger = logging.getLogger(__name__)
 CLAIM_RENEW_INTERVAL_SECONDS = 60

@@ -1,7 +1,11 @@
 from i_dot_ai_utilities.auth.auth_api import AuthApiClient, UserAuthorisationResult
 
-from common.services.exceptions import MissingAuthTokenError
 from common.settings import get_settings, get_structured_logger
+
+
+class MissingAuthTokenError(Exception):
+    """Raised when an auth token is not provided where required."""
+
 
 settings = get_settings()
 logger = get_structured_logger()

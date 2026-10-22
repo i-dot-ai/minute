@@ -1,4 +1,4 @@
-"""Tests for the crash-recovery semantics of claim_transcription and claim_minute_version.
+"""Tests for the crash-recovery semantics of the transcription and minute version claims.
 
 A live claim (fresh IN_PROGRESS) must not be stealable; a stale claim (older than
 CLAIM_STALE_AFTER, i.e. the claiming worker died) must be reclaimable, resetting
@@ -17,17 +17,12 @@ from sqlmodel import delete
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.database.postgres_database import async_engine
-from common.database.postgres_models import (
-    JobStatus,
-    Minute,
-    MinuteVersion,
-    Recording,
-    Transcription,
-)
-from common.services.job_claim import JobClaimRenewer
+from common.database.postgres_models import Minute, MinuteVersion, Recording, Transcription
+from common.services.job_claim import JobClaimRenewer, claim_job
 from common.services.minute_handler_service import MinuteHandlerService
-from common.services.transcription_handler_service import TranscriptionHandlerService
 from common.settings import CLAIM_STALE_AFTER
+from common.types import JobStatus
+from common.workflows.activities import _shared
 from tests.utils import get_or_create_user
 
 CUTOFF_NOW = datetime.now(UTC)
@@ -99,8 +94,8 @@ async def test_transcription_claim_guard_then_stale_reclaim(seeded_transcription
     transcription_id = seeded_transcription["transcription_id"]
 
     # fresh claim succeeds; a second delivery of the same message minutes later is a no-op
-    assert TranscriptionHandlerService.claim_transcription(transcription_id) is not None
-    assert TranscriptionHandlerService.claim_transcription(transcription_id) is None
+    assert claim_job(Transcription, transcription_id) is not None
+    assert claim_job(Transcription, transcription_id) is None
 
     # simulate the claimant crashing: the row stays IN_PROGRESS but ages past the window
     stale_updated = CUTOFF_NOW - CLAIM_STALE_AFTER - timedelta(minutes=5)
@@ -111,7 +106,7 @@ async def test_transcription_claim_guard_then_stale_reclaim(seeded_transcription
         await session.commit()
 
     # redelivery can reclaim the abandoned claim, and the age timer restarts
-    assert TranscriptionHandlerService.claim_transcription(transcription_id) is not None
+    assert claim_job(Transcription, transcription_id) is not None
 
     async with AsyncSession(async_engine) as session:
         transcription = await session.get(Transcription, transcription_id)
@@ -147,7 +142,7 @@ async def test_stale_claim_token_cannot_write(seeded_transcription):
     reclaims the job (its claim token no longer matches the row)."""
     transcription_id = seeded_transcription["transcription_id"]
 
-    stale_token = TranscriptionHandlerService.claim_transcription(transcription_id)
+    stale_token = claim_job(Transcription, transcription_id)
     assert stale_token is not None
 
     # the claimant is presumed dead and another worker reclaims the job
@@ -156,24 +151,14 @@ async def test_stale_claim_token_cannot_write(seeded_transcription):
         transcription.updated_datetime = CUTOFF_NOW - CLAIM_STALE_AFTER - timedelta(minutes=5)
         session.add(transcription)
         await session.commit()
-    fresh_token = TranscriptionHandlerService.claim_transcription(transcription_id)
+    fresh_token = claim_job(Transcription, transcription_id)
     assert fresh_token is not None
     assert fresh_token != stale_token
 
     # the original (superseded) worker finishing late cannot clobber the new owner
-    assert (
-        TranscriptionHandlerService.update_transcription(
-            transcription_id, status=JobStatus.COMPLETED, claim_token=stale_token
-        )
-        is False
-    )
+    assert await _shared.fenced_update(transcription_id, stale_token, status=JobStatus.COMPLETED) is False
     # the current owner's write still applies
-    assert (
-        TranscriptionHandlerService.update_transcription(
-            transcription_id, status=JobStatus.COMPLETED, claim_token=fresh_token
-        )
-        is True
-    )
+    assert await _shared.fenced_update(transcription_id, fresh_token, status=JobStatus.COMPLETED) is True
     async with AsyncSession(async_engine) as session:
         transcription = await session.get(Transcription, transcription_id)
         assert transcription.status == JobStatus.COMPLETED
@@ -184,7 +169,7 @@ async def test_job_claim_renewer_rotates_fencing_token(seeded_transcription):
     """Renewal is a short transaction: it rotates the fence token without holding
     a pooled connection across the surrounding job."""
     transcription_id = seeded_transcription["transcription_id"]
-    token = TranscriptionHandlerService.claim_transcription(transcription_id)
+    token = claim_job(Transcription, transcription_id)
     assert token is not None
 
     renewer = JobClaimRenewer(Transcription, transcription_id, token, interval=0.01)
@@ -192,15 +177,5 @@ async def test_job_claim_renewer_rotates_fencing_token(seeded_transcription):
         await asyncio.sleep(0.04)
 
     assert renewer.token != token
-    assert (
-        TranscriptionHandlerService.update_transcription(
-            transcription_id, status=JobStatus.COMPLETED, claim_token=token
-        )
-        is False
-    )
-    assert (
-        TranscriptionHandlerService.update_transcription(
-            transcription_id, status=JobStatus.COMPLETED, claim_token=renewer.token
-        )
-        is True
-    )
+    assert await _shared.fenced_update(transcription_id, token, status=JobStatus.COMPLETED) is False
+    assert await _shared.fenced_update(transcription_id, renewer.token, status=JobStatus.COMPLETED) is True

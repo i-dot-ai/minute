@@ -48,14 +48,14 @@ async def recordings() -> dict[str, uuid.UUID]:
 async def test_delete_orphan_records_keeps_attached_ones(recordings, monkeypatch):
     deleted_objects: list[str] = []
 
-    async def _exists(_key: str) -> bool:
+    async def _exists(_storage, _key: str) -> bool:
         return True
 
-    async def _delete(key: str) -> None:
+    async def _delete(_storage, key: str) -> None:
         deleted_objects.append(key)
 
-    monkeypatch.setattr("backend.cleanup_job.storage_service.check_object_exists", _exists)
-    monkeypatch.setattr("backend.cleanup_job.storage_service.delete", _delete)
+    monkeypatch.setattr("backend.cleanup_job.exists", _exists)
+    monkeypatch.setattr("backend.cleanup_job.delete", _delete)
 
     await delete_orphan_records()
 

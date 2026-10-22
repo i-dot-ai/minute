@@ -19,13 +19,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import get_user_info
 from common.database.postgres_database import async_engine
-from common.database.postgres_models import (
-    JobStatus,
-    Minute,
-    MinuteVersion,
-    Recording,
-    Transcription,
-)
+from common.database.postgres_models import Minute, MinuteVersion, Recording, Transcription
+from common.types import JobStatus
 from tests.utils import get_or_create_user, get_test_client
 
 SEED_TIME = datetime.now(UTC) - timedelta(minutes=10)
@@ -111,11 +106,11 @@ async def in_progress_transcription():
 def published_messages(monkeypatch):
     published: list = []
 
-    async def _object_exists(_key: str) -> bool:
+    async def _object_exists(_storage, _key: str) -> bool:
         return True
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.storage_service.check_object_exists",
+        "backend.api.routes.transcriptions.exists",
         _object_exists,
     )
     monkeypatch.setattr(

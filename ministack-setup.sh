@@ -22,32 +22,7 @@ export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-eu-west-2}"
 
 AWS="aws --endpoint-url $AWS_ENDPOINT_URL"
 
-################################
-## TRANSCRIPTION QUEUE
-################################
-
-TRANSCRIPTION_QUEUE_URL=$($AWS sqs create-queue --queue-name "$TRANSCRIPTION_QUEUE_NAME" --query QueueUrl --output text)
-TRANSCRIPTION_DEADLETTER_QUEUE_URL=$($AWS sqs create-queue --queue-name "$TRANSCRIPTION_DEADLETTER_QUEUE_NAME" --query QueueUrl --output text)
-echo "Main queue URL: $TRANSCRIPTION_QUEUE_URL"
-echo "Dead letter queue URL: $TRANSCRIPTION_DEADLETTER_QUEUE_URL"
-
-echo "Purging $TRANSCRIPTION_QUEUE_URL"
-$AWS sqs purge-queue --queue-url "$TRANSCRIPTION_QUEUE_URL"
-
-# Derive the dead-letter ARN from the created queue rather than hardcoding the
-# account id, so the redrive policy points at the real queue.
-TRANSCRIPTION_DEADLETTER_ARN=$($AWS sqs get-queue-attributes \
-  --queue-url "$TRANSCRIPTION_DEADLETTER_QUEUE_URL" \
-  --attribute-names QueueArn \
-  --query 'Attributes.QueueArn' --output text)
-
-echo "Dead letter queue ARN: $TRANSCRIPTION_DEADLETTER_ARN"
-
-$AWS sqs set-queue-attributes \
---queue-url "$TRANSCRIPTION_QUEUE_URL" \
---attributes "{
-    \"RedrivePolicy\": \"{\\\"deadLetterTargetArn\\\":\\\"$TRANSCRIPTION_DEADLETTER_ARN\\\",\\\"maxReceiveCount\\\":\\\"4\\\"}\"
-}"
+# Transcription runs on Temporal (no SQS queue); only AI edits use the LLM queue.
 
 ##############################
 ## LLM QUEUE

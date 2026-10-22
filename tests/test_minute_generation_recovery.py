@@ -20,16 +20,10 @@ from sqlmodel import delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.database.postgres_database import async_engine
-from common.database.postgres_models import (
-    JobStatus,
-    Minute,
-    MinuteVersion,
-    Transcription,
-    User,
-)
+from common.database.postgres_models import Minute, MinuteVersion, Transcription, User
 from common.services.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
 from common.settings import CLAIM_STALE_AFTER
-from common.types import MeetingType
+from common.types import JobStatus, MeetingType
 from tests.utils import get_or_create_user
 
 RECOVERY_EMAIL = "minute-recovery-test@example.com"

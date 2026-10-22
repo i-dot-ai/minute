@@ -7,11 +7,15 @@ from uuid import UUID
 
 import mistune
 from sqlalchemy import update
-from sqlalchemy.orm import selectinload
+from sqlmodel import col
 
-from common.convert_american_to_british_spelling import convert_american_to_british_spelling
-from common.database.postgres_database import SessionLocal
-from common.database.postgres_models import DialogueEntry, JobStatus, Minute, MinuteVersion, UserTemplate
+from common.database.postgres_database import AsyncSessionLocal
+from common.database.postgres_models import Minute, MinuteVersion
+from common.database.repository import (
+    get_only_version_for_minute,
+    get_user_template_with_questions,
+    get_version_with_transcription,
+)
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import (
@@ -22,8 +26,9 @@ from common.services.job_claim import JobClaimRenewer, claim_job
 from common.services.posthog_client import capture_event
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings, get_structured_logger
+from common.spelling import convert_american_to_british_spelling
 from common.templates.user_template import generate_user_template
-from common.types import MeetingType
+from common.types import DialogueEntry, JobStatus, MeetingType
 
 settings = get_settings()
 
@@ -59,7 +64,7 @@ class MinuteHandlerService:
         return claim_job(MinuteVersion, minute_version_id)
 
     @staticmethod
-    def update_minute_version(
+    async def update_minute_version(
         minute_version_id: UUID,
         claim_token: datetime,
         html_content: str | None = None,
@@ -70,70 +75,43 @@ class MinuteHandlerService:
 
         The update is applied only if the row still carries the claim token, so a
         superseded worker's late write is dropped instead of clobbering the new owner.
-        Returns whether the write was applied.
+        Returns whether the write was applied. Claim-specific, so it stays here rather
+        than in the repository.
         """
-        with SessionLocal() as session:
-            values: dict = {}
-            if html_content is not None:
-                values["html_content"] = html_content
-            if status is not None:
-                values["status"] = status
-            if error is not None:
-                values["error"] = error
-            result = session.exec(
+        values: dict = {}
+        if html_content is not None:
+            values["html_content"] = html_content
+        if status is not None:
+            values["status"] = status
+        if error is not None:
+            values["error"] = error
+        async with AsyncSessionLocal() as session:
+            result = await session.exec(
                 update(MinuteVersion)
                 .where(
-                    MinuteVersion.id == minute_version_id,
-                    MinuteVersion.updated_datetime == claim_token,
+                    col(MinuteVersion.id) == minute_version_id,
+                    col(MinuteVersion.updated_datetime) == claim_token,
                 )
                 .values(**values)
             )
-            session.commit()
-            return result.rowcount == 1
+            await session.commit()
+            return result.rowcount == 1  # pyright: ignore[reportAttributeAccessIssue]
 
     @classmethod
-    def record_minute_version_failure(cls, minute_version_id: UUID, error: str, claim_token: datetime) -> bool:
-        return cls.update_minute_version(
+    async def record_minute_version_failure(cls, minute_version_id: UUID, error: str, claim_token: datetime) -> bool:
+        return await cls.update_minute_version(
             minute_version_id, status=JobStatus.FAILED, error=error, claim_token=claim_token
         )
 
     @classmethod
     async def get_minute_version(cls, minute_version_id: UUID) -> MinuteVersion:
-        with SessionLocal() as session:
-            minute_version = session.get(
-                MinuteVersion,
-                minute_version_id,
-                options=[selectinload(MinuteVersion.minute).selectinload(Minute.transcription)],
-            )
-            if not minute_version:
-                msg = f"MinuteVersion not found for id: {minute_version_id}"
-                raise ValueError(msg)
-            session.expunge(minute_version)
-            return minute_version
+        async with AsyncSessionLocal() as session:
+            return await get_version_with_transcription(session, minute_version_id)
 
     @classmethod
     async def get_only_minute_version_for_minute_id(cls, minute_id: UUID) -> MinuteVersion:
-        with SessionLocal() as session:
-            minute = session.get(
-                Minute,
-                minute_id,
-                options=[selectinload(Minute.minute_versions)],
-            )
-            if not minute:
-                msg = f"Minute not found for minute id: {minute_id}"
-                raise ValueError(msg)
-            if not minute.minute_versions:
-                msg = f"MinuteVersion not found for minute id: {minute_id}"
-                raise ValueError(msg)
-            if len(minute.minute_versions) != 1:
-                msg = (
-                    f"More than one MinuteVersions found for minute id: {minute_id}. This function should only be "
-                    f"used for the initial generation of a Minute."
-                )
-                raise ValueError(msg)
-
-            session.expunge(minute)
-            return minute.minute_versions[0]
+        async with AsyncSessionLocal() as session:
+            return await get_only_version_for_minute(session, minute_id)
 
     @classmethod
     async def process_minute_generation_message(cls, minute_version_id: UUID) -> MinuteDelivery:
@@ -156,7 +134,7 @@ class MinuteHandlerService:
                 meeting_type = cls.predict_meeting(minute_version.minute.transcription.dialogue_entries)
                 slogger.info("Predicted meeting type {meeting_type}", meeting_type=str(meeting_type))
                 html_content = await cls.generate_minutes(meeting_type, minute_version.minute)
-            if not cls.update_minute_version(
+            if not await cls.update_minute_version(
                 minute_version.id,
                 html_content=html_content,
                 status=JobStatus.COMPLETED,
@@ -169,7 +147,7 @@ class MinuteHandlerService:
                 {"transcriptionId": str(minute_version.minute.transcription_id)},
             )
         except Exception as e:
-            if not cls.record_minute_version_failure(minute_version.id, error=str(e), claim_token=renewer.token):
+            if not await cls.record_minute_version_failure(minute_version.id, error=str(e), claim_token=renewer.token):
                 return MinuteDelivery.ACK
             capture_event(
                 minute_version.minute.transcription.user_id,
@@ -215,7 +193,7 @@ class MinuteHandlerService:
                     edit_instructions=target_minute_version.ai_edit_instructions,
                     transcript=source_minute_version.minute.transcription.dialogue_entries,
                 )
-            cls.update_minute_version(
+            await cls.update_minute_version(
                 minute_version_id=target_minute_version.id,
                 status=JobStatus.COMPLETED,
                 html_content=edited_string,
@@ -223,16 +201,19 @@ class MinuteHandlerService:
             )
             return MinuteDelivery.ACK
         except Exception as e:
-            if not cls.record_minute_version_failure(target_minute_version.id, error=str(e), claim_token=renewer.token):
+            if not await cls.record_minute_version_failure(
+                target_minute_version.id, error=str(e), claim_token=renewer.token
+            ):
                 return MinuteDelivery.ACK
             raise MinuteGenerationFailedError from e
 
     @classmethod
     async def generate_minute_from_user_template(cls, minute: Minute):
-        with SessionLocal() as session:
-            template = session.get(
-                UserTemplate, minute.user_template_id, options=[selectinload(UserTemplate.questions)]
-            )
+        if minute.user_template_id is None:
+            msg = "Minute has no user template"
+            raise RuntimeError(msg)
+        async with AsyncSessionLocal() as session:
+            template = await get_user_template_with_questions(session, minute.user_template_id)
         if not template:
             msg = f"No template with id {minute.user_template_id}"
             raise RuntimeError(msg)

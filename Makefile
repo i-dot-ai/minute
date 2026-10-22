@@ -36,7 +36,7 @@ CA_SH = if [ -f "$(CA_BUNDLE)" ]; then \
 HEARTBEAT_SH = HEARTBEAT_DIR="$(CURDIR)/.worker-tmp/healthcheck";
 
 # Source .env via the shell (not make's `export`, which keeps the literal quotes
-# around values like TRANSCRIPTION_SERVICES='[...]' and breaks pydantic parsing).
+# around list values like BETA_TEMPLATE_NAMES='[...]' and breaks pydantic parsing).
 ENV_SH = set -a; if [ -f .env ]; then . ./.env; fi; $(CA_SH) $(HEARTBEAT_SH) set +a;
 
 # Fast, offline unit tests. Paid-API / e2e tests are skipped here (run `make test_e2e`).

@@ -11,4 +11,4 @@ async def get_session():
         yield session
 
 
-SQLSessionDep = Annotated[AsyncSession, Depends(get_session)]
+SessionDep = Annotated[AsyncSession, Depends(get_session)]

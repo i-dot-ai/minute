@@ -9,9 +9,9 @@ services:
       - .env
     environment:
       - POSTGRES_HOST=db
-      - MINISTACK_URL=http://ministack:4566
-      - STORAGE_SERVICE_NAME=local
-      - LOCAL_STORAGE_PATH=/static
+      # Presigned URLs carry this host, so the browser must resolve `ministack` too:
+      # add `127.0.0.1 ministack` to the host's /etc/hosts (see README).
+      - AWS_ENDPOINT_URL=http://ministack:4566
       - TEMPORAL_ADDRESS=temporal:7233
     depends_on:
       db:
@@ -20,10 +20,6 @@ services:
         condition: service_healthy
       temporal:
         condition: service_healthy
-    volumes:
-      - type: bind
-        source: ./.data
-        target: /static
     healthcheck:
       test: ["CMD-SHELL", "curl --fail http://localhost:8080/healthcheck"]
       interval: 60s
@@ -54,18 +50,10 @@ services:
       - .env
     ports:
       - "8265:8265"
-    volumes:
-      - type: bind
-        source: ./.data
-        target: /static
     environment:
       - POSTGRES_HOST=db
       - RAY_DASHBOARD_HOST=0.0.0.0
-      - MINISTACK_URL=http://ministack:4566
-      - STORAGE_SERVICE_NAME=local
-      - LOCAL_STORAGE_PATH=/static
-      # Transcription runs on temporal-worker; Ray only runs the LLM actors.
-      - MAX_TRANSCRIPTION_PROCESSES=0
+      - AWS_ENDPOINT_URL=http://ministack:4566
     stop_grace_period: 10s
     depends_on:
       db:
@@ -114,15 +102,9 @@ services:
     command: ["worker/entrypoint.sh", "worker/temporal_worker.py"]
     env_file:
       - .env
-    volumes:
-      - type: bind
-        source: ./.data
-        target: /static
     environment:
       - POSTGRES_HOST=db
-      - MINISTACK_URL=http://ministack:4566
-      - STORAGE_SERVICE_NAME=local
-      - LOCAL_STORAGE_PATH=/static
+      - AWS_ENDPOINT_URL=http://ministack:4566
       - TEMPORAL_ADDRESS=temporal:7233
     stop_grace_period: 30s
     depends_on:
@@ -206,8 +188,7 @@ services:
       # Here you mount your setup file so it will be executed
       # when the container starts
       - ./ministack-setup.sh:/etc/localstack/init/ready.d/script.sh
-    environment:
-      - AWS_DEFAULT_REGION=eu-west-2
+    # AWS_DEFAULT_REGION comes from .env so queues land in the region the apps use (SQS is region-scoped).
     healthcheck:
       test: ["CMD", "test", "-f", "/ready.txt"]
       interval: 1m30s

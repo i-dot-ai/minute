@@ -16,13 +16,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import get_user_info
 from common.database.postgres_database import async_engine
-from common.database.postgres_models import (
-    JobStatus,
-    Minute,
-    MinuteVersion,
-    Transcription,
-    UserTemplate,
-)
+from common.database.postgres_models import Minute, MinuteVersion, Transcription, UserTemplate
+from common.types import JobStatus
 from tests.utils import get_or_create_user, get_test_client
 
 FOREIGN_EMAIL = "foreign-tenant@example.com"

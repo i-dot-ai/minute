@@ -16,13 +16,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import get_user_info
 from common.database.postgres_database import async_engine
-from common.database.postgres_models import (
-    JobStatus,
-    Minute,
-    MinuteVersion,
-    Recording,
-    Transcription,
-)
+from common.database.postgres_models import Minute, MinuteVersion, Recording, Transcription
+from common.types import JobStatus
 from tests.utils import get_or_create_user, get_test_client
 
 
@@ -74,11 +69,11 @@ async def recordings() -> dict[str, Recording]:
 
 @pytest.fixture(autouse=True)
 def _patch_storage(monkeypatch):
-    async def _object_exists(_key: str) -> bool:
+    async def _object_exists(_storage, _key: str) -> bool:
         return True
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.storage_service.check_object_exists",
+        "backend.api.routes.transcriptions.exists",
         _object_exists,
     )
 
@@ -134,7 +129,7 @@ async def test_concurrent_reuse_creates_and_queues_only_one_transcription(record
     checks = 0
     published: list = []
 
-    async def _object_exists(_key: str) -> bool:
+    async def _object_exists(_storage, _key: str) -> bool:
         nonlocal checks
         checks += 1
         if checks == 2:
@@ -144,7 +139,7 @@ async def test_concurrent_reuse_creates_and_queues_only_one_transcription(record
         return True
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.storage_service.check_object_exists",
+        "backend.api.routes.transcriptions.exists",
         _object_exists,
     )
     monkeypatch.setattr(

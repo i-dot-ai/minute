@@ -25,7 +25,7 @@ HEARTBEAT_TOUCH_INTERVAL = 15
 # Zero means "not configured" (e.g. host-run tests) and disables the count check; when
 # set, a container with fewer reporting actors is unhealthy, so an actor that dies
 # during startup is not hidden by its healthy siblings.
-EXPECTED_ACTORS = int(getenv("MAX_TRANSCRIPTION_PROCESSES", "0")) + int(getenv("MAX_LLM_PROCESSES", "0"))
+EXPECTED_ACTORS = int(getenv("MAX_LLM_PROCESSES", "0"))
 
 
 class HeartbeatTicker:

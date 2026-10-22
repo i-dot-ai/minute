@@ -23,6 +23,7 @@ from common.workflows.transcription import (
     GENERATE_TITLE,
     IDENTIFY_SPEAKERS,
     LLM_TASK_QUEUE,
+    PREPARE_AUDIO,
     STT_TASK_QUEUE,
     SUMMARIZE,
     TASK_QUEUE,
@@ -41,9 +42,8 @@ TIMEOUT_SECONDS = 600
 async def test_upload_creates_transcription_via_temporal():
     async with httpx.AsyncClient(base_url=BACKEND_URL, timeout=60) as api:
         recording = (await api.post("/recordings", json={"file_extension": "mp3"})).raise_for_status().json()
-        # Local storage returns a frontend-proxy path; the backend serves the same route at /mock_storage.
-        upload_path = recording["upload_url"].removeprefix("/api/proxy")
-        (await api.put(upload_path, content=AUDIO.read_bytes())).raise_for_status()
+        # Presigned S3 PUT against MiniStack (browser-facing endpoint, i.e. localhost:4566), as the frontend does.
+        (await api.put(recording["upload_url"], content=AUDIO.read_bytes())).raise_for_status()
 
         created = await api.post(
             "/transcriptions",
@@ -82,6 +82,7 @@ async def test_upload_creates_transcription_via_temporal():
         for a in [e.activity_task_scheduled_event_attributes]
     ]
     assert ran == [
+        (PREPARE_AUDIO, STT_TASK_QUEUE),
         (TRANSCRIBE, STT_TASK_QUEUE),
         (IDENTIFY_SPEAKERS, LLM_TASK_QUEUE),
         (GENERATE_TITLE, LLM_TASK_QUEUE),

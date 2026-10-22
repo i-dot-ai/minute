@@ -1,10 +1,34 @@
 import uuid
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
+from typing import TypedDict
 
 from pydantic import BaseModel, Field
 
-from common.database.postgres_models import ContentSource, DialogueEntry, JobStatus, TemplateType
+
+class DialogueEntry(TypedDict):
+    speaker: str
+    text: str
+    start_time: float
+    end_time: float
+
+
+class JobStatus(StrEnum):
+    AWAITING_START = auto()
+    IN_PROGRESS = auto()
+    COMPLETED = auto()
+    FAILED = auto()
+
+
+class ContentSource(StrEnum):
+    MANUAL_EDIT = auto()
+    AI_EDIT = auto()
+    INITIAL_GENERATION = auto()
+
+
+class TemplateType(StrEnum):
+    DOCUMENT = auto()
+    FORM = auto()
 
 
 class TranscriptionListFilter(StrEnum):
@@ -171,8 +195,8 @@ class MeetingCheck(BaseModel):
 
 
 class TaskType(IntEnum):
-    # messages have a natural ordering in which we want them to happen
-    TRANSCRIPTION = 1
+    # LLM-queue message types. Values are kept stable (1 was TRANSCRIPTION, now on Temporal)
+    # so messages already in SQS during a deploy keep their meaning.
     MINUTE = 2
     EDIT = 3
 
@@ -181,27 +205,10 @@ class EditMessageData(BaseModel):
     source_id: uuid.UUID = Field(description="ID of the source message")
 
 
-class TranscriptionJobMessageData(BaseModel):
-    transcription_service: str = Field(description="Name of the transcription service")
-    job_name: str = Field(
-        description="job name to identify asynchronous jobs. Not used in case of synchronous jobs",
-        default="synchronous",
-    )
-    transcript: list[DialogueEntry] | None = Field(description="Transcript of the transcription", default=None)
-    claim_token: datetime | None = Field(
-        description="Fencing token from the original claim, carried so async poll completions are fenced too",
-        default=None,
-    )
-    transcript_key: str | None = Field(
-        description="Provider output object to delete once the transcript is persisted",
-        default=None,
-    )
-
-
 class WorkerMessage(BaseModel):
     id: uuid.UUID
     type: TaskType
-    data: EditMessageData | TranscriptionJobMessageData | None = Field(default=None)
+    data: EditMessageData | None = Field(default=None)
 
 
 class MeetingType(StrEnum):

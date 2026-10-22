@@ -4,10 +4,9 @@ from fastapi import Depends, Header, HTTPException
 from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import func
 
-from backend.api.dependencies.get_session import SQLSessionDep
-from common.auth import get_user_info
+from backend.api.dependencies.get_session import SessionDep
+from common.auth import MissingAuthTokenError, get_user_info
 from common.database.postgres_models import User
-from common.services.exceptions import MissingAuthTokenError
 from common.settings import get_settings, get_structured_logger
 
 settings = get_settings()
@@ -16,7 +15,7 @@ logger = get_structured_logger()
 
 
 async def get_current_user(
-    session: SQLSessionDep,
+    session: SessionDep,
     x_amzn_oidc_data: Annotated[str | None, Header()] = None,
 ) -> User:
     """
@@ -52,7 +51,7 @@ async def get_current_user(
             )
             .returning(User)
         )
-        result = await session.execute(stmt)
+        result = await session.exec(stmt)
         await session.commit()
 
         return result.scalar_one()

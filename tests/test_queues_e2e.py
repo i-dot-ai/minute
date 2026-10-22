@@ -1,7 +1,8 @@
-"""End-to-end tests for the transcription and minute generation queues.
+"""End-to-end tests: transcription (Temporal) then extra templates and AI edits (Ray, SQS LLM queue).
 
-Storage and queues are served by MiniStack, so these never touch dev AWS. The worker
-downloads recordings from MiniStack and sends their bytes to synchronous Azure Speech.
+Storage and queues are served by MiniStack, so these never touch dev AWS. Transcription and the
+initial summary run on Temporal, so the stack must be up (`docker compose up -d --wait`): this
+test runs the Ray worker in-process for the SQS LLM queue only.
 """
 
 import asyncio
@@ -14,13 +15,15 @@ import pytest
 import ray
 import requests
 
-from common.database.postgres_models import ContentSource, JobStatus, Minute, MinuteVersion, Transcription
+from common.database.postgres_models import Minute, MinuteVersion, Transcription
 from common.services.queue_services import get_queue_service
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings
 from common.types import (
     AgendaUsage,
     AiEdit,
+    ContentSource,
+    JobStatus,
     MinutesCreateRequest,
     MinuteVersionCreateRequest,
     RecordingCreateRequest,
@@ -38,18 +41,6 @@ def worker_service() -> Generator[WorkerService, Any, None]:
     worker_service = create_worker_service()
     yield worker_service
     ray.shutdown()
-
-
-@pytest.fixture(autouse=True)
-async def transcription_queue_service():
-    settings = get_settings()
-    queue_service = get_queue_service(
-        settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
-    )
-    queue_service.purge_messages()
-    # needed to ensure sqs queue is purged (not sure if this long is needed for ministack)
-    await asyncio.sleep(1)
-    return queue_service
 
 
 @pytest.fixture(autouse=True)
@@ -72,14 +63,14 @@ async def load_db_test_instance(file_type: FileTypeTests) -> set[UUID]:
         test_ids = set()
         for test_file in test_audio_dir.iterdir():
             request = RecordingCreateRequest(file_extension="mp3")
-            response = await ac.post("/recordings", content=request.model_dump_json())
+            response = await ac.post("/recordings", json=request.model_dump(mode="json"))
             assert response.status_code == 200, f"failed to create recording for  {request.model_dump_json()}"
             response_json = response.json()
             with test_file.open("rb") as f:
                 http_response = requests.put(response_json["upload_url"], data=f.read(), timeout=60)  # noqa: ASYNC210
                 assert http_response.status_code == 200, f"failed to upload recording for {response_json['upload_url']}"
                 request = TranscriptionCreateRequest(recording_id=response_json["id"], template_name="General")
-                response = await ac.post("/transcriptions", content=request.model_dump_json())
+                response = await ac.post("/transcriptions", json=request.model_dump(mode="json"))
                 assert response.status_code == 201, f"failed to create transcription for {request.model_dump_json()}"
 
                 test_ids.add(response.json()["id"])
@@ -140,7 +131,7 @@ async def create_versions_for_ai_edit(transcription_id: UUID):
                     ),
                 )
                 response = await test_client.post(
-                    f"/minutes/{minute_version.minute.id}/versions", content=request.model_dump_json()
+                    f"/minutes/{minute_version.minute.id}/versions", json=request.model_dump(mode="json")
                 )
                 assert response.status_code == 200
 
@@ -208,7 +199,7 @@ async def create_template_minutes(transcription_id: UUID) -> None:
                 )
                 request = MinutesCreateRequest(template_name=template.name, agenda=agenda)
                 response = await test_client.post(
-                    f"/transcription/{transcription_id}/minutes", content=request.model_dump_json()
+                    f"/transcription/{transcription_id}/minutes", json=request.model_dump(mode="json")
                 )
                 assert response.status_code == 200
 

@@ -2,10 +2,9 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from common.database.postgres_models import DialogueEntry
 from common.prompts import get_transcript_messages
 from common.templates.types import SimpleTemplate
-from common.types import AgendaUsage
+from common.types import AgendaUsage, DialogueEntry
 
 
 class General(SimpleTemplate):

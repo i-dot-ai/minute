@@ -1,9 +1,10 @@
-import logging
 import re
 
 from breame.spelling import american_spelling_exists, get_british_spelling
 
-logger = logging.getLogger(__name__)
+from common.settings import get_structured_logger
+
+slogger = get_structured_logger()
 
 # The pattern must start with the letter class so that positions with no following
 # letters fail in O(1). A lazy non-letter prefix group re-expands to the end of the
@@ -54,7 +55,7 @@ def convert_american_to_british_spelling(  # noqa: C901
                     british = british.title()
                 return british
             except Exception as e:
-                logger.warning("Failed to convert word '%s': %s", word, e)
+                slogger.debug("Failed to convert word {word}: {error}", word=word, error=str(e))
                 if strict:
                     raise
             return word
@@ -62,7 +63,7 @@ def convert_american_to_british_spelling(  # noqa: C901
         return WORD_PATTERN.sub(replace_word, text)
 
     except Exception:
-        logger.exception("Failed to convert text")
+        slogger.exception("Spelling conversion failed")
         if strict:
             raise
         return text

@@ -18,16 +18,14 @@ logger = logging.getLogger(__name__)
 
 
 def get_sqs_client():
-    if settings.USE_MINISTACK and settings.ENVIRONMENT == "local":
-        return boto3.client(
-            "sqs",
-            aws_access_key_id="YOUR_ACCESS_KEY_ID",
-            aws_secret_access_key="YOUR_SECRET_ACCESS_KEY",  # noqa: S106
-            region_name="eu-west-2",
-            endpoint_url=settings.MINISTACK_URL,
-        )
-
-    return boto3.client("sqs")
+    """Same AWS_* settings as storage: MiniStack locally, the ECS task role when deployed (all unset)."""
+    return boto3.client(
+        "sqs",
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_DEFAULT_REGION,
+        endpoint_url=settings.AWS_ENDPOINT_URL,
+    )
 
 
 class SQSQueueService(QueueService):

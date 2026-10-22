@@ -9,12 +9,11 @@ import logging
 from temporalio.client import Client
 from temporalio.worker import Worker
 
+from common.runtime import build_runtime
 from common.sentry import init_sentry
-from common.services.transcription_handler_service import transcription_manager
-from common.services.transcription_services.adapter import AdapterType
 from common.settings import get_settings
+from common.workflows import activities
 from common.workflows.transcription import LLM_TASK_QUEUE, STT_TASK_QUEUE, TASK_QUEUE, TranscriptionWorkflow
-from worker import temporal_activities
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,15 +21,7 @@ logger = logging.getLogger(__name__)
 
 async def main() -> None:
     settings = get_settings()
-    async_adapters = [
-        a.name
-        for a in transcription_manager.get_available_services().values()
-        if a.adapter_type != AdapterType.SYNCHRONOUS
-    ]
-    if async_adapters:
-        msg = f"Async transcription providers are not supported on Temporal yet: {async_adapters}"
-        raise RuntimeError(msg)
-
+    runtime = build_runtime(settings)
     client = await Client.connect(settings.TEMPORAL_ADDRESS, namespace=settings.TEMPORAL_NAMESPACE)
     llm_cap = max(settings.MAX_LLM_PROCESSES, 1)
     # One Worker per task queue. Slots per queue = that resource's cap in this process;
@@ -40,18 +31,18 @@ async def main() -> None:
             client,
             task_queue=TASK_QUEUE,
             workflows=[TranscriptionWorkflow],
-            activities=temporal_activities.WORKFLOW_QUEUE_ACTIVITIES,
+            activities=activities.WORKFLOW_QUEUE_ACTIVITIES,
         ),
         Worker(
             client,
             task_queue=STT_TASK_QUEUE,
-            activities=temporal_activities.STT_ACTIVITIES,
+            activities=activities.build_stt_activities(runtime),
             max_concurrent_activities=settings.STT_MAX_CONCURRENCY,
         ),
         Worker(
             client,
             task_queue=LLM_TASK_QUEUE,
-            activities=temporal_activities.LLM_ACTIVITIES,
+            activities=activities.LLM_ACTIVITIES,
             max_concurrent_activities=llm_cap,
         ),
     ]

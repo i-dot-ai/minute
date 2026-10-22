@@ -6,12 +6,13 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from backend.api.dependencies import SQLSessionDep, UserDep
-from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription, UserTemplate
+from backend.api.dependencies import SessionDep, UserDep
+from common.database.postgres_models import Minute, MinuteVersion, Transcription, UserTemplate
 from common.services.queue_services import get_queue_service
 from common.settings import get_settings
 from common.types import (
     EditMessageData,
+    JobStatus,
     MinuteListItem,
     MinutesCreateRequest,
     MinuteVersionCreateRequest,
@@ -43,7 +44,7 @@ async def _enqueue_minute_version(session: AsyncSession, minute_version: MinuteV
 
 @minutes_router.get("/transcription/{transcription_id}/minutes")
 async def list_minutes_for_transcription(
-    transcription_id: uuid.UUID, session: SQLSessionDep, user: UserDep
+    transcription_id: uuid.UUID, session: SessionDep, user: UserDep
 ) -> list[MinuteListItem]:
     transcription = await session.get(Transcription, transcription_id)
     if not transcription or transcription.user_id != user.id:
@@ -69,7 +70,7 @@ async def list_minutes_for_transcription(
 
 @minutes_router.post("/transcription/{transcription_id}/minutes")
 async def create_minute(
-    transcription_id: uuid.UUID, request: MinutesCreateRequest, session: SQLSessionDep, user: UserDep
+    transcription_id: uuid.UUID, request: MinutesCreateRequest, session: SessionDep, user: UserDep
 ) -> MinuteListItem:
     transcription = await session.get(Transcription, transcription_id)
     if not transcription or transcription.user_id != user.id:
@@ -123,7 +124,7 @@ async def create_minute(
 
 
 @minutes_router.get("/minutes/{minutes_id}")
-async def get_minute(minutes_id: uuid.UUID, session: SQLSessionDep, user: UserDep) -> Minute:
+async def get_minute(minutes_id: uuid.UUID, session: SessionDep, user: UserDep) -> Minute:
     query = (
         select(Minute)
         .where(Minute.id == minutes_id)
@@ -138,7 +139,7 @@ async def get_minute(minutes_id: uuid.UUID, session: SQLSessionDep, user: UserDe
 
 
 @minutes_router.delete("/minutes/{minute_id}", status_code=204)
-async def delete_minute(minute_id: uuid.UUID, session: SQLSessionDep, user: UserDep) -> None:
+async def delete_minute(minute_id: uuid.UUID, session: SessionDep, user: UserDep) -> None:
     query = select(Minute).where(Minute.id == minute_id).options(selectinload(Minute.transcription))
     minute = (await session.exec(query)).first()
     if not minute or not minute.transcription.user_id or minute.transcription.user_id != user.id:
@@ -149,9 +150,7 @@ async def delete_minute(minute_id: uuid.UUID, session: SQLSessionDep, user: User
 
 
 @minutes_router.get("/minutes/{minute_id}/versions")
-async def list_minute_versions(
-    minute_id: uuid.UUID, session: SQLSessionDep, user: UserDep
-) -> list[MinuteVersionResponse]:
+async def list_minute_versions(minute_id: uuid.UUID, session: SessionDep, user: UserDep) -> list[MinuteVersionResponse]:
     result = await session.exec(
         select(Minute)
         .where(Minute.id == minute_id)
@@ -179,7 +178,7 @@ async def list_minute_versions(
 
 @minutes_router.post("/minutes/{minute_id}/versions")
 async def create_minute_version(
-    minute_id: uuid.UUID, request: MinuteVersionCreateRequest, session: SQLSessionDep, user: UserDep
+    minute_id: uuid.UUID, request: MinuteVersionCreateRequest, session: SessionDep, user: UserDep
 ) -> MinuteVersionResponse:
     minute = await get_minute(minute_id, session, user)
     # An authenticated user CANNOT submit an AI edit for their own minute
@@ -239,7 +238,7 @@ async def create_minute_version(
 
 
 @minutes_router.get("/minute_versions/{minute_version_id}")
-async def get_minute_version(minute_version_id: uuid.UUID, session: SQLSessionDep, user: UserDep) -> MinuteVersion:
+async def get_minute_version(minute_version_id: uuid.UUID, session: SessionDep, user: UserDep) -> MinuteVersion:
     query = (
         select(MinuteVersion)
         .where(MinuteVersion.id == minute_version_id)
@@ -257,7 +256,7 @@ async def get_minute_version(minute_version_id: uuid.UUID, session: SQLSessionDe
 
 
 @minutes_router.delete("/minute_versions/{minute_version_id}")
-async def delete_minute_version(minute_version_id: uuid.UUID, session: SQLSessionDep, user: UserDep):
+async def delete_minute_version(minute_version_id: uuid.UUID, session: SessionDep, user: UserDep):
     query = (
         select(MinuteVersion)
         .where(MinuteVersion.id == minute_version_id)

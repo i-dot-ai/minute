@@ -2,6 +2,7 @@ import logging
 
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import Session, create_engine
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.settings import get_settings
 
@@ -41,3 +42,9 @@ async_engine = create_async_engine(
 
 def SessionLocal() -> Session:  # noqa: N802
     return Session(engine)
+
+
+def AsyncSessionLocal() -> AsyncSession:  # noqa: N802
+    """Worker sessions: expire_on_commit=False so ORM objects stay readable after the
+    caller commits mid-workflow (long phases span multiple transactions)."""
+    return AsyncSession(async_engine, expire_on_commit=False)

@@ -1,8 +1,8 @@
 from pydantic import BaseModel, Field
 
-from common.database.postgres_models import DialogueEntry
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_meeting_title_prompt
+from common.types import DialogueEntry
 
 
 class MeetingTitleResponse(BaseModel):

@@ -1,13 +1,11 @@
-import logging
 from typing import Any
 from uuid import UUID
 
 import posthog
 
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 
-logger = logging.getLogger(__name__)
-
+slogger = get_structured_logger()
 settings = get_settings()
 posthog_client = None
 if settings.POSTHOG_API_KEY:
@@ -30,4 +28,4 @@ def capture_event(
     try:
         posthog_client.capture(distinct_id=str(distinct_id), event=event, properties=properties or {})
     except Exception:
-        logger.exception("Failed to capture PostHog event %s", event)
+        slogger.exception("Failed to capture PostHog event {event}", event=event)

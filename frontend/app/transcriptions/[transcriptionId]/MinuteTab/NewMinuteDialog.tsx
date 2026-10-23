@@ -104,6 +104,7 @@ export function NewMinuteDialog({
         type="button"
         className={buttonClassName}
         disabled={disabled}
+        id="new-summary-button"
         onClick={() => setOpen(true)}
       >
         {icon && <PlusIcon className="size-4" />}

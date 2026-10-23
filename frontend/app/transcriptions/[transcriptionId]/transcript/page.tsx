@@ -332,6 +332,7 @@ export default function TranscriptPage({
                   />
                   <button
                     type="button"
+                    id="transcript-edit-button"
                     className="govuk-button govuk-!-margin-bottom-0 !hidden sm:!flex"
                     onClick={() => {
                       setDraftTitle(transcription.title ?? '')
@@ -342,6 +343,7 @@ export default function TranscriptPage({
                   </button>
                   <button
                     type="button"
+                    id="transcript-edit-button"
                     className="govuk-button govuk-button--secondary sm:!hidden"
                     onClick={() => {
                       setDraftTitle(transcription.title ?? '')

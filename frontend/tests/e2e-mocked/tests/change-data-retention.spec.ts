@@ -1,6 +1,4 @@
 import { mockBackend } from '@/tests/e2e-mocked/utilities/mock-backend'
-import { json } from '@/tests/e2e-mocked/utilities/routes/general'
-import { usersMe } from '@/tests/e2e-mocked/mocked-responses/users.me'
 import { test, expect } from '@playwright/test'
 
 test('changing the data retention period updates the transcriptions page', async ({
@@ -39,23 +37,5 @@ test('changing the data retention period updates the transcriptions page', async
   await expect(dialog).toBeHidden()
   await expect(
     page.getByText('Transcriptions will be deleted after 7 days')
-  ).toBeVisible()
-})
-
-test('businessandtrade users get the fixed settings', async ({ page }) => {
-  await mockBackend(page)
-  await page.route('**/api/proxy/users/me', (route) =>
-    route.fulfill(
-      json(200, { ...usersMe, email: 'jane@businessandtrade.gov.uk' })
-    )
-  )
-
-  await page.goto('/transcriptions')
-  await expect(
-    page.getByRole('button', { name: 'Change data retention period' })
-  ).not.toBeVisible()
-
-  await expect(
-    page.getByText('This has been set by your department and cannot be changed')
   ).toBeVisible()
 })

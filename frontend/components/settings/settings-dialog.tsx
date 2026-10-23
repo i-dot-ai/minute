@@ -19,8 +19,6 @@ import { useForm } from 'react-hook-form'
 
 type UserSettingsForm = { dataRetention: 'none' | `${number}` }
 
-const SETTINGS_FIXED_DOMAINS = ['businessandtrade', 'dsit']
-
 export function SettingsDialog({ user }: { user: GetUserResponse }) {
   const [open, setOpen] = useState(false)
   const radiosRef = useRef<HTMLDivElement>(null)
@@ -72,16 +70,6 @@ export function SettingsDialog({ user }: { user: GetUserResponse }) {
     },
     [mutateAsync, queryClient]
   )
-  const isFixedDomain = new RegExp(
-    `@(${SETTINGS_FIXED_DOMAINS.join('|')})\\.gov\\.uk$`,
-    'i'
-  ).test(user.email)
-
-  if (isFixedDomain) {
-    return (
-      <span>This has been set by your department and cannot be changed</span>
-    )
-  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

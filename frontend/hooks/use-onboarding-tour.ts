@@ -250,7 +250,7 @@ export const pageTours: PageTour[] = [
       pathname.startsWith('/transcriptions/') && !pathname.includes('/summary'),
     steps: [
       {
-        target: '.govuk-width-container',
+        target: '.govuk-width-container--with-secondary-nav',
         placement: 'center',
         content:
           'This is the full transcript. You can view and edit the text and speakers',
@@ -259,10 +259,10 @@ export const pageTours: PageTour[] = [
       {
         target: '#transcript-export-button',
         content: 'You can export the transcript or download the audio here',
-        title: 'Export the summary',
+        title: 'Export the transcript',
       },
       {
-        target: '#transcript-edit-button',
+        target: '.transcript-edit-button',
         content:
           'You can edit the speaker names or the transcript text and generate a new summary from here',
         title: 'Edit the transcript',

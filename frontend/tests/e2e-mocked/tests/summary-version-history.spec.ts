@@ -29,7 +29,7 @@ test('switching between summaries navigates to the selected one', async ({
   await mockBackend(page, 'meeting-2')
   await goToSummaryPage(page, meeting2.title!)
 
-  const nav = page.getByRole('navigation', { name: 'Summaries and transcript' })
+  const nav = page.getByRole('navigation', { name: 'Menu' })
   const executive = meeting2Minutes.find(
     (minute) => minute.template_name === 'Executive summary'
   )!

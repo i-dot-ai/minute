@@ -3,7 +3,7 @@ import { meeting1 } from '@/tests/e2e-mocked/mocked-responses/mock-meeting-1'
 
 export const goToSummaryPage = async (page: Page, meetingTitle: string) => {
   await page.goto('/')
-  await page.getByRole('link', { name: 'transcripts' }).click()
+  await page.getByRole('link', { name: 'transcriptions' }).click()
   await expect(page).toHaveURL(/\/transcriptions$/)
 
   await page.getByRole('link', { name: meetingTitle }).first().click()

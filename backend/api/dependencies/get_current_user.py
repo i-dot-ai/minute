@@ -7,6 +7,7 @@ from sqlmodel import func
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
 from common.database.postgres_models import User
+from common.retention import forced_retention_days
 from common.services.exceptions import MissingAuthTokenError
 from common.settings import get_settings, get_structured_logger
 
@@ -43,13 +44,21 @@ async def get_current_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        # Department-forced retention: (re)apply on every request so new users
+        # get it and existing/changed rows are healed. The no-op email set is
+        # just so RETURNING fires.
+        forced = forced_retention_days(email)
+        values: dict[str, object] = {"email": email}
+        if forced is not None:
+            values["data_retention_days"] = forced
+            set_ = {User.email: User.email, User.data_retention_days: forced}
+        else:
+            set_ = {User.email: User.email}
+
         stmt = (
             insert(User)
-            .values(email=email)
-            .on_conflict_do_update(
-                index_elements=[func.lower(User.email)],
-                set_={User.email: User.email},  # no-op, just so RETURNING fires
-            )
+            .values(**values)
+            .on_conflict_do_update(index_elements=[func.lower(User.email)], set_=set_)
             .returning(User)
         )
         result = await session.execute(stmt)

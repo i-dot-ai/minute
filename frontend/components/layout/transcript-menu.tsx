@@ -34,7 +34,7 @@ export function TranscriptMenu() {
   const transcriptPage = !pathname.includes('/summary')
 
   return (
-    <div className="sm:w-[150px] lg:w-[200px]">
+    <div id="transcript-details-menu" className="sm:w-[150px] lg:w-[200px]">
       <h2 className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 ml-2 text-[0.875rem] lg:ml-5">
         {transcription?.title}
       </h2>
@@ -55,17 +55,22 @@ export function TranscriptMenu() {
           <button
             onClick={() => setAreSummariesCollapsed((prev) => !prev)}
             className="govuk-!-padding-right-2 govuk-!-padding-top-1 govuk-!-padding-bottom-1 flex w-full cursor-pointer items-center justify-between pl-2 hover:bg-[#d2e2f1] lg:pl-4"
+            aria-expanded={!areSummariesCollapsed}
+            aria-controls={areSummariesCollapsed ? undefined : 'summary-list'}
           >
-            <h2 className="govuk-caption-s text-[0.875rem] font-normal text-(--govuk-text-colour)">
+            <span className="govuk-caption-s text-[0.875rem] font-normal text-(--govuk-text-colour)">
               Summaries
-            </h2>
+            </span>
             {areSummariesCollapsed ? <ChevronDown /> : <ChevronUp />}
             <span className="govuk-visually-hidden">
               {areSummariesCollapsed ? 'Expand' : 'Collapse'} summary details
             </span>
           </button>
           {!areSummariesCollapsed && (
-            <ul className="govuk-list govuk-!-margin-bottom-0 ml-2 lg:ml-5">
+            <ul
+              id="summary-list"
+              className="govuk-list govuk-!-margin-bottom-0 ml-2 lg:ml-5"
+            >
               {minutes.map((minute) => {
                 const date = new Date(
                   minute.updated_datetime

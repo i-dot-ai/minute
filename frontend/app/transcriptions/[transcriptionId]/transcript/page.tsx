@@ -332,8 +332,7 @@ export default function TranscriptPage({
                   />
                   <button
                     type="button"
-                    id="transcript-edit-button"
-                    className="govuk-button govuk-!-margin-bottom-0 !hidden sm:!flex"
+                    className="transcript-edit-button govuk-button govuk-!-margin-bottom-0 !hidden sm:!flex"
                     onClick={() => {
                       setDraftTitle(transcription.title ?? '')
                       setIsEditing(true)
@@ -343,8 +342,7 @@ export default function TranscriptPage({
                   </button>
                   <button
                     type="button"
-                    id="transcript-edit-button"
-                    className="govuk-button govuk-button--secondary sm:!hidden"
+                    className="transcript-edit-button govuk-button govuk-button--secondary sm:!hidden"
                     onClick={() => {
                       setDraftTitle(transcription.title ?? '')
                       setIsEditing(true)

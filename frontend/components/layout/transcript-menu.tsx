@@ -23,24 +23,25 @@ export function TranscriptMenu() {
     ),
     enabled: !!transcriptionId,
   })
-  const { data: transcription, isLoading } = useQuery({
+  const { data: transcription } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId ?? '' },
     }),
+    enabled: !!transcriptionId,
   })
 
   if (!transcriptionId) return null
   const transcriptPage = !pathname.includes('/summary')
 
   return (
-    <div className="w-[150px] lg:w-[200px]">
-      <h2 className="ml-2 lg:ml-5 govuk-!-padding-top-2 govuk-!-padding-bottom-2 text-[0.875rem]">
+    <div className="sm:w-[150px] lg:w-[200px]">
+      <h2 className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 ml-2 text-[0.875rem] lg:ml-5">
         {transcription?.title}
       </h2>
       <ul className="govuk-list ml-2 lg:ml-5">
         <li
           id="tour-transcript"
-          className={`govuk-!-padding-top-1 rounded-xs govuk-!-padding-bottom-1 flex-1 pl-2 lg:pl-4 ${transcriptPage ? ' bg-[#d2e2f1] font-bold' : ''}`}
+          className={`govuk-!-padding-top-1 govuk-!-padding-bottom-1 flex-1 rounded-xs pl-2 lg:pl-4 ${transcriptPage ? 'bg-[#d2e2f1] font-bold' : ''}`}
         >
           <Link
             href={`/transcriptions/${transcriptionId}/transcript`}
@@ -53,7 +54,7 @@ export function TranscriptMenu() {
         <li id="tour-summaries" className="govuk-!-margin-bottom-0 flex-1">
           <button
             onClick={() => setAreSummariesCollapsed((prev) => !prev)}
-            className="pl-2 lg:pl-4 govuk-!-padding-right-2 govuk-!-padding-top-1 govuk-!-padding-bottom-1 flex w-full cursor-pointer items-center justify-between hover:bg-[#d2e2f1]"
+            className="govuk-!-padding-right-2 govuk-!-padding-top-1 govuk-!-padding-bottom-1 flex w-full cursor-pointer items-center justify-between pl-2 hover:bg-[#d2e2f1] lg:pl-4"
           >
             <h2 className="govuk-caption-s text-[0.875rem] font-normal text-(--govuk-text-colour)">
               Summaries
@@ -80,13 +81,12 @@ export function TranscriptMenu() {
                 return (
                   <li
                     key={minute.id}
-                    className={`govuk-!-padding-left-3 rounded-xs govuk-!-padding-right-2 govuk-!-margin-0 flex-1 py-1 ${isActive ? 'bg-[#d2e2f1] font-bold' : ''}`}
+                    className={`govuk-!-padding-left-3 govuk-!-padding-right-2 govuk-!-margin-0 flex-1 rounded-xs py-1 ${isActive ? 'bg-[#d2e2f1] font-bold' : ''}`}
                   >
                     <Link
                       href={href}
                       className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline text-[0.875rem] ${isActive ? '!text-(--govuk-text-colour)' : ''}`}
                       aria-current={isActive ? 'page' : undefined}
-                      style={isActive ? { fontWeight: 'bold' } : undefined}
                     >
                       {minute.template_name}
                     </Link>
@@ -98,16 +98,16 @@ export function TranscriptMenu() {
               })}
               {minutes.length === 0 && (
                 <li
-                    className={`govuk-!-padding-left-3 rounded-xs govuk-!-padding-right-2 govuk-!-margin-0 flex-1 py-1 ${transcriptPage ? '' : 'bg-[#d2e2f1] font-bold'}`}
+                  className={`govuk-!-padding-left-3 govuk-!-padding-right-2 govuk-!-margin-0 flex-1 rounded-xs py-1 ${transcriptPage ? '' : 'bg-[#d2e2f1] font-bold'}`}
                 >
                   <Link
                     href={`/transcriptions/${transcriptionId}/summary`}
                     className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline text-[0.875rem] ${transcriptPage ? '' : '!text-(--govuk-text-colour)'}`}
                     aria-current={transcriptPage ? undefined : 'page'}
-                    >
+                  >
                     No summary yet
                   </Link>
-                  </li>
+                </li>
               )}
             </ul>
           )}

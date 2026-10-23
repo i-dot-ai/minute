@@ -194,7 +194,7 @@ export const PaginatedTranscriptions = () => {
       <div className="flex items-center justify-between">
         <form
           role="search"
-          className="govuk-form-group w-full md:w-[50%] relative"
+          className="govuk-form-group relative w-full md:w-[50%]"
           onSubmit={handleSearchSubmit}
         >
           <Search

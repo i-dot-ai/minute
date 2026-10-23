@@ -20,6 +20,7 @@ export const ExportTranscriptDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <button
         type="button"
+        id="transcript-export-button"
         className="govuk-button govuk-button--secondary sm:!mb-0"
         onClick={() => setOpen(true)}
       >

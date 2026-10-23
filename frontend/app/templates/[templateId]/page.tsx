@@ -246,7 +246,7 @@ export default function EditTemplatePage() {
                         </h1>
                         <input
                           id="name"
-                          className="govuk-input md:!w-[50%] bg-white"
+                          className="govuk-input bg-white md:!w-[50%]"
                           {...register('name', {
                             required: {
                               value: true,
@@ -264,7 +264,7 @@ export default function EditTemplatePage() {
                         </label>
                         <textarea
                           id="description"
-                          className="govuk-textarea md:!w-[50%] bg-white"
+                          className="govuk-textarea bg-white md:!w-[50%]"
                           rows={3}
                           {...register('description', {
                             required: {

@@ -84,6 +84,12 @@ export const ServiceNavigation = () => {
                         setIsTranscriptDetailsCollapsed((prev) => !prev)
                       }
                       className="govuk-service-navigation__link cursor-pointer hover:bg-[#8eb8dc]"
+                      aria-expanded={!isTranscriptDetailsCollapsed}
+                      aria-controls={
+                        isTranscriptDetailsCollapsed
+                          ? undefined
+                          : 'transcript-details-menu'
+                      }
                     >
                       {isTranscriptDetailsCollapsed ? (
                         <ChevronDown />

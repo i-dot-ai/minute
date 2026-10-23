@@ -1,8 +1,9 @@
-"""Integration test for migration 2f6c1b8a9d04 (30-day retention for
-businessandtrade.gov.uk users).
+"""Integration test for the department retention migrations (2f6c1b8a9d04 then
+22f279f7b97c, which fixes retention for businessandtrade.gov.uk and dsit.gov.uk
+users).
 
 Spins up a throwaway Postgres database, runs alembic up to the parent revision,
-seeds users inside and outside the target domain, applies the migration, and
+seeds users inside and outside the target domain, applies the migrations, and
 asserts only the target-domain users are changed.
 
 Requires a running Postgres instance reachable via the POSTGRES_* settings
@@ -21,7 +22,7 @@ from alembic.config import Config
 from common.settings import get_settings
 
 PRE_REVISION = "b8c4d2e7f1a9"
-TARGET_REVISION = "2f6c1b8a9d04"
+TARGET_REVISION = "22f279f7b97c"
 
 settings = get_settings()
 
@@ -84,7 +85,7 @@ def _seed(conn: sa.Connection) -> None:
     )
 
 
-def test_only_target_domain_users_get_30_days(migration_db):
+def test_only_target_domain_users_get_fixed_retention(migration_db):
     engine, cfg = migration_db
 
     with engine.begin() as conn:
@@ -98,11 +99,11 @@ def test_only_target_domain_users_get_30_days(migration_db):
             for r in conn.execute(sa.text('SELECT email, data_retention_days FROM "user"')).all()
         }
 
-        # Target domain (any case) set to 30.
-        assert retention["alice@businessandtrade.gov.uk"] == 42
-        assert retention["Bob@BusinessAndTrade.gov.uk"] == 42
+        # Target domain (any case) set to 31.
+        assert retention["alice@businessandtrade.gov.uk"] == 31
+        assert retention["Bob@BusinessAndTrade.gov.uk"] == 31
 
-        assert retention["frank@dsit.gov.uk"] == 42
+        assert retention["frank@dsit.gov.uk"] == 31
 
         # Subdomain and lookalike domains are untouched.
         assert retention["carol@other.gov.uk"] == 90

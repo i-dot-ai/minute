@@ -4,8 +4,8 @@ Must stay in step with the backfill in alembic revision 2f6c1b8a9d04.
 """
 
 FORCED_RETENTION_DOMAINS: dict[str, int] = {
-    "businessandtrade.gov.uk": 42,
-    "dsit.gov.uk": 42,
+    "businessandtrade.gov.uk": 31,
+    "dsit.gov.uk": 31,
 }
 
 

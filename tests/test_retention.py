@@ -2,8 +2,8 @@ from common.retention import forced_retention_days
 
 
 def test_forced_domains_get_fixed_value():
-    assert forced_retention_days("alice@businessandtrade.gov.uk") == 42
-    assert forced_retention_days("Bob@DSIT.gov.uk") == 42
+    assert forced_retention_days("alice@businessandtrade.gov.uk") == 31
+    assert forced_retention_days("Bob@DSIT.gov.uk") == 31
 
 
 def test_other_and_lookalike_domains_are_not_forced():

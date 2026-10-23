@@ -1,4 +1,4 @@
-"""Set 30-day retention for businessandtrade.gov.uk and dsit.gov.uk users
+"""Set fixed retention for businessandtrade.gov.uk and dsit.gov.uk users
 
 Revision ID: 2f6c1b8a9d04
 Revises: b8c4d2e7f1a9

@@ -7,7 +7,7 @@ test('changing the data retention period updates the transcriptions page', async
   await mockBackend(page)
 
   await page.goto('/')
-  await page.getByRole('link', { name: 'transcripts' }).click()
+  await page.getByRole('link', { name: 'transcriptions' }).click()
   await expect(page).toHaveURL(/\/transcriptions$/)
 
   await expect(

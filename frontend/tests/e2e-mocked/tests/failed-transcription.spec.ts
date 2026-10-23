@@ -17,7 +17,7 @@ test('a failed transcription shows the internal error message and retry', async 
   await page.goto(`/transcriptions/${meeting1.id}`)
 
   await expect(
-    page.getByRole('heading', { name: meeting1.title! })
+    page.getByRole('heading', { name: meeting1.title!, level: 1 })
   ).toBeVisible()
   await expect(
     page.getByText('There was an internal server error.')

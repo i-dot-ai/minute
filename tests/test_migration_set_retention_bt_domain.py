@@ -76,6 +76,7 @@ def _seed(conn: sa.Connection) -> None:
               (gen_random_uuid(), 'alice@businessandtrade.gov.uk',   NOW(), NOW(), 365),
               (gen_random_uuid(), 'Bob@BusinessAndTrade.gov.uk',     NOW(), NOW(), NULL),
               (gen_random_uuid(), 'carol@other.gov.uk',              NOW(), NOW(), 90),
+              (gen_random_uuid(), 'frank@dsit.gov.uk',               NOW(), NOW(), 200),
               (gen_random_uuid(), 'dave@sub.businessandtrade.gov.uk', NOW(), NOW(), 14),
               (gen_random_uuid(), 'eve@notbusinessandtrade.gov.uk',  NOW(), NOW(), 7);
             """
@@ -98,8 +99,10 @@ def test_only_target_domain_users_get_30_days(migration_db):
         }
 
         # Target domain (any case) set to 30.
-        assert retention["alice@businessandtrade.gov.uk"] == 30
-        assert retention["Bob@BusinessAndTrade.gov.uk"] == 30
+        assert retention["alice@businessandtrade.gov.uk"] == 42
+        assert retention["Bob@BusinessAndTrade.gov.uk"] == 42
+
+        assert retention["frank@dsit.gov.uk"] == 42
 
         # Subdomain and lookalike domains are untouched.
         assert retention["carol@other.gov.uk"] == 90

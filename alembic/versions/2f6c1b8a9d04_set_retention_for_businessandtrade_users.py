@@ -1,4 +1,4 @@
-"""Set 30-day retention for businessandtrade.gov.uk users
+"""Set 30-day retention for businessandtrade.gov.uk and dsit.gov.uk users
 
 Revision ID: 2f6c1b8a9d04
 Revises: b8c4d2e7f1a9
@@ -22,8 +22,9 @@ def upgrade() -> None:
     # (x@notbusinessandtrade.gov.uk). ILIKE covers any un-lowercased rows.
     op.execute("""
         UPDATE "user"
-        SET data_retention_days = 30
+        SET data_retention_days = 42
         WHERE email ILIKE '%@businessandtrade.gov.uk'
+           OR email ILIKE '%@dsit.gov.uk'
     """)
 
 

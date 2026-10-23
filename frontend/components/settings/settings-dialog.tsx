@@ -19,7 +19,7 @@ import { useForm } from 'react-hook-form'
 
 type UserSettingsForm = { dataRetention: 'none' | `${number}` }
 
-const SETTINGS_FIXED_DOMAINS = ['businessandtrade']
+const SETTINGS_FIXED_DOMAINS = ['businessandtrade', 'dsit']
 
 export function SettingsDialog({ user }: { user: GetUserResponse }) {
   const [open, setOpen] = useState(false)

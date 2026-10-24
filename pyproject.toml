@@ -31,6 +31,7 @@ dependencies = [
     "python-multipart>=0.0.20,<0.0.21",
     "i-dot-ai-utilities>=0.4.4,<0.5",
     "nh3>=0.2.18,<0.3",
+    "temporalio>=1.34.0,<2",
 ]
 
 [tool.ruff]
@@ -49,7 +50,6 @@ worker = [
     "google-genai>=1.10.0,<2",
     "openai>=1.42.0,<2",
     "ffmpeg-python>=0.2.0,<0.3",
-    "ray[default]>=2.53.0,<3",
     "posthog>=6.6.1,<7",
 ]
 dev = [

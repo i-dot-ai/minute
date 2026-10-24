@@ -7,38 +7,41 @@ from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from backend.api.dependencies import SQLSessionDep, UserDep
+from backend.utils import temporal
 from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription, UserTemplate
-from common.services.queue_services import get_queue_service
-from common.settings import get_settings
 from common.types import (
-    EditMessageData,
     MinuteListItem,
     MinutesCreateRequest,
     MinuteVersionCreateRequest,
     MinuteVersionResponse,
-    TaskType,
-    WorkerMessage,
-)
-
-settings = get_settings()
-
-llm_queue_service = get_queue_service(
-    settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
 )
 
 minutes_router = APIRouter(tags=["Minutes"])
 
 
-async def _enqueue_minute_version(session: AsyncSession, minute_version: MinuteVersion, message: WorkerMessage) -> None:
-    """Commit before publish so workers can always see the job row."""
+async def _start_generation(session: AsyncSession, minute_version: MinuteVersion) -> None:
+    """Commit before starting the workflow so the worker can always see the row."""
     await session.commit()
     try:
-        llm_queue_service.publish_message(message)
+        await temporal.start_minute_generation_workflow(minute_version.id)
     except Exception as exc:
         minute_version.status = JobStatus.FAILED
         minute_version.error = "Failed to enqueue minute generation"
         await session.commit()
         raise HTTPException(status_code=503, detail="Failed to enqueue minute generation") from exc
+
+
+async def _start_edit(
+    session: AsyncSession, minute_version: MinuteVersion, source_minute_version_id: uuid.UUID
+) -> None:
+    await session.commit()
+    try:
+        await temporal.start_minute_edit_workflow(minute_version.id, source_minute_version_id)
+    except Exception as exc:
+        minute_version.status = JobStatus.FAILED
+        minute_version.error = "Failed to enqueue minute edit"
+        await session.commit()
+        raise HTTPException(status_code=503, detail="Failed to enqueue minute edit") from exc
 
 
 @minutes_router.get("/transcription/{transcription_id}/minutes")
@@ -109,7 +112,7 @@ async def create_minute(
     session.add(minute)
     minute_version = MinuteVersion(id=uuid.uuid4(), minute_id=minute.id)
     session.add(minute_version)
-    await _enqueue_minute_version(session, minute_version, WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
+    await _start_generation(session, minute_version)
     await session.refresh(minute_version)
     await session.refresh(minute)
     return MinuteListItem(
@@ -213,15 +216,7 @@ async def create_minute_version(
     minute.updated_datetime = datetime.now(tz=UTC)
     session.add(minute_version)
     if request.ai_edit_instructions:
-        await _enqueue_minute_version(
-            session,
-            minute_version,
-            WorkerMessage(
-                id=minute_version.id,
-                data=EditMessageData(source_id=request.ai_edit_instructions.source_id),
-                type=TaskType.EDIT,
-            ),
-        )
+        await _start_edit(session, minute_version, request.ai_edit_instructions.source_id)
     else:
         await session.commit()
     await session.refresh(minute_version)

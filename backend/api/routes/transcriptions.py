@@ -12,6 +12,7 @@ from sqlmodel import col, func, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from backend.api.dependencies import SQLSessionDep, UserDep
+from backend.utils import temporal
 from backend.utils.get_file_s3_key import get_file_s3_key
 from common.database.postgres_models import (
     JobStatus,
@@ -21,7 +22,6 @@ from common.database.postgres_models import (
     Transcription,
     UserTemplate,
 )
-from common.services.queue_services import get_queue_service
 from common.services.storage_services import get_storage_service
 from common.settings import get_settings
 from common.types import (
@@ -29,7 +29,6 @@ from common.types import (
     RecordingCreateRequest,
     RecordingCreateResponse,
     SingleRecording,
-    TaskType,
     TranscriptionCreateRequest,
     TranscriptionCreateResponse,
     TranscriptionGetResponse,
@@ -37,7 +36,6 @@ from common.types import (
     TranscriptionMetadata,
     TranscriptionPatchRequest,
     TranscriptionRetryRequest,
-    WorkerMessage,
 )
 
 settings = get_settings()
@@ -46,9 +44,6 @@ storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
 transcriptions_router = APIRouter(tags=["Transcriptions"])
-transcription_queue_service = get_queue_service(
-    settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
-)
 
 logger = logging.getLogger(__name__)
 
@@ -63,10 +58,10 @@ def _next_cleanup_cutoff(retention_days: int) -> datetime:
 
 
 async def _enqueue_transcription(session: AsyncSession, transcription: Transcription, minute_id: uuid.UUID) -> None:
-    """Commit before publish so workers can always see the job row."""
+    """Commit before starting the workflow so the worker can always see the job row."""
     await session.commit()
     try:
-        transcription_queue_service.publish_message(WorkerMessage(id=minute_id, type=TaskType.TRANSCRIPTION))
+        await temporal.start_transcription_workflow(transcription.id, minute_id)
     except Exception as exc:
         transcription.status = JobStatus.FAILED
         transcription.error = "Failed to enqueue transcription"

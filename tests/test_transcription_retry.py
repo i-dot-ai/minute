@@ -10,7 +10,6 @@ Requires the docker-compose Postgres (`make run`).
 import asyncio
 import uuid
 from datetime import UTC, datetime, timedelta
-from types import SimpleNamespace
 
 import pytest
 import pytest_asyncio
@@ -19,20 +18,16 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import get_user_info
 from common.database.postgres_database import async_engine
-from common.database.postgres_models import Minute, MinuteVersion, Recording, Transcription
-from common.types import JobStatus
+from common.database.postgres_models import (
+    JobStatus,
+    Minute,
+    MinuteVersion,
+    Recording,
+    Transcription,
+)
 from tests.utils import get_or_create_user, get_test_client
 
 SEED_TIME = datetime.now(UTC) - timedelta(minutes=10)
-
-
-def _recorder(started: list):
-    """Stand-in for temporal.start_transcription_workflow; records the minute id like the old queue message."""
-
-    async def _start(transcription_id, minute_id):
-        started.append(SimpleNamespace(id=minute_id, transcription_id=transcription_id))
-
-    return _start
 
 
 async def _current_user_id(session: AsyncSession) -> uuid.UUID:
@@ -106,16 +101,16 @@ async def in_progress_transcription():
 def published_messages(monkeypatch):
     published: list = []
 
-    async def _object_exists(_storage, _key: str) -> bool:
+    async def _object_exists(_key: str) -> bool:
         return True
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.exists",
+        "backend.api.routes.transcriptions.storage_service.check_object_exists",
         _object_exists,
     )
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
-        _recorder(published),
+        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
+        published.append,
     )
     return published
 
@@ -218,12 +213,12 @@ async def test_retry_publish_failure_marks_failed(failed_transcription, monkeypa
     """A definite enqueue failure leaves the retry explicitly retryable."""
     transcription_id = failed_transcription["transcription_id"]
 
-    async def _boom(_transcription_id, _minute_id):
-        msg = "temporal unavailable"
+    def _boom(_message):
+        msg = "queue unavailable"
         raise RuntimeError(msg)
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
+        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
         _boom,
     )
 

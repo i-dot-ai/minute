@@ -1,35 +1,37 @@
-"""Crash-recovery tests for the audio + STT steps (the `prepare_audio` and `transcribe` activities).
+"""End-to-end recovery test for a transcription that fails halfway.
 
-Temporal runs one attempt at a time and one workflow per transcription, so an IN_PROGRESS row is
-this workflow's own earlier attempt and the retry adopts its claim: a crashed or throttled attempt
-is retried straight away, without waiting for the claim to go stale. A genuinely non-transient
-failure marks the row FAILED, and the retry then fails again (the user retries via the API).
+Delivery 1: process_transcription claims the job (AWAITING_START -> IN_PROGRESS),
+then dies mid-provider-call via CancelledError, which escapes the handled-failure
+path (that path would write FAILED and complete the message) and leaves the row
+claimed but unfinished.
 
-These call the activities' step functions directly, so they need no Temporal context. Requires the
-docker-compose Postgres (`make run`).
+Delivery 2 (SQS redelivered the message after the visibility timeout): the claim is
+stale, so process_transcription reclaims it, re-runs the provider and completes.
+
+Requires the docker-compose Postgres (`make run`).
 """
 
 import asyncio
 import uuid
 from datetime import UTC, datetime, timedelta
-from types import SimpleNamespace
-from typing import Any, cast
 
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlmodel import delete
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.database.postgres_database import async_engine
-from common.database.postgres_models import Minute, MinuteVersion, Recording, Transcription
-from common.runtime import Runtime
-from common.services.stt import TranscriptionFailedError, TranscriptionTransientError
-from common.types import JobStatus
-from common.workflows import transcription as wf
-from common.workflows.activities import _shared
-from common.workflows.activities import prepare_audio as prepare_activity
-from common.workflows.activities import transcribe as transcribe_activity
+from common.database.postgres_models import (
+    JobStatus,
+    Minute,
+    MinuteVersion,
+    Recording,
+    Transcription,
+)
+from common.services.exceptions import TranscriptionFailedError
+from common.services.transcription_handler_service import TranscriptionHandlerService
+from common.settings import CLAIM_STALE_AFTER
+from common.types import TranscriptionJobMessageData
 from tests.utils import get_or_create_user
 
 RECOVERY_EMAIL = "transcription-recovery-test@example.com"
@@ -77,193 +79,258 @@ async def transcription_setup() -> dict[str, uuid.UUID]:
         await session.commit()
 
 
-class _FakeStt:
-    """STT whose single call is the test's `transcribe`; the timeout/attempt args pass through."""
+@pytest.mark.asyncio(loop_scope="session")
+async def test_job_crashing_halfway_recovers_on_redelivery(transcription_setup, monkeypatch):
+    minute_id = transcription_setup["minute_id"]
+    transcription_id = transcription_setup["transcription_id"]
 
-    def __init__(self, transcribe) -> None:
-        self._transcribe = transcribe
+    # Delivery 1: the worker claims the job, then dies before the provider returns.
+    async def _crash(transcription):  # noqa: ARG001
+        raise asyncio.CancelledError  # BaseException: survives the handler's except block
 
-    async def transcribe(self, audio_file_path, timeout_seconds: float = 0.0, attempt: int = 1):
-        return await self._transcribe(audio_file_path, timeout_seconds, attempt)
-
-
-def _stub_stt(monkeypatch, transcribe, *, prepare_fails: Exception | None = None) -> Runtime:
-    """Skip download/ffmpeg (both activities' prepare step) and replace the STT call.
-
-    Returns the Runtime the activities run with, so tests pass it to the step functions.
-    """
-
-    async def _prepare(transcription, work_dir, storage, db):  # noqa: ARG001
-        if prepare_fails:
-            raise prepare_fails
-        return SimpleNamespace(file_path=work_dir / "audio.mp3", duration_seconds=98.0)
-
-    monkeypatch.setattr(prepare_activity, "prepare_recording", _prepare)
-    monkeypatch.setattr(transcribe_activity, "prepare_recording", _prepare)
-    monkeypatch.setattr(_shared, "capture_event", lambda *_a, **_k: None)
-    return Runtime(
-        storage=cast(Any, None),
-        stt=_FakeStt(transcribe),
-        db=async_sessionmaker(async_engine, expire_on_commit=False),
+    monkeypatch.setattr(
+        "common.services.transcription_handler_service.transcription_manager.perform_transcription_steps", _crash
     )
+    with pytest.raises(asyncio.CancelledError):
+        await TranscriptionHandlerService.process_transcription(minute_id=minute_id)
 
-
-def _transcribe_input(minute_id: uuid.UUID, timeout_seconds: float = 300) -> wf.TranscribeInput:
-    return wf.TranscribeInput(minute_id=str(minute_id), stt_timeout_seconds=timeout_seconds)
-
-
-async def _transcript(_path, timeout_seconds, attempt):  # noqa: ARG001
-    return TRANSCRIPT
-
-
-async def _status(transcription_id: uuid.UUID) -> Transcription:
-    async with AsyncSession(async_engine) as session:
-        return await session.get(Transcription, transcription_id)
-
-
-async def _reassign_claim(transcription_id: uuid.UUID) -> None:
-    """Stand in for another owner taking the row over: its fencing token changes."""
     async with AsyncSession(async_engine) as session:
         transcription = await session.get(Transcription, transcription_id)
-        transcription.updated_datetime = datetime.now(UTC) + timedelta(minutes=1)
+        assert transcription.status == JobStatus.IN_PROGRESS
+        claimed_at = transcription.updated_datetime
+
+    # Simulate the outage passing: the crashed claim ages past CLAIM_STALE_AFTER
+    new_time = datetime.now(UTC) - CLAIM_STALE_AFTER - timedelta(minutes=5)
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, transcription_id)
+        transcription.updated_datetime = new_time
         session.add(transcription)
         await session.commit()
 
+    assert claimed_at > new_time
+
+    # Delivery 2: SQS redelivers the message; the stale claim is reclaimed and the job completes.
+    async def _recover(transcription):  # noqa: ARG001
+        return TranscriptionJobMessageData(transcription_service="MockAdapter", transcript=TRANSCRIPT)
+
+    async def _speak(entries):
+        return entries
+
+    monkeypatch.setattr(
+        "common.services.transcription_handler_service.transcription_manager.perform_transcription_steps", _recover
+    )
+    monkeypatch.setattr("common.services.transcription_handler_service.process_speakers_and_dialogue_entries", _speak)
+
+    async def _fake_title(transcript):  # noqa: ARG001
+        return "Recovered meeting"
+
+    monkeypatch.setattr("common.services.transcription_handler_service.generate_meeting_title", _fake_title)
+    monkeypatch.setattr("common.services.transcription_handler_service.capture_event", lambda *_args, **_kwargs: None)
+
+    transcription_job = await TranscriptionHandlerService.process_transcription(minute_id=minute_id)
+
+    assert transcription_job.transcript == TRANSCRIPT
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, transcription_id)
+        assert transcription.status == JobStatus.COMPLETED
+        assert transcription.dialogue_entries == TRANSCRIPT
+        assert transcription.title == "Recovered meeting"
+
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_prepare_then_transcribe_on_the_next_region(transcription_setup, monkeypatch):
-    minute_id = transcription_setup["minute_id"]
-    seen: list = []
-
-    async def _stt(_path, timeout_seconds, attempt):
-        seen.append((timeout_seconds, attempt))
-        return TRANSCRIPT
-
-    runtime = _stub_stt(monkeypatch, _stt)
-    prepared = await prepare_activity._prepare_audio(minute_id, runtime)
-    assert prepared.duration_seconds == 98.0
-    assert (await _status(transcription_setup["transcription_id"])).status == JobStatus.IN_PROGRESS
-
-    # attempt 2: a retry after a throttled first attempt, on the next region
-    result = await transcribe_activity._transcribe(_transcribe_input(minute_id), attempt=2, runtime=runtime)
-    assert result == str(transcription_setup["transcription_id"])
-    assert seen == [(300, 2)]
-    row = await _status(transcription_setup["transcription_id"])
-    assert row.status == JobStatus.IN_PROGRESS  # COMPLETED is a later activity
-    assert row.dialogue_entries == TRANSCRIPT
-
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_transcribe_crashing_halfway_recovers_on_retry(transcription_setup, monkeypatch):
+async def test_handled_failure_marks_failed_and_stops_redelivery_transcription(transcription_setup, monkeypatch):
+    """A normal exception is a HANDLED failure: row goes FAILED and the message completes,
+    so a redelivery must not re-run the provider (the user retries via the API instead)."""
     minute_id = transcription_setup["minute_id"]
     transcription_id = transcription_setup["transcription_id"]
 
-    async def _crash(_path, timeout_seconds, attempt):  # noqa: ARG001
-        raise asyncio.CancelledError  # BaseException: e.g. the SDK cancelling a timed-out attempt
+    calls = {"n": 0}
 
-    runtime = _stub_stt(monkeypatch, _crash)
-    await prepare_activity._prepare_audio(minute_id, runtime)
-    with pytest.raises(asyncio.CancelledError):
-        await transcribe_activity._transcribe(_transcribe_input(minute_id), attempt=1, runtime=runtime)
-    assert (await _status(transcription_id)).status == JobStatus.IN_PROGRESS
+    async def _fail(transcription):  # noqa: ARG001
+        provider_error = "provider exploded"
+        raise RuntimeError(provider_error)
 
-    # The retry adopts the crashed attempt's claim and recovers, without waiting for it to go stale.
-    runtime = _stub_stt(monkeypatch, _transcript)
-    assert await transcribe_activity._transcribe(_transcribe_input(minute_id), attempt=2, runtime=runtime) == str(
-        transcription_id
+    async def _count_provider(transcription):
+        calls["n"] += 1
+        await _fail(transcription)
+
+    monkeypatch.setattr(
+        "common.services.transcription_handler_service.transcription_manager.perform_transcription_steps",
+        _count_provider,
     )
-    assert (await _status(transcription_id)).dialogue_entries == TRANSCRIPT
+    with pytest.raises(TranscriptionFailedError):
+        await TranscriptionHandlerService.process_transcription(minute_id=minute_id)
+
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, transcription_id)
+        assert transcription.status == JobStatus.FAILED
+        assert transcription.error
+
+    # redelivery: FAILED is never claimable, so the provider must not run again
+    monkeypatch.setattr(
+        "common.services.transcription_handler_service.transcription_manager.perform_transcription_steps", _fail
+    )
+    assert await TranscriptionHandlerService.process_transcription(minute_id=minute_id) is None
+    assert calls["n"] == 1
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_provider_unavailable_leaves_row_for_retry(transcription_setup, monkeypatch):
-    """Every region throttled: transient, so the row stays IN_PROGRESS (not FAILED) and the retry succeeds."""
-    minute_id = transcription_setup["minute_id"]
+async def test_duplicate_async_poll_delivery_is_fenced(transcription_setup):
+    """A duplicate poll carries the active claim token and cannot create a new claim."""
     transcription_id = transcription_setup["transcription_id"]
-
-    async def _throttled(_path, timeout_seconds, attempt):  # noqa: ARG001
-        msg = "every region 429"
-        raise TranscriptionTransientError(msg)
-
-    runtime = _stub_stt(monkeypatch, _throttled)
-    await prepare_activity._prepare_audio(minute_id, runtime)
-    with pytest.raises(TranscriptionTransientError):
-        await transcribe_activity._transcribe(_transcribe_input(minute_id), attempt=1, runtime=runtime)
-    row = await _status(transcription_id)
-    assert row.status == JobStatus.IN_PROGRESS
-    assert row.error is None
-
-    runtime = _stub_stt(monkeypatch, _transcript)
-    assert await transcribe_activity._transcribe(_transcribe_input(minute_id), attempt=2, runtime=runtime) == str(
-        transcription_id
-    )
-
-
-@pytest.mark.asyncio(loop_scope="session")
-@pytest.mark.parametrize("step", ["prepare", "transcribe"])
-async def test_handled_failure_marks_failed_and_is_not_retried(transcription_setup, monkeypatch, step):
-    """A non-transient error (corrupt audio, 400 from Azure) is HANDLED: the row goes FAILED and a
-    retry raises again (FAILED is terminal; the user retries via the API instead)."""
-    minute_id = transcription_setup["minute_id"]
-    boom = RuntimeError("provider exploded")
-
-    async def _fail(_path, timeout_seconds, attempt):  # noqa: ARG001
-        raise boom
-
-    if step == "prepare":
-        runtime = _stub_stt(monkeypatch, _transcript, prepare_fails=boom)
-        with pytest.raises(TranscriptionFailedError):
-            await prepare_activity._prepare_audio(minute_id, runtime)
-        with pytest.raises(TranscriptionFailedError):
-            await prepare_activity._prepare_audio(minute_id, runtime)
-    else:
-        runtime = _stub_stt(monkeypatch, _fail)
-        await prepare_activity._prepare_audio(minute_id, runtime)
-        with pytest.raises(TranscriptionFailedError):
-            await transcribe_activity._transcribe(_transcribe_input(minute_id), attempt=1, runtime=runtime)
-        with pytest.raises(TranscriptionFailedError):
-            await transcribe_activity._transcribe(_transcribe_input(minute_id), attempt=2, runtime=runtime)
-    row = await _status(transcription_setup["transcription_id"])
-    assert row.status == JobStatus.FAILED
-    assert "provider exploded" in row.error
+    token = TranscriptionHandlerService.claim_transcription(transcription_id)
+    assert token is not None
+    assert TranscriptionHandlerService.claim_transcription(transcription_id) is None
 
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_failure_persist_error_is_not_swallowed(transcription_setup, monkeypatch):
-    """If recording FAILED itself fails, the error escapes as UNHANDLED (retryable), so the
-    row is not stranded IN_PROGRESS behind a non-retryable failure."""
+    """Finding 6: if recording FAILED fails, the error must escape as UNHANDLED so the
+    worker does not acknowledge the message and strand the row with no recovery delivery."""
+    minute_id = transcription_setup["minute_id"]
 
-    async def _fail(_path, timeout_seconds, attempt):  # noqa: ARG001
+    async def _provider_fails(_transcription):
         msg = "provider exploded"
         raise RuntimeError(msg)
 
-    runtime = _stub_stt(monkeypatch, _fail)
-    await prepare_activity._prepare_audio(transcription_setup["minute_id"], runtime)
+    monkeypatch.setattr(
+        "common.services.transcription_handler_service.transcription_manager.perform_transcription_steps",
+        _provider_fails,
+    )
 
-    async def _persist_fails(*_args, **_kwargs):
+    def _persist_fails(*_args, **_kwargs):
         msg = "database down"
         raise RuntimeError(msg)
 
-    monkeypatch.setattr(_shared, "fenced_update", _persist_fails)
-    with pytest.raises(RuntimeError, match="database down"):
-        await transcribe_activity._transcribe(
-            _transcribe_input(transcription_setup["minute_id"]), attempt=1, runtime=runtime
+    monkeypatch.setattr(TranscriptionHandlerService, "update_transcription", _persist_fails)
+
+    # RuntimeError (not the handled TranscriptionFailedError the actor acknowledges)
+    with pytest.raises(RuntimeError):
+        await TranscriptionHandlerService.process_transcription(minute_id=minute_id)
+
+
+async def _age_claim(transcription_id: uuid.UUID) -> None:
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, transcription_id)
+        transcription.updated_datetime = datetime.now(UTC) - CLAIM_STALE_AFTER - timedelta(minutes=5)
+        session.add(transcription)
+        await session.commit()
+
+
+def _stub_completion(monkeypatch, deleted: list[str]) -> None:
+    async def _check(adapter_name, async_transcription_message_data):  # noqa: ARG001
+        return async_transcription_message_data.model_copy(
+            update={"transcript": TRANSCRIPT, "transcript_key": "restricted/transcribe-output/x/out.json"}
         )
+
+    async def _same(entries):
+        return entries
+
+    async def _title(transcript):  # noqa: ARG001
+        return "Recovered poll"
+
+    async def _delete(key):
+        deleted.append(key)
+
+    module = "common.services.transcription_handler_service"
+    monkeypatch.setattr(f"{module}.transcription_manager.check_transcription", _check)
+    monkeypatch.setattr(f"{module}.process_speakers_and_dialogue_entries", _same)
+    monkeypatch.setattr(f"{module}.generate_meeting_title", _title)
+    monkeypatch.setattr(f"{module}.capture_event", lambda *_a, **_k: None)
+    monkeypatch.setattr(f"{module}.storage_service.delete", _delete)
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_superseded_attempt_cannot_write(transcription_setup, monkeypatch):
-    """An attempt whose claim was taken over has its late write dropped instead of clobbering the
-    new owner: the fenced write fails and the step raises Transient so Temporal retries."""
-    minute_id = transcription_setup["minute_id"]
+async def test_superseded_poll_token_reclaims_abandoned_job(transcription_setup, monkeypatch):
+    """Finding 1: a poll worker that crashed after rotating the token leaves the
+    redelivered message with a dead token. Once the claim is stale it must reclaim,
+    complete, and only then delete the provider output (finding 3)."""
     transcription_id = transcription_setup["transcription_id"]
+    old_token = TranscriptionHandlerService.claim_transcription(transcription_id)
+    assert old_token is not None
+    await _age_claim(transcription_id)  # row now ages past the stale window; old_token no longer matches
 
-    async def _stalls_then_returns(_path, timeout_seconds, attempt):  # noqa: ARG001
-        await _reassign_claim(transcription_id)  # another owner takes the row over mid-call
-        return TRANSCRIPT
+    deleted: list[str] = []
+    _stub_completion(monkeypatch, deleted)
+    message = TranscriptionJobMessageData(transcription_service="AWSTranscribe", job_name="j", claim_token=old_token)
 
-    runtime = _stub_stt(monkeypatch, _stalls_then_returns)
-    await prepare_activity._prepare_audio(minute_id, runtime)
-    with pytest.raises(TranscriptionTransientError):
-        await transcribe_activity._transcribe(_transcribe_input(minute_id), attempt=1, runtime=runtime)
-    assert (await _status(transcription_id)).dialogue_entries is None
+    job = await TranscriptionHandlerService.process_transcription(
+        minute_id=transcription_setup["minute_id"], async_transcription_message_data=message
+    )
+
+    assert job is not None
+    assert deleted == ["restricted/transcribe-output/x/out.json"]
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, transcription_id)
+        assert transcription.status == JobStatus.COMPLETED
+        assert transcription.dialogue_entries == TRANSCRIPT
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_superseded_poll_token_cannot_steal_live_or_fresh_job(transcription_setup, monkeypatch):
+    """A dead-token poll must not take a live claim, nor start a fresh AWAITING_START job."""
+    transcription_id = transcription_setup["transcription_id"]
+    deleted: list[str] = []
+    _stub_completion(monkeypatch, deleted)
+    message = TranscriptionJobMessageData(
+        transcription_service="AWSTranscribe", job_name="j", claim_token=datetime.now(UTC) - timedelta(days=1)
+    )
+
+    # AWAITING_START (e.g. just retried): not claimable by a poll message
+    assert (
+        await TranscriptionHandlerService.process_transcription(
+            minute_id=transcription_setup["minute_id"], async_transcription_message_data=message
+        )
+        is None
+    )
+    # live IN_PROGRESS claim: not claimable either
+    assert TranscriptionHandlerService.claim_transcription(transcription_id) is not None
+    assert (
+        await TranscriptionHandlerService.process_transcription(
+            minute_id=transcription_setup["minute_id"], async_transcription_message_data=message
+        )
+        is None
+    )
+    assert deleted == []
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_provider_output_kept_when_write_superseded(transcription_setup, monkeypatch):
+    """Finding 3: if the COMPLETED write is rejected, the provider output must survive
+    so the current owner can still read it."""
+    token = TranscriptionHandlerService.claim_transcription(transcription_setup["transcription_id"])
+    deleted: list[str] = []
+    _stub_completion(monkeypatch, deleted)
+    monkeypatch.setattr(TranscriptionHandlerService, "update_transcription", lambda *_a, **_k: False)
+    message = TranscriptionJobMessageData(transcription_service="AWSTranscribe", job_name="j", claim_token=token)
+
+    assert (
+        await TranscriptionHandlerService.process_transcription(
+            minute_id=transcription_setup["minute_id"], async_transcription_message_data=message
+        )
+        is None
+    )
+    assert deleted == []
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_provider_output_delete_failure_does_not_fail_job(transcription_setup, monkeypatch):
+    token = TranscriptionHandlerService.claim_transcription(transcription_setup["transcription_id"])
+    _stub_completion(monkeypatch, [])
+
+    async def _boom(_key):
+        msg = "s3 down"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr("common.services.transcription_handler_service.storage_service.delete", _boom)
+    message = TranscriptionJobMessageData(transcription_service="AWSTranscribe", job_name="j", claim_token=token)
+
+    assert (
+        await TranscriptionHandlerService.process_transcription(
+            minute_id=transcription_setup["minute_id"], async_transcription_message_data=message
+        )
+        is not None
+    )
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, transcription_setup["transcription_id"])
+        assert transcription.status == JobStatus.COMPLETED

@@ -40,7 +40,7 @@ test('deleting one of several summaries removes it and keeps the rest', async ({
   // remaining first summary. The deleted one is gone from the summaries nav.
   await expect(page).toHaveURL(/\/transcriptions\/[^/]+\/summary\/[^/]+$/)
 
-  const nav = page.getByRole('navigation', { name: 'Summaries and transcript' })
+  const nav = page.getByRole('navigation', { name: 'Menu' })
   await expect(
     nav.getByRole('link', { name: 'Executive summary' })
   ).toBeVisible()
@@ -65,7 +65,7 @@ test('deleting the only summary leaves the meeting with no summary and option to
 
   await expect(page).toHaveURL(/\/transcriptions\/[^/]+\/transcript$/)
 
-  await page.getByRole('link', { name: 'Summary', exact: true }).click()
+  await page.getByRole('link', { name: 'No summary yet', exact: true }).click()
 
   await expect(page).toHaveURL(/\/transcriptions\/[^/]+\/summary$/)
 

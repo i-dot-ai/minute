@@ -1,11 +1,11 @@
 from typing import Protocol
 
-from common.database.postgres_models import Minute
+from common.database.postgres_models import DialogueEntry, Minute
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_section_for_agenda_prompt, string_to_system_message
 from common.settings import get_settings
 from common.templates.citations import add_citations_to_minute
-from common.types import AgendaUsage, DialogueEntry
+from common.types import AgendaUsage
 
 settings = get_settings()
 

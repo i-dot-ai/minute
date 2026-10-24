@@ -207,6 +207,12 @@ export const pageTours: PageTour[] = [
         title: 'Summary',
       },
       {
+        target: '#new-summary-button',
+        content:
+          'Generate a new summary here. You can use a different template or the same one again.',
+        title: 'Generate new summary',
+      },
+      {
         target: '#tour-show-references',
         content:
           'Show references to easily view where in the transcript the summary is referencing. Or hide them for easier reading.',
@@ -233,7 +239,7 @@ export const pageTours: PageTour[] = [
       {
         target: '#tour-summaries',
         content:
-          'Click "new summary" to generate a new summary. All generated summaries will be listed here to easily switch between them.',
+          'All generated summaries will be listed here to easily switch between them.',
         title: 'Summaries',
       },
     ],
@@ -244,10 +250,22 @@ export const pageTours: PageTour[] = [
       pathname.startsWith('/transcriptions/') && !pathname.includes('/summary'),
     steps: [
       {
-        target: '.secondary-nav',
+        target: '.govuk-width-container--with-secondary-nav',
+        placement: 'center',
         content:
-          'This is the full transcript. You can edit the text, rename speakers, and switch back to your summaries here.',
+          'This is the full transcript. You can view and edit the text and speakers',
         title: 'Transcript',
+      },
+      {
+        target: '#transcript-export-button',
+        content: 'You can export the transcript or download the audio here',
+        title: 'Export the transcript',
+      },
+      {
+        target: '.transcript-edit-button',
+        content:
+          'You can edit the speaker names or the transcript text and generate a new summary from here',
+        title: 'Edit the transcript',
       },
     ],
   },

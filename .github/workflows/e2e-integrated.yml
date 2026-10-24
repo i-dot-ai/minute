@@ -37,6 +37,7 @@ jobs:
           cp .env.example .env
           cat >> .env <<'EOF'
 
+          TRANSCRIPTION_SERVICES='["azure_stt_synchronous"]'
           AZURE_SPEECH_KEY=${{ secrets.AZURE_SPEECH_KEY }}
           AZURE_SPEECH_REGION=${{ secrets.AZURE_SPEECH_REGION }}
           GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT }}
@@ -46,7 +47,9 @@ jobs:
 
       - name: Start the stack
         run: |
-          docker compose up -d --wait db ministack temporal backend worker temporal-worker frontend
+          # 777: non-root backend (uid 1000) must write uploads here; runner owns it as uid 1001
+          mkdir -p .data && chmod 777 .data
+          docker compose up -d --wait db ministack backend worker frontend
 
       - name: Install Playwright (chromium)
         working-directory: frontend

@@ -1,8 +1,8 @@
 import re
 
+from common.database.postgres_models import DialogueEntry
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_citations_prompt
-from common.types import DialogueEntry
 
 
 async def add_citations_to_minute(

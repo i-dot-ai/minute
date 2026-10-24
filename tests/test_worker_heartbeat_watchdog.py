@@ -129,6 +129,7 @@ def test_stale_actor_replaced_and_healthy_actor_untouched(tmp_path, monkeypatch)
     service.actors = [FakeActor(fresh_id), FakeActor(stale_id)]
     stale_actor = service.actors[1]
     service.calls = ["fresh-call", "stale-call"]
+    service.num_transcription_actors = 1
 
     now = time.time()
     _write_heartbeat(tmp_path, fresh_id, now - 10)
@@ -147,7 +148,7 @@ def test_stale_actor_replaced_and_healthy_actor_untouched(tmp_path, monkeypatch)
     replacement.process = FakeProcessHandle(replacement_calls, "replacement-call")
     monkeypatch.setattr(service, "_create_llm_actor", lambda: replacement)
 
-    service._restart_stale_actors()
+    service._restart_stale_actors()  # noqa: SLF001
 
     assert killed == [stale_actor]
     assert service.actors[1] is replacement
@@ -172,14 +173,15 @@ async def test_failed_task_restarts_on_current_actor_exactly_once():
     replacement.process = FakeProcessHandle(replacement_calls, "replacement-call")
     service.actors = [replacement]
     service.calls = ["dead-call"]
-    service._last_stale_check = monotonic()  # fresh: the stale branch must not fire
+    service.num_transcription_actors = 1
+    service._last_stale_check = monotonic()  # fresh: the stale branch must not fire  # noqa: SLF001
 
     async def _died():
         raise ActorDiedError
 
     dead = asyncio.ensure_future(_died())
     futures = [dead]
-    await service._check_and_restart_tasks(futures)
+    await service._check_and_restart_tasks(futures)  # noqa: SLF001
     dead.exception()  # consume so asyncio doesn't warn about an unretrieved error
 
     assert replacement_calls == ["replacement-call"]
@@ -215,8 +217,8 @@ async def test_heartbeat_ticker_stops_and_restarts_cleanly(tmp_path):
     ticker = HeartbeatTicker(path, interval=0.05)
     async with ticker:
         await asyncio.sleep(0.12)
-        assert ticker._task is not None
-    assert ticker._task is None
+        assert ticker._task is not None  # noqa: SLF001
+    assert ticker._task is None  # noqa: SLF001 (cancelled on exit)
 
     async with HeartbeatTicker(path, interval=0.05):  # re-entry must not raise
         await asyncio.sleep(0.06)
@@ -229,6 +231,7 @@ def test_restart_swap_survives_heartbeat_unlink_failure(tmp_path, monkeypatch):
     fresh_id, stale_id = "0" * 32, "1" * 32
     service.actors = [FakeActor(fresh_id), FakeActor(stale_id)]
     service.calls = ["fresh-call", "stale-call"]
+    service.num_transcription_actors = 1
 
     now = time.time()
     _write_heartbeat(tmp_path, fresh_id, now - 10)
@@ -246,7 +249,7 @@ def test_restart_swap_survives_heartbeat_unlink_failure(tmp_path, monkeypatch):
 
     monkeypatch.setattr(Path, "unlink", _unlink_boom)
 
-    service._restart_stale_actors()
+    service._restart_stale_actors()  # noqa: SLF001
 
     assert service.actors[1] is replacement
 
@@ -261,16 +264,17 @@ async def test_failed_task_exception_is_retrieved():
     replacement.process = FakeProcessHandle(replacement_calls, "replacement-call")
     service.actors = [replacement]
     service.calls = ["dead-call"]
-    service._last_stale_check = monotonic()  # fresh: the stale branch must not fire
+    service.num_transcription_actors = 1
+    service._last_stale_check = monotonic()  # fresh: the stale branch must not fire  # noqa: SLF001
 
     async def _died():
         raise ActorDiedError
 
     dead = asyncio.ensure_future(_died())
-    await service._check_and_restart_tasks([dead])
+    await service._check_and_restart_tasks([dead])  # noqa: SLF001
 
     # asyncio clears _log_traceback only when the exception has been retrieved
-    assert dead._log_traceback is False
+    assert dead._log_traceback is False  # noqa: SLF001
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -282,14 +286,15 @@ async def test_cancelled_future_is_restarted():
     replacement.process = FakeProcessHandle(replacement_calls, "replacement-call")
     service.actors = [replacement]
     service.calls = ["dead-call"]
-    service._last_stale_check = monotonic()  # fresh: the stale branch must not fire
+    service.num_transcription_actors = 1
+    service._last_stale_check = monotonic()  # fresh: the stale branch must not fire  # noqa: SLF001
 
     cancelled = asyncio.ensure_future(asyncio.sleep(30))
     cancelled.cancel()
     await asyncio.sleep(0)  # let the cancellation settle
 
     futures = [cancelled]
-    await service._check_and_restart_tasks(futures)
+    await service._check_and_restart_tasks(futures)  # noqa: SLF001
 
     assert replacement_calls == ["replacement-call"]
     assert futures[0] is not cancelled

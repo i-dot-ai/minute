@@ -10,7 +10,7 @@ test('deleting a meeting removes it from the transcriptions list', async ({
   await routeDeleteTranscription(page, { transcriptions })
 
   await page.goto('/')
-  await page.getByRole('link', { name: 'transcripts' }).click()
+  await page.getByRole('link', { name: 'transcriptions' }).click()
   await expect(page).toHaveURL(/\/transcriptions$/)
 
   const target = transcriptions.items[0]
@@ -51,7 +51,7 @@ test('cancelling the delete dialog keeps the meeting', async ({ page }) => {
   await routeDeleteTranscription(page, { transcriptions })
 
   await page.goto('/')
-  await page.getByRole('link', { name: 'transcripts' }).click()
+  await page.getByRole('link', { name: 'transcriptions' }).click()
   await expect(page).toHaveURL(/\/transcriptions$/)
 
   const target = transcriptions.items[0]
@@ -73,7 +73,7 @@ test('select all meetings and delete deletes all meetings and renders button whi
   await routeDeleteTranscription(page, { transcriptions })
 
   await page.goto('/')
-  await page.getByRole('link', { name: 'transcripts' }).click()
+  await page.getByRole('link', { name: 'transcriptions' }).click()
   await expect(page).toHaveURL(/\/transcriptions$/)
 
   await expect(

@@ -1,8 +1,8 @@
 from pydantic import BaseModel, Field
 
+from common.database.postgres_models import DialogueEntry
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_meeting_title_prompt
-from common.types import DialogueEntry
 
 
 class MeetingTitleResponse(BaseModel):
@@ -10,9 +10,11 @@ class MeetingTitleResponse(BaseModel):
 
 
 async def generate_meeting_title(transcript: list[DialogueEntry]) -> str:
-    """Raises on LLM failure; callers decide whether a missing title is fatal."""
-    chatbot = create_default_chatbot(fast_or_best=FastOrBestLLM.FAST)
-    response = await chatbot.structured_chat(
-        messages=get_meeting_title_prompt(transcript=transcript), response_format=MeetingTitleResponse
-    )
-    return response.title
+    try:
+        chatbot = create_default_chatbot(fast_or_best=FastOrBestLLM.FAST)
+        response = await chatbot.structured_chat(
+            messages=get_meeting_title_prompt(transcript=transcript), response_format=MeetingTitleResponse
+        )
+        return response.title
+    except:  # noqa: E722
+        return ""

@@ -18,8 +18,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import get_user_info
 from common.database.postgres_database import async_engine
-from common.database.postgres_models import Transcription, User
-from common.types import JobStatus
+from common.database.postgres_models import JobStatus, Transcription, User
 from tests.utils import get_test_client
 
 # Recent enough that the rows never fall the wrong side of a retention cutoff,

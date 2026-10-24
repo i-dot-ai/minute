@@ -6,8 +6,8 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
 from backend.api.dependencies import UserDep
-from backend.api.dependencies.get_session import SessionDep
-from common.database.postgres_models import TemplateQuestion, UserTemplate
+from backend.api.dependencies.get_session import SQLSessionDep
+from common.database.postgres_models import TemplateQuestion, TemplateType, UserTemplate
 from common.services.html_sanitiser import sanitize_template_html
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings
@@ -17,7 +17,6 @@ from common.types import (
     Question,
     TemplateMetadata,
     TemplateResponse,
-    TemplateType,
 )
 
 templates_router = APIRouter(tags=["Templates"])
@@ -41,7 +40,7 @@ def get_templates(user: UserDep) -> list[TemplateMetadata]:
 
 
 @templates_router.get("/user-templates")
-async def get_user_templates(user: UserDep, session: SessionDep) -> list[TemplateResponse]:
+async def get_user_templates(user: UserDep, session: SQLSessionDep) -> list[TemplateResponse]:
     templates = (
         await session.exec(
             select(UserTemplate)
@@ -66,7 +65,7 @@ async def get_user_templates(user: UserDep, session: SessionDep) -> list[Templat
 
 
 @templates_router.get("/user-templates/{template_id}")
-async def get_user_template(user: UserDep, session: SessionDep, template_id: UUID) -> TemplateResponse:
+async def get_user_template(user: UserDep, session: SQLSessionDep, template_id: UUID) -> TemplateResponse:
     template = (
         await session.exec(
             select(UserTemplate)
@@ -96,7 +95,7 @@ async def get_user_template(user: UserDep, session: SessionDep, template_id: UUI
 
 
 @templates_router.post("/user-templates")
-async def create_user_template(user: UserDep, session: SessionDep, request: CreateUserTemplateRequest) -> None:
+async def create_user_template(user: UserDep, session: SQLSessionDep, request: CreateUserTemplateRequest) -> None:
     template = UserTemplate(
         name=request.name,
         content=sanitize_template_html(request.content),
@@ -119,7 +118,7 @@ async def create_user_template(user: UserDep, session: SessionDep, request: Crea
 
 @templates_router.patch("/user-templates/{template_id}")
 async def edit_user_template(
-    user: UserDep, session: SessionDep, template_id: UUID, request: PatchUserTemplateRequest
+    user: UserDep, session: SQLSessionDep, template_id: UUID, request: PatchUserTemplateRequest
 ) -> None:
     template = (
         await session.exec(select(UserTemplate).where(UserTemplate.id == template_id, UserTemplate.user_id == user.id))
@@ -167,7 +166,7 @@ async def edit_user_template(
 
 
 @templates_router.delete("/user-templates/{template_id}")
-async def delete_user_template(user: UserDep, session: SessionDep, template_id: UUID) -> None:
+async def delete_user_template(user: UserDep, session: SQLSessionDep, template_id: UUID) -> None:
     template = (
         await session.exec(select(UserTemplate).where(UserTemplate.id == template_id, UserTemplate.user_id == user.id))
     ).first()
@@ -180,7 +179,7 @@ async def delete_user_template(user: UserDep, session: SessionDep, template_id: 
 
 
 @templates_router.post("/user-templates/{template_id}/duplicate")
-async def duplicate_user_template(user: UserDep, session: SessionDep, template_id: UUID) -> UUID:
+async def duplicate_user_template(user: UserDep, session: SQLSessionDep, template_id: UUID) -> UUID:
     original_template = (
         await session.exec(
             select(UserTemplate)

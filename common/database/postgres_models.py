@@ -1,4 +1,6 @@
 from datetime import datetime
+from enum import StrEnum, auto
+from typing import TypedDict
 from uuid import UUID, uuid4
 
 from sqlalchemy import TIMESTAMP, Column, Index, text
@@ -7,7 +9,12 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
 from sqlmodel import Field, Relationship, SQLModel, col, func
 
-from common.types import ContentSource, DialogueEntry, JobStatus, TemplateType
+
+class DialogueEntry(TypedDict):
+    speaker: str
+    text: str
+    start_time: float
+    end_time: float
 
 
 # Create factory functions for columns to avoid reusing column objects
@@ -28,6 +35,19 @@ class BaseTableMixin(SQLModel):
     id: UUID = Field(
         default_factory=uuid4, primary_key=True, sa_column_kwargs={"server_default": func.gen_random_uuid()}
     )
+
+
+class JobStatus(StrEnum):
+    AWAITING_START = auto()
+    IN_PROGRESS = auto()
+    COMPLETED = auto()
+    FAILED = auto()
+
+
+class ContentSource(StrEnum):
+    MANUAL_EDIT = auto()
+    AI_EDIT = auto()
+    INITIAL_GENERATION = auto()
 
 
 class MinuteVersion(BaseTableMixin, table=True):
@@ -122,6 +142,11 @@ class Transcription(BaseTableMixin, table=True):
         back_populates="transcription",
         sa_relationship_kwargs={"order_by": col(Recording.created_datetime).desc()},
     )
+
+
+class TemplateType(StrEnum):
+    DOCUMENT = auto()
+    FORM = auto()
 
 
 class TemplateQuestion(BaseTableMixin, table=True):

@@ -1,4 +1,4 @@
-from common.types import DialogueEntry
+from common.database.postgres_models import DialogueEntry
 
 
 def transcript_as_speaker_and_utterance(transcript: list[DialogueEntry]) -> str:

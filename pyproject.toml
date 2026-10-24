@@ -10,6 +10,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
+    "certifi>=2026.10.19",
     "cryptography>=44.0.2,<45",
     "pydantic-settings>=2.5.2,<3",
     "alembic>=1.13.3,<2",
@@ -30,8 +31,6 @@ dependencies = [
     "python-multipart>=0.0.20,<0.0.21",
     "i-dot-ai-utilities>=0.4.4,<0.5",
     "nh3>=0.2.18,<0.3",
-    "temporalio>=1.34.0,<2",
-    "s3fs>=2026.9.0",
 ]
 
 [tool.ruff]
@@ -80,6 +79,8 @@ skip = [
 ]
 
 [tool.uv]
+required-version = ">=0.13.5"
+constraint-dependencies = ["pip>=26.2.2"]
 default-groups = "all"
 override-dependencies = [
     "wrapt>=2.4.0",
@@ -128,6 +129,6 @@ ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318","ISC001"]
 known-first-party = ["backend", "frontend"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "S106", "SLF001", "PLR0913", "PLR0915", "PLR2004", "TD003", "S311"]
+"tests/*" = ["S101", "S106", "PLR0913", "PLR0915", "PLR2004", "TD003", "S311"]
 "*/tests/*" = ["S101", "S106", "PLR0913", "PLR0915", "PLR2004", "TD003"]
 "*/tests_playwright/*" = ["S101", "S106", "PLR0913", "PLR2004", "TD003"]

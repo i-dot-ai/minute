@@ -1,5 +1,4 @@
 from .get_current_user import UserDep
-from .get_session import SessionDep
-from .get_storage import StorageDep
+from .get_session import SQLSessionDep
 
-__all__ = ["SessionDep", "StorageDep", "UserDep"]
+__all__ = ["SQLSessionDep", "UserDep"]

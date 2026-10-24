@@ -1,7 +1,8 @@
 # flake8: noqa: E501, RUF001
+from common.database.postgres_models import DialogueEntry
 from common.prompts import get_transcript_messages
 from common.templates.types import SimpleTemplate
-from common.types import AgendaUsage, DialogueEntry
+from common.types import AgendaUsage
 
 
 class ExecutiveSummary(SimpleTemplate):

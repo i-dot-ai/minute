@@ -3,15 +3,12 @@ from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from sqlmodel import and_, col, func, null, select, update
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from common.database.postgres_database import AsyncSessionLocal
-from common.database.postgres_models import MinuteVersion, Transcription
-from common.database.repository import (
-    finalize_stale_in_progress,
-    find_expired_transcriptions,
-    find_orphan_recordings,
-)
-from common.services.storage.s3 import client, delete, exists
+from common.database.postgres_database import async_engine
+from common.database.postgres_models import JobStatus, MinuteVersion, Recording, Transcription, User
+from common.services.storage_services import get_storage_service
 from common.settings import get_settings
 
 logger = logging.getLogger()
@@ -19,18 +16,26 @@ logger.setLevel(logging.INFO)
 
 settings = get_settings()
 
+storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
+
 
 async def cleanup_failed_records():
-    """Fail jobs stuck IN_PROGRESS for over a day so users can retry them."""
+    """clear records based on each user's retention period setting."""
     logger.info("Starting stalled object cleanup process")
-    cutoff_date = datetime.now(tz=ZoneInfo("Europe/London")) - timedelta(days=1)
-    async with AsyncSessionLocal() as session:
+    async with AsyncSession(async_engine) as session:
         for object_type in [MinuteVersion, Transcription]:
-            count = await finalize_stale_in_progress(
-                session, object_type, cutoff_date, "Unknown error. Job finalised by cleanup process"
+            # delete after 24 hrs if not successful
+            cutoff_date = datetime.now(tz=ZoneInfo("Europe/London")) - timedelta(days=1)
+            update_stmt = (
+                update(object_type)
+                .where(and_(object_type.created_datetime < cutoff_date, object_type.status == JobStatus.IN_PROGRESS))
+                .values(status=JobStatus.FAILED, error="Unknown error. Job finalised by cleanup process")
             )
+            result = await session.exec(update_stmt)
             await session.commit()
-            logger.info("updated %d old %s that were not successfully processed", count, object_type.__qualname__)
+            logger.info(
+                f"updated {result.rowcount} old {object_type.__qualname__} that were not successfully processed"  # noqa: G004
+            )
 
     logger.info("Stalled record cleanup process completed")
 
@@ -38,8 +43,16 @@ async def cleanup_failed_records():
 async def cleanup_old_records():
     """Delete records based on each user's retention period setting."""
     logger.info("Starting data retention cleanup process")
-    async with AsyncSessionLocal() as session:
-        transcriptions = await find_expired_transcriptions(session)
+    async with AsyncSession(async_engine) as session:
+        statement = (
+            select(Transcription)
+            .join(User, User.id == Transcription.user_id)
+            .where(
+                col(User.data_retention_days).is_not(null()),
+                Transcription.created_datetime < func.now() - User.data_retention_days * timedelta(days=1),
+            )
+        )
+        transcriptions = (await session.exec(statement)).all()
         logger.info("Deleting %d transcriptions.", len(transcriptions))
         for transcription in transcriptions:
             await session.delete(transcription)
@@ -48,13 +61,15 @@ async def cleanup_old_records():
 
 async def delete_orphan_records():
     logger.info("Starting recording clean up")
-    async with AsyncSessionLocal() as session, client() as s3:
-        recordings = await find_orphan_recordings(session)
+    async with AsyncSession(async_engine) as session:
+        orphan_recording_query = select(Recording).where(col(Recording.transcription_id).is_(None)).with_for_update()
+        recordings = (await session.exec(orphan_recording_query)).all()
         logger.info("Found %d Recordings with no Transcription.", len(recordings))
         for recording in recordings:
             try:
-                if await exists(s3, recording.s3_file_key):
-                    await delete(s3, recording.s3_file_key)
+                exists = await storage_service.check_object_exists(recording.s3_file_key)
+                if exists:
+                    await storage_service.delete(recording.s3_file_key)
             except Exception as e:  # noqa: BLE001
                 msg = f"Error deleting recording {recording.id}. Will keep record in database: {e}"
                 logger.error(msg)

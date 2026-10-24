@@ -14,13 +14,42 @@ const PUBLIC_PATHS = [
   '/sign-out',
 ]
 
+function applySecurityHeaders(req: NextRequest) {
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  const isDev =
+    process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
+
+  const csp = [
+    "default-src 'none'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self'",
+    "img-src 'self' data:",
+    `media-src 'self' blob: https://*.s3.amazonaws.com https://*.s3.${process.env.AWS_REGION ?? 'eu-west-2'}.amazonaws.com`,
+    `connect-src 'self' https://eu.i.posthog.com https://*.s3.amazonaws.com https://*.s3.${process.env.AWS_REGION ?? 'eu-west-2'}.amazonaws.com`,
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "object-src 'none'",
+  ].join('; ')
+
+  const requestHeaders = new Headers(req.headers)
+  requestHeaders.set('x-nonce', nonce)
+  requestHeaders.set('content-security-policy', csp)
+  requestHeaders.set('x-pathname', req.nextUrl.pathname)
+
+  const res = NextResponse.next({ request: { headers: requestHeaders } })
+  res.headers.set('content-security-policy', csp)
+  return res
+}
+
 export async function middleware(req: NextRequest) {
   try {
     const { pathname } = req.nextUrl
 
     // Check if the requested path is public
     if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
-      return NextResponse.next()
+      return applySecurityHeaders(req)
     }
 
     // Proxy directly to the backend for API requests
@@ -63,12 +92,7 @@ export async function middleware(req: NextRequest) {
     console.info(
       `User ${authResult.email} authorisation result: ${authResult.isAuthorised}`
     )
-    const requestHeaders = new Headers(req.headers)
-    requestHeaders.set('x-pathname', pathname)
-
-    return NextResponse.next({
-      request: { headers: requestHeaders },
-    })
+    return applySecurityHeaders(req)
   } catch (error) {
     console.error('Error authorising token:', error)
     return redirectToGenericError(req)

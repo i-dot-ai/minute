@@ -9,7 +9,7 @@ from common.services.queue_services import get_queue_service
 from common.services.queue_services.base import QueueService
 from common.settings import get_settings
 from worker.healthcheck import HEARTBEAT_DIR, HEARTBEAT_TIMEOUT
-from worker.ray_receive_service import HasBeenStopped, RayLlmService
+from worker.ray_receive_service import HasBeenStopped, RayLlmService, RayTranscriptionService
 from worker.signal_handler import SignalHandler
 
 logger = logging.getLogger(__name__)
@@ -46,17 +46,22 @@ def stale_actor_indices(actors: list, heartbeat_dir: Path, now: float, timeout: 
 
 
 class WorkerService:
-    """Runs the Ray LLM actors that handle AI edits from the SQS LLM queue (transcription is on Temporal)."""
-
-    def __init__(self, llm_queue_service: QueueService):
+    def __init__(self, transcription_queue_service: QueueService, llm_queue_service: QueueService):
+        self.transcription_queue_service = transcription_queue_service
         self.llm_queue_service = llm_queue_service
         self.actors = []
         self.calls = []
+        self.num_transcription_actors = settings.MAX_TRANSCRIPTION_PROCESSES
         self.signal_handler = SignalHandler()
         self.stopped = HasBeenStopped.remote()
         self._last_stale_check = monotonic()
+        for _ in range(self.num_transcription_actors):
+            self._add_actor(self._create_transcription_actor())
         for _ in range(settings.MAX_LLM_PROCESSES):
             self._add_actor(self._create_llm_actor())
+
+    def _create_transcription_actor(self):
+        return RayTranscriptionService.remote(self.transcription_queue_service, self.llm_queue_service, self.stopped)
 
     def _create_llm_actor(self):
         return RayLlmService.remote(self.llm_queue_service, self.stopped)
@@ -70,7 +75,10 @@ class WorkerService:
         for idx in stale:
             try:
                 logger.error("Actor %s heartbeat older than %ss — restarting it", self.actors[idx], HEARTBEAT_TIMEOUT)
-                new = self._create_llm_actor()
+                if idx < self.num_transcription_actors:
+                    new = self._create_transcription_actor()
+                else:
+                    new = self._create_llm_actor()
                 old = self.actors[idx]
                 # no_restart: the replacement actor is created above; the wedged actor
                 # must not resurrect and resume touching its (now-deleted) heartbeat file
@@ -135,21 +143,25 @@ def create_worker_service() -> WorkerService:
     settings = get_settings()
     # log the configured providers so it is obvious from the startup logs which services a running worker talks to
     logger.info(
-        "Worker configured with LLM providers: fast=%s (%s), best=%s (%s)",
+        "Worker configured with transcription services: %s. LLM providers: fast=%s (%s), best=%s (%s)",
+        ", ".join(settings.TRANSCRIPTION_SERVICES) or "none",
         settings.FAST_LLM_PROVIDER,
         settings.FAST_LLM_MODEL_NAME,
         settings.BEST_LLM_PROVIDER,
         settings.BEST_LLM_MODEL_NAME,
     )
+    transcription_sqs_service = get_queue_service(
+        settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
+    )
     llm_sqs_service = get_queue_service(
         settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
     )
     # max concurrent ray processes
-    # +3 as we need 1 for the ray Queue, 1 for the HasBeenStopped Actor, plus one 'spare'
+    # +4 as we need 2 for the ray Queues, 1 for the HasBeenStopped Actor, plus one 'spare'
     # we init ray here so we can handle its init in testing
     ray.init(
         log_to_driver=True,
-        num_cpus=(settings.MAX_LLM_PROCESSES + 3),
+        num_cpus=(settings.MAX_TRANSCRIPTION_PROCESSES + settings.MAX_LLM_PROCESSES + 4),
         configure_logging=True,
         dashboard_host=settings.RAY_DASHBOARD_HOST,
         dashboard_port=8265,
@@ -157,4 +169,4 @@ def create_worker_service() -> WorkerService:
         # so structured JSON logs stay valid for CloudWatch.
         logging_config=ray.LoggingConfig(encoding="JSON", log_level="INFO"),
     )
-    return WorkerService(llm_queue_service=llm_sqs_service)
+    return WorkerService(transcription_queue_service=transcription_sqs_service, llm_queue_service=llm_sqs_service)

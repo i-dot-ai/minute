@@ -9,17 +9,18 @@ services:
       - .env
     environment:
       - POSTGRES_HOST=db
-      # Presigned URLs carry this host, so the browser must resolve `ministack` too:
-      # add `127.0.0.1 ministack` to the host's /etc/hosts (see README).
-      - AWS_ENDPOINT_URL=http://ministack:4566
-      - TEMPORAL_ADDRESS=temporal:7233
+      - MINISTACK_URL=http://ministack:4566
+      - STORAGE_SERVICE_NAME=local
+      - LOCAL_STORAGE_PATH=/static
     depends_on:
       db:
         condition: service_healthy
       ministack:
         condition: service_healthy
-      temporal:
-        condition: service_healthy
+    volumes:
+      - type: bind
+        source: ./.data
+        target: /static
     healthcheck:
       test: ["CMD-SHELL", "curl --fail http://localhost:8080/healthcheck"]
       interval: 60s
@@ -50,10 +51,16 @@ services:
       - .env
     ports:
       - "8265:8265"
+    volumes:
+      - type: bind
+        source: ./.data
+        target: /static
     environment:
       - POSTGRES_HOST=db
       - RAY_DASHBOARD_HOST=0.0.0.0
-      - AWS_ENDPOINT_URL=http://ministack:4566
+      - MINISTACK_URL=http://ministack:4566
+      - STORAGE_SERVICE_NAME=local
+      - LOCAL_STORAGE_PATH=/static
     stop_grace_period: 10s
     depends_on:
       db:
@@ -72,52 +79,6 @@ services:
       watch:
         - path: ./worker
           target: /app/backend
-          action: sync+restart
-        - path: ./common
-          target: /app/common
-          action: sync+restart
-        - path: ./uv.lock
-          action: rebuild
-
-  temporal:
-    # Temporal CLI dev server: SQLite-backed, UI on http://localhost:8233
-    image: temporalio/temporal:1.9.1
-    command: ["server", "start-dev", "--ip", "0.0.0.0", "--db-filename", "/home/temporal/temporal.db"]
-    ports:
-      - "7233:7233"
-      - "8233:8233"
-    volumes:
-      - temporal-data:/home/temporal
-    healthcheck:
-      test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "localhost:7233"]
-      interval: 5s
-      retries: 20
-      start_period: 5s
-      timeout: 5s
-
-  temporal-worker:
-    build:
-      context: .
-      dockerfile: ./worker/Dockerfile
-    command: ["worker/entrypoint.sh", "worker/temporal_worker.py"]
-    env_file:
-      - .env
-    environment:
-      - POSTGRES_HOST=db
-      - AWS_ENDPOINT_URL=http://ministack:4566
-      - TEMPORAL_ADDRESS=temporal:7233
-    stop_grace_period: 30s
-    depends_on:
-      db:
-        condition: service_healthy
-      ministack:
-        condition: service_healthy
-      temporal:
-        condition: service_healthy
-    develop:
-      watch:
-        - path: ./worker
-          target: /app/worker
           action: sync+restart
         - path: ./common
           target: /app/common
@@ -188,7 +149,8 @@ services:
       # Here you mount your setup file so it will be executed
       # when the container starts
       - ./ministack-setup.sh:/etc/localstack/init/ready.d/script.sh
-    # AWS_DEFAULT_REGION comes from .env so queues land in the region the apps use (SQS is region-scoped).
+    environment:
+      - AWS_DEFAULT_REGION=eu-west-2
     healthcheck:
       test: ["CMD", "test", "-f", "/ready.txt"]
       interval: 1m30s
@@ -199,4 +161,3 @@ services:
 volumes:
   local_postgres_data: {}
   next_data: {}
-  temporal-data: {}

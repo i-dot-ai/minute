@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
-from backend.api.dependencies import SessionDep, UserDep
+from backend.api.dependencies import SQLSessionDep, UserDep
 from common.database.postgres_models import User, UserTemplate
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings
@@ -34,7 +34,7 @@ def get_user(user: UserDep) -> GetUserResponse:
 @users_router.patch("/users/data-retention", response_model=GetUserResponse)
 async def update_data_retention(
     data: DataRetentionUpdateResponse,
-    session: SessionDep,
+    session: SQLSessionDep,
     user: UserDep,
 ) -> GetUserResponse:
     """Update the data retention period for the current user.
@@ -66,7 +66,7 @@ async def update_data_retention(
 @users_router.patch("/users/default-template", response_model=GetUserResponse)
 async def update_default_template(
     data: SetDefaultTemplateRequest,
-    session: SessionDep,
+    session: SQLSessionDep,
     user: UserDep,
 ) -> GetUserResponse:
     """Set the current user's default template.

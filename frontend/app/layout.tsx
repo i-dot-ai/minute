@@ -12,8 +12,8 @@ import Link from 'next/link'
 import './globals.css'
 import { Header } from '@/components/layout/header'
 import ServiceNavigation from '@/components/layout/service-navigation'
-import { TranscriptionSidePanel } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/TranscriptionSidePanel'
 import { Footer } from '@/components/layout/footer'
+import { connection } from 'next/server'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -25,11 +25,12 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  await connection()
   return (
     <html lang="en" className={`${inter.className} govuk-template sm:h-dvh`}>
       <body className="govuk-template__body govuk-frontend-supported sm:h-full sm:overflow-hidden">
@@ -51,7 +52,6 @@ export default function RootLayout({
                     <Header />
                     <div className="sm:flex sm:min-h-0 sm:flex-1">
                       <ServiceNavigation />
-                      <TranscriptionSidePanel />
                       <main
                         id="main-content"
                         tabIndex={-1}

@@ -6,8 +6,12 @@ export type StaticMock = {
   status: number
   response: unknown
 }
+// Use urls that mimic prod set up to catch CSP action properly
+export const UPLOAD_URL =
+  'https://i-dot-ai-test-minute-data.s3.eu-west-2.amazonaws.com/upload'
 
-export const UPLOAD_URL = 'https://blob.test.local/upload'
+export const STORAGE_HOST =
+  'https://i-dot-ai-test-minute-data.s3.eu-west-2.amazonaws.com'
 
 export async function routeStatic(
   page: Page,
@@ -36,7 +40,7 @@ export async function routeStorage(page: Page): Promise<void> {
     route.fulfill({ status: 200, body: '' })
   )
 
-  await page.route('**/api/proxy/mock_storage/**', (route) =>
+  await page.route(`${STORAGE_HOST}/**`, (route) =>
     route.fulfill({ status: 200, contentType: 'audio/mpeg', body: '' })
   )
 }

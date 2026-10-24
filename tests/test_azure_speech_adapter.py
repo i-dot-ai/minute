@@ -1,20 +1,20 @@
-"""Unit tests for Azure STT: one request per call, on the region picked from the attempt number.
+"""Unit tests for AzureSpeechAdapter failing over between Azure regions.
 
-Nothing here calls Azure. httpx.AsyncClient is swapped for a real client whose transport returns
-canned responses and the audio is a small synthetic file. Retrying across regions is Temporal's
-job, so a failed request raises TranscriptionTransientError rather than failing over in-process.
+Nothing here calls Azure. httpx.AsyncClient is swapped for a real client whose transport returns canned responses, the
+audio is a small synthetic file, and tenacity's sleep between retries returns immediately.
 """
 
-import asyncio
 from pathlib import Path
 from types import SimpleNamespace
 
 import httpx
 import pytest
 from structlog.testing import capture_logs
+from tenacity import RetryError
 
-from common.services.stt import TranscriptionFailedError, TranscriptionTransientError, azure
-from common.services.stt.azure import Azure, AzureSpeechRegion, _configured_regions, region_for
+from common.services.exceptions import TranscriptionFailedError
+from common.services.transcription_services import azure
+from common.services.transcription_services.azure import AzureSpeechAdapter, AzureSpeechRegion, _configured_regions
 
 PRIMARY = AzureSpeechRegion(region="uksouth", key="primary-key")
 FALLBACK_1 = AzureSpeechRegion(region="westeurope", key="fallback-1-key")
@@ -62,19 +62,24 @@ class QueuedTransport(httpx.AsyncBaseTransport):
         return response
 
 
-class HangingTransport(httpx.AsyncBaseTransport):
-    """Accepts the request and never answers (httpx's own timeouts don't fire)."""
-
-    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:  # noqa: ARG002
-        await asyncio.sleep(3600)
-        return ok()
-
-
 @pytest.fixture
 def audio_file(tmp_path: Path) -> Path:
     path = tmp_path / "audio.mp3"
     path.write_bytes(b"\0" * 1024)
     return path
+
+
+@pytest.fixture(autouse=True)
+def backoffs(monkeypatch) -> list[float]:
+    """Stops start() from actually waiting between retries in every test, and records each wait for the tests that
+    check the backoff."""
+    waits: list[float] = []
+
+    async def record_sleep(seconds: float) -> None:
+        waits.append(seconds)
+
+    monkeypatch.setattr(AzureSpeechAdapter.start.retry, "sleep", record_sleep)
+    return waits
 
 
 @pytest.fixture
@@ -102,71 +107,56 @@ def sent_to(region: AzureSpeechRegion) -> tuple[str, str]:
 
 
 @pytest.mark.parametrize(
-    ("attempt", "expected"),
+    ("responses", "regions", "expected_requests", "expected_backoffs"),
     [
-        pytest.param(1, PRIMARY, id="attempt 1 -> primary region"),
-        pytest.param(2, FALLBACK_1, id="attempt 2 -> fallback 1"),
-        pytest.param(3, FALLBACK_2, id="attempt 3 -> fallback 2"),
-        pytest.param(4, PRIMARY, id="attempt 4 wraps back to the primary"),
-    ],
-)
-def test_region_rotates_with_the_attempt(monkeypatch, attempt, expected):
-    monkeypatch.setattr(azure, "regions", ALL_REGIONS)
-    assert region_for(attempt) == expected
-
-
-def test_region_for_without_any_configured_region_raises(monkeypatch):
-    monkeypatch.setattr(azure, "regions", [])
-    with pytest.raises(TranscriptionFailedError, match="No Azure STT region is configured"):
-        region_for(1)
-
-
-@pytest.mark.asyncio
-async def test_transcribes_on_the_attempts_region(azure_responses, audio_file):
-    transport = azure_responses([ok()])
-
-    result = await Azure().transcribe(audio_file, attempt=2)
-
-    assert result == EXPECTED_TRANSCRIPT
-    assert transport.requests == [sent_to(FALLBACK_1)]  # one request, to that attempt's region
-    assert transport.audio_sizes == [1024]
-
-
-@pytest.mark.parametrize(
-    ("response", "expected_error"),
-    [
-        pytest.param(error(429), TranscriptionTransientError, id="throttled"),
-        pytest.param(error(503), TranscriptionTransientError, id="service unavailable"),
-        pytest.param(timeout(), TranscriptionTransientError, id="read timeout"),
-        pytest.param(error(400), TranscriptionFailedError, id="bad request is not retried"),
-        pytest.param(httpx.ConnectError("no route"), TranscriptionTransientError, id="network error"),
+        pytest.param([ok()], ALL_REGIONS, [PRIMARY], 0, id="primary serves the request"),
+        pytest.param([error(429), ok()], ALL_REGIONS, [PRIMARY, FALLBACK_1], 0, id="throttled primary fails over"),
+        pytest.param([error(500), error(503), ok()], ALL_REGIONS, ALL_REGIONS, 0, id="server errors fail over"),
+        pytest.param([timeout(), ok()], ALL_REGIONS, [PRIMARY, FALLBACK_1], 0, id="timeout fails over"),
+        pytest.param(
+            [error(429), error(429), error(429), ok()],
+            ALL_REGIONS,
+            [*ALL_REGIONS, PRIMARY],
+            1,
+            id="backs off only after every region fails",
+        ),
+        pytest.param([error(429), error(429), ok()], [PRIMARY], [PRIMARY] * 3, 2, id="single region backs off"),
     ],
 )
 @pytest.mark.asyncio
-async def test_one_request_then_the_matching_error(azure_responses, audio_file, response, expected_error):
-    transport = azure_responses([response])
+async def test_transcribes(
+    azure_responses, audio_file, backoffs, responses, regions, expected_requests, expected_backoffs
+):
+    transport = azure_responses(responses, regions)
 
-    with pytest.raises(expected_error):
-        await Azure().transcribe(audio_file, attempt=1)
+    result = await AzureSpeechAdapter.start(audio_file)
 
-    assert transport.requests == [sent_to(PRIMARY)]  # one request: no in-process failover
-
-
-@pytest.mark.asyncio
-async def test_a_hung_region_raises_transient_within_the_timeout(monkeypatch, audio_file):
-    real_async_client = httpx.AsyncClient
-    monkeypatch.setattr(azure, "regions", [PRIMARY])
-    monkeypatch.setattr(azure.httpx, "AsyncClient", lambda **kw: real_async_client(transport=HangingTransport(), **kw))
-
-    with pytest.raises(TranscriptionTransientError, match="unavailable"):
-        await asyncio.wait_for(Azure().transcribe(audio_file, timeout_seconds=0.2), timeout=5)
+    assert result.transcript == EXPECTED_TRANSCRIPT
+    assert transport.requests == [sent_to(region) for region in expected_requests]
+    assert transport.audio_sizes == [1024] * len(expected_requests)
+    assert len(backoffs) == expected_backoffs
 
 
 @pytest.mark.asyncio
-async def test_transcribe_requires_a_configured_service(monkeypatch):
-    monkeypatch.setattr(azure.settings, "AZURE_SPEECH_KEY", None)
-    with pytest.raises(TranscriptionFailedError, match="No transcription service is configured"):
-        await Azure().transcribe(Path("whatever.mp3"))
+async def test_gives_up_after_five_sweeps_of_every_region(azure_responses, audio_file, backoffs):
+    transport = azure_responses([error(429) for _ in range(15)])
+
+    with pytest.raises(RetryError):
+        await AzureSpeechAdapter.start(audio_file)
+
+    assert len(transport.requests) == 15
+    assert len(backoffs) == 4
+
+
+@pytest.mark.asyncio
+async def test_client_error_fails_without_trying_other_regions(azure_responses, audio_file, backoffs):
+    transport = azure_responses([error(400)])
+
+    with pytest.raises(TranscriptionFailedError, match="HTTP 400"):
+        await AzureSpeechAdapter.start(audio_file)
+
+    assert transport.requests == [sent_to(PRIMARY)]
+    assert backoffs == []
 
 
 def region_settings(**overrides: str | None) -> SimpleNamespace:
@@ -183,7 +173,7 @@ def region_settings(**overrides: str | None) -> SimpleNamespace:
 
 
 def test_configured_regions_are_primary_then_fallbacks_in_order():
-    assert _configured_regions(region_settings()) == ALL_REGIONS  # pyright: ignore[reportArgumentType]
+    assert _configured_regions(region_settings()) == ALL_REGIONS
 
 
 @pytest.mark.parametrize(
@@ -199,7 +189,7 @@ def test_configured_regions_warns_about_and_leaves_out_a_missing_or_empty_region
     settings = region_settings(AZURE_SPEECH_FALLBACK_1_REGION=region, AZURE_SPEECH_FALLBACK_1_KEY=key)
 
     with capture_logs() as logs:
-        assert _configured_regions(settings) == [PRIMARY, FALLBACK_2]  # pyright: ignore[reportArgumentType]
+        assert _configured_regions(settings) == [PRIMARY, FALLBACK_2]
 
     assert [(log["log_level"], log["event"]) for log in logs] == [
         (

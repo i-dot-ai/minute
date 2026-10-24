@@ -1,6 +1,6 @@
 """Temporal worker for the transcription workflow: one Worker per task queue, each with its own cap.
 
-AI edits of minutes stay on the Ray LLM worker for now.
+AI edits of minutes are not covered yet; this worker runs transcription (and the initial summary).
 """
 
 import asyncio
@@ -9,7 +9,6 @@ import logging
 from temporalio.client import Client
 from temporalio.worker import Worker
 
-from common.runtime import build_runtime
 from common.sentry import init_sentry
 from common.settings import get_settings
 from common.workflows import activities
@@ -21,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 async def main() -> None:
     settings = get_settings()
-    runtime = build_runtime(settings)
     client = await Client.connect(settings.TEMPORAL_ADDRESS, namespace=settings.TEMPORAL_NAMESPACE)
     llm_cap = max(settings.MAX_LLM_PROCESSES, 1)
     # One Worker per task queue. Slots per queue = that resource's cap in this process;
@@ -36,7 +34,7 @@ async def main() -> None:
         Worker(
             client,
             task_queue=STT_TASK_QUEUE,
-            activities=activities.build_stt_activities(runtime),
+            activities=activities.STT_ACTIVITIES,
             max_concurrent_activities=settings.STT_MAX_CONCURRENCY,
         ),
         Worker(
@@ -47,7 +45,7 @@ async def main() -> None:
         ),
     ]
     logger.info(
-        "Temporal worker on %s: queues %s, %s (Azure STT cap %d), %s (LLM cap %d)",
+        "Temporal worker on %s: queues %s, %s (STT cap %d), %s (LLM cap %d)",
         settings.TEMPORAL_ADDRESS,
         TASK_QUEUE,
         STT_TASK_QUEUE,

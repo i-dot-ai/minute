@@ -12,10 +12,13 @@ services:
       - MINISTACK_URL=http://ministack:4566
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
+      - TEMPORAL_ADDRESS=temporal:7233
     depends_on:
       db:
         condition: service_healthy
       ministack:
+        condition: service_healthy
+      temporal:
         condition: service_healthy
     volumes:
       - type: bind
@@ -38,53 +41,61 @@ services:
         - path: ./uv.lock
           action: rebuild
 
-  worker:
+  worker: # Temporal worker: transcription workflow (prepare/STT/LLM steps) + initial summary
     build:
       context: .
       dockerfile: ./worker/Dockerfile
-    shm_size: 4gb
+    command: ["worker/entrypoint.sh", "worker/temporal_worker.py"]
     deploy: # Make sure the worker has a couple of CPUS
       resources:
         limits:
           cpus: "2.0" # Set CPU limit to 2 cores
     env_file:
       - .env
-    ports:
-      - "8265:8265"
     volumes:
       - type: bind
         source: ./.data
         target: /static
     environment:
       - POSTGRES_HOST=db
-      - RAY_DASHBOARD_HOST=0.0.0.0
       - MINISTACK_URL=http://ministack:4566
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
-    stop_grace_period: 10s
+      - TEMPORAL_ADDRESS=temporal:7233
+    stop_grace_period: 30s
     depends_on:
       db:
         condition: service_healthy
       ministack:
         condition: service_healthy
-    healthcheck:
-      # Direct interpreter call (venv is on PATH); avoids `uv run` touching
-      # /app/.venv on a timer while Ray is running off the same venv.
-      test: ["CMD-SHELL", "python worker/healthcheck.py"]
-      interval: 30s
-      retries: 2
-      start_period: 60s
-      timeout: 5s
+      temporal:
+        condition: service_healthy
     develop:
       watch:
         - path: ./worker
-          target: /app/backend
+          target: /app/worker
           action: sync+restart
         - path: ./common
           target: /app/common
           action: sync+restart
         - path: ./uv.lock
           action: rebuild
+
+  temporal:
+    # Temporal CLI dev server: SQLite-backed, UI on http://localhost:8233
+    image: temporalio/temporal:1.9.1
+    command: ["server", "start-dev", "--ip", "0.0.0.0", "--db-filename", "/home/temporal/temporal.db"]
+    ports:
+      - "7233:7233"
+      - "8233:8233"
+    volumes:
+      - temporal-data:/home/temporal
+    healthcheck:
+      test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "localhost:7233"]
+      interval: 5s
+      retries: 20
+      start_period: 5s
+      timeout: 5s
 
   frontend:
     build:
@@ -161,3 +172,4 @@ services:
 volumes:
   local_postgres_data: {}
   next_data: {}
+  temporal-data: {}

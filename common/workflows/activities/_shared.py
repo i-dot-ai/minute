@@ -1,7 +1,4 @@
-"""Helpers shared by the transcription activities: the row and its claim.
-
-Code used by a single activity lives in that activity's module; this holds what several need.
-"""
+"""Helpers shared by the transcription activities: the row, its claim and fenced writes."""
 
 from datetime import datetime
 from uuid import UUID
@@ -9,24 +6,27 @@ from uuid import UUID
 from sqlalchemy import update
 from sqlmodel import col
 
-from common.database.postgres_database import AsyncSessionLocal
-from common.database.postgres_models import Transcription
-from common.database.repository import get_transcription, get_transcription_for_minute, update_in_progress_transcription
+from common.database.postgres_database import SessionLocal
+from common.database.postgres_models import JobStatus, Transcription
+from common.services.exceptions import TranscriptionFailedError
 from common.services.job_claim import claim_job
 from common.services.posthog_client import capture_event
-from common.services.stt import TranscriptionFailedError, TranscriptionTransientError
+from common.services.transcription_handler_service import TranscriptionHandlerService
 from common.settings import get_structured_logger
-from common.types import JobStatus
+
+
+class TranscriptionTransientError(Exception):
+    """The attempt lost its claim or its write could not be applied; retry without touching the row."""
+
 
 slogger = get_structured_logger()
 
 
-async def load(minute_id: UUID) -> Transcription:
+def load(minute_id: UUID) -> Transcription:
     """The minute's transcription with its recordings. Raises TranscriptionFailedError if it is gone."""
     slogger.set_context_field("minute_id", str(minute_id))
     try:
-        async with AsyncSessionLocal() as session:
-            transcription = await get_transcription_for_minute(session, minute_id)
+        transcription = TranscriptionHandlerService.get_transcription_from_minute_id(minute_id)
     except Exception as e:
         raise TranscriptionFailedError from e
     slogger.set_context_field("transcription_id", str(transcription.id))
@@ -34,22 +34,28 @@ async def load(minute_id: UUID) -> Transcription:
     return transcription
 
 
-async def get_row(transcription_id: UUID) -> Transcription | None:
-    async with AsyncSessionLocal() as session:
-        return await get_transcription(session, transcription_id)
+def get_row(transcription_id: UUID) -> Transcription | None:
+    try:
+        return TranscriptionHandlerService.get_transcription(transcription_id)
+    except ValueError:
+        return None
 
 
-async def update_in_progress(transcription_id: UUID, **values) -> bool:
+def update_in_progress(transcription_id: UUID, **values) -> bool:
     """Write to the row only while it is IN_PROGRESS. Returns whether it was applied."""
-    async with AsyncSessionLocal() as session:
-        applied = await update_in_progress_transcription(session, transcription_id, **values)
-        await session.commit()
-        return applied
+    with SessionLocal() as session:
+        result = session.exec(
+            update(Transcription)
+            .where(col(Transcription.id) == transcription_id, col(Transcription.status) == JobStatus.IN_PROGRESS)
+            .values(**values)
+        )
+        session.commit()
+        return result.rowcount == 1  # pyright: ignore[reportAttributeAccessIssue]
 
 
-async def in_progress(transcription_id: UUID) -> Transcription | None:
+def in_progress(transcription_id: UUID) -> Transcription | None:
     """The row if a step may still write to it; None if it was deleted, failed or finished."""
-    row = await get_row(transcription_id)
+    row = get_row(transcription_id)
     if row is None or row.status != JobStatus.IN_PROGRESS:
         slogger.info("Transcription no longer in progress; skipping step")
         return None
@@ -72,22 +78,15 @@ def take_claim(transcription: Transcription) -> datetime:
     return token
 
 
-async def fenced_update(transcription_id: UUID, claim_token: datetime, **values) -> bool:
+def fenced_update(transcription_id: UUID, claim_token: datetime, **values) -> bool:
     """Apply only while claim_token still owns the row, so a superseded attempt's late write is dropped."""
-    async with AsyncSessionLocal() as session:
-        result = await session.exec(
-            update(Transcription)
-            .where(col(Transcription.id) == transcription_id, col(Transcription.updated_datetime) == claim_token)
-            .values(**values)
-        )
-        await session.commit()
-        return result.rowcount == 1  # pyright: ignore[reportAttributeAccessIssue]
+    return TranscriptionHandlerService.update_transcription(transcription_id, claim_token, **values)
 
 
-async def mark_failed(transcription: Transcription, claim_token: datetime, error: Exception) -> str | None:
+def mark_failed(transcription: Transcription, claim_token: datetime, error: Exception) -> str | None:
     """Mark the row FAILED if this attempt still owns it. Returns the message, or None if superseded."""
     msg = f"Transcription failed: {error!s}"
-    if not await fenced_update(transcription.id, claim_token, status=JobStatus.FAILED, error=msg):
+    if not fenced_update(transcription.id, claim_token, status=JobStatus.FAILED, error=msg):
         return None
     capture_event(transcription.user_id, "transcription_failed", {"transcriptionId": str(transcription.id)})
     return msg

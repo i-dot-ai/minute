@@ -4,9 +4,9 @@ from uuid import UUID
 
 from temporalio import activity
 
+from common.database.postgres_models import JobStatus
+from common.services.exceptions import TranscriptionFailedError
 from common.services.posthog_client import capture_event
-from common.services.stt import TranscriptionFailedError
-from common.types import JobStatus
 from common.workflows import transcription as wf
 from common.workflows.activities import _shared
 
@@ -15,9 +15,9 @@ from common.workflows.activities import _shared
 async def fail_transcription(params: wf.FailTranscriptionInput) -> None:
     """IN_PROGRESS -> FAILED. No-op if the row is already terminal or was deleted."""
     try:
-        transcription = await _shared.load(UUID(params.minute_id))
+        transcription = _shared.load(UUID(params.minute_id))
     except TranscriptionFailedError:
         return  # deleted
     error = f"Transcription failed: {params.error}"
-    if await _shared.update_in_progress(transcription.id, status=JobStatus.FAILED, error=error):
+    if _shared.update_in_progress(transcription.id, status=JobStatus.FAILED, error=error):
         capture_event(transcription.user_id, "transcription_failed", {"transcriptionId": str(transcription.id)})

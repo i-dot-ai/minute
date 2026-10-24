@@ -5,16 +5,15 @@ Collaborators are patched; ActivityEnvironment runs each activity in-process (no
 
 import uuid
 from types import SimpleNamespace
-from typing import cast
 
 import pytest
 from temporalio.exceptions import ApplicationError
 from temporalio.testing import ActivityEnvironment
 
-from common.runtime import Runtime
+from common.database.postgres_models import JobStatus
+from common.services.exceptions import TranscriptionFailedError
 from common.services.minute_handler_service import MinuteDelivery, MinuteGenerationFailedError
-from common.services.stt import TranscriptionFailedError, TranscriptionTransientError
-from common.types import DialogueEntry, JobStatus
+from common.services.transcription_handler_service import TranscriptionHandlerService
 from common.workflows import transcription as wf
 from common.workflows.activities import (
     _shared,
@@ -29,10 +28,8 @@ from common.workflows.activities import (
 
 MINUTE_ID = uuid.uuid4()
 TRANSCRIPTION_ID = uuid.uuid4()
-ENTRIES: list[DialogueEntry] = [DialogueEntry(speaker="A", text="hi", start_time=0.0, end_time=1.0)]
+ENTRIES = [{"speaker": "A", "text": "hi", "start_time": 0.0, "end_time": 1.0}]
 TRANSCRIBE_INPUT = wf.TranscribeInput(minute_id=str(MINUTE_ID), stt_timeout_seconds=60)
-# The step functions are patched in these tests, so the runtime's providers are never read.
-RUNTIME = cast(Runtime, SimpleNamespace(storage=None, stt=None, db=None))
 
 
 def _row(status=JobStatus.IN_PROGRESS, entries=ENTRIES):
@@ -48,7 +45,7 @@ def writes(monkeypatch):
     """Record IN_PROGRESS-guarded writes; returns True (row was IN_PROGRESS)."""
     calls: list = []
 
-    async def _update(tid, **values):
+    def _update(tid, **values):
         calls.append((tid, values))
         return True
 
@@ -59,27 +56,21 @@ def writes(monkeypatch):
 
 def _patch_row(monkeypatch, row):
     """Patch the row every activity reads (in_progress and complete_transcription both use it)."""
-
-    async def _get(_tid):
-        return row
-
-    monkeypatch.setattr(_shared, "get_row", _get)
+    in_progress = lambda _tid: row if row and row.status == JobStatus.IN_PROGRESS else None  # noqa: E731
+    monkeypatch.setattr(_shared, "in_progress", in_progress)
+    monkeypatch.setattr(_shared, "get_row", lambda _tid: row)
 
 
 def _patch_load(monkeypatch, row):
     """Patch the minute -> transcription lookup (fail_transcription reads it by minute id)."""
-
-    async def _load(_minute_id):
-        return row
-
-    monkeypatch.setattr(_shared, "load", _load)
+    monkeypatch.setattr(_shared, "load", lambda _minute_id: row)
 
 
 # --- prepare_audio ---
 
 
 def _patch_audio_step(monkeypatch, *, result=None, raises=None):
-    async def _step(_minute_id, _runtime):
+    async def _step(_minute_id):
         if raises:
             raise raises
         return result
@@ -88,7 +79,7 @@ def _patch_audio_step(monkeypatch, *, result=None, raises=None):
 
 
 async def _run_prepare_audio():
-    return await _run(prepare_audio.build_prepare_audio(RUNTIME), str(MINUTE_ID))
+    return await _run(prepare_audio.prepare_audio, str(MINUTE_ID))
 
 
 @pytest.mark.asyncio
@@ -107,7 +98,7 @@ async def test_prepare_audio_bad_audio_is_non_retryable(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_prepare_audio_transient_error_is_retryable(monkeypatch):
-    _patch_audio_step(monkeypatch, raises=TranscriptionTransientError("claim moved"))
+    _patch_audio_step(monkeypatch, raises=_shared.TranscriptionTransientError("claim moved"))
     with pytest.raises(ApplicationError) as e:
         await _run_prepare_audio()
     assert not e.value.non_retryable
@@ -117,9 +108,9 @@ async def test_prepare_audio_transient_error_is_retryable(monkeypatch):
 
 
 def _patch_transcribe_step(monkeypatch, *, result=None, raises=None, seen=None):
-    async def _step(params, attempt, runtime):  # noqa: ARG001
+    async def _step(params):
         if seen is not None:
-            seen.append((params, attempt))
+            seen.append(params)
         if raises:
             raise raises
         return result
@@ -128,21 +119,20 @@ def _patch_transcribe_step(monkeypatch, *, result=None, raises=None, seen=None):
 
 
 async def _transcribe():
-    return await ActivityEnvironment().run(transcribe.build_transcribe(RUNTIME), TRANSCRIBE_INPUT)
+    return await ActivityEnvironment().run(transcribe.transcribe, TRANSCRIBE_INPUT)
 
 
 @pytest.mark.asyncio
-async def test_transcribe_returns_id_and_passes_the_attempt(monkeypatch):
+async def test_transcribe_returns_id(monkeypatch):
     seen: list = []
     _patch_transcribe_step(monkeypatch, result=str(TRANSCRIPTION_ID), seen=seen)
     assert await _transcribe() == str(TRANSCRIPTION_ID)
-    # ActivityEnvironment runs attempt 1; the region is chosen from it by the STT provider.
-    assert seen == [(TRANSCRIBE_INPUT, 1)]
+    assert seen == [TRANSCRIBE_INPUT]
 
 
 @pytest.mark.asyncio
 async def test_transcribe_provider_unavailable_is_retryable(monkeypatch):
-    _patch_transcribe_step(monkeypatch, raises=TranscriptionTransientError("every region 429"))
+    _patch_transcribe_step(monkeypatch, raises=_shared.TranscriptionTransientError("provider 429"))
     with pytest.raises(ApplicationError) as e:
         await _transcribe()
     assert not e.value.non_retryable
@@ -171,7 +161,7 @@ async def test_fail_transcription_marks_in_progress_row_failed(monkeypatch, writ
 
 @pytest.mark.asyncio
 async def test_fail_transcription_ignores_deleted_row(monkeypatch, writes):
-    async def _gone(_minute_id):
+    def _gone(_minute_id):
         raise TranscriptionFailedError
 
     monkeypatch.setattr(_shared, "load", _gone)
@@ -191,7 +181,7 @@ async def test_identify_speakers_saves_named_entries(monkeypatch, writes):
         return named
 
     _patch_row(monkeypatch, _row())
-    monkeypatch.setattr(identify_speakers, "process_speakers_and_dialogue_entries", _name)
+    monkeypatch.setattr(TranscriptionHandlerService, "identify_speakers", _name)
     await _run(identify_speakers.identify_speakers, str(TRANSCRIPTION_ID))
     assert writes == [(TRANSCRIPTION_ID, {"dialogue_entries": named})]
 
@@ -206,19 +196,6 @@ async def test_generate_title_saves_title(monkeypatch, writes):
     monkeypatch.setattr(generate_title, "generate_meeting_title", _title)
     await _run(generate_title.generate_title, str(TRANSCRIPTION_ID))
     assert writes == [(TRANSCRIPTION_ID, {"title": "Weekly sync"})]
-
-
-@pytest.mark.asyncio
-async def test_generate_title_llm_error_propagates_for_retry(monkeypatch, writes):
-    async def _boom(transcript):  # noqa: ARG001
-        msg = "llm down"
-        raise RuntimeError(msg)
-
-    _patch_row(monkeypatch, _row())
-    monkeypatch.setattr(generate_title, "generate_meeting_title", _boom)
-    with pytest.raises(RuntimeError):
-        await _run(generate_title.generate_title, str(TRANSCRIPTION_ID))
-    assert writes == []
 
 
 @pytest.mark.asyncio
@@ -244,10 +221,7 @@ async def test_post_processing_skips_rows_no_longer_in_progress(monkeypatch, wri
     ],
 )
 async def test_complete_transcription(monkeypatch, applied, row, expected):
-    async def _update(_tid, **_v):
-        return applied
-
-    monkeypatch.setattr(_shared, "update_in_progress", _update)
+    monkeypatch.setattr(_shared, "update_in_progress", lambda _tid, **_v: applied)
     monkeypatch.setattr(_shared, "capture_event", lambda *_a, **_k: None)
     _patch_row(monkeypatch, row)
     assert await _run(complete_transcription.complete_transcription, str(TRANSCRIPTION_ID)) is expected

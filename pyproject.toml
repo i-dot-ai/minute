@@ -31,6 +31,7 @@ dependencies = [
     "python-multipart>=0.0.20,<0.0.21",
     "i-dot-ai-utilities>=0.4.4,<0.5",
     "nh3>=0.2.18,<0.3",
+    "temporalio>=1.34.0,<2",
 ]
 
 [tool.ruff]

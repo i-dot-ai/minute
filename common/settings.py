@@ -136,6 +136,14 @@ class Settings(BaseSettings):
         default="sqs",
     )
 
+    TEMPORAL_ADDRESS: str = Field(description="Temporal frontend gRPC address", default="localhost:7233")
+    TEMPORAL_NAMESPACE: str = Field(description="Temporal namespace", default="default")
+    STT_MAX_CONCURRENCY: int = Field(
+        description="Max concurrent STT calls per Temporal STT worker. The cluster-wide cap is this times "
+        "the number of worker processes polling the 'stt' task queue.",
+        default=4,
+    )
+
     # if running the worker inside a docker container (use "0.0.0.0" )
     RAY_DASHBOARD_HOST: str = Field(description="Ray dashboard host IP address", default="127.0.0.1")
 

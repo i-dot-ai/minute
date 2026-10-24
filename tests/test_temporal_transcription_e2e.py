@@ -1,7 +1,7 @@
 """E2E: upload audio -> Temporal runs transcribe, speakers, title, summary as separate activities.
 
 Hits the running docker compose stack over HTTP (not in-process), so the real
-backend, temporal server and temporal-worker are exercised. Calls Azure STT.
+backend, temporal server and worker are exercised. Calls Azure STT and the LLM.
 
     docker compose up -d --build --wait
     ALLOW_TESTS_TO_ACCESS_PAID_APIS=1 uv run pytest tests/test_temporal_transcription_e2e.py -s
@@ -42,8 +42,11 @@ TIMEOUT_SECONDS = 600
 async def test_upload_creates_transcription_via_temporal():
     async with httpx.AsyncClient(base_url=BACKEND_URL, timeout=60) as api:
         recording = (await api.post("/recordings", json={"file_extension": "mp3"})).raise_for_status().json()
-        # Presigned S3 PUT against MiniStack (browser-facing endpoint, i.e. localhost:4566), as the frontend does.
-        (await api.put(recording["upload_url"], content=AUDIO.read_bytes())).raise_for_status()
+        # Local storage returns a frontend-proxied mock-storage path; S3 returns an absolute presigned URL.
+        upload_url = recording["upload_url"]
+        if upload_url.startswith("/"):
+            upload_url = BACKEND_URL + upload_url.removeprefix("/api/proxy")
+        (await api.put(upload_url, content=AUDIO.read_bytes())).raise_for_status()
 
         created = await api.post(
             "/transcriptions",

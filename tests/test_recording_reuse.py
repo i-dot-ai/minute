@@ -1,7 +1,7 @@
 """Tests for the recording-reuse guard on POST /transcriptions (vuln-0001).
 
-Rows are seeded straight into Postgres; the S3 existence check and the queue
-publish are patched. Requires the docker-compose Postgres (`make run`).
+Rows are seeded straight into Postgres; the S3 existence check and the workflow
+start are patched. Requires the docker-compose Postgres (`make run`).
 """
 
 import asyncio
@@ -94,10 +94,14 @@ async def test_reused_recording_rejected(recordings):
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_fresh_recording_still_creates_transcription(recordings, monkeypatch):
-    published: list = []
+    started: list = []
+
+    async def _start(transcription_id, minute_id):
+        started.append((transcription_id, minute_id))
+
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
-        published.append,
+        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
+        _start,
     )
     fresh = recordings["fresh"]
 
@@ -108,7 +112,7 @@ async def test_fresh_recording_still_creates_transcription(recordings, monkeypat
         )
 
     assert response.status_code == 201
-    assert len(published) == 1
+    assert len(started) == 1
     async with AsyncSession(async_engine) as session:
         recording = await session.get(Recording, fresh.id)
         assert recording.transcription_id is not None
@@ -122,7 +126,7 @@ async def test_concurrent_reuse_creates_and_queues_only_one_transcription(record
     fresh = recordings["fresh"]
     both_checked_storage = asyncio.Event()
     checks = 0
-    published: list = []
+    started: list = []
 
     async def _object_exists(_key: str) -> bool:
         nonlocal checks
@@ -133,13 +137,16 @@ async def test_concurrent_reuse_creates_and_queues_only_one_transcription(record
             await asyncio.wait_for(both_checked_storage.wait(), timeout=0.1)
         return True
 
+    async def _start(transcription_id, minute_id):
+        started.append((transcription_id, minute_id))
+
     monkeypatch.setattr(
         "backend.api.routes.transcriptions.storage_service.check_object_exists",
         _object_exists,
     )
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
-        published.append,
+        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
+        _start,
     )
 
     async with get_test_client() as first, get_test_client() as second:
@@ -168,7 +175,7 @@ async def test_concurrent_reuse_creates_and_queues_only_one_transcription(record
         await session.commit()
 
     assert sorted(response.status_code for response in responses) == [201, 409]
-    assert len(published) == 1
+    assert len(started) == 1
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -176,12 +183,12 @@ async def test_publish_failure_marks_transcription_failed(recordings, monkeypatc
     """A definite enqueue failure leaves the committed job explicitly retryable."""
     fresh = recordings["fresh"]
 
-    def _boom(_message):
-        msg = "queue unavailable"
+    async def _boom(_transcription_id, _minute_id):
+        msg = "temporal unavailable"
         raise RuntimeError(msg)
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
+        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
         _boom,
     )
 

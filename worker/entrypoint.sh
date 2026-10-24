@@ -6,9 +6,8 @@ echo $GOOGLE_APPLICATION_CREDENTIALS_BASE64 | base64 -d > /app/config/google-cre
 export GOOGLE_APPLICATION_CREDENTIALS=/app/config/google-credentials.json
 
 # Main execution
-echo "Starting worker..."
+echo "Starting Temporal worker..."
 
 # Run the venv interpreter directly (it is first on PATH from the Dockerfile)
 # rather than via `uv run`, which could re-sync/mutate /app/.venv while the process is live.
-# Default: the legacy Ray worker. docker compose passes worker/temporal_worker.py.
-exec python "${1:-worker/main.py}"
+exec python worker/temporal_worker.py

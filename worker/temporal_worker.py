@@ -1,6 +1,7 @@
-"""Temporal worker for the transcription workflow: one Worker per task queue, each with its own cap.
+"""Temporal worker: one Worker per task queue, each with its own cap.
 
-AI edits of minutes are not covered yet; this worker runs transcription (and the initial summary).
+Queues: transcription (workflow tasks + DB writes), stt (ffmpeg + the STT provider),
+llm (speakers, title, summary, minute generation and AI edits).
 """
 
 import asyncio
@@ -12,6 +13,7 @@ from temporalio.worker import Worker
 from common.sentry import init_sentry
 from common.settings import get_settings
 from common.workflows import activities
+from common.workflows.minute_version import MinuteEditWorkflow, MinuteGenerationWorkflow
 from common.workflows.transcription import LLM_TASK_QUEUE, STT_TASK_QUEUE, TASK_QUEUE, TranscriptionWorkflow
 
 logging.basicConfig(level=logging.INFO)
@@ -28,7 +30,7 @@ async def main() -> None:
         Worker(
             client,
             task_queue=TASK_QUEUE,
-            workflows=[TranscriptionWorkflow],
+            workflows=[TranscriptionWorkflow, MinuteGenerationWorkflow, MinuteEditWorkflow],
             activities=activities.WORKFLOW_QUEUE_ACTIVITIES,
         ),
         Worker(

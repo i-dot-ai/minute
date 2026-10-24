@@ -68,11 +68,6 @@ class Settings(BaseSettings):
         self.LOGGING_FORMAT = LogOutputFormat.TEXT if is_local else LogOutputFormat.JSON
         return self
 
-    TRANSCRIPTION_QUEUE_NAME: str = Field(description="SQS transcription queue name")
-    TRANSCRIPTION_DEADLETTER_QUEUE_NAME: str = Field(description="SQS transcription dead-letter queue name")
-    LLM_QUEUE_NAME: str = Field(description="SQS LLM queue name")
-    LLM_DEADLETTER_QUEUE_NAME: str = Field(description="SQS LLM dead-letter queue name")
-
     AZURE_SPEECH_KEY: str = Field(description="Azure STT speech key for API")
     AZURE_SPEECH_REGION: str = Field(description="Region for Azure STT")
     # optional extra Azure STT regions, tried in order when a region returns 429 or 5xx
@@ -81,8 +76,10 @@ class Settings(BaseSettings):
     AZURE_SPEECH_FALLBACK_2_KEY: str | None = Field(description="Azure STT speech key for fallback 2", default=None)
     AZURE_SPEECH_FALLBACK_2_REGION: str | None = Field(description="Region for Azure STT fallback 2", default=None)
 
-    MAX_TRANSCRIPTION_PROCESSES: int = Field(description="the number of transcription workers per node", default=1)
-    MAX_LLM_PROCESSES: int = Field(description="the number of LLM workers per node", default=1)
+    MAX_LLM_PROCESSES: int = Field(
+        description="Max concurrent LLM steps (speakers, title, summary, minute generation, edits) per node",
+        default=4,
+    )
 
     # if using Azure OpenAI
     AZURE_DEPLOYMENT: str | None = Field(description="Azure deployment for openAI", default=None)
@@ -131,11 +128,6 @@ class Settings(BaseSettings):
     # if using s3
     DATA_S3_BUCKET: str | None = Field(description="S3 bucket name for data storage", default=None)
 
-    QUEUE_SERVICE_NAME: str = Field(
-        description="Queue service type to communicate with worker. Currently supported: sqs",
-        default="sqs",
-    )
-
     TEMPORAL_ADDRESS: str = Field(description="Temporal frontend gRPC address", default="localhost:7233")
     TEMPORAL_NAMESPACE: str = Field(description="Temporal namespace", default="default")
     STT_MAX_CONCURRENCY: int = Field(
@@ -143,9 +135,6 @@ class Settings(BaseSettings):
         "the number of worker processes polling the 'stt' task queue.",
         default=4,
     )
-
-    # if running the worker inside a docker container (use "0.0.0.0" )
-    RAY_DASHBOARD_HOST: str = Field(description="Ray dashboard host IP address", default="127.0.0.1")
 
     BETA_TEMPLATE_NAMES: list[str] = Field(
         description="List of template names hidden from users",

@@ -19,6 +19,10 @@ class TranscriptionTransientError(Exception):
     """The attempt lost its claim or its write could not be applied; retry without touching the row."""
 
 
+# Statuses a step may write to: IN_PROGRESS while the workflow runs, COMPLETED for the
+# post-completion steps (title). Never AWAITING_START (a retry reset) or FAILED.
+WRITABLE_STATUSES = (JobStatus.IN_PROGRESS, JobStatus.COMPLETED)
+
 slogger = get_structured_logger()
 
 
@@ -47,6 +51,18 @@ def update_in_progress(transcription_id: UUID, **values) -> bool:
         result = session.exec(
             update(Transcription)
             .where(col(Transcription.id) == transcription_id, col(Transcription.status) == JobStatus.IN_PROGRESS)
+            .values(**values)
+        )
+        session.commit()
+        return result.rowcount == 1  # pyright: ignore[reportAttributeAccessIssue]
+
+
+def update_when_writable(transcription_id: UUID, **values) -> bool:
+    """Write while the row is IN_PROGRESS or COMPLETED (post-completion steps). Returns whether it was applied."""
+    with SessionLocal() as session:
+        result = session.exec(
+            update(Transcription)
+            .where(col(Transcription.id) == transcription_id, col(Transcription.status).in_(WRITABLE_STATUSES))
             .values(**values)
         )
         session.commit()

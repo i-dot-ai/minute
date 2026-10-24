@@ -71,14 +71,22 @@ async def tenants() -> dict[str, dict[str, uuid.UUID]]:
 
 
 @pytest.fixture(autouse=True)
-def published(monkeypatch):
-    published: list = []
-    monkeypatch.setattr("backend.api.routes.minutes.llm_queue_service.publish_message", published.append)
-    return published
+def started(monkeypatch):
+    started: list = []
+
+    async def _start_generation(minute_version_id):
+        started.append(("generate", str(minute_version_id)))
+
+    async def _start_edit(minute_version_id, source_minute_version_id):
+        started.append(("edit", str(minute_version_id), str(source_minute_version_id)))
+
+    monkeypatch.setattr("backend.api.routes.minutes.temporal.start_minute_generation_workflow", _start_generation)
+    monkeypatch.setattr("backend.api.routes.minutes.temporal.start_minute_edit_workflow", _start_edit)
+    return started
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_create_minute_rejects_foreign_template(tenants, published):
+async def test_create_minute_rejects_foreign_template(tenants, started):
     foreign = tenants["foreign"]
     async with get_test_client() as ac:
         response = await ac.post(
@@ -86,11 +94,11 @@ async def test_create_minute_rejects_foreign_template(tenants, published):
             json={"template_name": "General", "template_id": str(foreign["template_id"])},
         )
     assert response.status_code == 404
-    assert published == []
+    assert started == []
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_create_minute_accepts_own_template(tenants, published):
+async def test_create_minute_accepts_own_template(tenants, started):
     own = tenants["own"]
     async with get_test_client() as ac:
         response = await ac.post(
@@ -98,11 +106,12 @@ async def test_create_minute_accepts_own_template(tenants, published):
             json={"template_name": "General", "template_id": str(own["template_id"])},
         )
     assert response.status_code == 200
-    assert len(published) == 1
+    assert len(started) == 1
+    assert started[0][0] == "generate"
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_create_minute_version_rejects_foreign_source(tenants, published):
+async def test_create_minute_version_rejects_foreign_source(tenants, started):
     own, foreign = tenants["own"], tenants["foreign"]
     async with get_test_client() as ac:
         response = await ac.post(
@@ -116,11 +125,11 @@ async def test_create_minute_version_rejects_foreign_source(tenants, published):
             },
         )
     assert response.status_code == 404
-    assert published == []
+    assert started == []
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_create_minute_version_accepts_own_source(tenants, published):
+async def test_create_minute_version_accepts_own_source(tenants, started):
     own = tenants["own"]
     async with get_test_client() as ac:
         response = await ac.post(
@@ -131,19 +140,20 @@ async def test_create_minute_version_accepts_own_source(tenants, published):
             },
         )
     assert response.status_code == 200
-    assert len(published) == 1
+    assert len(started) == 1
+    assert started[0] == ("edit", response.json()["id"], str(own["minute_version_id"]))
 
 
-def _publish_boom(_message):
-    msg = "queue unavailable"
+async def _start_boom(*_args):
+    msg = "temporal unavailable"
     raise RuntimeError(msg)
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_create_minute_publish_failure_marks_failed(tenants, monkeypatch):
+async def test_create_minute_start_failure_marks_failed(tenants, monkeypatch):
     """A definite enqueue failure marks the committed version failed."""
     own = tenants["own"]
-    monkeypatch.setattr("backend.api.routes.minutes.llm_queue_service.publish_message", _publish_boom)
+    monkeypatch.setattr("backend.api.routes.minutes.temporal.start_minute_generation_workflow", _start_boom)
 
     async with get_test_client() as ac:
         response = await ac.post(
@@ -162,10 +172,10 @@ async def test_create_minute_publish_failure_marks_failed(tenants, monkeypatch):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_create_minute_version_publish_failure_marks_failed(tenants, monkeypatch):
+async def test_create_minute_version_start_failure_marks_failed(tenants, monkeypatch):
     """The AI-edit route applies the same enqueue compensation."""
     own = tenants["own"]
-    monkeypatch.setattr("backend.api.routes.minutes.llm_queue_service.publish_message", _publish_boom)
+    monkeypatch.setattr("backend.api.routes.minutes.temporal.start_minute_edit_workflow", _start_boom)
 
     async with get_test_client() as ac:
         response = await ac.post(

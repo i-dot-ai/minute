@@ -99,20 +99,20 @@ async def _run(**kwargs) -> tuple[list, dict, dict]:
     return [name for name, _ in calls], outcome, dict(calls)
 
 
-ALL_STEPS = [
-    wf.PREPARE_AUDIO,
-    wf.TRANSCRIBE,
-    wf.IDENTIFY_SPEAKERS,
-    wf.GENERATE_TITLE,
-    wf.COMPLETE_TRANSCRIPTION,
-    wf.SUMMARIZE,
-]
+SEQUENTIAL_STEPS = [wf.PREPARE_AUDIO, wf.TRANSCRIBE, wf.IDENTIFY_SPEAKERS, wf.COMPLETE_TRANSCRIPTION]
+PARALLEL_STEPS = [wf.GENERATE_TITLE, wf.SUMMARIZE]
+
+
+def _assert_all_steps_ran(calls: list) -> None:
+    """Title and summary run concurrently after completion, so their relative order is not fixed."""
+    assert calls[:4] == SEQUENTIAL_STEPS
+    assert sorted(calls[4:]) == sorted(PARALLEL_STEPS)
 
 
 @pytest.mark.asyncio
 async def test_happy_path_runs_every_step_in_order_on_its_queue():
     calls, outcome, queue_of = await _run()
-    assert calls == ALL_STEPS
+    _assert_all_steps_ran(calls)
     assert queue_of == {
         wf.PREPARE_AUDIO: wf.STT_TASK_QUEUE,
         wf.TRANSCRIBE: wf.STT_TASK_QUEUE,
@@ -148,16 +148,18 @@ async def test_transcribe_gets_duration_based_timeout():
 @pytest.mark.parametrize("broken", [wf.IDENTIFY_SPEAKERS, wf.GENERATE_TITLE, wf.SUMMARIZE])
 async def test_optional_step_failure_degrades(broken):
     calls, outcome, _ = await _run(fail=frozenset({broken}))
-    assert calls == ALL_STEPS  # everything still runs
+    _assert_all_steps_ran(calls)  # everything still runs
     assert outcome[broken].startswith("failed:")
     assert all(v == "ok" for k, v in outcome.items() if k != broken)
 
 
 @pytest.mark.asyncio
-async def test_transcription_no_longer_in_progress_skips_summary():
+async def test_transcription_no_longer_in_progress_skips_summary_and_title():
     calls, outcome, _ = await _run(completed=False)
     assert wf.SUMMARIZE not in calls
+    assert wf.GENERATE_TITLE not in calls
     assert outcome[wf.SUMMARIZE].startswith("skipped")
+    assert outcome[wf.GENERATE_TITLE].startswith("skipped")
 
 
 @pytest.mark.asyncio

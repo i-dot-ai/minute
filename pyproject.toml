@@ -50,7 +50,6 @@ worker = [
     "google-genai>=1.10.0,<2",
     "openai>=1.42.0,<2",
     "ffmpeg-python>=0.2.0,<0.3",
-    "ray[default]>=2.53.0,<3",
     "posthog>=6.6.1,<7",
 ]
 dev = [

@@ -41,11 +41,10 @@ services:
         - path: ./uv.lock
           action: rebuild
 
-  worker: # Temporal worker: transcription workflow (prepare/STT/LLM steps) + initial summary
+  worker: # Temporal worker: transcription + minute generation + AI edits
     build:
       context: .
       dockerfile: ./worker/Dockerfile
-    command: ["worker/entrypoint.sh", "worker/temporal_worker.py"]
     deploy: # Make sure the worker has a couple of CPUS
       resources:
         limits:

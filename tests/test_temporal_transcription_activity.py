@@ -12,13 +12,16 @@ from temporalio.testing import ActivityEnvironment
 
 from common.database.postgres_models import JobStatus
 from common.services.exceptions import TranscriptionFailedError
-from common.services.minute_handler_service import MinuteDelivery, MinuteGenerationFailedError
+from common.services.minute_handler_service import MinuteDelivery, MinuteGenerationFailedError, MinuteHandlerService
 from common.services.transcription_handler_service import TranscriptionHandlerService
+from common.workflows import minute_version as minute_wf
 from common.workflows import transcription as wf
 from common.workflows.activities import (
     _shared,
     complete_transcription,
+    edit_minute,
     fail_transcription,
+    generate_minute,
     generate_title,
     identify_speakers,
     prepare_audio,
@@ -50,6 +53,7 @@ def writes(monkeypatch):
         return True
 
     monkeypatch.setattr(_shared, "update_in_progress", _update)
+    monkeypatch.setattr(_shared, "update_when_writable", _update)
     monkeypatch.setattr(_shared, "capture_event", lambda *_a, **_k: None)
     return calls
 
@@ -187,12 +191,13 @@ async def test_identify_speakers_saves_named_entries(monkeypatch, writes):
 
 
 @pytest.mark.asyncio
-async def test_generate_title_saves_title(monkeypatch, writes):
+@pytest.mark.parametrize("status", [JobStatus.IN_PROGRESS, JobStatus.COMPLETED])
+async def test_generate_title_saves_title(monkeypatch, writes, status):
     async def _title(transcript):
         assert transcript == ENTRIES
         return "Weekly sync"
 
-    _patch_row(monkeypatch, _row())
+    _patch_row(monkeypatch, _row(status))
     monkeypatch.setattr(generate_title, "generate_meeting_title", _title)
     await _run(generate_title.generate_title, str(TRANSCRIPTION_ID))
     assert writes == [(TRANSCRIPTION_ID, {"title": "Weekly sync"})]
@@ -269,3 +274,53 @@ async def test_summarize_claimed_elsewhere_retries(monkeypatch):
     with pytest.raises(ApplicationError) as e:
         await _run(summarize.summarize, str(MINUTE_ID))
     assert not e.value.non_retryable
+
+
+# --- generate_minute / edit_minute (user-created minutes and AI edits) ---
+
+
+@pytest.mark.asyncio
+async def test_generate_minute_generates_the_version(monkeypatch):
+    seen: list = []
+
+    async def _generate(mvid):
+        seen.append(mvid)
+        return MinuteDelivery.ACK
+
+    monkeypatch.setattr(MinuteHandlerService, "process_minute_generation_message", _generate)
+    await _run(generate_minute.generate_minute, str(MINUTE_ID))
+    assert seen == [MINUTE_ID]
+
+
+@pytest.mark.asyncio
+async def test_generate_minute_handled_failure_is_non_retryable(monkeypatch):
+    _patch_summarize(monkeypatch, raises=MinuteGenerationFailedError())
+    with pytest.raises(ApplicationError) as e:
+        await _run(generate_minute.generate_minute, str(MINUTE_ID))
+    assert e.value.non_retryable
+
+
+@pytest.mark.asyncio
+async def test_edit_minute_passes_target_and_source(monkeypatch):
+    seen: list = []
+
+    async def _edit(target_minute_version_id, source_minute_version_id):
+        seen.append((target_minute_version_id, source_minute_version_id))
+        return MinuteDelivery.ACK
+
+    monkeypatch.setattr(MinuteHandlerService, "process_minute_edit_message", _edit)
+    params = minute_wf.MinuteEditInput(minute_version_id=str(TRANSCRIPTION_ID), source_minute_version_id=str(MINUTE_ID))
+    await _run(edit_minute.edit_minute, params)
+    assert seen == [(TRANSCRIPTION_ID, MINUTE_ID)]
+
+
+@pytest.mark.asyncio
+async def test_edit_minute_handled_failure_is_non_retryable(monkeypatch):
+    async def _edit(**_kwargs):
+        raise MinuteGenerationFailedError
+
+    monkeypatch.setattr(MinuteHandlerService, "process_minute_edit_message", _edit)
+    params = minute_wf.MinuteEditInput(minute_version_id=str(TRANSCRIPTION_ID), source_minute_version_id=str(MINUTE_ID))
+    with pytest.raises(ApplicationError) as e:
+        await _run(edit_minute.edit_minute, params)
+    assert e.value.non_retryable

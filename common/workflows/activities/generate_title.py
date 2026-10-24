@@ -12,10 +12,11 @@ from common.workflows.activities import _shared
 @activity.defn(name=wf.GENERATE_TITLE)
 async def generate_title(transcription_id: str) -> None:
     transcription_id_uuid = UUID(transcription_id)
-    row = _shared.in_progress(transcription_id_uuid)
-    if row is None or not row.dialogue_entries:
+    # Runs after the transcription is COMPLETED, so that status is writable too.
+    row = _shared.get_row(transcription_id_uuid)
+    if row is None or row.status not in _shared.WRITABLE_STATUSES or not row.dialogue_entries:
         return
     # generate_meeting_title swallows LLM errors and returns ""; a missing title degrades.
     title = await generate_meeting_title(transcript=row.dialogue_entries)
     if title:
-        _shared.update_in_progress(transcription_id_uuid, title=title)
+        _shared.update_when_writable(transcription_id_uuid, title=title)

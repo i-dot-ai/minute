@@ -9,6 +9,7 @@ the SDK cancels an attempt locally when it expires. The STT step's timeout scale
 audio duration measured by prepare_audio.
 """
 
+import asyncio
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -113,9 +114,10 @@ class TranscriptionWorkflow:
             raise
 
         outcome: dict[str, str] = {}
-        # Speaker naming before title: the title is generated from the named transcript.
-        for step in (IDENTIFY_SPEAKERS, GENERATE_TITLE):
-            outcome[step] = await self._optional(step, transcription_id, timedelta(minutes=10), _LLM_RETRY)
+        # Speaker naming before title and summary: both are generated from the named transcript.
+        outcome[IDENTIFY_SPEAKERS] = await self._optional(
+            IDENTIFY_SPEAKERS, transcription_id, timedelta(minutes=10), _LLM_RETRY
+        )
 
         completed: bool = await workflow.execute_activity(
             COMPLETE_TRANSCRIPTION,
@@ -125,11 +127,18 @@ class TranscriptionWorkflow:
             retry_policy=_DB_RETRY,
         )
         if not completed:
-            outcome[SUMMARIZE] = "skipped: transcription deleted or no longer in progress"
+            skipped = "skipped: transcription deleted or no longer in progress"
+            outcome[GENERATE_TITLE] = skipped
+            outcome[SUMMARIZE] = skipped
             return outcome
 
-        # A failed summary marks its minute_version FAILED (shown in the UI); the transcript stands.
-        outcome[SUMMARIZE] = await self._optional(SUMMARIZE, minute_id, timedelta(minutes=30), _CLAIMED_STEP_RETRY)
+        # The transcript is usable from here. The two steps write separate rows and don't depend on
+        # each other, so they run together. Each degrades on failure: a failed summary marks its
+        # minute_version FAILED (shown in the UI) while the transcript stands.
+        outcome[GENERATE_TITLE], outcome[SUMMARIZE] = await asyncio.gather(
+            self._optional(GENERATE_TITLE, transcription_id, timedelta(minutes=10), _LLM_RETRY),
+            self._optional(SUMMARIZE, minute_id, timedelta(minutes=30), _CLAIMED_STEP_RETRY),
+        )
         return outcome
 
     async def _transcribe(self, minute_id: str) -> str:

@@ -1,5 +1,6 @@
 """E2E: upload audio -> Temporal runs transcribe, speakers, title, summary as separate activities.
 
+Also covers the minute workflows: generating a user-created minute, and applying an AI edit.
 Hits the running docker compose stack over HTTP (not in-process), so the real
 backend, temporal server and worker are exercised. Calls Azure STT and the LLM.
 
@@ -18,6 +19,7 @@ import pytest
 from temporalio.client import Client, WorkflowExecutionStatus
 
 from common.settings import get_settings
+from common.workflows.minute_version import workflow_id as minute_version_workflow_id
 from common.workflows.transcription import (
     COMPLETE_TRANSCRIPTION,
     GENERATE_TITLE,
@@ -35,6 +37,19 @@ from tests.marks import costs_money
 AUDIO = Path("frontend/tests/fixtures/sample-meeting.mp3")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8080")
 TIMEOUT_SECONDS = 600
+
+
+async def _wait_for_version(api: httpx.AsyncClient, minute_id: str, version_id: str | None = None) -> dict:
+    """Poll until the (newest) version of the minute is terminal; returns it."""
+    versions: list = []
+    for _ in range(TIMEOUT_SECONDS // 5):
+        versions = (await api.get(f"/minutes/{minute_id}/versions")).raise_for_status().json()
+        match = next((v for v in versions if version_id is None or v["id"] == version_id), None)
+        if match and match["status"] in ("completed", "failed"):
+            return match
+        await asyncio.sleep(5)
+    msg = f"minute version did not finish: {versions}"
+    raise AssertionError(msg)
 
 
 @costs_money
@@ -66,7 +81,6 @@ async def test_upload_creates_transcription_via_temporal():
 
     assert status == "completed", f"transcription ended {status}: {body.get('error')}"
     assert body["dialogue_entries"], "no transcript saved"
-    assert body["title"], "no title generated"
 
     settings = get_settings()
     client = await Client.connect(settings.TEMPORAL_ADDRESS, namespace=settings.TEMPORAL_NAMESPACE)
@@ -88,13 +102,53 @@ async def test_upload_creates_transcription_via_temporal():
         (PREPARE_AUDIO, STT_TASK_QUEUE),
         (TRANSCRIBE, STT_TASK_QUEUE),
         (IDENTIFY_SPEAKERS, LLM_TASK_QUEUE),
-        (GENERATE_TITLE, LLM_TASK_QUEUE),
         (COMPLETE_TRANSCRIPTION, TASK_QUEUE),
+        (GENERATE_TITLE, LLM_TASK_QUEUE),
         (SUMMARIZE, LLM_TASK_QUEUE),
     ]
 
     async with httpx.AsyncClient(base_url=BACKEND_URL, timeout=60) as api:
+        # The title is written by a post-completion step, so it is only guaranteed once the
+        # workflow (handle.result above) has finished.
+        body = (await api.get(f"/transcriptions/{transcription_id}")).raise_for_status().json()
         minutes = (await api.get(f"/transcription/{transcription_id}/minutes")).raise_for_status().json()
         versions = (await api.get(f"/minutes/{minutes[0]['id']}/versions")).raise_for_status().json()
+    assert body["title"], "no title generated"
     assert versions[0]["status"] == "completed", versions[0].get("error")
     assert versions[0]["html_content"], "no summary generated"
+
+    # User-created minute: its own Temporal workflow (MinuteGenerationWorkflow).
+    async with httpx.AsyncClient(base_url=BACKEND_URL, timeout=60) as api:
+        created_minute = (
+            (await api.post(f"/transcription/{transcription_id}/minutes", json={"template_name": "General"}))
+            .raise_for_status()
+            .json()
+        )
+        generated = await _wait_for_version(api, created_minute["id"])
+        assert generated["status"] == "completed", generated.get("error")
+        assert generated["html_content"], "no minute generated"
+
+        # AI edit: MinuteEditWorkflow over the generated version.
+        edited = (
+            (
+                await api.post(
+                    f"/minutes/{created_minute['id']}/versions",
+                    json={
+                        "content_source": "ai_edit",
+                        "ai_edit_instructions": {
+                            "instruction": "Add a one-line summary at the top",
+                            "source_id": generated["id"],
+                        },
+                    },
+                )
+            )
+            .raise_for_status()
+            .json()
+        )
+        edited_version = await _wait_for_version(api, created_minute["id"], edited["id"])
+    assert edited_version["status"] == "completed", edited_version.get("error")
+    assert edited_version["html_content"], "no edited minute"
+
+    for version_id in (generated["id"], edited["id"]):
+        version_handle = client.get_workflow_handle(minute_version_workflow_id(version_id))
+        assert (await version_handle.describe()).status == WorkflowExecutionStatus.COMPLETED

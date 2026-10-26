@@ -1,0 +1,3 @@
+# Minimal Temporal dynamic config. The server image expects this file to exist; add per-environment
+# overrides here as needed (https://docs.temporal.io/references/dynamic-configuration).
+{}

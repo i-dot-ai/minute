@@ -81,20 +81,47 @@ services:
           action: rebuild
 
   temporal:
-    # Temporal CLI dev server: SQLite-backed, UI on http://localhost:8233
-    image: temporalio/temporal:1.9.1
-    command: ["server", "start-dev", "--ip", "0.0.0.0", "--db-filename", "/home/temporal/temporal.db"]
+    # Same image and bootstrap as production (temporal/Dockerfile): schema setup + default namespace,
+    # then the server. Persistence is the app's Postgres, a different set of databases.
+    build:
+      context: .
+      dockerfile: ./temporal/Dockerfile
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - DBNAME=temporal
+      - VISIBILITY_DBNAME=temporal_visibility
+      - POSTGRES_SEEDS=db
+      - POSTGRES_PWD=${POSTGRES_PASSWORD}
+      - BIND_ON_IP=0.0.0.0
+      - DYNAMIC_CONFIG_FILE_PATH=/etc/temporal/config/dynamicconfig/docker.yaml
+    env_file:
+      - .env
     ports:
       - "7233:7233"
-      - "8233:8233"
-    volumes:
-      - temporal-data:/home/temporal
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "localhost:7233"]
+      # Readiness, not just liveness: the entrypoint registers `default` a moment after the server
+      # answers, so wait until the namespace exists before declaring the container healthy (the
+      # worker depends_on this and fails fatally if it polls before the namespace exists).
+      test: ["CMD", "temporal", "operator", "namespace", "describe", "-n", "default", "--address", "localhost:7233"]
       interval: 5s
       retries: 20
-      start_period: 5s
+      start_period: 10s
       timeout: 5s
+
+  temporal-ui: # local convenience; not deployed
+    image: temporalio/ui:latest
+    ports:
+      - "8233:8080"
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    depends_on:
+      temporal:
+        condition: service_healthy
 
   frontend:
     build:
@@ -171,4 +198,3 @@ services:
 volumes:
   local_postgres_data: {}
   next_data: {}
-  temporal-data: {}

@@ -30,3 +30,11 @@ jobs:
     with:
       service: worker
     secrets: inherit
+  temporal:
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/build-one.yml
+    with:
+      service: temporal
+    secrets: inherit

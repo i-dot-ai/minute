@@ -4,8 +4,8 @@ locals {
 
   additional_policy_arns = { for idx, arn in [aws_iam_policy.ecs_exec_custom_policy.arn] : idx => arn }
 
-  MAX_TRANSCRIPTION_PROCESSES = terraform.workspace == "prod" ? 4 : 2
-  MAX_LLM_PROCESSES           = terraform.workspace == "prod" ? 8 : 4
+  MAX_LLM_PROCESSES   = terraform.workspace == "prod" ? 8 : 4
+  STT_MAX_CONCURRENCY = terraform.workspace == "prod" ? 4 : 2
 
   shared_environment_variables = {
     "ENVIRONMENT" : terraform.workspace,
@@ -14,13 +14,11 @@ locals {
     "AWS_ACCOUNT_ID" : data.aws_caller_identity.current.account_id,
     "POSTGRES_HOST" : module.rds.db_instance_address,
     "AZURE_OPENAI_API_VERSION" : "2024-10-21"
-    "TRANSCRIPTION_QUEUE_NAME" : aws_sqs_queue.transcription_queue.name
-    "TRANSCRIPTION_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.transcription_queue_deadletter.name
-    "LLM_QUEUE_NAME" : aws_sqs_queue.llm_queue.name
-    "LLM_DEADLETTER_QUEUE_NAME" : aws_sqs_queue.llm_queue_deadletter.name
     "TRANSCRIPTION_SERVICES" : "[\"azure_stt_synchronous\"]"
-    "MAX_TRANSCRIPTION_PROCESSES" : local.MAX_TRANSCRIPTION_PROCESSES
     "MAX_LLM_PROCESSES" : local.MAX_LLM_PROCESSES
+    "STT_MAX_CONCURRENCY" : local.STT_MAX_CONCURRENCY
+    "TEMPORAL_ADDRESS" : "temporal.${local.name}-internal:7233"
+    "TEMPORAL_NAMESPACE" : "default"
     "FAST_LLM_PROVIDER"   = "gemini"
     "FAST_LLM_MODEL_NAME" = "gemini-3.5-flash"
     "BEST_LLM_PROVIDER"   = "gemini"
@@ -188,13 +186,10 @@ module "worker" {
   ephemeral_storage = 40
 
   http_healthcheck = false
-  container_healthcheck = {
-    command     = ["CMD-SHELL", "uv run python worker/healthcheck.py"]
-    interval    = 30
-    retries     = 2
-    startPeriod = 60
-    timeout     = 5
-  }
+  # The Temporal worker has no HTTP endpoint or heartbeat file to check. Temporal's own activity
+  # retries (and the STT heartbeat) handle worker loss, so a container healthcheck here would only
+  # risk flapping a healthy task.
+  container_healthcheck = null
 }
 
 resource "aws_service_discovery_private_dns_namespace" "private_dns_namespace" {

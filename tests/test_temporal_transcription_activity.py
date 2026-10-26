@@ -102,18 +102,15 @@ async def test_prepare_audio_reports_duration(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_prepare_audio_bad_audio_is_non_retryable(monkeypatch):
-    _patch_audio_step(monkeypatch, raises=TranscriptionFailedError("no audio stream"))
-    with pytest.raises(ApplicationError) as e:
-        await _run_prepare_audio()
-    assert e.value.non_retryable
-
-
-@pytest.mark.asyncio
-async def test_prepare_audio_transient_error_is_retryable(monkeypatch):
-    _patch_audio_step(monkeypatch, raises=_shared.TranscriptionTransientError("row moved on"))
-    with pytest.raises(ApplicationError) as e:
-        await _run_prepare_audio()
-    assert not e.value.non_retryable
+    # Bad audio is permanent; a moved-on row is transient and should be retried.
+    for raises, non_retryable in (
+        (TranscriptionFailedError("no audio stream"), True),
+        (_shared.TranscriptionTransientError("row moved on"), False),
+    ):
+        _patch_audio_step(monkeypatch, raises=raises)
+        with pytest.raises(ApplicationError) as e:
+            await _run_prepare_audio()
+        assert e.value.non_retryable is non_retryable
 
 
 # --- transcribe ---
@@ -143,19 +140,16 @@ async def test_transcribe_returns_id(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_transcribe_provider_unavailable_is_retryable(monkeypatch):
-    _patch_transcribe_step(monkeypatch, raises=_shared.TranscriptionTransientError("provider 429"))
-    with pytest.raises(ApplicationError) as e:
-        await _transcribe()
-    assert not e.value.non_retryable
-
-
-@pytest.mark.asyncio
-async def test_transcribe_handled_failure_is_non_retryable(monkeypatch):
-    _patch_transcribe_step(monkeypatch, raises=TranscriptionFailedError("azure said no"))
-    with pytest.raises(ApplicationError) as e:
-        await _transcribe()
-    assert e.value.non_retryable
+async def test_transcribe_error_mapping(monkeypatch):
+    # Provider unavailability is transient; a handled failure is permanent.
+    for raises, non_retryable in (
+        (_shared.TranscriptionTransientError("provider 429"), False),
+        (TranscriptionFailedError("azure said no"), True),
+    ):
+        _patch_transcribe_step(monkeypatch, raises=raises)
+        with pytest.raises(ApplicationError) as e:
+            await _transcribe()
+        assert e.value.non_retryable is non_retryable
 
 
 # --- fail_transcription ---
@@ -199,25 +193,28 @@ async def test_identify_speakers_saves_named_entries(monkeypatch, writes):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("status", [JobStatus.IN_PROGRESS, JobStatus.COMPLETED])
-async def test_generate_title_saves_title(monkeypatch, writes, status):
-    async def _title(transcript):
-        assert transcript == ENTRIES
-        return "Weekly sync"
+async def test_generate_title_saves_title(monkeypatch, writes):
+    for status in (JobStatus.IN_PROGRESS, JobStatus.COMPLETED):
+        writes.clear()
 
-    _patch_row(monkeypatch, _row(status))
-    monkeypatch.setattr(generate_title, "generate_meeting_title", _title)
-    await _run(generate_title.generate_title, str(TRANSCRIPTION_ID))
-    assert writes == [(TRANSCRIPTION_ID, {"title": "Weekly sync"})]
+        async def _title(transcript):
+            assert transcript == ENTRIES
+            return "Weekly sync"
+
+        _patch_row(monkeypatch, _row(status))
+        monkeypatch.setattr(generate_title, "generate_meeting_title", _title)
+        await _run(generate_title.generate_title, str(TRANSCRIPTION_ID))
+        assert writes == [(TRANSCRIPTION_ID, {"title": "Weekly sync"})], status
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("fn", [identify_speakers.identify_speakers, generate_title.generate_title])
-@pytest.mark.parametrize("row", [None, _row(JobStatus.FAILED)])
-async def test_post_processing_skips_rows_no_longer_in_progress(monkeypatch, writes, fn, row):
-    _patch_row(monkeypatch, row)
-    await _run(fn, str(TRANSCRIPTION_ID))
-    assert writes == []
+async def test_post_processing_skips_rows_no_longer_in_progress(monkeypatch, writes):
+    for fn in (identify_speakers.identify_speakers, generate_title.generate_title):
+        for row in (None, _row(JobStatus.FAILED)):
+            writes.clear()
+            _patch_row(monkeypatch, row)
+            await _run(fn, str(TRANSCRIPTION_ID))
+            assert writes == [], (fn.__name__, row)
 
 
 @pytest.mark.asyncio
@@ -237,20 +234,24 @@ async def test_title_llm_error_propagates_for_temporal_to_retry(monkeypatch, wri
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    ("applied", "row", "expected"),
-    [
+async def test_complete_transcription(monkeypatch):
+    for applied, row, expected in (
         (True, _row(), True),
         (False, _row(JobStatus.COMPLETED), True),  # retry after an earlier attempt already completed it
         (False, _row(JobStatus.FAILED), False),
         (False, None, False),  # deleted
-    ],
-)
-async def test_complete_transcription(monkeypatch, applied, row, expected):
-    monkeypatch.setattr(_shared, "update_in_progress", lambda _tid, **_v: applied)
-    monkeypatch.setattr(_shared, "capture_event", lambda *_a, **_k: None)
-    _patch_row(monkeypatch, row)
-    assert await _run(complete_transcription.complete_transcription, str(TRANSCRIPTION_ID)) is expected
+    ):
+
+        def _update(_tid, _applied=applied, **_v):
+            return _applied
+
+        monkeypatch.setattr(_shared, "update_in_progress", _update)
+        monkeypatch.setattr(_shared, "capture_event", lambda *_a, **_k: None)
+        _patch_row(monkeypatch, row)
+        assert await _run(complete_transcription.complete_transcription, str(TRANSCRIPTION_ID)) is expected, (
+            applied,
+            expected,
+        )
 
 
 # --- summarise ---
@@ -304,19 +305,12 @@ async def test_generate_minute_generates_the_version(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_generate_minute_handled_failure_is_non_retryable(monkeypatch):
-    _patch_summarise(monkeypatch, raises=MinuteGenerationFailedError())
-    with pytest.raises(ApplicationError) as e:
-        await _run(generate_minute.generate_minute, str(MINUTE_ID))
-    assert e.value.non_retryable
-
-
-@pytest.mark.asyncio
-async def test_generate_minute_transient_error_is_retryable(monkeypatch):
-    _patch_summarise(monkeypatch, raises=MinuteGenerationTransientError())
-    with pytest.raises(ApplicationError) as e:
-        await _run(generate_minute.generate_minute, str(MINUTE_ID))
-    assert not e.value.non_retryable
+async def test_generate_minute_error_mapping(monkeypatch):
+    for raises, non_retryable in ((MinuteGenerationFailedError(), True), (MinuteGenerationTransientError(), False)):
+        _patch_summarise(monkeypatch, raises=raises)
+        with pytest.raises(ApplicationError) as e:
+            await _run(generate_minute.generate_minute, str(MINUTE_ID))
+        assert e.value.non_retryable is non_retryable
 
 
 @pytest.mark.asyncio
@@ -333,24 +327,14 @@ async def test_edit_minute_passes_target_and_source(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_edit_minute_handled_failure_is_non_retryable(monkeypatch):
-    async def _edit(**_kwargs):
-        raise MinuteGenerationFailedError
-
-    monkeypatch.setattr(MinuteHandlerService, "process_minute_edit_message", _edit)
+async def test_edit_minute_error_mapping(monkeypatch):
     params = minute_wf.MinuteEditInput(minute_version_id=str(TRANSCRIPTION_ID), source_minute_version_id=str(MINUTE_ID))
-    with pytest.raises(ApplicationError) as e:
-        await _run(edit_minute.edit_minute, params)
-    assert e.value.non_retryable
+    for raises, non_retryable in ((MinuteGenerationFailedError, True), (MinuteGenerationTransientError, False)):
 
+        async def _edit(_raises=raises, **_kwargs):
+            raise _raises
 
-@pytest.mark.asyncio
-async def test_edit_minute_transient_error_is_retryable(monkeypatch):
-    async def _edit(**_kwargs):
-        raise MinuteGenerationTransientError
-
-    monkeypatch.setattr(MinuteHandlerService, "process_minute_edit_message", _edit)
-    params = minute_wf.MinuteEditInput(minute_version_id=str(TRANSCRIPTION_ID), source_minute_version_id=str(MINUTE_ID))
-    with pytest.raises(ApplicationError) as e:
-        await _run(edit_minute.edit_minute, params)
-    assert not e.value.non_retryable
+        monkeypatch.setattr(MinuteHandlerService, "process_minute_edit_message", _edit)
+        with pytest.raises(ApplicationError) as e:
+            await _run(edit_minute.edit_minute, params)
+        assert e.value.non_retryable is non_retryable

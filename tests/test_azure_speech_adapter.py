@@ -28,6 +28,13 @@ TRANSCRIBE_RESPONSE = {
 }
 EXPECTED_TRANSCRIPT = [{"speaker": "1", "text": "Good morning, everyone.", "start_time": 0.96, "end_time": 2.4}]
 
+# Captured before the fixture patches the attribute, so looping the fixture stays safe.
+_REAL_ASYNC_CLIENT = httpx.AsyncClient
+
+MISSING_REGION_WARNING = (
+    "AZURE_SPEECH_FALLBACK_1_REGION or AZURE_SPEECH_FALLBACK_1_KEY is missing or empty, so it won't be used"
+)
+
 
 def ok() -> httpx.Response:
     return httpx.Response(200, json=TRANSCRIBE_RESPONSE)
@@ -77,11 +84,10 @@ def azure_responses(monkeypatch):
         responses: list[httpx.Response | Exception], regions: list[AzureSpeechRegion] = ALL_REGIONS
     ) -> QueuedTransport:
         transport = QueuedTransport(responses)
-        real_async_client = httpx.AsyncClient
 
         def async_client(**kwargs) -> httpx.AsyncClient:
             transport.client_kwargs = kwargs
-            return real_async_client(transport=transport, **kwargs)
+            return _REAL_ASYNC_CLIENT(transport=transport, **kwargs)
 
         monkeypatch.setattr(azure, "regions", regions)
         monkeypatch.setattr(azure.httpx, "AsyncClient", async_client)
@@ -94,29 +100,27 @@ def sent_to(region: AzureSpeechRegion) -> tuple[str, str]:
     return (f"{region.region}.api.cognitive.microsoft.com", region.key)
 
 
-@pytest.mark.parametrize(
-    ("responses", "regions", "expected_requests"),
-    [
-        pytest.param([ok()], ALL_REGIONS, [PRIMARY], id="primary serves the request"),
-        pytest.param([error(429), ok()], ALL_REGIONS, [PRIMARY, FALLBACK_1], id="throttled primary fails over"),
-        pytest.param([error(500), error(503), ok()], ALL_REGIONS, ALL_REGIONS, id="server errors fail over"),
-        pytest.param([timeout(), ok()], ALL_REGIONS, [PRIMARY, FALLBACK_1], id="timeout fails over"),
-    ],
-)
 @pytest.mark.asyncio
-async def test_transcribes(azure_responses, audio_file, responses, regions, expected_requests):
-    transport = azure_responses(responses, regions)
+async def test_transcribes(azure_responses, audio_file):
+    cases = [
+        ("primary serves the request", [ok()], [PRIMARY]),
+        ("throttled primary fails over", [error(429), ok()], [PRIMARY, FALLBACK_1]),
+        ("server errors fail over", [error(500), error(503), ok()], ALL_REGIONS),
+        ("timeout fails over", [timeout(), ok()], [PRIMARY, FALLBACK_1]),
+    ]
+    for name, responses, expected_requests in cases:
+        transport = azure_responses(responses, ALL_REGIONS)
 
-    result = await AzureSpeechAdapter.start(audio_file)
+        result = await AzureSpeechAdapter.start(audio_file)
 
-    assert result.transcript == EXPECTED_TRANSCRIPT
-    assert transport.requests == [sent_to(region) for region in expected_requests]
-    assert transport.audio_sizes == [1024] * len(expected_requests)
+        assert result.transcript == EXPECTED_TRANSCRIPT, name
+        assert transport.requests == [sent_to(region) for region in expected_requests], name
+        assert transport.audio_sizes == [1024] * len(expected_requests), name
 
 
 @pytest.mark.asyncio
-async def test_all_regions_failing_raises_for_temporal_to_retry(azure_responses, audio_file):
-    """One sweep of the regions per call: retrying is Temporal's job, not the adapter's."""
+async def test_failure_sweeps_regions_once(azure_responses, audio_file):
+    # One sweep of the regions per call: retrying is Temporal's job, not the adapter's.
     transport = azure_responses([error(429) for _ in range(len(ALL_REGIONS))])
 
     with pytest.raises(httpx.HTTPStatusError):
@@ -124,9 +128,7 @@ async def test_all_regions_failing_raises_for_temporal_to_retry(azure_responses,
 
     assert transport.requests == [sent_to(region) for region in ALL_REGIONS]
 
-
-@pytest.mark.asyncio
-async def test_client_error_fails_without_trying_other_regions(azure_responses, audio_file):
+    # A 4xx (bad request) is not worth failing over.
     transport = azure_responses([error(400)])
 
     with pytest.raises(TranscriptionFailedError, match="HTTP 400"):
@@ -152,27 +154,19 @@ def test_configured_regions_are_primary_then_fallbacks_in_order():
     assert _configured_regions(region_settings()) == ALL_REGIONS
 
 
-@pytest.mark.parametrize(
-    ("region", "key"),
-    [
+def test_configured_regions_warns_about_and_leaves_out_a_missing_or_empty_region_or_key():
+    for region, key in (
         (FALLBACK_1.region, None),
         (None, FALLBACK_1.key),
         (FALLBACK_1.region, ""),
         ("", FALLBACK_1.key),
-    ],
-)
-def test_configured_regions_warns_about_and_leaves_out_a_missing_or_empty_region_or_key(region, key):
-    settings = region_settings(AZURE_SPEECH_FALLBACK_1_REGION=region, AZURE_SPEECH_FALLBACK_1_KEY=key)
+    ):
+        settings = region_settings(AZURE_SPEECH_FALLBACK_1_REGION=region, AZURE_SPEECH_FALLBACK_1_KEY=key)
 
-    with capture_logs() as logs:
-        assert _configured_regions(settings) == [PRIMARY, FALLBACK_2]
+        with capture_logs() as logs:
+            assert _configured_regions(settings) == [PRIMARY, FALLBACK_2]
 
-    assert [(log["log_level"], log["event"]) for log in logs] == [
-        (
-            "warning",
-            "AZURE_SPEECH_FALLBACK_1_REGION or AZURE_SPEECH_FALLBACK_1_KEY is missing or empty, so it won't be used",
-        )
-    ]
+        assert [(log["log_level"], log["event"]) for log in logs] == [("warning", MISSING_REGION_WARNING)]
 
 
 @pytest.mark.asyncio

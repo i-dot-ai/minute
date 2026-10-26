@@ -125,12 +125,13 @@ async def test_happy_path_runs_every_step_in_order_on_its_queue():
     assert outcome == {wf.IDENTIFY_SPEAKERS: "ok", wf.GENERATE_TITLE: "ok", wf.SUMMARISE: "ok"}
 
 
-@pytest.mark.parametrize(
-    ("duration", "expected"),
-    [(0, timedelta(minutes=5)), (98, timedelta(minutes=5, seconds=9.8)), (7200, timedelta(minutes=17))],
-)
-def test_stt_timeout_scales_with_audio_duration(duration, expected):
-    assert wf.stt_timeout(duration) == expected
+def test_stt_timeout_scales_with_audio_duration():
+    for duration, expected in (
+        (0, timedelta(minutes=5)),
+        (98, timedelta(minutes=5, seconds=9.8)),
+        (7200, timedelta(minutes=17)),
+    ):
+        assert wf.stt_timeout(duration) == expected
 
 
 @pytest.mark.asyncio
@@ -147,12 +148,12 @@ async def test_transcribe_gets_duration_based_timeout():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("broken", [wf.IDENTIFY_SPEAKERS, wf.GENERATE_TITLE, wf.SUMMARISE])
-async def test_optional_step_failure_degrades(broken):
-    calls, outcome, _ = await _run(fail=frozenset({broken}))
-    _assert_all_steps_ran(calls)  # everything still runs
-    assert outcome[broken].startswith("failed:")
-    assert all(v == "ok" for k, v in outcome.items() if k != broken)
+async def test_optional_step_failure_degrades():
+    for broken in (wf.IDENTIFY_SPEAKERS, wf.GENERATE_TITLE, wf.SUMMARISE):
+        calls, outcome, _ = await _run(fail=frozenset({broken}))
+        _assert_all_steps_ran(calls)  # everything still runs
+        assert outcome[broken].startswith("failed:"), broken
+        assert all(v == "ok" for k, v in outcome.items() if k != broken), broken
 
 
 @pytest.mark.asyncio
@@ -165,20 +166,20 @@ async def test_transcription_no_longer_in_progress_skips_summary_and_title():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("broken", [wf.PREPARE_AUDIO, wf.TRANSCRIBE])
-async def test_audio_or_stt_failure_marks_failed_and_fails_the_run(broken):
-    calls: list = []
-    seen: dict = {}
-    async with await WorkflowEnvironment.start_time_skipping() as env:
-        workers = _workers(env.client, _activities(calls, fail=frozenset({broken}), seen=seen))
-        async with workers[0], workers[1], workers[2]:
-            with pytest.raises(WorkflowFailureError):
-                await env.client.execute_workflow(
-                    wf.TranscriptionWorkflow.run, MINUTE_ID, id=str(uuid.uuid4()), task_queue=wf.TASK_QUEUE
-                )
-    assert [name for name, _ in calls][-1] == wf.FAIL_TRANSCRIPTION  # row isn't left IN_PROGRESS
-    assert f"{broken} broke" in seen["fail_input"].error
-    assert wf.IDENTIFY_SPEAKERS not in [name for name, _ in calls]
+async def test_audio_or_stt_failure_marks_failed_and_fails_the_run():
+    for broken in (wf.PREPARE_AUDIO, wf.TRANSCRIBE):
+        calls: list = []
+        seen: dict = {}
+        async with await WorkflowEnvironment.start_time_skipping() as env:
+            workers = _workers(env.client, _activities(calls, fail=frozenset({broken}), seen=seen))
+            async with workers[0], workers[1], workers[2]:
+                with pytest.raises(WorkflowFailureError):
+                    await env.client.execute_workflow(
+                        wf.TranscriptionWorkflow.run, MINUTE_ID, id=str(uuid.uuid4()), task_queue=wf.TASK_QUEUE
+                    )
+        assert [name for name, _ in calls][-1] == wf.FAIL_TRANSCRIPTION, broken  # row isn't left IN_PROGRESS
+        assert f"{broken} broke" in seen["fail_input"].error
+        assert wf.IDENTIFY_SPEAKERS not in [name for name, _ in calls], broken
 
 
 @pytest.mark.asyncio

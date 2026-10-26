@@ -112,7 +112,7 @@ async def test_list_transcriptions_paginates(seeded):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_list_transcriptions_returns_metadata(seeded):
+async def test_list_transcriptions_metadata_and_failed_filter(seeded):
     token, _ = seeded
     async with get_test_client() as ac:
         response = await ac.get("/transcriptions", params={"search": token, "page_size": 1})
@@ -120,6 +120,11 @@ async def test_list_transcriptions_returns_metadata(seeded):
         assert item["text"] == "body 2"
         assert item["status"] == JobStatus.FAILED
         assert item["expiring"] is False
+
+        filtered = await ac.get("/transcriptions", params={"search": token, "filter_by": "failed"})
+        body = filtered.json()
+        assert body["total_count"] == 1
+        assert body["items"][0]["status"] == JobStatus.FAILED
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -136,16 +141,6 @@ async def test_list_transcriptions_marks_old_rows_expiring(seeded_old):
             assert body["items"][0]["expiring"] is True
         finally:
             await ac.patch("/users/data-retention", json={"data_retention_days": original})
-
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_list_transcriptions_filters_by_failed(seeded):
-    token, _ = seeded
-    async with get_test_client() as ac:
-        response = await ac.get("/transcriptions", params={"search": token, "filter_by": "failed"})
-        body = response.json()
-        assert body["total_count"] == 1
-        assert body["items"][0]["status"] == JobStatus.FAILED
 
 
 @pytest.mark.asyncio(loop_scope="session")

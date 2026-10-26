@@ -176,36 +176,28 @@ async def test_retry_resets_existing_transcription(failed_transcription, started
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_retry_rejects_non_failed_transcription(in_progress_transcription):
-    transcription_id = in_progress_transcription["transcription_id"]
+async def test_retry_rejections(in_progress_transcription, started_workflows):
     async with get_test_client() as ac:
-        response = await ac.post(
-            f"/transcriptions/{transcription_id}/retry",
+        # Unknown transcription.
+        unknown = await ac.post(f"/transcriptions/{uuid.uuid4()}/retry", json={"template_name": "General"})
+        assert unknown.status_code == 404
+
+        # Not in a failed (terminal) state.
+        not_failed = await ac.post(
+            f"/transcriptions/{in_progress_transcription['transcription_id']}/retry",
             json={"template_name": "General"},
         )
-    assert response.status_code == 400
+        assert not_failed.status_code == 400
 
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_retry_returns_404_for_unknown_transcription():
-    async with get_test_client() as ac:
-        response = await ac.post(
-            f"/transcriptions/{uuid.uuid4()}/retry",
-            json={"template_name": "General"},
-        )
-    assert response.status_code == 404
-
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_retry_rejects_minute_with_multiple_versions(started_workflows):
+    # A minute with more than one version cannot be retried.
     ids = await _seed_failed_transcription(extra_versions=1)
     try:
         async with get_test_client() as ac:
-            response = await ac.post(
+            multi = await ac.post(
                 f"/transcriptions/{ids['transcription_id']}/retry",
                 json={"template_name": "General"},
             )
-        assert response.status_code == 400
+        assert multi.status_code == 400
         assert started_workflows == []
     finally:
         await _delete_transcription(ids["transcription_id"])

@@ -74,26 +74,9 @@ def _patch_storage(monkeypatch):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_reused_recording_rejected(recordings):
-    """vuln-0001: submitting a recording that is already linked to a transcription
-    must not re-link it, orphan the original transcription, or queue more work."""
-    linked = recordings["linked"]
-
-    async with get_test_client() as ac:
-        response = await ac.post(
-            "/transcriptions",
-            json={"recording_id": str(linked.id), "template_name": "General", "title": "Second attempt"},
-        )
-
-    assert response.status_code == 409
-    # the recording's linkage is unchanged (still points at the first transcription)
-    async with AsyncSession(async_engine) as session:
-        recording = await session.get(Recording, linked.id)
-        assert str(recording.transcription_id) == str(linked.transcription_id)
-
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_fresh_recording_still_creates_transcription(recordings, monkeypatch):
+async def test_recording_reuse_boundary(recordings, monkeypatch):
+    """vuln-0001: a recording already linked to a transcription must not be re-linked, orphan the
+    original transcription, or queue more work; a fresh recording still creates and queues one."""
     started: list = []
 
     async def _start(transcription_id, minute_id):
@@ -103,15 +86,25 @@ async def test_fresh_recording_still_creates_transcription(recordings, monkeypat
         "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
         _start,
     )
-    fresh = recordings["fresh"]
+    linked, fresh = recordings["linked"], recordings["fresh"]
 
     async with get_test_client() as ac:
-        response = await ac.post(
+        rejected = await ac.post(
+            "/transcriptions",
+            json={"recording_id": str(linked.id), "template_name": "General", "title": "Second attempt"},
+        )
+        assert rejected.status_code == 409
+        assert started == []
+        # the recording's linkage is unchanged (still points at the first transcription)
+        async with AsyncSession(async_engine) as session:
+            recording = await session.get(Recording, linked.id)
+            assert str(recording.transcription_id) == str(linked.transcription_id)
+
+        accepted = await ac.post(
             "/transcriptions",
             json={"recording_id": str(fresh.id), "template_name": "General", "title": "New job"},
         )
-
-    assert response.status_code == 201
+    assert accepted.status_code == 201
     assert len(started) == 1
     async with AsyncSession(async_engine) as session:
         recording = await session.get(Recording, fresh.id)

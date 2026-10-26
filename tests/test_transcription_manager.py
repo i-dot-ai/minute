@@ -131,39 +131,28 @@ def sample_message_data():
 class TestTranscriptionServiceManager:
     """Test class for TranscriptionServiceManager."""
 
-    def test_init_with_available_adapters(self, manager):
-        """Test initialization with available adapters."""
-        # Should only include available adapters that are in settings
+    def test_init_selects_only_available_registered_adapters(self, manager):
+        """Only available adapters that are in settings are registered."""
         assert len(manager._available_adapters) == 2  # noqa: SLF001
         assert "MockAdapter1" in manager._available_adapters  # noqa: SLF001
         assert "MockAdapter2" in manager._available_adapters  # noqa: SLF001
         assert "MockAdapter3" not in manager._available_adapters  # noqa: SLF001
 
-    def test_init_with_no_available_adapters(self, mock_adapters):  # noqa: ARG002
-        """Test initialization when no adapters are available."""
         with patch("common.services.transcription_services.transcription_manager.settings") as mock_settings:
             mock_settings.TRANSCRIPTION_SERVICES = ["NonExistentAdapter"]
-
-            manager = TranscriptionServiceManager()
-            assert len(manager._available_adapters) == 0  # noqa: SLF001
+            assert len(TranscriptionServiceManager()._available_adapters) == 0  # noqa: SLF001
 
     def test_get_available_services(self, manager):
-        """Test get_available_services method."""
+        """Only available adapters that are in settings are listed."""
         available_services = manager.get_available_services()
 
         assert len(available_services) == 2
         assert "MockAdapter1" in available_services
         assert "MockAdapter2" in available_services
 
-    def test_get_available_services_with_unavailable_adapter(self, mock_adapters):  # noqa: ARG002
-        """Test get_available_services when adapter is unavailable."""
         with patch("common.services.transcription_services.transcription_manager.settings") as mock_settings:
             mock_settings.TRANSCRIPTION_SERVICES = ["MockAdapter3"]  # This one is not available
-
-            manager = TranscriptionServiceManager()
-            available_services = manager.get_available_services()
-
-            assert len(available_services) == 0
+            assert TranscriptionServiceManager().get_available_services() == {}
 
     def test_async_aws_adapter_fails_registration(self):
         """An async provider (AWS) is not supported by the Temporal workflow, so registration fails fast."""
@@ -178,17 +167,11 @@ class TestTranscriptionServiceManager:
             with pytest.raises(RuntimeError, match="not supported by the Temporal transcription workflow"):
                 TranscriptionServiceManager()
 
-    @pytest.mark.parametrize(
-        "duration,expected_adapter",  # noqa: PT006
-        [
-            (1500, "MockAdapter1"),  # Should select MockAdapter1 (1800s max) for 1500s duration
-            (2000, "MockAdapter2"),  # Should select MockAdapter2 (3600s max) for 2000s duration
-        ],
-    )
-    def test_select_adaptor_success(self, manager, duration, expected_adapter):
+    def test_select_adaptor_success(self, manager):
         """Test successful adapter selection based on duration."""
-        adapter = manager.select_adaptor(duration)
-        assert adapter.name == expected_adapter
+        # Picks the smallest available adapter that can handle the duration.
+        for duration, expected_adapter in ((1500, "MockAdapter1"), (2000, "MockAdapter2")):
+            assert manager.select_adaptor(duration).name == expected_adapter, duration
 
     def test_select_adaptor_no_suitable_adapter(self, manager):
         """Test adapter selection when no adapter can handle the duration."""

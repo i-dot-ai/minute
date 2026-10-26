@@ -86,35 +86,32 @@ def started(monkeypatch):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_create_minute_rejects_foreign_template(tenants, started):
-    foreign = tenants["foreign"]
+async def test_create_minute_template_tenant_boundary(tenants, started):
+    """A foreign user's template id is a 404 and starts nothing; the caller's own template is accepted."""
+    own, foreign = tenants["own"], tenants["foreign"]
     async with get_test_client() as ac:
-        response = await ac.post(
-            f"/transcription/{tenants['own']['transcription_id']}/minutes",
+        rejected = await ac.post(
+            f"/transcription/{own['transcription_id']}/minutes",
             json={"template_name": "General", "template_id": str(foreign["template_id"])},
         )
-    assert response.status_code == 404
-    assert started == []
+        assert rejected.status_code == 404
+        assert started == []
 
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_create_minute_accepts_own_template(tenants, started):
-    own = tenants["own"]
-    async with get_test_client() as ac:
-        response = await ac.post(
+        accepted = await ac.post(
             f"/transcription/{own['transcription_id']}/minutes",
             json={"template_name": "General", "template_id": str(own["template_id"])},
         )
-    assert response.status_code == 200
+    assert accepted.status_code == 200
     assert len(started) == 1
     assert started[0][0] == "generate"
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_create_minute_version_rejects_foreign_source(tenants, started):
+async def test_create_minute_version_source_tenant_boundary(tenants, started):
+    """A foreign user's source version id is a 404 and starts nothing; the caller's own source is accepted."""
     own, foreign = tenants["own"], tenants["foreign"]
     async with get_test_client() as ac:
-        response = await ac.post(
+        rejected = await ac.post(
             f"/minutes/{own['minute_id']}/versions",
             json={
                 "content_source": "ai_edit",
@@ -124,24 +121,19 @@ async def test_create_minute_version_rejects_foreign_source(tenants, started):
                 },
             },
         )
-    assert response.status_code == 404
-    assert started == []
+        assert rejected.status_code == 404
+        assert started == []
 
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_create_minute_version_accepts_own_source(tenants, started):
-    own = tenants["own"]
-    async with get_test_client() as ac:
-        response = await ac.post(
+        accepted = await ac.post(
             f"/minutes/{own['minute_id']}/versions",
             json={
                 "content_source": "ai_edit",
                 "ai_edit_instructions": {"instruction": "Summarise this", "source_id": str(own["minute_version_id"])},
             },
         )
-    assert response.status_code == 200
+    assert accepted.status_code == 200
     assert len(started) == 1
-    assert started[0] == ("edit", response.json()["id"], str(own["minute_version_id"]))
+    assert started[0] == ("edit", accepted.json()["id"], str(own["minute_version_id"]))
 
 
 async def _start_boom(*_args):
@@ -150,34 +142,26 @@ async def _start_boom(*_args):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_create_minute_start_failure_marks_failed(tenants, monkeypatch):
-    """A definite enqueue failure marks the committed version failed."""
+async def test_start_failure_marks_failed(tenants, monkeypatch):
+    """A definite enqueue failure marks the committed version failed, on both generation routes."""
     own = tenants["own"]
-    monkeypatch.setattr("backend.api.routes.minutes.temporal.start_minute_generation_workflow", _start_boom)
 
     async with get_test_client() as ac:
+        monkeypatch.setattr("backend.api.routes.minutes.temporal.start_minute_generation_workflow", _start_boom)
         response = await ac.post(
             f"/transcription/{own['transcription_id']}/minutes",
             json={"template_name": "General", "template_id": str(own["template_id"])},
         )
+        assert response.status_code == 503
+        async with AsyncSession(async_engine) as session:
+            versions = (
+                await session.exec(
+                    select(MinuteVersion).join(Minute).where(Minute.transcription_id == own["transcription_id"])
+                )
+            ).all()
+        assert any(version.status == JobStatus.FAILED for version in versions)
 
-    assert response.status_code == 503
-    async with AsyncSession(async_engine) as session:
-        versions = (
-            await session.exec(
-                select(MinuteVersion).join(Minute).where(Minute.transcription_id == own["transcription_id"])
-            )
-        ).all()
-    assert any(version.status == JobStatus.FAILED for version in versions)
-
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_create_minute_version_start_failure_marks_failed(tenants, monkeypatch):
-    """The AI-edit route applies the same enqueue compensation."""
-    own = tenants["own"]
-    monkeypatch.setattr("backend.api.routes.minutes.temporal.start_minute_edit_workflow", _start_boom)
-
-    async with get_test_client() as ac:
+        monkeypatch.setattr("backend.api.routes.minutes.temporal.start_minute_edit_workflow", _start_boom)
         response = await ac.post(
             f"/minutes/{own['minute_id']}/versions",
             json={
@@ -185,8 +169,9 @@ async def test_create_minute_version_start_failure_marks_failed(tenants, monkeyp
                 "ai_edit_instructions": {"instruction": "Summarise", "source_id": str(own["minute_version_id"])},
             },
         )
-
-    assert response.status_code == 503
-    async with AsyncSession(async_engine) as session:
-        versions = (await session.exec(select(MinuteVersion).where(MinuteVersion.minute_id == own["minute_id"]))).all()
-    assert any(version.status == JobStatus.FAILED for version in versions)
+        assert response.status_code == 503
+        async with AsyncSession(async_engine) as session:
+            versions = (
+                await session.exec(select(MinuteVersion).where(MinuteVersion.minute_id == own["minute_id"]))
+            ).all()
+        assert any(version.status == JobStatus.FAILED for version in versions)

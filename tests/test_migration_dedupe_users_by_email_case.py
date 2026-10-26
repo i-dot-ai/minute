@@ -192,7 +192,7 @@ def _seed(conn: sa.Connection) -> None:
     )
 
 
-def test_migration_merges_duplicates_reassigns_fks_and_lowercases(migration_db):
+def test_migration_merges_duplicates_and_enforces_uniqueness(migration_db):
     engine, cfg = migration_db
 
     with engine.begin() as conn:
@@ -274,12 +274,7 @@ def test_migration_merges_duplicates_reassigns_fks_and_lowercases(migration_db):
             orphans = conn.execute(sa.text(query)).scalar_one()
             assert orphans == 0, f"orphaned {table}.{col} rows after migration"
 
-
-def test_migration_enforces_case_insensitive_uniqueness(migration_db):
-    engine, cfg = migration_db
-    command.upgrade(cfg, TARGET_REVISION)
-
-    # Inserting a fresh user is fine.
+    # The functional unique index rejects a case-variant of an existing email; a fresh one is fine.
     with engine.begin() as conn:
         conn.execute(
             sa.text(
@@ -289,7 +284,6 @@ def test_migration_enforces_case_insensitive_uniqueness(migration_db):
             {"e": "dave@example.com"},
         )
 
-    # A case-variant of the same email is rejected by the functional unique index.
     with pytest.raises(IntegrityError), engine.begin() as conn:
         conn.execute(
             sa.text(
@@ -300,7 +294,7 @@ def test_migration_enforces_case_insensitive_uniqueness(migration_db):
         )
 
 
-def test_migration_is_a_noop_when_there_are_no_duplicates(migration_db):
+def test_migration_noop_and_downgrade(migration_db):
     engine, cfg = migration_db
 
     with engine.begin() as conn:
@@ -311,23 +305,12 @@ def test_migration_is_a_noop_when_there_are_no_duplicates(migration_db):
 
     command.upgrade(cfg, TARGET_REVISION)
 
+    # With no duplicates the upgrade is a no-op: the single row is untouched.
     with engine.connect() as conn:
         rows = conn.execute(sa.text('SELECT id, email FROM "user"')).all()
         assert len(rows) == 1
         assert rows[0].id == BOB
         assert rows[0].email == "bob@example.com"
-
-
-def test_downgrade_drops_only_the_unique_index(migration_db):
-    engine, cfg = migration_db
-    command.upgrade(cfg, TARGET_REVISION)
-
-    # Seed a single user so we can verify rows survive the downgrade.
-    with engine.begin() as conn:
-        conn.execute(
-            sa.text('INSERT INTO "user" (id, email, created_datetime, updated_datetime) VALUES (:i, :e, NOW(), NOW())'),
-            {"i": BOB, "e": "bob@example.com"},
-        )
 
     command.downgrade(cfg, PRE_REVISION)
 

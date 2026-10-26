@@ -4,9 +4,10 @@ Activities are referenced by name so the workflow sandbox never imports the
 transcription stack (ffmpeg, DB, LLM clients). They run in common/workflows/activities/
 and pass only ids and small values: transcripts and summaries stay in Postgres.
 
-No heartbeats: every step has a start_to_close timeout above its slowest healthy run, and
-the SDK cancels an attempt locally when it expires. The STT step's timeout scales with the
-audio duration measured by prepare_audio.
+The STT step heartbeats (only it, since it blocks longest on a provider with no progress to report),
+so an abrupt worker death is retried in its heartbeat_timeout; every step still has a start_to_close
+timeout above its slowest healthy run, and the SDK cancels an attempt locally when it expires. The
+STT step's timeout scales with the audio duration measured by prepare_audio.
 """
 
 import asyncio
@@ -168,6 +169,10 @@ class TranscriptionWorkflow:
             result_type=str,
             task_queue=STT_TASK_QUEUE,
             start_to_close_timeout=timeout,
+            # The activity heartbeats every 15s; the server throttles sends to ~0.8x this, leaving a
+            # comfortable margin, so a killed worker is retried in ~90s rather than up to the (much
+            # longer) start_to_close.
+            heartbeat_timeout=timedelta(seconds=90),
             retry_policy=_STT_RETRY,
         )
 

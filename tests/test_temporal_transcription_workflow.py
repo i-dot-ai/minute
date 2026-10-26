@@ -41,6 +41,7 @@ def _activities(calls: list, *, fail: frozenset = frozenset(), completed: bool =
     async def transcribe(params: wf.TranscribeInput) -> str:
         seen["transcribe_input"] = params
         seen["transcribe_timeout"] = activity.info().start_to_close_timeout
+        seen["transcribe_heartbeat_timeout"] = activity.info().heartbeat_timeout
         _maybe_fail(wf.TRANSCRIBE)
         return TRANSCRIPTION_ID
 
@@ -138,6 +139,7 @@ async def test_transcribe_gets_duration_based_timeout():
     await _run(seen=seen)
     expected = wf.stt_timeout(AUDIO_SECONDS)
     assert seen["transcribe_timeout"] == expected
+    assert seen["transcribe_heartbeat_timeout"] == timedelta(seconds=90)
     params = seen["transcribe_input"]
     assert params.minute_id == MINUTE_ID
     # Azure's budget leaves room inside the activity timeout for the mp3 download

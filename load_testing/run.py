@@ -11,9 +11,16 @@ from pathlib import Path
 
 import requests
 
+BASES = {
+    "dev": "https://minute.dev.i.ai.gov.uk",
+    "preprod": "https://minute.preprod.i.ai.gov.uk",
+    "local": "http://localhost:3000",
+}
+
 
 def upload_a_file(env: str, fp: Path, cookie: str) -> dict:
-    api = f"https://minute.{env}.i.ai.gov.uk/api/proxy"
+    base = BASES[env]
+    api = f"{base}/api/proxy"
     sess = requests.Session()
     headers = {"Cookie": cookie}
 
@@ -33,7 +40,10 @@ def upload_a_file(env: str, fp: Path, cookie: str) -> dict:
     t0 = time.monotonic()
     _data = fp.read_bytes()  # -> S3
     _headers = {"x-ms-blob-type": "BlockBlob"}
-    rsp = sess.put(r["upload_url"], data=_data, headers=_headers, timeout=300)
+    _url = r["upload_url"]
+    if _url.startswith("/"):  # local storage returns a relative /api/proxy path
+        _url = base + _url
+    rsp = sess.put(_url, data=_data, headers=_headers, timeout=300)
     timeline["upload_to_s3"] = time.monotonic() - t0
 
     t0 = time.monotonic()
@@ -105,11 +115,14 @@ def get_results(env: str, files: list[Path], cookie: str) -> list[dict]:
 
 def main(argv: list[str]) -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env", choices=["dev", "preprod"])
+    parser.add_argument("--env", choices=["local", "dev", "preprod"])
     parser.add_argument("--scenario", required=True)
     parser.add_argument("--n", type=int, required=True)
-    parser.add_argument("--cookie", required=True)
+    parser.add_argument("--cookie", default="")
     args = parser.parse_args(argv)
+
+    if args.env != "local" and not args.cookie:
+        parser.error("--cookie is required unless --env=local")
 
     if args.scenario.lower().replace("_", "-") == "bbc-podcasting-house":
         _dir = Path(__file__).parent / ".downloads" / "bbc_podcasting_house"
@@ -145,7 +158,7 @@ def main(argv: list[str]) -> None:
        `'(_ )_)(_)_)'
     """)  # noqa: T201
 
-    url = "https://minute.dev.i.ai.gov.uk/transcriptions"
+    url = f"{BASES[args.env]}/transcriptions"
     print(f"Trace: \033]8;;{url}\033\\{url}\033]8;;\033\\\n")  # noqa: T201
     results = get_results(env=args.env, files=files, cookie=args.cookie)
 

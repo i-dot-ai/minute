@@ -6,6 +6,7 @@ llm (speakers, title, summary, minute generation and AI edits).
 
 import asyncio
 import logging
+import signal
 
 from temporalio.client import Client
 from temporalio.worker import Worker
@@ -55,7 +56,18 @@ async def main() -> None:
         LLM_TASK_QUEUE,
         llm_cap,
     )
-    await asyncio.gather(*(w.run() for w in workers))
+
+    stop = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, stop.set)
+
+    runs = [asyncio.create_task(worker.run()) for worker in workers]
+    await stop.wait()
+    logger.info("Signal received; waiting for in-flight activities to finish")
+    # shutdown() waits for each worker's running activities, so an ECS stop does not cut them off.
+    await asyncio.gather(*(worker.shutdown() for worker in workers))
+    await asyncio.gather(*runs)
 
 
 if __name__ == "__main__":

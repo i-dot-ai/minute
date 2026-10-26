@@ -239,8 +239,8 @@ async def test_retry_publish_failure_marks_failed(failed_transcription, monkeypa
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_patch_rejected_while_processing(in_progress_transcription, failed_transcription):
-    """Finding 2: a PATCH would bump updated_datetime (the worker's claim token) and
-    void the in-flight claim, so it is refused until the job is terminal."""
+    """Finding 2: a PATCH while processing would race the workflow's writes, so it is
+    refused until the job is terminal."""
     async with get_test_client() as ac:
         blocked = await ac.patch(
             f"/transcriptions/{in_progress_transcription['transcription_id']}", json={"title": "renamed"}

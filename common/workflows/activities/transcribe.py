@@ -6,8 +6,9 @@ from temporalio import activity
 from temporalio.exceptions import ApplicationError
 
 from common.database.postgres_models import JobStatus, Transcription
+from common.services.errors import is_transient
 from common.services.exceptions import TranscriptionFailedError
-from common.services.job_claim import JobClaimRenewer
+from common.services.job_claim import claim_job
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.settings import get_structured_logger
 from common.workflows import transcription as wf
@@ -24,14 +25,19 @@ async def _transcribe(params: wf.TranscribeInput) -> str:
     if transcription.status == JobStatus.FAILED:
         msg = f"Transcription is FAILED: {transcription.error}"
         raise TranscriptionFailedError(msg)
-    claim = _shared.take_claim(transcription)
-    renewer = JobClaimRenewer(Transcription, transcription.id, claim)
+    # claim_job is the status-guarded transition (AWAITING_START -> IN_PROGRESS); an IN_PROGRESS row
+    # is this workflow's own earlier attempt, so nothing else is needed to "own" it.
+    claim_job(Transcription, transcription.id)
     try:
-        async with renewer:
-            # Downloads the newest recording (the mono mp3 prepare_audio saved) and runs one STT call.
-            transcription_job = await transcription_manager.perform_transcription_steps(transcription=transcription)
+        # Downloads the newest recording (the mono mp3 prepare_audio saved) and runs one STT call
+        # within the workflow's duration-based budget.
+        transcription_job = await transcription_manager.perform_transcription_steps(
+            transcription=transcription, timeout_seconds=params.stt_timeout_seconds
+        )
     except Exception as e:
-        if (msg := _shared.mark_failed(transcription, renewer.token, e)) is None:
+        if is_transient(e):
+            raise _shared.TranscriptionTransientError(str(e)) from e
+        if (msg := _shared.mark_failed(transcription, e)) is None:
             raise _shared.TranscriptionTransientError(str(e)) from e
         raise TranscriptionFailedError(msg) from e
     transcript = transcription_job.transcript
@@ -39,8 +45,8 @@ async def _transcribe(params: wf.TranscribeInput) -> str:
         # An async provider (AWS) returns a job to poll; this Temporal path only supports sync providers.
         msg = "Transcription provider did not return a transcript"
         raise _shared.TranscriptionTransientError(msg)
-    if not _shared.fenced_update(transcription.id, renewer.token, transcript=transcript):
-        msg = "Transcription claim was superseded"
+    if not _shared.update_in_progress(transcription.id, dialogue_entries=transcript):
+        msg = "Transcription changed while being written"
         raise _shared.TranscriptionTransientError(msg)
     return str(transcription.id)
 
@@ -53,6 +59,6 @@ async def transcribe(params: wf.TranscribeInput) -> str:
     try:
         return await _transcribe(params)
     except _shared.TranscriptionTransientError as e:
-        raise ApplicationError(str(e)) from e  # provider unavailable or claim moved: retry with backoff
+        raise ApplicationError(str(e)) from e  # provider unavailable or row moved on: retry with backoff
     except TranscriptionFailedError as e:
         raise ApplicationError(str(e), non_retryable=True) from e  # row is already FAILED, or bad audio

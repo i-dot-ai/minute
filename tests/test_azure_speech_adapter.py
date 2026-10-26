@@ -1,7 +1,7 @@
 """Unit tests for AzureSpeechAdapter failing over between Azure regions.
 
-Nothing here calls Azure. httpx.AsyncClient is swapped for a real client whose transport returns canned responses, the
-audio is a small synthetic file, and tenacity's sleep between retries returns immediately.
+Nothing here calls Azure. httpx.AsyncClient is swapped for a real client whose transport returns canned responses and
+the audio is a small synthetic file. The adapter makes one pass over the regions per call: Temporal owns retries.
 """
 
 from pathlib import Path
@@ -10,7 +10,6 @@ from types import SimpleNamespace
 import httpx
 import pytest
 from structlog.testing import capture_logs
-from tenacity import RetryError
 
 from common.services.exceptions import TranscriptionFailedError
 from common.services.transcription_services import azure
@@ -51,6 +50,7 @@ class QueuedTransport(httpx.AsyncBaseTransport):
         self.responses = list(responses)
         self.requests: list[tuple[str, str]] = []
         self.audio_sizes: list[int] = []
+        self.client_kwargs: dict = {}
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         body = await request.aread()
@@ -69,19 +69,6 @@ def audio_file(tmp_path: Path) -> Path:
     return path
 
 
-@pytest.fixture(autouse=True)
-def backoffs(monkeypatch) -> list[float]:
-    """Stops start() from actually waiting between retries in every test, and records each wait for the tests that
-    check the backoff."""
-    waits: list[float] = []
-
-    async def record_sleep(seconds: float) -> None:
-        waits.append(seconds)
-
-    monkeypatch.setattr(AzureSpeechAdapter.start.retry, "sleep", record_sleep)
-    return waits
-
-
 @pytest.fixture
 def azure_responses(monkeypatch):
     """Configures the regions and queues Azure's responses, returning the transport so tests can check the requests."""
@@ -93,6 +80,7 @@ def azure_responses(monkeypatch):
         real_async_client = httpx.AsyncClient
 
         def async_client(**kwargs) -> httpx.AsyncClient:
+            transport.client_kwargs = kwargs
             return real_async_client(transport=transport, **kwargs)
 
         monkeypatch.setattr(azure, "regions", regions)
@@ -107,26 +95,16 @@ def sent_to(region: AzureSpeechRegion) -> tuple[str, str]:
 
 
 @pytest.mark.parametrize(
-    ("responses", "regions", "expected_requests", "expected_backoffs"),
+    ("responses", "regions", "expected_requests"),
     [
-        pytest.param([ok()], ALL_REGIONS, [PRIMARY], 0, id="primary serves the request"),
-        pytest.param([error(429), ok()], ALL_REGIONS, [PRIMARY, FALLBACK_1], 0, id="throttled primary fails over"),
-        pytest.param([error(500), error(503), ok()], ALL_REGIONS, ALL_REGIONS, 0, id="server errors fail over"),
-        pytest.param([timeout(), ok()], ALL_REGIONS, [PRIMARY, FALLBACK_1], 0, id="timeout fails over"),
-        pytest.param(
-            [error(429), error(429), error(429), ok()],
-            ALL_REGIONS,
-            [*ALL_REGIONS, PRIMARY],
-            1,
-            id="backs off only after every region fails",
-        ),
-        pytest.param([error(429), error(429), ok()], [PRIMARY], [PRIMARY] * 3, 2, id="single region backs off"),
+        pytest.param([ok()], ALL_REGIONS, [PRIMARY], id="primary serves the request"),
+        pytest.param([error(429), ok()], ALL_REGIONS, [PRIMARY, FALLBACK_1], id="throttled primary fails over"),
+        pytest.param([error(500), error(503), ok()], ALL_REGIONS, ALL_REGIONS, id="server errors fail over"),
+        pytest.param([timeout(), ok()], ALL_REGIONS, [PRIMARY, FALLBACK_1], id="timeout fails over"),
     ],
 )
 @pytest.mark.asyncio
-async def test_transcribes(
-    azure_responses, audio_file, backoffs, responses, regions, expected_requests, expected_backoffs
-):
+async def test_transcribes(azure_responses, audio_file, responses, regions, expected_requests):
     transport = azure_responses(responses, regions)
 
     result = await AzureSpeechAdapter.start(audio_file)
@@ -134,29 +112,27 @@ async def test_transcribes(
     assert result.transcript == EXPECTED_TRANSCRIPT
     assert transport.requests == [sent_to(region) for region in expected_requests]
     assert transport.audio_sizes == [1024] * len(expected_requests)
-    assert len(backoffs) == expected_backoffs
 
 
 @pytest.mark.asyncio
-async def test_gives_up_after_five_sweeps_of_every_region(azure_responses, audio_file, backoffs):
-    transport = azure_responses([error(429) for _ in range(15)])
+async def test_all_regions_failing_raises_for_temporal_to_retry(azure_responses, audio_file):
+    """One sweep of the regions per call: retrying is Temporal's job, not the adapter's."""
+    transport = azure_responses([error(429) for _ in range(len(ALL_REGIONS))])
 
-    with pytest.raises(RetryError):
+    with pytest.raises(httpx.HTTPStatusError):
         await AzureSpeechAdapter.start(audio_file)
 
-    assert len(transport.requests) == 15
-    assert len(backoffs) == 4
+    assert transport.requests == [sent_to(region) for region in ALL_REGIONS]
 
 
 @pytest.mark.asyncio
-async def test_client_error_fails_without_trying_other_regions(azure_responses, audio_file, backoffs):
+async def test_client_error_fails_without_trying_other_regions(azure_responses, audio_file):
     transport = azure_responses([error(400)])
 
     with pytest.raises(TranscriptionFailedError, match="HTTP 400"):
         await AzureSpeechAdapter.start(audio_file)
 
     assert transport.requests == [sent_to(PRIMARY)]
-    assert backoffs == []
 
 
 def region_settings(**overrides: str | None) -> SimpleNamespace:
@@ -197,3 +173,18 @@ def test_configured_regions_warns_about_and_leaves_out_a_missing_or_empty_region
             "AZURE_SPEECH_FALLBACK_1_REGION or AZURE_SPEECH_FALLBACK_1_KEY is missing or empty, so it won't be used",
         )
     ]
+
+
+@pytest.mark.asyncio
+async def test_start_uses_the_callers_timeout_budget(azure_responses, audio_file):
+    """The workflow's duration-based budget reaches the HTTP client."""
+    transport = azure_responses([ok()])
+    await AzureSpeechAdapter.start(audio_file, timeout_seconds=123.5)
+    assert transport.client_kwargs["timeout"].read == 123.5
+
+
+@pytest.mark.asyncio
+async def test_start_falls_back_to_the_default_timeout(azure_responses, audio_file):
+    transport = azure_responses([ok()])
+    await AzureSpeechAdapter.start(audio_file)
+    assert transport.client_kwargs["timeout"].read == azure.TIMEOUT.read

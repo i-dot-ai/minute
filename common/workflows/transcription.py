@@ -29,44 +29,48 @@ FAIL_TRANSCRIPTION = "fail_transcription"
 IDENTIFY_SPEAKERS = "identify_speakers"
 GENERATE_TITLE = "generate_title"
 COMPLETE_TRANSCRIPTION = "complete_transcription"
-SUMMARIZE = "summarize"
+SUMMARISE = "summarise"
 
 # STT timeout = floor + factor x audio duration. Measured: Azure took 119s for a 2h file (~2% of
 # the duration), so 10% is ~5x headroom; the floor covers download, upload and short files.
 # 2h audio -> 17 min, 5h (Azure's limit) -> 35 min.
 STT_TIMEOUT_FLOOR = timedelta(minutes=5)
 STT_TIMEOUT_PER_AUDIO_SECOND = 0.1
-# Part of the STT activity timeout kept back from Azure's budget for the mp3 download, so a slow
-# Azure fails as a retryable TranscriptionTransientError rather than an activity timeout.
+# Part of the STT activity timeout kept back from the provider's budget for the mp3 download, so a
+# hung provider fails as a retryable error rather than by exhausting the activity timeout.
 STT_DOWNLOAD_MARGIN = timedelta(minutes=1)
 
-# STT is the only retry loop (the provider never retries): each attempt makes one Azure request,
-# on the region chosen from the attempt number (Azure.region_for), so the retries fan out across
-# regions. 6 attempts over 3 regions gives each region two tries.
+# STT is the only retry loop (the provider never retries): each attempt makes one request per
+# configured Azure region via AzureSpeechAdapter's in-attempt failover, then Temporal backs off and
+# retries. 4 attempts give each region several tries.
 _STT_RETRY = RetryPolicy(
     initial_interval=timedelta(seconds=30),
     backoff_coefficient=2.0,
-    maximum_interval=timedelta(minutes=2),
-    maximum_attempts=6,
+    maximum_interval=timedelta(minutes=5),
+    maximum_attempts=4,
 )
 # prepare_audio (download + ffmpeg): a couple of quick retries for transient S3/ffmpeg hiccups.
 _PREPARE_RETRY = RetryPolicy(
-    initial_interval=timedelta(seconds=10), maximum_interval=timedelta(minutes=1), maximum_attempts=3
-)
-# Claim-based steps (summary, and the edit workflow): wait for a crashed attempt's claim
-# (CLAIM_STALE_AFTER = 3 min) to go stale before retrying.
-_CLAIMED_STEP_RETRY = RetryPolicy(
-    initial_interval=timedelta(minutes=1),
+    initial_interval=timedelta(seconds=10),
     backoff_coefficient=2.0,
-    maximum_interval=timedelta(minutes=5),
-    maximum_attempts=10,
+    maximum_interval=timedelta(minutes=1),
+    maximum_attempts=3,
 )
-# The LLM client already retries each call (tenacity), so a few attempts here is enough.
-_LLM_RETRY = RetryPolicy(
-    initial_interval=timedelta(seconds=5), maximum_interval=timedelta(minutes=1), maximum_attempts=3
+# The LLM client does not retry; Temporal owns it, so give transient provider errors a few tries.
+# Shared with the minute-version workflows (same LLM activities, same task queue).
+LLM_RETRY = RetryPolicy(
+    initial_interval=timedelta(seconds=15),
+    backoff_coefficient=2.0,
+    maximum_interval=timedelta(minutes=2),
+    maximum_attempts=5,
 )
+# Status transitions (complete/fail): cheap, idempotent writes, so ride out a DB blip rather than
+# giving up after ~30s. The 2min cap is reached and the last two waits hold there (~6min total).
 _DB_RETRY = RetryPolicy(
-    initial_interval=timedelta(seconds=1), maximum_interval=timedelta(seconds=30), maximum_attempts=10
+    initial_interval=timedelta(seconds=1),
+    backoff_coefficient=2.0,
+    maximum_interval=timedelta(minutes=2),
+    maximum_attempts=10,
 )
 
 
@@ -101,9 +105,10 @@ class TranscriptionWorkflow:
     async def run(self, minute_id: str) -> dict[str, str]:
         """Returns the outcome of each optional step, e.g. {"title": "failed: ..."}."""
         try:
-            transcription_id = await self._transcribe(minute_id)
+            return await self._run(minute_id)
         except ActivityError as e:
-            # Retries exhausted (or a non-retryable failure): don't leave the row IN_PROGRESS.
+            # Retries exhausted (or a non-retryable failure) anywhere in the run: mark the row
+            # terminal now rather than leaving it IN_PROGRESS for the 24h cleanup sweeper.
             await workflow.execute_activity(
                 FAIL_TRANSCRIPTION,
                 FailTranscriptionInput(minute_id=minute_id, error=str(e.cause)),
@@ -113,10 +118,13 @@ class TranscriptionWorkflow:
             )
             raise
 
+    async def _run(self, minute_id: str) -> dict[str, str]:
+        transcription_id = await self._transcribe(minute_id)
+
         outcome: dict[str, str] = {}
         # Speaker naming before title and summary: both are generated from the named transcript.
         outcome[IDENTIFY_SPEAKERS] = await self._optional(
-            IDENTIFY_SPEAKERS, transcription_id, timedelta(minutes=10), _LLM_RETRY
+            IDENTIFY_SPEAKERS, transcription_id, timedelta(minutes=10), LLM_RETRY
         )
 
         completed: bool = await workflow.execute_activity(
@@ -129,15 +137,15 @@ class TranscriptionWorkflow:
         if not completed:
             skipped = "skipped: transcription deleted or no longer in progress"
             outcome[GENERATE_TITLE] = skipped
-            outcome[SUMMARIZE] = skipped
+            outcome[SUMMARISE] = skipped
             return outcome
 
         # The transcript is usable from here. The two steps write separate rows and don't depend on
         # each other, so they run together. Each degrades on failure: a failed summary marks its
         # minute_version FAILED (shown in the UI) while the transcript stands.
-        outcome[GENERATE_TITLE], outcome[SUMMARIZE] = await asyncio.gather(
-            self._optional(GENERATE_TITLE, transcription_id, timedelta(minutes=10), _LLM_RETRY),
-            self._optional(SUMMARIZE, minute_id, timedelta(minutes=30), _CLAIMED_STEP_RETRY),
+        outcome[GENERATE_TITLE], outcome[SUMMARISE] = await asyncio.gather(
+            self._optional(GENERATE_TITLE, transcription_id, timedelta(minutes=10), LLM_RETRY),
+            self._optional(SUMMARISE, minute_id, timedelta(minutes=30), LLM_RETRY),
         )
         return outcome
 
@@ -159,7 +167,6 @@ class TranscriptionWorkflow:
             ),
             result_type=str,
             task_queue=STT_TASK_QUEUE,
-            # One Azure request (one region) per attempt; Temporal's retry policy walks the regions.
             start_to_close_timeout=timeout,
             retry_policy=_STT_RETRY,
         )

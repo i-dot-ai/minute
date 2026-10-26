@@ -1,24 +1,31 @@
 import logging
 import re
-from datetime import datetime
-from enum import StrEnum, auto
 from typing import cast
 from uuid import UUID
 
 import mistune
 from sqlalchemy import update
 from sqlalchemy.orm import selectinload
+from sqlmodel import col, select
 
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
-from common.database.postgres_models import DialogueEntry, JobStatus, Minute, MinuteVersion, UserTemplate
+from common.database.postgres_models import (
+    ContentSource,
+    DialogueEntry,
+    JobStatus,
+    Minute,
+    MinuteVersion,
+    UserTemplate,
+)
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import (
     get_ai_edit_initial_messages,
     get_basic_minutes_prompt,
 )
-from common.services.job_claim import JobClaimRenewer, claim_job
+from common.services.errors import is_transient
+from common.services.job_claim import claim_job
 from common.services.posthog_client import capture_event
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings, get_structured_logger
@@ -35,9 +42,8 @@ class MinuteGenerationFailedError(Exception):
     pass
 
 
-class MinuteDelivery(StrEnum):
-    ACK = auto()
-    LEAVE = auto()
+class MinuteGenerationTransientError(Exception):
+    """A dependency blip during generation/edit: leave the row and let Temporal retry the activity."""
 
 
 fenced_document_pattern = re.compile(r"\A\s*```[a-zA-Z]*\n(.*?)\n?```\s*\Z", re.DOTALL)
@@ -55,23 +61,17 @@ def strip_document_code_fence(markdown: str) -> str:
 
 class MinuteHandlerService:
     @staticmethod
-    def claim_minute_version(minute_version_id: UUID) -> datetime | None:
+    def claim_minute_version(minute_version_id: UUID) -> bool:
         return claim_job(MinuteVersion, minute_version_id)
 
     @staticmethod
     def update_minute_version(
         minute_version_id: UUID,
-        claim_token: datetime,
         html_content: str | None = None,
         status: JobStatus | None = None,
         error: str | None = None,
     ) -> bool:
-        """Update a minute version only while claim_token still owns it.
-
-        The update is applied only if the row still carries the claim token, so a
-        superseded worker's late write is dropped instead of clobbering the new owner.
-        Returns whether the write was applied.
-        """
+        """Write only while the version is processing (IN_PROGRESS); returns whether it was applied."""
         with SessionLocal() as session:
             values: dict = {}
             if html_content is not None:
@@ -84,7 +84,7 @@ class MinuteHandlerService:
                 update(MinuteVersion)
                 .where(
                     MinuteVersion.id == minute_version_id,
-                    MinuteVersion.updated_datetime == claim_token,
+                    MinuteVersion.status == JobStatus.IN_PROGRESS,
                 )
                 .values(**values)
             )
@@ -92,10 +92,8 @@ class MinuteHandlerService:
             return result.rowcount == 1
 
     @classmethod
-    def record_minute_version_failure(cls, minute_version_id: UUID, error: str, claim_token: datetime) -> bool:
-        return cls.update_minute_version(
-            minute_version_id, status=JobStatus.FAILED, error=error, claim_token=claim_token
-        )
+    def record_minute_version_failure(cls, minute_version_id: UUID, error: str) -> bool:
+        return cls.update_minute_version(minute_version_id, status=JobStatus.FAILED, error=error)
 
     @classmethod
     async def get_minute_version(cls, minute_version_id: UUID) -> MinuteVersion:
@@ -112,119 +110,102 @@ class MinuteHandlerService:
             return minute_version
 
     @classmethod
-    async def get_only_minute_version_for_minute_id(cls, minute_id: UUID) -> MinuteVersion:
+    async def get_initial_minute_version_for_minute_id(cls, minute_id: UUID) -> MinuteVersion:
+        """The INITIAL_GENERATION version, even if AI-edit versions were added since."""
         with SessionLocal() as session:
-            minute = session.get(
-                Minute,
-                minute_id,
-                options=[selectinload(Minute.minute_versions)],
-            )
-            if not minute:
-                msg = f"Minute not found for minute id: {minute_id}"
-                raise ValueError(msg)
-            if not minute.minute_versions:
-                msg = f"MinuteVersion not found for minute id: {minute_id}"
-                raise ValueError(msg)
-            if len(minute.minute_versions) != 1:
-                msg = (
-                    f"More than one MinuteVersions found for minute id: {minute_id}. This function should only be "
-                    f"used for the initial generation of a Minute."
+            minute_version = session.exec(
+                select(MinuteVersion)
+                .where(
+                    MinuteVersion.minute_id == minute_id,
+                    MinuteVersion.content_source == ContentSource.INITIAL_GENERATION,
                 )
+                .order_by(col(MinuteVersion.created_datetime).asc())
+            ).first()
+            if not minute_version:
+                msg = f"Initial MinuteVersion not found for minute id: {minute_id}"
                 raise ValueError(msg)
 
-            session.expunge(minute)
-            return minute.minute_versions[0]
+            session.expunge(minute_version)
+            return minute_version
 
     @classmethod
-    async def process_minute_generation_message(cls, minute_version_id: UUID) -> MinuteDelivery:
+    async def process_minute_generation_message(cls, minute_version_id: UUID) -> None:
         try:
             minute_version = await cls.get_minute_version(minute_version_id=minute_version_id)
             slogger.set_context_field("minute_id", str(minute_version.minute_id))
             slogger.set_context_field("user_id", str(minute_version.minute.transcription.user_id))
             slogger.info("Successfully found MinuteVersion")
         except Exception as e:
+            if is_transient(e):
+                raise MinuteGenerationTransientError(str(e)) from e
             raise MinuteGenerationFailedError from e
-        token = cls.claim_minute_version(minute_version.id)
-        if token is None:
+        if not cls.claim_minute_version(minute_version.id):
             current = await cls.get_minute_version(minute_version.id)
             if current.status in (JobStatus.COMPLETED, JobStatus.FAILED):
-                return MinuteDelivery.ACK
-            return MinuteDelivery.LEAVE
-        renewer = JobClaimRenewer(MinuteVersion, minute_version.id, token)
+                return  # a previous attempt finished it: idempotent retry
         try:
-            async with renewer:
-                meeting_type = cls.predict_meeting(minute_version.minute.transcription.dialogue_entries)
-                slogger.info("Predicted meeting type {meeting_type}", meeting_type=str(meeting_type))
-                html_content = await cls.generate_minutes(meeting_type, minute_version.minute)
-            if not cls.update_minute_version(
-                minute_version.id,
-                html_content=html_content,
-                status=JobStatus.COMPLETED,
-                claim_token=renewer.token,
-            ):
-                return MinuteDelivery.ACK
+            meeting_type = cls.predict_meeting(minute_version.minute.transcription.dialogue_entries)
+            slogger.info("Predicted meeting type {meeting_type}", meeting_type=str(meeting_type))
+            html_content = await cls.generate_minutes(meeting_type, minute_version.minute)
+            if not cls.update_minute_version(minute_version.id, html_content=html_content, status=JobStatus.COMPLETED):
+                return  # the row moved on (deleted/failed): nothing to write
             capture_event(
                 minute_version.minute.transcription.user_id,
                 "summary_generation_succeeded",
                 {"transcriptionId": str(minute_version.minute.transcription_id)},
             )
         except Exception as e:
-            if not cls.record_minute_version_failure(minute_version.id, error=str(e), claim_token=renewer.token):
-                return MinuteDelivery.ACK
+            if is_transient(e):
+                # A dependency blip: leave the row IN_PROGRESS and let Temporal retry the activity.
+                raise MinuteGenerationTransientError(str(e)) from e
+            if not cls.record_minute_version_failure(minute_version.id, error=str(e)):
+                return
             capture_event(
                 minute_version.minute.transcription.user_id,
                 "summary_generation_failed",
                 {"transcriptionId": str(minute_version.minute.transcription_id)},
             )
             raise MinuteGenerationFailedError from e
-        return MinuteDelivery.ACK
 
     @classmethod
-    async def process_minute_edit_message(
-        cls, source_minute_version_id: UUID, target_minute_version_id: UUID
-    ) -> MinuteDelivery:
+    async def process_minute_edit_message(cls, source_minute_version_id: UUID, target_minute_version_id: UUID) -> None:
         try:
             target_minute_version = await cls.get_minute_version(target_minute_version_id)
             slogger.set_context_field("minute_id", str(target_minute_version.minute_id))
             slogger.set_context_field("user_id", str(target_minute_version.minute.transcription.user_id))
         except Exception as e:
+            if is_transient(e):
+                raise MinuteGenerationTransientError(str(e)) from e
             raise MinuteGenerationFailedError from e
 
-        token = cls.claim_minute_version(target_minute_version.id)
-        if token is None:
+        if not cls.claim_minute_version(target_minute_version.id):
             current = await cls.get_minute_version(target_minute_version.id)
             if current.status in (JobStatus.COMPLETED, JobStatus.FAILED):
-                return MinuteDelivery.ACK
-            return MinuteDelivery.LEAVE
-        renewer = JobClaimRenewer(MinuteVersion, target_minute_version.id, token)
+                return  # a previous attempt finished it: idempotent retry
         try:
-            async with renewer:
-                source_minute_version = await cls.get_minute_version(source_minute_version_id)
-                if (
-                    not source_minute_version.minute.transcription.user_id
-                    or source_minute_version.minute.transcription.user_id
-                    != target_minute_version.minute.transcription.user_id
-                ):
-                    msg = "Source and target minute versions belong to different users"
-                    raise ValueError(msg)
-                if not str(target_minute_version.ai_edit_instructions or "").strip():
-                    msg = "Target minute does not have AI edit instructions"
-                    raise ValueError(msg)
-                edited_string = await cls.edit_minutes_with_ai(
-                    minutes=source_minute_version.html_content,
-                    edit_instructions=target_minute_version.ai_edit_instructions,
-                    transcript=source_minute_version.minute.transcription.dialogue_entries,
-                )
-            cls.update_minute_version(
-                minute_version_id=target_minute_version.id,
-                status=JobStatus.COMPLETED,
-                html_content=edited_string,
-                claim_token=renewer.token,
+            source_minute_version = await cls.get_minute_version(source_minute_version_id)
+            if (
+                not source_minute_version.minute.transcription.user_id
+                or source_minute_version.minute.transcription.user_id
+                != target_minute_version.minute.transcription.user_id
+            ):
+                msg = "Source and target minute versions belong to different users"
+                raise ValueError(msg)
+            if not str(target_minute_version.ai_edit_instructions or "").strip():
+                msg = "Target minute does not have AI edit instructions"
+                raise ValueError(msg)
+            edited_string = await cls.edit_minutes_with_ai(
+                minutes=source_minute_version.html_content,
+                edit_instructions=target_minute_version.ai_edit_instructions,
+                transcript=source_minute_version.minute.transcription.dialogue_entries,
             )
-            return MinuteDelivery.ACK
+            cls.update_minute_version(target_minute_version.id, status=JobStatus.COMPLETED, html_content=edited_string)
         except Exception as e:
-            if not cls.record_minute_version_failure(target_minute_version.id, error=str(e), claim_token=renewer.token):
-                return MinuteDelivery.ACK
+            if is_transient(e):
+                # A dependency blip: leave the row IN_PROGRESS and let Temporal retry the activity.
+                raise MinuteGenerationTransientError(str(e)) from e
+            if not cls.record_minute_version_failure(target_minute_version.id, error=str(e)):
+                return
             raise MinuteGenerationFailedError from e
 
     @classmethod

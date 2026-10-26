@@ -13,7 +13,7 @@ from common.workflows.activities import (
     generate_title,
     identify_speakers,
     prepare_audio,
-    summarize,
+    summarise,
     transcribe,
 )
 
@@ -22,7 +22,7 @@ STT_ACTIVITIES = [prepare_audio.prepare_audio, transcribe.transcribe]  # ffmpeg 
 LLM_ACTIVITIES = [  # the only LLM callers
     identify_speakers.identify_speakers,
     generate_title.generate_title,
-    summarize.summarize,
+    summarise.summarise,
     generate_minute.generate_minute,
     edit_minute.edit_minute,
 ]

@@ -8,6 +8,7 @@ from common.database.postgres_models import Recording, Transcription
 from common.services.exceptions import TranscriptionFailedError
 from common.services.storage_services import StorageService
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
+from common.services.transcription_services.aws import AWSTranscribeAdapter
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.types import TranscriptionJobMessageData
 
@@ -46,7 +47,7 @@ class MockAdapter(TranscriptionAdapter):
     def is_available(self) -> bool:
         return self._is_available
 
-    async def start(self, audio_file_path_or_recording) -> TranscriptionJobMessageData:  # noqa: ARG002
+    async def start(self, audio_file_path_or_recording, timeout_seconds=None) -> TranscriptionJobMessageData:  # noqa: ARG002
         return TranscriptionJobMessageData(
             job_name="test_job_name",
             transcript=[{"text": "Test transcript", "speaker": "Speaker1", "start": 0.0, "end": 1.0}],
@@ -164,6 +165,19 @@ class TestTranscriptionServiceManager:
 
             assert len(available_services) == 0
 
+    def test_async_aws_adapter_fails_registration(self):
+        """An async provider (AWS) is not supported by the Temporal workflow, so registration fails fast."""
+        with (
+            patch(
+                "common.services.transcription_services.transcription_manager._adapters",
+                {"aws_transcribe": AWSTranscribeAdapter},
+            ),
+            patch("common.services.transcription_services.transcription_manager.settings") as mock_settings,
+        ):
+            mock_settings.TRANSCRIPTION_SERVICES = ["aws_transcribe"]
+            with pytest.raises(RuntimeError, match="not supported by the Temporal transcription workflow"):
+                TranscriptionServiceManager()
+
     @pytest.mark.parametrize(
         "duration,expected_adapter",  # noqa: PT006
         [
@@ -272,7 +286,7 @@ class TestTranscriptionServiceManager:
 
                 assert result.job_name == "test_job"
                 assert result.transcript is None
-                mock_start.assert_called_once_with(audio_file_path_or_recording=mock_recording)
+                mock_start.assert_called_once_with(audio_file_path_or_recording=mock_recording, timeout_seconds=None)
 
     @pytest.mark.asyncio
     async def test_perform_transcription_steps_unknown_adapter_type(

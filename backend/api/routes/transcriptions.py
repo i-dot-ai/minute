@@ -367,8 +367,8 @@ async def save_transcription(
     transcription = await session.get(Transcription, transcription_id)
     if not transcription or transcription.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Transcription not found")
-    # updated_datetime is the worker's claim token (common/services/job_claim.py): any
-    # write while the job is processing would silently void the worker's claim.
+    # The workflow writes the row (speakers, title) while it is processing, so an edit now
+    # would race those writes.
     if transcription.status in (JobStatus.AWAITING_START, JobStatus.IN_PROGRESS):
         raise HTTPException(status_code=409, detail="Transcription cannot be edited while it is processing")
 

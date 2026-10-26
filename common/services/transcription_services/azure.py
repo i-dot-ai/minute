@@ -5,7 +5,6 @@ from typing import Any
 
 import httpx
 import sentry_sdk
-from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 from common.database.postgres_models import Recording
 from common.services.exceptions import TranscriptionFailedError
@@ -69,12 +68,6 @@ def _configured_regions(settings: Settings) -> list[AzureSpeechRegion]:
 regions = _configured_regions(settings)
 
 
-def _is_retryable(exception: BaseException) -> bool:
-    if isinstance(exception, httpx.HTTPStatusError):
-        return exception.response.status_code in RETRYABLE_STATUS_CODES
-    return isinstance(exception, httpx.TimeoutException)
-
-
 class AzureSpeechAdapter(TranscriptionAdapter):
     """Adapter for Azure Speech-to-Text service."""
 
@@ -89,8 +82,8 @@ class AzureSpeechAdapter(TranscriptionAdapter):
     @classmethod
     async def _post_with_failover(cls, client: httpx.AsyncClient, files: Any) -> tuple[httpx.Response, int]:
         """Send the request to each region in turn until one can take it. Returns the response and the index of the
-        region that served it. If every region is throttled or failing, the last region's error is raised so that the
-        retry decorator on start() backs off before sweeping the regions again."""
+        region that served it. If every region is throttled or failing, the last region's error is raised; Temporal
+        owns the retry (backoff between attempts), so nothing here waits and sweeps again."""
         errors: list[httpx.HTTPStatusError | httpx.TimeoutException] = []
         for index, region in enumerate(regions):
             try:
@@ -127,12 +120,9 @@ class AzureSpeechAdapter(TranscriptionAdapter):
         raise errors[-1]
 
     @classmethod
-    @retry(
-        retry=retry_if_exception(_is_retryable),
-        wait=wait_exponential(multiplier=30),  # 30, 60, 120, 240 secs between sweeps of every region
-        stop=stop_after_attempt(5),
-    )
-    async def start(cls, audio_file_path_or_recording: Path | Recording) -> TranscriptionJobMessageData:
+    async def start(
+        cls, audio_file_path_or_recording: Path | Recording, timeout_seconds: float | None = None
+    ) -> TranscriptionJobMessageData:
         """Transcribe using Azure Speech-to-Text API."""
         # Use your existing Azure transcription function
         """
@@ -143,6 +133,8 @@ class AzureSpeechAdapter(TranscriptionAdapter):
             msg = "Synchronous transcription requires a local audio file"
             raise TypeError(msg)
         audio_file_path = audio_file_path_or_recording
+        # The caller sizes this from the audio duration; fall back to the adapter default.
+        request_timeout = httpx.Timeout(timeout_seconds) if timeout_seconds else TIMEOUT
 
         with (
             sentry_sdk.start_transaction(op="process", name="post_file_to_azure_transcribe") as transaction,
@@ -157,7 +149,8 @@ class AzureSpeechAdapter(TranscriptionAdapter):
             }
             transaction.set_data("file_size", audio_file_path.stat().st_size)
             transaction.set_data("file_type", audio_file_path.suffix.lower())
-            async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            transaction.set_data("timeout_seconds", timeout_seconds)
+            async with httpx.AsyncClient(timeout=request_timeout) as client:
                 response, region_index = await cls._post_with_failover(client, files)
                 transaction.set_data("azure_region", regions[region_index].region)
                 transaction.set_data("azure_region_failovers", region_index)

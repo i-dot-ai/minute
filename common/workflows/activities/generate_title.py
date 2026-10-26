@@ -16,7 +16,8 @@ async def generate_title(transcription_id: str) -> None:
     row = _shared.get_row(transcription_id_uuid)
     if row is None or row.status not in _shared.WRITABLE_STATUSES or not row.dialogue_entries:
         return
-    # generate_meeting_title swallows LLM errors and returns ""; a missing title degrades.
+    # generate_meeting_title raises on LLM failure; the activity retries, and the workflow treats a
+    # missing title as optional.
     title = await generate_meeting_title(transcript=row.dialogue_entries)
     if title:
-        _shared.update_when_writable(transcription_id_uuid, title=title)
+        _shared.set_title_if_empty(transcription_id_uuid, title)

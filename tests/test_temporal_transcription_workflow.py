@@ -62,14 +62,14 @@ def _activities(calls: list, *, fail: frozenset = frozenset(), completed: bool =
         _maybe_fail(wf.COMPLETE_TRANSCRIPTION)
         return completed
 
-    @activity.defn(name=wf.SUMMARIZE)
-    async def summarize(_minute_id: str) -> None:
-        _maybe_fail(wf.SUMMARIZE)
+    @activity.defn(name=wf.SUMMARISE)
+    async def summarise(_minute_id: str) -> None:
+        _maybe_fail(wf.SUMMARISE)
 
     # Same grouping as common/workflows/activities/__init__.py: {task queue: activities}
     return {
         wf.STT_TASK_QUEUE: [prepare_audio, transcribe],
-        wf.LLM_TASK_QUEUE: [identify_speakers, generate_title, summarize],
+        wf.LLM_TASK_QUEUE: [identify_speakers, generate_title, summarise],
         wf.TASK_QUEUE: [complete_transcription, fail_transcription],
     }
 
@@ -100,7 +100,7 @@ async def _run(**kwargs) -> tuple[list, dict, dict]:
 
 
 SEQUENTIAL_STEPS = [wf.PREPARE_AUDIO, wf.TRANSCRIBE, wf.IDENTIFY_SPEAKERS, wf.COMPLETE_TRANSCRIPTION]
-PARALLEL_STEPS = [wf.GENERATE_TITLE, wf.SUMMARIZE]
+PARALLEL_STEPS = [wf.GENERATE_TITLE, wf.SUMMARISE]
 
 
 def _assert_all_steps_ran(calls: list) -> None:
@@ -118,10 +118,10 @@ async def test_happy_path_runs_every_step_in_order_on_its_queue():
         wf.TRANSCRIBE: wf.STT_TASK_QUEUE,
         wf.IDENTIFY_SPEAKERS: wf.LLM_TASK_QUEUE,
         wf.GENERATE_TITLE: wf.LLM_TASK_QUEUE,
-        wf.SUMMARIZE: wf.LLM_TASK_QUEUE,
+        wf.SUMMARISE: wf.LLM_TASK_QUEUE,
         wf.COMPLETE_TRANSCRIPTION: wf.TASK_QUEUE,
     }
-    assert outcome == {wf.IDENTIFY_SPEAKERS: "ok", wf.GENERATE_TITLE: "ok", wf.SUMMARIZE: "ok"}
+    assert outcome == {wf.IDENTIFY_SPEAKERS: "ok", wf.GENERATE_TITLE: "ok", wf.SUMMARISE: "ok"}
 
 
 @pytest.mark.parametrize(
@@ -145,7 +145,7 @@ async def test_transcribe_gets_duration_based_timeout():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("broken", [wf.IDENTIFY_SPEAKERS, wf.GENERATE_TITLE, wf.SUMMARIZE])
+@pytest.mark.parametrize("broken", [wf.IDENTIFY_SPEAKERS, wf.GENERATE_TITLE, wf.SUMMARISE])
 async def test_optional_step_failure_degrades(broken):
     calls, outcome, _ = await _run(fail=frozenset({broken}))
     _assert_all_steps_ran(calls)  # everything still runs
@@ -156,9 +156,9 @@ async def test_optional_step_failure_degrades(broken):
 @pytest.mark.asyncio
 async def test_transcription_no_longer_in_progress_skips_summary_and_title():
     calls, outcome, _ = await _run(completed=False)
-    assert wf.SUMMARIZE not in calls
+    assert wf.SUMMARISE not in calls
     assert wf.GENERATE_TITLE not in calls
-    assert outcome[wf.SUMMARIZE].startswith("skipped")
+    assert outcome[wf.SUMMARISE].startswith("skipped")
     assert outcome[wf.GENERATE_TITLE].startswith("skipped")
 
 
@@ -177,6 +177,27 @@ async def test_audio_or_stt_failure_marks_failed_and_fails_the_run(broken):
     assert [name for name, _ in calls][-1] == wf.FAIL_TRANSCRIPTION  # row isn't left IN_PROGRESS
     assert f"{broken} broke" in seen["fail_input"].error
     assert wf.IDENTIFY_SPEAKERS not in [name for name, _ in calls]
+
+
+@pytest.mark.asyncio
+async def test_completion_failure_marks_failed_and_fails_the_run():
+    """A post-transcribe failure (e.g. a DB blip on the completion write) closes the row too, so it
+    isn't left IN_PROGRESS for the cleanup sweeper."""
+    calls: list = []
+    seen: dict = {}
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        workers = _workers(env.client, _activities(calls, fail=frozenset({wf.COMPLETE_TRANSCRIPTION}), seen=seen))
+        async with workers[0], workers[1], workers[2]:
+            with pytest.raises(WorkflowFailureError):
+                await env.client.execute_workflow(
+                    wf.TranscriptionWorkflow.run, MINUTE_ID, id=str(uuid.uuid4()), task_queue=wf.TASK_QUEUE
+                )
+    names = [name for name, _ in calls]
+    assert names[-1] == wf.FAIL_TRANSCRIPTION
+    assert wf.IDENTIFY_SPEAKERS in names  # ran before completion
+    assert wf.GENERATE_TITLE not in names  # title/summary never reached
+    assert wf.SUMMARISE not in names
+    assert f"{wf.COMPLETE_TRANSCRIPTION} broke" in seen["fail_input"].error
 
 
 @pytest.mark.asyncio

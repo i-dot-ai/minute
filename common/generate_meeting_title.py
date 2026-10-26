@@ -10,11 +10,9 @@ class MeetingTitleResponse(BaseModel):
 
 
 async def generate_meeting_title(transcript: list[DialogueEntry]) -> str:
-    try:
-        chatbot = create_default_chatbot(fast_or_best=FastOrBestLLM.FAST)
-        response = await chatbot.structured_chat(
-            messages=get_meeting_title_prompt(transcript=transcript), response_format=MeetingTitleResponse
-        )
-        return response.title
-    except:  # noqa: E722
-        return ""
+    """Raises on LLM failure; the activity retries and the workflow treats a missing title as optional."""
+    chatbot = create_default_chatbot(fast_or_best=FastOrBestLLM.FAST)
+    response = await chatbot.structured_chat(
+        messages=get_meeting_title_prompt(transcript=transcript), response_format=MeetingTitleResponse
+    )
+    return response.title

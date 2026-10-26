@@ -5,20 +5,23 @@ from uuid import UUID
 from temporalio import activity
 from temporalio.exceptions import ApplicationError
 
-from common.services.minute_handler_service import MinuteDelivery, MinuteGenerationFailedError, MinuteHandlerService
+from common.services.minute_handler_service import (
+    MinuteGenerationFailedError,
+    MinuteGenerationTransientError,
+    MinuteHandlerService,
+)
 from common.workflows import minute_version as wf
 
 
 async def generate(minute_version_id: UUID) -> None:
-    """Generate and persist the version's HTML; shared with the transcription workflow's summarize step."""
+    """Generate and persist the version's HTML; shared with the transcription workflow's summarise step."""
     try:
-        delivery = await MinuteHandlerService.process_minute_generation_message(minute_version_id)
+        await MinuteHandlerService.process_minute_generation_message(minute_version_id)
+    except MinuteGenerationTransientError as e:
+        raise ApplicationError(str(e)) from e  # dependency blip: retry
     except MinuteGenerationFailedError as e:
         # minute_version is already FAILED in the DB.
         raise ApplicationError(str(e.__cause__ or e), non_retryable=True) from e
-    if delivery == MinuteDelivery.LEAVE:
-        msg = "Minute version claimed by an earlier attempt; retrying once the claim goes stale"
-        raise ApplicationError(msg)
 
 
 @activity.defn(name=wf.GENERATE_MINUTE)

@@ -27,7 +27,7 @@ from common.workflows.transcription import (
     LLM_TASK_QUEUE,
     PREPARE_AUDIO,
     STT_TASK_QUEUE,
-    SUMMARIZE,
+    SUMMARISE,
     TASK_QUEUE,
     TRANSCRIBE,
     workflow_id,
@@ -88,7 +88,7 @@ async def test_upload_creates_transcription_via_temporal():
     outcome = await asyncio.wait_for(handle.result(), timeout=TIMEOUT_SECONDS)
     print(f"workflow outcome: {outcome}")  # noqa: T201
     assert (await handle.describe()).status == WorkflowExecutionStatus.COMPLETED
-    assert outcome == {IDENTIFY_SPEAKERS: "ok", GENERATE_TITLE: "ok", SUMMARIZE: "ok"}
+    assert outcome == {IDENTIFY_SPEAKERS: "ok", GENERATE_TITLE: "ok", SUMMARISE: "ok"}
 
     # Each step is its own activity in the workflow history (visible in the Temporal UI).
     history = await handle.fetch_history()
@@ -104,7 +104,7 @@ async def test_upload_creates_transcription_via_temporal():
         (IDENTIFY_SPEAKERS, LLM_TASK_QUEUE),
         (COMPLETE_TRANSCRIPTION, TASK_QUEUE),
         (GENERATE_TITLE, LLM_TASK_QUEUE),
-        (SUMMARIZE, LLM_TASK_QUEUE),
+        (SUMMARISE, LLM_TASK_QUEUE),
     ]
 
     async with httpx.AsyncClient(base_url=BACKEND_URL, timeout=60) as api:

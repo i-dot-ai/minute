@@ -29,15 +29,9 @@ CA_SH = if [ -f "$(CA_BUNDLE)" ]; then \
 	GRPC_DEFAULT_SSL_ROOTS_FILE_PATH="$(CA_BUNDLE)"; \
 	fi;
 
-# The worker's Ray actors write heartbeats to HEARTBEAT_DIR, which defaults to
-# /healthcheck. That path exists in the worker container but the macOS root volume
-# is read-only, so the actors die on creation and silently consume nothing. Point
-# it somewhere writable for host-run tests.
-HEARTBEAT_SH = HEARTBEAT_DIR="$(CURDIR)/.worker-tmp/healthcheck";
-
 # Source .env via the shell (not make's `export`, which keeps the literal quotes
 # around values like TRANSCRIPTION_SERVICES='[...]' and breaks pydantic parsing).
-ENV_SH = set -a; if [ -f .env ]; then . ./.env; fi; $(CA_SH) $(HEARTBEAT_SH) set +a;
+ENV_SH = set -a; if [ -f .env ]; then . ./.env; fi; $(CA_SH) set +a;
 
 # Fast, offline unit tests. Paid-API / e2e tests are skipped here (run `make test_e2e`).
 test:
@@ -61,7 +55,7 @@ run_backend:
 	uv run uvicorn backend.main:app --reload --port 8080
 
 run_worker:
-	uv run python backend/services/queue_service.py
+	uv run python worker/temporal_worker.py
 
 run:
 	docker compose up -d --wait

@@ -1,6 +1,6 @@
 # Self-hosted Temporal. The backend starts workflows and the worker polls them, so both need a
 # frontend they can reach in-VPC: it is registered under Cloud Map as `temporal.<namespace>:7233`
-# and handed out via TEMPORAL_ADDRESS in ecs.tf.
+# and handed out via TEMPORAL_ADDRESS in the application's ecs.tf. This root has separate state.
 #
 # ponytail: one server container runs every role, and a single Aurora writer holds persistence. That
 # is fine for dev and low volume. Before this carries real production load, split frontend/history/
@@ -44,7 +44,7 @@ resource "aws_service_discovery_service" "temporal" {
   name = "temporal"
 
   dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.private_dns_namespace.id
+    namespace_id = data.terraform_remote_state.application.outputs.temporal_dependencies.namespace_id
 
     dns_records {
       ttl  = 10
@@ -76,13 +76,13 @@ module "temporal" {
 
   vpc_id                        = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets               = data.terraform_remote_state.vpc.outputs.private_subnets
-  aws_lb_arn                    = module.load_balancer.alb_arn
-  load_balancer_security_group  = module.load_balancer.load_balancer_security_group_id
+  aws_lb_arn                    = data.terraform_remote_state.application.outputs.temporal_dependencies.alb_arn
+  load_balancer_security_group  = data.terraform_remote_state.application.outputs.temporal_dependencies.alb_security_group_id
   certificate_arn               = data.terraform_remote_state.universal.outputs.certificate_arn
   target_group_name_override    = "minute-temporal-${var.env}-tg"
   ecs_cluster_id                = data.terraform_remote_state.platform.outputs.ecs_cluster_id
   ecs_cluster_name              = data.terraform_remote_state.platform.outputs.ecs_cluster_name
-  task_additional_iam_policies  = local.additional_policy_arns
+  task_additional_iam_policies  = { "0" = data.terraform_remote_state.application.outputs.temporal_dependencies.policy_arn }
   permissions_boundary_name     = "infra/i-dot-ai-${var.env}-minute-perms-boundary-app"
   service_discovery_service_arn = aws_service_discovery_service.temporal.arn
 
@@ -104,12 +104,12 @@ module "temporal" {
     {
       purpose          = "backend-to-temporal"
       port             = 7233
-      additional_sg_id = module.backend.ecs_sg_id
+      additional_sg_id = data.terraform_remote_state.application.outputs.temporal_dependencies.backend_security_group_id
     },
     {
       purpose          = "worker-to-temporal"
       port             = 7233
-      additional_sg_id = module.worker.ecs_sg_id
+      additional_sg_id = data.terraform_remote_state.application.outputs.temporal_dependencies.worker_security_group_id
     },
   ]
 

@@ -1,6 +1,14 @@
+# Access the Temporal UI
 
+Connect to the development Temporal server through an AWS Systems Manager port-forwarding session, then run the Temporal UI locally to inspect workflows and activity retries. The commands below also show how to close the session when you finish.
+
+Run `aws-login` first to authenticate with AWS, then run the commands below.
+
+For the independent application/server release commands and the one-time state migration, see [Temporal releases](temporal-releases.md).
 
 ```console
+aws-login
+
 REGION=eu-west-2
 CLUSTER=i-dot-ai-dev-ecs-cluster
 SERVICE=i-dot-ai-dev-minute-temporal-ecs-service

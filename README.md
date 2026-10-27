@@ -93,6 +93,8 @@ The worker reads from the queue and executes transcription/file conversion/llm c
 
 ## Deployment
 
+Application and Temporal server releases use separate Terraform configurations and state. See [Temporal releases](runbooks/temporal-releases.md) for the release commands and the required migration of existing deployments.
+
 #### Architecture diagram
 
 Minute runs on AWS, with SQS for message queues and S3 for cloud storage.

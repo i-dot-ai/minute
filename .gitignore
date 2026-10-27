@@ -21,6 +21,8 @@ Brewfile.lock.json
 */.terraform.lock.hcl
 .terraform.lock.hcl
 *.terraform.lock.hcl 
+*.tfstate
+*.tfstate.backup
 
 # Data
 *.csv

@@ -6,7 +6,7 @@ terraform {
     }
   }
 
-  required_version = ">= 1.2.2"
+  required_version = ">= 1.7.0"
 
   backend "s3" {
     key = "minute/terraform.tfstate"

@@ -78,7 +78,7 @@ ECR_REPO_NAME=$(APP_NAME)-$(service)
 ECR_URL=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 ECR_REPO_URL=$(ECR_URL)/$(ECR_REPO_NAME)
 
-IMAGE_TAG=$$(git rev-parse HEAD)
+IMAGE_TAG ?= $$(git rev-parse HEAD)
 IMAGE=$(ECR_REPO_URL):$(IMAGE_TAG)
 
 DOCKER_BUILDER_CONTAINER=$(APP_NAME)
@@ -112,11 +112,16 @@ check_docker_tag_exists:
 		echo "Error: ECR tag $(IMAGE_TAG) does not exist." && exit 1; \
 	fi
 
-docker_update_tag: ## Tag the docker image with the specified tag
-	# repo and tag variable are set from git-hub core workflow. example: repo=ecr-repo-name, tag=dev
-	if make docker_tag_is_present_on_image 2>/dev/null; then echo "Image already tagged with $(tag)" && exit 0; fi && \
-	MANIFEST=$$(aws ecr batch-get-image --repository-name $(repo) --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
-	aws ecr put-image --repository-name $(repo) --image-tag $(tag) --image-manifest "$$MANIFEST"
+docker_update_tag: ## Tag the docker image(s) with the specified tag
+	@if [ -z "$(repo)" ]; then \
+		for repository in $$(printf '%s' "$(ECR_REPO)" | tr ',' ' '); do \
+			$(MAKE) docker_update_tag repo=$$repository tag=$(tag) IMAGE_TAG=$(IMAGE_TAG) || exit 1; \
+		done; \
+	else \
+		if $(MAKE) docker_tag_is_present_on_image repo=$(repo) tag=$(tag) IMAGE_TAG=$(IMAGE_TAG) 2>/dev/null; then exit 0; fi; \
+		MANIFEST=$$(aws ecr batch-get-image --repository-name $(repo) --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
+		aws ecr put-image --repository-name $(repo) --image-tag $(tag) --image-manifest "$$MANIFEST"; \
+	fi
 
 docker_echo:
 	echo $($(value))
@@ -127,14 +132,20 @@ ifndef env
 override env = default
 endif
 workspace = $(env)
-tf_build_args =-var "image_tag=$(IMAGE_TAG)" -var-file="variables/global.tfvars" -var-file="variables/$(env).tfvars"  
-TF_BACKEND_CONFIG=backend.hcl
+INFRASTRUCTURE_FOLDER ?= $(if $(infrastructure_folder),$(infrastructure_folder),terraform)
+tf_build_args = -var "image_tag=$(IMAGE_TAG)" -var-file="$(abspath terraform/variables/global.tfvars)" -var-file="$(abspath terraform/variables/$(env).tfvars)"
+TF_BACKEND_CONFIG ?= $(abspath terraform/backend.hcl)
+ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
+override ECR_REPO = minute-temporal
+else
+override ECR_REPO = minute-backend,minute-frontend,minute-worker
+endif
 
 tf_set_workspace:
-	terraform -chdir=terraform/ workspace select $(workspace)
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) workspace select $(workspace)
 
 tf_new_workspace:
-	terraform -chdir=terraform/ workspace new $(workspace)
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) workspace new $(workspace)
 
 tf_set_or_create_workspace:
 	make tf_set_workspace || make tf_new_workspace
@@ -144,42 +155,44 @@ tf_init_and_set_workspace:
 
 .PHONY: tf_init
 tf_init:
-	terraform -chdir=./terraform/ init \
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) init \
 		-backend-config=$(TF_BACKEND_CONFIG) \
 		-backend-config="dynamodb_table=i-dot-ai-$(env)-dynamo-lock" \
 		-reconfigure \
 
 .PHONY: tf_fmt
 tf_fmt:
-	terraform fmt
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) fmt
 
 .PHONY: tf_plan
 tf_plan:
 	make tf_init_and_set_workspace && \
-	terraform -chdir=./terraform/ plan ${tf_build_args} ${args}
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) plan ${tf_build_args} ${args}
 
 .PHONY: tf_apply
 tf_apply:
 	make tf_init_and_set_workspace && \
-	terraform -chdir=./terraform/ apply ${tf_build_args} ${args}
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) apply ${tf_build_args} ${args}
 
 .PHONY: tf_auto_apply
 tf_auto_apply:  ## Auto apply terraform
-	make check_docker_tag_exists repo=$(ECR_REPO_NAME)
+	@for repository in $$(printf '%s' "$(ECR_REPO)" | tr ',' ' '); do \
+		$(MAKE) check_docker_tag_exists repo=$$repository IMAGE_TAG=$(IMAGE_TAG) || exit 1; \
+	done
 	make tf_init_and_set_workspace && \
-	terraform -chdir=./terraform/ apply  ${tf_build_args} ${args} -auto-approve
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) apply ${tf_build_args} ${args} -auto-approve
 
 ## Release app
 # Note: `env` falls back to `default` above for the terraform targets (that is a real
 # terraform workspace). A release has no such fallback -- deploying needs an explicit
 # environment, otherwise you tag `release-default-*`, which no workflow matches.
-.PHONY: release
-release:
+.PHONY: release release-temporal-server
+release release-temporal-server:
 	@if [ "$(env)" = "default" ]; then \
 		printf '\033[0;31mrelease needs an explicit environment, e.g. `make release env=dev`\033[0m\n'; \
 		exit 1; \
 	fi
-	chmod +x ./release.sh && ./release.sh $(env)
+	bash ./release.sh $(env) $(if $(filter release-temporal-server,$@),temporal-server,app)
 
 generate_api_types:
 	cd frontend && npm run openapi-ts

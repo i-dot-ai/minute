@@ -7,12 +7,29 @@ on:
     tags:
       - release-dev-**
       - release-preprod-**
+      - release-temporal-server-dev-**
+      - release-temporal-server-preprod-**
   
   # Move to manual release until we are confident we can handle deploys 
   # during meeting recordings
   workflow_dispatch:
+    inputs:
+      component:
+        description: What to release
+        type: choice
+        options: [app, temporal-server]
+        default: app
+      environment:
+        description: Deployment environment (production requires main)
+        type: choice
+        options: [dev, preprod, prod]
+        default: dev
 
 permissions: {}
+
+concurrency:
+  group: minute-release-${{ github.event_name == 'workflow_dispatch' && inputs.environment || ((startsWith(github.ref_name, 'release-dev-') || startsWith(github.ref_name, 'release-temporal-server-dev-')) && 'dev' || 'preprod') }}
+  cancel-in-progress: false
 
 jobs:
   set-vars:
@@ -28,6 +45,9 @@ jobs:
       infra-config-repo: ${{ steps.export.outputs.infra-config-repo }}
       environment: ${{ steps.env-var.outputs.environment }}
       ecr-repo: ${{ steps.export.outputs.ecr-repo }}
+      infrastructure-folder: ${{ steps.env-var.outputs.infrastructure-folder }}
+      component: ${{ steps.env-var.outputs.component }}
+      image-tag: ${{ steps.env-var.outputs.image-tag }}
 
     steps:
       - name: Checkout
@@ -50,15 +70,49 @@ jobs:
           echo "::add-mask::${AWS_REGION}"
 
       - id: env-var
+        env:
+          RELEASE_REF: ${{ github.ref_name }}
+          RELEASE_EVENT: ${{ github.event_name }}
+          RELEASE_COMPONENT: ${{ inputs.component }}
+          RELEASE_ENVIRONMENT: ${{ inputs.environment }}
         run: |
-          # prod env from main branch
-          if [[ "${{ github.ref_name }}" == main ]]; then
-            export ENVIRONMENT=prod
+          if [[ "$RELEASE_EVENT" == workflow_dispatch ]]; then
+            component="$RELEASE_COMPONENT"
+            environment="$RELEASE_ENVIRONMENT"
+          elif [[ "$RELEASE_REF" == release-temporal-server-* ]]; then
+            component=temporal-server
+            environment="${RELEASE_REF#release-temporal-server-}"
+            environment="${environment%%-*}"
           else
-            export ENVIRONMENT=$(echo ${{ github.ref_name }} | awk -F- '{ print $2 }')
+            component=app
+            environment="${RELEASE_REF#release-}"
+            environment="${environment%%-*}"
           fi
-          echo "environment=${ENVIRONMENT}"
-          echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
+          case "$environment" in dev|preprod|prod) ;; *) exit 1 ;; esac
+          if [[ "$environment" == prod && "$RELEASE_REF" != main ]]; then
+            echo "Production releases require main" >&2
+            exit 1
+          fi
+          case "$component" in
+            app) folder=terraform ;;
+            temporal-server) folder=terraform-temporal ;;
+            *) exit 1 ;;
+          esac
+          echo "environment=$environment" >> "$GITHUB_OUTPUT"
+          echo "component=$component" >> "$GITHUB_OUTPUT"
+          echo "infrastructure-folder=$folder" >> "$GITHUB_OUTPUT"
+          echo "image-tag=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  build-temporal:
+    needs: set-vars
+    if: needs.set-vars.outputs.component == 'temporal-server'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/build-one.yml
+    with:
+      service: temporal
+    secrets: inherit
 
   start-runner:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
@@ -78,9 +132,11 @@ jobs:
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
   apply-infra:
+    if: ${{ !cancelled() && needs.set-vars.result == 'success' && needs.start-runner.result == 'success' && (needs.build-temporal.result == 'success' || needs.build-temporal.result == 'skipped') }}
     needs:
       - set-vars
       - start-runner
+      - build-temporal
     permissions:
       id-token: write
       contents: read
@@ -89,9 +145,11 @@ jobs:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
       ENVIRONMENT: ${{ needs.set-vars.outputs.environment }}
-      ECR_REPO: ${{ needs.set-vars.outputs.ecr-repo }}
+      ECR_REPO: ${{ needs.set-vars.outputs.component == 'temporal-server' && 'minute-temporal' || needs.set-vars.outputs.ecr-repo }}
+      INFRASTRUCTURE_FOLDER: ${{ needs.set-vars.outputs.infrastructure-folder }}
+      TF_FILE: main/${{ needs.set-vars.outputs.infrastructure-folder }}/provider.tf
       PUBLIC_INFRA_DEPLOYMENT: false
-      IMAGE_TAG: ${{ github.sha }}
+      IMAGE_TAG: ${{ needs.set-vars.outputs.image-tag }}
       USE_OIDC: true
     secrets:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT }}

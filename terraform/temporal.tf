@@ -64,13 +64,15 @@ module "temporal" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   source = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v7.0.1-ecs"
 
-  name               = "${local.name}-temporal"
-  image_tag          = var.image_tag
-  ecr_repository_uri = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-temporal"
-  container_port     = 7233
-  cpu                = var.env == "prod" ? 2048 : 1024
-  memory             = var.env == "prod" ? 4096 : 2048
-  desired_app_count  = 1
+  name                       = "${local.name}-temporal"
+  image_tag                  = var.image_tag
+  ecr_repository_uri         = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-temporal"
+  container_port             = 7233
+  cpu                        = var.env == "prod" ? 2048 : 1024
+  memory                     = var.env == "prod" ? 4096 : 2048
+  desired_app_count          = 1
+  autoscaling_minimum_target = 1
+  autoscaling_maximum_target = 1
 
   vpc_id                        = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets               = data.terraform_remote_state.vpc.outputs.private_subnets
@@ -139,4 +141,17 @@ module "temporal" {
       valueFrom = aws_ssm_parameter.temporal_db_password.arn
     }
   ]
+}
+
+# ECS rolling deployments overlap server tasks even with an autoscaling maximum of one.
+resource "aws_security_group_rule" "temporal_internode" {
+  for_each = toset(["6933", "6934", "6935", "6939", "7233", "7234", "7235", "7239"])
+
+  type                     = "ingress"
+  description              = "Temporal server-to-server communication"
+  from_port                = tonumber(each.value)
+  to_port                  = tonumber(each.value)
+  protocol                 = "tcp"
+  security_group_id        = module.temporal.ecs_sg_id
+  source_security_group_id = module.temporal.ecs_sg_id
 }

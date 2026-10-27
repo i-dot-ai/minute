@@ -12,9 +12,8 @@ from common.workflows.activities import _shared
 @activity.defn(name=wf.GENERATE_TITLE)
 async def generate_title(transcription_id: str) -> None:
     transcription_id_uuid = UUID(transcription_id)
-    # Runs after the transcription is COMPLETED, so that status is writable too.
-    row = _shared.get_row(transcription_id_uuid)
-    if row is None or row.status not in _shared.WRITABLE_STATUSES or not row.dialogue_entries:
+    row = _shared.in_progress(transcription_id_uuid)
+    if row is None or not row.dialogue_entries or row.title:
         return
     # generate_meeting_title raises on LLM failure; the activity retries, and the workflow treats a
     # missing title as optional.

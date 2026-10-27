@@ -17,10 +17,6 @@ class TranscriptionTransientError(Exception):
     """Retryable: a dependency blip or the row moved on before the write; retry without touching it."""
 
 
-# Statuses a step may write to: IN_PROGRESS while the workflow runs, COMPLETED for the
-# post-completion steps (title). Never AWAITING_START (a retry reset) or FAILED.
-WRITABLE_STATUSES = (JobStatus.IN_PROGRESS, JobStatus.COMPLETED)
-
 slogger = get_structured_logger()
 
 
@@ -29,7 +25,7 @@ def load(minute_id: UUID) -> Transcription:
     slogger.set_context_field("minute_id", str(minute_id))
     try:
         transcription = TranscriptionHandlerService.get_transcription_from_minute_id(minute_id)
-    except Exception as e:
+    except ValueError as e:
         raise TranscriptionFailedError from e
     slogger.set_context_field("transcription_id", str(transcription.id))
     slogger.set_context_field("user_id", str(transcription.user_id))
@@ -56,14 +52,13 @@ def update_in_progress(transcription_id: UUID, **values) -> bool:
 
 
 def set_title_if_empty(transcription_id: UUID, title: str) -> bool:
-    """Write a generated title only while the row is writable and still has none, so a title the
-    user set after completion is never overwritten. Returns whether it was applied."""
+    """Write a generated title only while processing and still empty; preserve user titles."""
     with SessionLocal() as session:
         result = session.exec(
             update(Transcription)
             .where(
                 col(Transcription.id) == transcription_id,
-                col(Transcription.status).in_(WRITABLE_STATUSES),
+                col(Transcription.status) == JobStatus.IN_PROGRESS,
                 or_(col(Transcription.title).is_(None), col(Transcription.title) == ""),
             )
             .values(title=title)
@@ -81,10 +76,20 @@ def in_progress(transcription_id: UUID) -> Transcription | None:
     return row
 
 
-def mark_failed(transcription: Transcription, error: Exception) -> str | None:
-    """Mark the row FAILED while it is still processing. Returns the message, or None if it moved on."""
+def mark_failed(transcription: Transcription, error: Exception | str) -> str | None:
+    """Finalise unfinished work, including a failure before the initial claim; preserve terminal rows."""
     msg = f"Transcription failed: {error!s}"
-    if not update_in_progress(transcription.id, status=JobStatus.FAILED, error=msg):
-        return None
+    with SessionLocal() as session:
+        result = session.exec(
+            update(Transcription)
+            .where(
+                col(Transcription.id) == transcription.id,
+                col(Transcription.status).in_((JobStatus.AWAITING_START, JobStatus.IN_PROGRESS)),
+            )
+            .values(status=JobStatus.FAILED, error=msg)
+        )
+        session.commit()
+        if result.rowcount != 1:  # pyright: ignore[reportAttributeAccessIssue]
+            return None
     capture_event(transcription.user_id, "transcription_failed", {"transcriptionId": str(transcription.id)})
     return msg

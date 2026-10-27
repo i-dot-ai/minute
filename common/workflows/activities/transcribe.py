@@ -45,7 +45,9 @@ async def _transcribe(params: wf.TranscribeInput) -> str:
         # Downloads the newest recording (the mono mp3 prepare_audio saved) and runs one STT call
         # within the workflow's duration-based budget.
         transcription_job = await transcription_manager.perform_transcription_steps(
-            transcription=transcription, timeout_seconds=params.stt_timeout_seconds
+            transcription=transcription,
+            timeout_seconds=params.stt_timeout_seconds,
+            attempt=activity.info().attempt,
         )
     except Exception as e:
         if is_transient(e):

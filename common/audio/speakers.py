@@ -1,9 +1,5 @@
-import logging
-
 from common.audio.generate_speaker_predictions import generate_speaker_predictions
 from common.types import DialogueEntry
-
-logger = logging.getLogger(__name__)
 
 
 def group_dialogue_entries_by_speaker(
@@ -119,24 +115,18 @@ async def process_speakers_and_dialogue_entries(
     # Step 3: Add "Unknown speaker" prefix
     labelled_dialogue_entries = add_speaker_labels_to_dialogue_entries(normalised_dialogue_entries)
 
-    try:
-        # Step 4: Get speaker predictions
-        speaker_predictions = await generate_speaker_predictions(labelled_dialogue_entries)
+    # Step 4: Get speaker predictions; errors reach Temporal so it can retry before degrading.
+    speaker_predictions = await generate_speaker_predictions(labelled_dialogue_entries)
 
-        # Step 5: Update entries with predicted names
-        predicted_entries = []
-        for entry in labelled_dialogue_entries:
-            predicted_entries.append(
-                DialogueEntry(
-                    speaker=speaker_predictions.get(entry["speaker"], entry["speaker"]),
-                    text=entry["text"],
-                    start_time=entry["start_time"],
-                    end_time=entry["end_time"],
-                )
+    # Step 5: Update entries with predicted names
+    predicted_entries = []
+    for entry in labelled_dialogue_entries:
+        predicted_entries.append(
+            DialogueEntry(
+                speaker=speaker_predictions.get(entry["speaker"], entry["speaker"]),
+                text=entry["text"],
+                start_time=entry["start_time"],
+                end_time=entry["end_time"],
             )
-
-        return predicted_entries
-    except Exception as e:  # noqa: BLE001 # flagged by ruff - investigate when we have time.
-        logger.error("Error predicting speaker names: %s", str(e))
-        # Return the labeled entries if prediction fails
-        return labelled_dialogue_entries
+        )
+    return predicted_entries

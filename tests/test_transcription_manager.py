@@ -47,7 +47,12 @@ class MockAdapter(TranscriptionAdapter):
     def is_available(self) -> bool:
         return self._is_available
 
-    async def start(self, audio_file_path_or_recording, timeout_seconds=None) -> TranscriptionJobMessageData:  # noqa: ARG002
+    async def start(
+        self,
+        audio_file_path_or_recording,  # noqa: ARG002
+        timeout_seconds=None,  # noqa: ARG002
+        attempt=1,  # noqa: ARG002
+    ) -> TranscriptionJobMessageData:
         return TranscriptionJobMessageData(
             job_name="test_job_name",
             transcript=[{"text": "Test transcript", "speaker": "Speaker1", "start": 0.0, "end": 1.0}],
@@ -234,11 +239,13 @@ class TestTranscriptionServiceManager:
                     transcription_service=mock_adapter.name,
                 )
 
-                result = await manager.perform_transcription_steps(mock_transcription)
+                result = await manager.perform_transcription_steps(mock_transcription, timeout_seconds=123, attempt=2)
 
                 assert result.job_name == "test_job"
                 assert result.transcript is not None
-                mock_start.assert_called_once()
+                mock_start.assert_called_once_with(
+                    audio_file_path_or_recording=Path(temp_file.name), timeout_seconds=123, attempt=2
+                )
 
     @pytest.mark.asyncio
     async def test_perform_transcription_steps_asynchronous(
@@ -269,7 +276,9 @@ class TestTranscriptionServiceManager:
 
                 assert result.job_name == "test_job"
                 assert result.transcript is None
-                mock_start.assert_called_once_with(audio_file_path_or_recording=mock_recording, timeout_seconds=None)
+                mock_start.assert_called_once_with(
+                    audio_file_path_or_recording=mock_recording, timeout_seconds=None, attempt=1
+                )
 
     @pytest.mark.asyncio
     async def test_perform_transcription_steps_unknown_adapter_type(

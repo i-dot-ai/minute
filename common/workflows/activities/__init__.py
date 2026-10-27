@@ -8,6 +8,7 @@ module.
 from common.workflows.activities import (
     complete_transcription,
     edit_minute,
+    fail_minute,
     fail_transcription,
     generate_minute,
     generate_title,
@@ -26,4 +27,9 @@ LLM_ACTIVITIES = [  # the only LLM callers
     generate_minute.generate_minute,
     edit_minute.edit_minute,
 ]
-WORKFLOW_QUEUE_ACTIVITIES = [complete_transcription.complete_transcription, fail_transcription.fail_transcription]
+WORKFLOW_QUEUE_ACTIVITIES = [
+    complete_transcription.complete_transcription,
+    fail_transcription.fail_transcription,
+    fail_minute.fail_minute_version,
+    fail_minute.fail_summarise,
+]

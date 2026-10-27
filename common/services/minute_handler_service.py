@@ -93,7 +93,18 @@ class MinuteHandlerService:
 
     @classmethod
     def record_minute_version_failure(cls, minute_version_id: UUID, error: str) -> bool:
-        return cls.update_minute_version(minute_version_id, status=JobStatus.FAILED, error=error)
+        """Finalise awaiting or processing work, without overwriting a completed result."""
+        with SessionLocal() as session:
+            result = session.exec(
+                update(MinuteVersion)
+                .where(
+                    MinuteVersion.id == minute_version_id,
+                    col(MinuteVersion.status).in_((JobStatus.AWAITING_START, JobStatus.IN_PROGRESS)),
+                )
+                .values(status=JobStatus.FAILED, error=error)
+            )
+            session.commit()
+            return result.rowcount == 1
 
     @classmethod
     async def get_minute_version(cls, minute_version_id: UUID) -> MinuteVersion:

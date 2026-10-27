@@ -1005,7 +1005,6 @@ dependencies = [
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "sqlmodel" },
     { name = "temporalio" },
-    { name = "tenacity" },
 ]
 
 [package.dev-dependencies]
@@ -1063,7 +1062,6 @@ requires-dist = [
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.42,<3" },
     { name = "sqlmodel", specifier = ">=0.0.27,<0.0.28" },
     { name = "temporalio", specifier = ">=1.34.0,<2" },
-    { name = "tenacity", specifier = ">=9.1.2,<10" },
 ]
 
 [package.metadata.requires-dev]

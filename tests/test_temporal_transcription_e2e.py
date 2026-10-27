@@ -65,7 +65,7 @@ async def test_upload_creates_transcription_via_temporal():
 
         created = await api.post(
             "/transcriptions",
-            json={"recording_id": recording["id"], "template_name": "General", "title": "Temporal e2e"},
+            json={"recording_id": recording["id"], "template_name": "General"},
         )
         assert created.status_code == 201, created.text
         transcription_id = created.json()["id"]
@@ -81,6 +81,7 @@ async def test_upload_creates_transcription_via_temporal():
 
     assert status == "completed", f"transcription ended {status}: {body.get('error')}"
     assert body["dialogue_entries"], "no transcript saved"
+    assert body["title"], "title must be ready when transcription completion is published"
 
     settings = get_settings()
     client = await Client.connect(settings.TEMPORAL_ADDRESS, namespace=settings.TEMPORAL_NAMESPACE)
@@ -102,14 +103,12 @@ async def test_upload_creates_transcription_via_temporal():
         (PREPARE_AUDIO, STT_TASK_QUEUE),
         (TRANSCRIBE, STT_TASK_QUEUE),
         (IDENTIFY_SPEAKERS, LLM_TASK_QUEUE),
-        (COMPLETE_TRANSCRIPTION, TASK_QUEUE),
         (GENERATE_TITLE, LLM_TASK_QUEUE),
+        (COMPLETE_TRANSCRIPTION, TASK_QUEUE),
         (SUMMARISE, LLM_TASK_QUEUE),
     ]
 
     async with httpx.AsyncClient(base_url=BACKEND_URL, timeout=60) as api:
-        # The title is written by a post-completion step, so it is only guaranteed once the
-        # workflow (handle.result above) has finished.
         body = (await api.get(f"/transcriptions/{transcription_id}")).raise_for_status().json()
         minutes = (await api.get(f"/transcription/{transcription_id}/minutes")).raise_for_status().json()
         versions = (await api.get(f"/minutes/{minutes[0]['id']}/versions")).raise_for_status().json()

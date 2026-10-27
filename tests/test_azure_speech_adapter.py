@@ -1,19 +1,24 @@
-"""Unit tests for AzureSpeechAdapter failing over between Azure regions.
+"""Unit tests for AzureSpeechAdapter making one request per Temporal attempt.
 
 Nothing here calls Azure. httpx.AsyncClient is swapped for a real client whose transport returns canned responses and
-the audio is a small synthetic file. The adapter makes one pass over the regions per call: Temporal owns retries.
+the audio is a small synthetic file. Temporal retries rotate through the configured regions.
 """
 
+import asyncio
 from pathlib import Path
 from types import SimpleNamespace
 
 import httpx
 import pytest
 from structlog.testing import capture_logs
+from temporalio.testing import WorkflowEnvironment
 
-from common.services.exceptions import TranscriptionFailedError
+from common.database.postgres_models import JobStatus
 from common.services.transcription_services import azure
 from common.services.transcription_services.azure import AzureSpeechAdapter, AzureSpeechRegion, _configured_regions
+from common.workflows import transcription as wf
+from common.workflows.activities import _shared, transcribe
+from tests.test_temporal_transcription_workflow import TRANSCRIPTION_ID, _activities, _workers
 
 PRIMARY = AzureSpeechRegion(region="uksouth", key="primary-key")
 FALLBACK_1 = AzureSpeechRegion(region="westeurope", key="fallback-1-key")
@@ -102,39 +107,60 @@ def sent_to(region: AzureSpeechRegion) -> tuple[str, str]:
 
 @pytest.mark.asyncio
 async def test_transcribes(azure_responses, audio_file):
-    cases = [
-        ("primary serves the request", [ok()], [PRIMARY]),
-        ("throttled primary fails over", [error(429), ok()], [PRIMARY, FALLBACK_1]),
-        ("server errors fail over", [error(500), error(503), ok()], ALL_REGIONS),
-        ("timeout fails over", [timeout(), ok()], [PRIMARY, FALLBACK_1]),
-    ]
-    for name, responses, expected_requests in cases:
-        transport = azure_responses(responses, ALL_REGIONS)
-
-        result = await AzureSpeechAdapter.start(audio_file)
-
-        assert result.transcript == EXPECTED_TRANSCRIPT, name
-        assert transport.requests == [sent_to(region) for region in expected_requests], name
-        assert transport.audio_sizes == [1024] * len(expected_requests), name
+    for regions in (ALL_REGIONS, [PRIMARY, FALLBACK_2], [PRIMARY]):
+        for attempt in range(1, 5):
+            transport = azure_responses([ok()], regions)
+            result = await AzureSpeechAdapter.start(audio_file, attempt=attempt)
+            assert result.transcript == EXPECTED_TRANSCRIPT
+            assert transport.requests == [sent_to(regions[(attempt - 1) % len(regions)])]
+            assert transport.audio_sizes == [1024]
 
 
 @pytest.mark.asyncio
-async def test_failure_sweeps_regions_once(azure_responses, audio_file):
-    # One sweep of the regions per call: retrying is Temporal's job, not the adapter's.
-    transport = azure_responses([error(429) for _ in range(len(ALL_REGIONS))])
+async def test_failure_never_tries_a_second_region_in_the_same_attempt(azure_responses, audio_file):
+    for response in (error(400), error(401), error(429), error(503), timeout()):
+        transport = azure_responses([response, ok()])
+        expected_error = httpx.TimeoutException if isinstance(response, Exception) else httpx.HTTPStatusError
+        with pytest.raises(expected_error):
+            await AzureSpeechAdapter.start(audio_file)
+        assert transport.requests == [sent_to(PRIMARY)]
 
-    with pytest.raises(httpx.HTTPStatusError):
-        await AzureSpeechAdapter.start(audio_file)
 
+@pytest.mark.asyncio
+async def test_whole_request_is_bounded_by_the_provider_budget(monkeypatch, audio_file):
+    async def _hang(*_args, **_kwargs):
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(azure.httpx.AsyncClient, "post", _hang)
+    with pytest.raises(TimeoutError):
+        await AzureSpeechAdapter.start(audio_file, timeout_seconds=0.01)
+
+
+@pytest.mark.asyncio
+async def test_temporal_retries_use_distinct_regions(monkeypatch, azure_responses, audio_file):
+    transport = azure_responses([timeout(), error(503), ok()])
+    row = SimpleNamespace(id=TRANSCRIPTION_ID, status=JobStatus.IN_PROGRESS, dialogue_entries=None)
+    monkeypatch.setattr(_shared, "load", lambda *_args: row)
+    monkeypatch.setattr(_shared, "update_in_progress", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(transcribe, "claim_job", lambda *_args: True)
+
+    async def _provider(transcription, timeout_seconds, attempt):  # noqa: ARG001
+        return await AzureSpeechAdapter.start(audio_file, timeout_seconds=timeout_seconds, attempt=attempt)
+
+    monkeypatch.setattr(transcribe.transcription_manager, "perform_transcription_steps", _provider)
+    by_queue = _activities([])
+    by_queue[wf.STT_TASK_QUEUE] = [by_queue[wf.STT_TASK_QUEUE][0], transcribe.transcribe]
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        workers = _workers(env.client, by_queue)
+        async with workers[0], workers[1], workers[2]:
+            outcome = await env.client.execute_workflow(
+                wf.TranscriptionWorkflow.run,
+                "00000000-0000-0000-0000-000000000001",
+                id="region-retries",
+                task_queue=wf.TASK_QUEUE,
+            )
     assert transport.requests == [sent_to(region) for region in ALL_REGIONS]
-
-    # A 4xx (bad request) is not worth failing over.
-    transport = azure_responses([error(400)])
-
-    with pytest.raises(TranscriptionFailedError, match="HTTP 400"):
-        await AzureSpeechAdapter.start(audio_file)
-
-    assert transport.requests == [sent_to(PRIMARY)]
+    assert outcome[wf.SUMMARISE] == "ok"
 
 
 def region_settings(**overrides: str | None) -> SimpleNamespace:

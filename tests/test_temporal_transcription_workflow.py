@@ -22,15 +22,22 @@ TRANSCRIPTION_ID = str(uuid.uuid4())
 AUDIO_SECONDS = 7200.0  # 2h
 
 
-def _activities(calls: list, *, fail: frozenset = frozenset(), completed: bool = True, seen: dict | None = None):
-    """Mock every activity by name; names in `fail` raise a non-retryable error. `seen` records inputs/timeouts."""
+def _activities(  # noqa: C901 # Each mock is one workflow step.
+    calls: list,
+    *,
+    fail: frozenset = frozenset(),
+    retryable: frozenset = frozenset(),
+    completed: bool = True,
+    seen: dict | None = None,
+):
+    """Mock each activity; fail permanently or exhaust retries, and record its inputs/timeouts."""
     seen = {} if seen is None else seen
 
     def _maybe_fail(name):
         calls.append((name, activity.info().task_queue))
-        if name in fail:
+        if name in fail or name in retryable:
             msg = f"{name} broke"
-            raise ApplicationError(msg, non_retryable=True)
+            raise ApplicationError(msg, non_retryable=name not in retryable)
 
     @activity.defn(name=wf.PREPARE_AUDIO)
     async def prepare_audio(_minute_id: str) -> wf.PreparedAudio:
@@ -67,22 +74,27 @@ def _activities(calls: list, *, fail: frozenset = frozenset(), completed: bool =
     async def summarise(_minute_id: str) -> None:
         _maybe_fail(wf.SUMMARISE)
 
+    @activity.defn(name=wf.FAIL_SUMMARISE)
+    async def fail_summarise(params: wf.FailTranscriptionInput) -> None:
+        seen["fail_summary_input"] = params
+        _maybe_fail(wf.FAIL_SUMMARISE)
+
     # Same grouping as common/workflows/activities/__init__.py: {task queue: activities}
     return {
         wf.STT_TASK_QUEUE: [prepare_audio, transcribe],
         wf.LLM_TASK_QUEUE: [identify_speakers, generate_title, summarise],
-        wf.TASK_QUEUE: [complete_transcription, fail_transcription],
+        wf.TASK_QUEUE: [complete_transcription, fail_transcription, fail_summarise],
     }
 
 
-def _workers(client, by_queue: dict, **caps) -> list[Worker]:
+def _workers(client, by_queue: dict, *, workflows=(wf.TranscriptionWorkflow,), **caps) -> list[Worker]:
     """One Worker per queue, mirroring worker/temporal_worker.py."""
     return [
         Worker(
             client,
             task_queue=queue,
             activities=acts,
-            workflows=[wf.TranscriptionWorkflow] if queue == wf.TASK_QUEUE else [],
+            workflows=workflows if queue == wf.TASK_QUEUE else [],
             **({"max_concurrent_activities": caps[queue]} if queue in caps else {}),
         )
         for queue, acts in by_queue.items()
@@ -100,14 +112,18 @@ async def _run(**kwargs) -> tuple[list, dict, dict]:
     return [name for name, _ in calls], outcome, dict(calls)
 
 
-SEQUENTIAL_STEPS = [wf.PREPARE_AUDIO, wf.TRANSCRIBE, wf.IDENTIFY_SPEAKERS, wf.COMPLETE_TRANSCRIPTION]
-PARALLEL_STEPS = [wf.GENERATE_TITLE, wf.SUMMARISE]
+SEQUENTIAL_STEPS = [
+    wf.PREPARE_AUDIO,
+    wf.TRANSCRIBE,
+    wf.IDENTIFY_SPEAKERS,
+    wf.GENERATE_TITLE,
+    wf.COMPLETE_TRANSCRIPTION,
+    wf.SUMMARISE,
+]
 
 
 def _assert_all_steps_ran(calls: list) -> None:
-    """Title and summary run concurrently after completion, so their relative order is not fixed."""
-    assert calls[:4] == SEQUENTIAL_STEPS
-    assert sorted(calls[4:]) == sorted(PARALLEL_STEPS)
+    assert [name for name in calls if name != wf.FAIL_SUMMARISE] == SEQUENTIAL_STEPS
 
 
 @pytest.mark.asyncio
@@ -154,15 +170,41 @@ async def test_optional_step_failure_degrades():
         _assert_all_steps_ran(calls)  # everything still runs
         assert outcome[broken].startswith("failed:"), broken
         assert all(v == "ok" for k, v in outcome.items() if k != broken), broken
+        assert (wf.FAIL_SUMMARISE in calls) is (broken == wf.SUMMARISE)
 
 
 @pytest.mark.asyncio
-async def test_transcription_no_longer_in_progress_skips_summary_and_title():
+async def test_optional_enrichment_exhausts_retries_without_failing_transcription():
+    for broken in (wf.IDENTIFY_SPEAKERS, wf.GENERATE_TITLE):
+        calls, outcome, _ = await _run(retryable=frozenset({broken}))
+        assert calls.count(broken) == wf.LLM_RETRY.maximum_attempts
+        assert outcome[broken].startswith("failed:")
+        assert wf.FAIL_TRANSCRIPTION not in calls
+        assert wf.FAIL_SUMMARISE not in calls
+        assert calls.index(wf.COMPLETE_TRANSCRIPTION) > max(i for i, name in enumerate(calls) if name == broken)
+        assert calls[-1] == wf.SUMMARISE
+
+
+@pytest.mark.asyncio
+async def test_summary_exhausted_retries_finalises_the_minute():
+    seen = {}
+    calls, outcome, queue_of = await _run(retryable=frozenset({wf.SUMMARISE}), seen=seen)
+    assert calls.count(wf.SUMMARISE) == wf.LLM_RETRY.maximum_attempts
+    assert calls[-1] == wf.FAIL_SUMMARISE
+    assert queue_of[wf.FAIL_SUMMARISE] == wf.TASK_QUEUE
+    assert seen["fail_summary_input"].minute_id == MINUTE_ID
+    assert "summarise broke" in seen["fail_summary_input"].error
+    assert outcome[wf.SUMMARISE].startswith("failed:")
+    assert wf.FAIL_TRANSCRIPTION not in calls
+
+
+@pytest.mark.asyncio
+async def test_transcription_no_longer_in_progress_skips_summary():
     calls, outcome, _ = await _run(completed=False)
     assert wf.SUMMARISE not in calls
-    assert wf.GENERATE_TITLE not in calls
+    assert wf.GENERATE_TITLE in calls
     assert outcome[wf.SUMMARISE].startswith("skipped")
-    assert outcome[wf.GENERATE_TITLE].startswith("skipped")
+    assert outcome[wf.GENERATE_TITLE] == "ok"
 
 
 @pytest.mark.asyncio
@@ -198,7 +240,7 @@ async def test_completion_failure_marks_failed_and_fails_the_run():
     names = [name for name, _ in calls]
     assert names[-1] == wf.FAIL_TRANSCRIPTION
     assert wf.IDENTIFY_SPEAKERS in names  # ran before completion
-    assert wf.GENERATE_TITLE not in names  # title/summary never reached
+    assert wf.GENERATE_TITLE in names  # optional enrichment precedes completion
     assert wf.SUMMARISE not in names
     assert f"{wf.COMPLETE_TRANSCRIPTION} broke" in seen["fail_input"].error
 

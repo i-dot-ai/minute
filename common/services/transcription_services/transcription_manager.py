@@ -76,9 +76,9 @@ class TranscriptionServiceManager:
         return transcription_job
 
     async def perform_transcription_steps(
-        self, transcription: Transcription, timeout_seconds: float | None = None
+        self, transcription: Transcription, timeout_seconds: float | None = None, attempt: int = 1
     ) -> TranscriptionJobMessageData:
-        """`timeout_seconds` is the caller's budget for the provider call; None uses the adapter default."""
+        """One provider attempt, with the caller's timeout budget and Temporal attempt number."""
         recording = transcription.recordings[0]
         file_extension = Path(recording.s3_file_key).suffix.lower()
         with tempfile.TemporaryDirectory() as tempdir:
@@ -97,11 +97,11 @@ class TranscriptionServiceManager:
             match adapter.adapter_type:
                 case AdapterType.SYNCHRONOUS:
                     transcription_job = await adapter.start(
-                        audio_file_path_or_recording=file_path, timeout_seconds=timeout_seconds
+                        audio_file_path_or_recording=file_path, timeout_seconds=timeout_seconds, attempt=attempt
                     )
                 case AdapterType.ASYNC:
                     transcription_job = await adapter.start(
-                        audio_file_path_or_recording=recording, timeout_seconds=timeout_seconds
+                        audio_file_path_or_recording=recording, timeout_seconds=timeout_seconds, attempt=attempt
                     )
                 case _:
                     msg = "adapter not recognised"

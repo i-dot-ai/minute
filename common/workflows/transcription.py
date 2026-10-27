@@ -10,7 +10,6 @@ timeout above its slowest healthy run, and the SDK cancels an attempt locally wh
 STT step's timeout scales with the audio duration measured by prepare_audio.
 """
 
-import asyncio
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -31,6 +30,7 @@ IDENTIFY_SPEAKERS = "identify_speakers"
 GENERATE_TITLE = "generate_title"
 COMPLETE_TRANSCRIPTION = "complete_transcription"
 SUMMARISE = "summarise"
+FAIL_SUMMARISE = "fail_summarise"
 
 # STT timeout = floor + factor x audio duration. Measured: Azure took 119s for a 2h file (~2% of
 # the duration), so 10% is ~5x headroom; the floor covers download, upload and short files.
@@ -41,9 +41,8 @@ STT_TIMEOUT_PER_AUDIO_SECOND = 0.1
 # hung provider fails as a retryable error rather than by exhausting the activity timeout.
 STT_DOWNLOAD_MARGIN = timedelta(minutes=1)
 
-# STT is the only retry loop (the provider never retries): each attempt makes one request per
-# configured Azure region via AzureSpeechAdapter's in-attempt failover, then Temporal backs off and
-# retries. 4 attempts give each region several tries.
+# Each Temporal attempt makes one request, rotating through configured Azure regions.
+# Four attempts visit all three regions and then retry the primary, with backoff between them.
 _STT_RETRY = RetryPolicy(
     initial_interval=timedelta(seconds=30),
     backoff_coefficient=2.0,
@@ -67,7 +66,7 @@ LLM_RETRY = RetryPolicy(
 )
 # Status transitions (complete/fail): cheap, idempotent writes, so ride out a DB blip rather than
 # giving up after ~30s. The 2min cap is reached and the last two waits hold there (~6min total).
-_DB_RETRY = RetryPolicy(
+DB_RETRY = RetryPolicy(
     initial_interval=timedelta(seconds=1),
     backoff_coefficient=2.0,
     maximum_interval=timedelta(minutes=2),
@@ -115,7 +114,7 @@ class TranscriptionWorkflow:
                 FailTranscriptionInput(minute_id=minute_id, error=str(e.cause)),
                 task_queue=TASK_QUEUE,
                 start_to_close_timeout=timedelta(seconds=30),
-                retry_policy=_DB_RETRY,
+                retry_policy=DB_RETRY,
             )
             raise
 
@@ -127,27 +126,24 @@ class TranscriptionWorkflow:
         outcome[IDENTIFY_SPEAKERS] = await self._optional(
             IDENTIFY_SPEAKERS, transcription_id, timedelta(minutes=10), LLM_RETRY
         )
+        outcome[GENERATE_TITLE] = await self._optional(
+            GENERATE_TITLE, transcription_id, timedelta(minutes=10), LLM_RETRY
+        )
 
         completed: bool = await workflow.execute_activity(
             COMPLETE_TRANSCRIPTION,
             transcription_id,
             task_queue=TASK_QUEUE,
             start_to_close_timeout=timedelta(seconds=30),
-            retry_policy=_DB_RETRY,
+            retry_policy=DB_RETRY,
         )
         if not completed:
             skipped = "skipped: transcription deleted or no longer in progress"
-            outcome[GENERATE_TITLE] = skipped
             outcome[SUMMARISE] = skipped
             return outcome
 
-        # The transcript is usable from here. The two steps write separate rows and don't depend on
-        # each other, so they run together. Each degrades on failure: a failed summary marks its
-        # minute_version FAILED (shown in the UI) while the transcript stands.
-        outcome[GENERATE_TITLE], outcome[SUMMARISE] = await asyncio.gather(
-            self._optional(GENERATE_TITLE, transcription_id, timedelta(minutes=10), LLM_RETRY),
-            self._optional(SUMMARISE, minute_id, timedelta(minutes=30), LLM_RETRY),
-        )
+        # The transcript and optional enrichment are now usable; summary failure must not undo them.
+        outcome[SUMMARISE] = await self._optional(SUMMARISE, minute_id, timedelta(minutes=30), LLM_RETRY)
         return outcome
 
     async def _transcribe(self, minute_id: str) -> str:
@@ -188,5 +184,13 @@ class TranscriptionWorkflow:
             )
         except ActivityError as e:
             workflow.logger.warning("Optional step %s failed: %s", step, e.cause)
+            if step == SUMMARISE:
+                await workflow.execute_activity(
+                    FAIL_SUMMARISE,
+                    FailTranscriptionInput(minute_id=arg, error=str(e.cause)),
+                    task_queue=TASK_QUEUE,
+                    start_to_close_timeout=timedelta(seconds=30),
+                    retry_policy=DB_RETRY,
+                )
             return f"failed: {e.cause}"
         return "ok"

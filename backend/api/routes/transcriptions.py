@@ -69,6 +69,15 @@ async def _enqueue_transcription(session: AsyncSession, transcription: Transcrip
         raise HTTPException(status_code=503, detail="Failed to enqueue transcription") from exc
 
 
+async def _check_retry_workflow(transcription_id: uuid.UUID) -> None:
+    try:
+        running = await temporal.transcription_workflow_running(transcription_id)
+    except Exception as exc:
+        raise HTTPException(503, detail="Could not check transcription workflow; please try again") from exc
+    if running:
+        raise HTTPException(409, detail="The previous transcription is still finishing; please try again shortly")
+
+
 @transcriptions_router.get("/transcriptions", response_model=PaginatedTranscriptionsResponse)
 async def list_transcriptions(
     session: SQLSessionDep,
@@ -244,6 +253,7 @@ async def retry_transcription(
         raise HTTPException(404, detail="Transcription not found")
     if transcription.status != JobStatus.FAILED:
         raise HTTPException(400, detail="Only failed transcriptions can be retried")
+    await _check_retry_workflow(transcription.id)
 
     recording = transcription.recordings[0] if transcription.recordings else None
     if not recording:
@@ -274,11 +284,14 @@ async def retry_transcription(
             msg = f"User template not found: {request.template_id}"
             raise HTTPException(status_code=404, detail=msg)
 
-    # Atomic FAILED -> AWAITING_START transition: only one concurrent retry can
-    # win, so exactly one request ever publishes retry work.
+    # Fence against the row we read: a newer attempt may already have failed again.
     retry_claim = await session.exec(
         update(Transcription)
-        .where(Transcription.id == transcription.id, Transcription.status == JobStatus.FAILED)
+        .where(
+            Transcription.id == transcription.id,
+            Transcription.status == JobStatus.FAILED,
+            Transcription.updated_datetime == transcription.updated_datetime,
+        )
         .values(status=JobStatus.AWAITING_START)
     )
     if retry_claim.rowcount != 1:

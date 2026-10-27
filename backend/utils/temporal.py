@@ -2,7 +2,7 @@ import asyncio
 from typing import Any
 from uuid import UUID
 
-from temporalio.client import Client
+from temporalio.client import Client, WorkflowExecutionStatus
 from temporalio.service import RPCError, RPCStatusCode
 
 from common.settings import get_settings
@@ -46,6 +46,18 @@ async def _start_workflow(workflow: Any, arg: Any, *, workflow_id: str) -> None:
 async def start_transcription_workflow(transcription_id: UUID, minute_id: UUID) -> None:
     """Start the run. Default conflict policy: a start while a run is still open raises."""
     await _start_workflow(TranscriptionWorkflow.run, str(minute_id), workflow_id=workflow_id(str(transcription_id)))
+
+
+async def transcription_workflow_running(transcription_id: UUID) -> bool:
+    """A failed DB row can precede workflow closure; never reset it while that run is still open."""
+    client = await get_temporal_client()
+    try:
+        description = await client.get_workflow_handle(workflow_id(str(transcription_id))).describe()
+    except RPCError as e:
+        if e.status == RPCStatusCode.NOT_FOUND:
+            return False  # failed before enqueue, or its closed history has expired
+        raise
+    return description.status == WorkflowExecutionStatus.RUNNING
 
 
 async def start_minute_generation_workflow(minute_version_id: UUID) -> None:

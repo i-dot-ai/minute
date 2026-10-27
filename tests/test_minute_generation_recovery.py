@@ -11,10 +11,8 @@ Requires the docker-compose Postgres (`make run`).
 """
 
 import asyncio
-import uuid
 
 import pytest
-import pytest_asyncio
 from sqlmodel import delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -28,41 +26,6 @@ from common.database.postgres_models import (
 )
 from common.services.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
 from common.types import MeetingType
-from tests.utils import get_or_create_user
-
-RECOVERY_EMAIL = "minute-recovery-test@example.com"
-
-
-async def _current_user_id(session: AsyncSession) -> uuid.UUID:
-    return (await get_or_create_user(session, RECOVERY_EMAIL)).id
-
-
-@pytest_asyncio.fixture
-async def minute_version_setup() -> dict[str, uuid.UUID]:
-    ids: dict[str, uuid.UUID] = {}
-
-    async with AsyncSession(async_engine, expire_on_commit=False) as session:
-        user_id = await _current_user_id(session)
-        transcription = Transcription(
-            user_id=user_id,
-            status=JobStatus.COMPLETED,
-            dialogue_entries=[{"speaker": "A", "text": "hello", "start_time": 0.0, "end_time": 1.0}],
-        )
-        minute = Minute(template_name="General", transcription_id=transcription.id)
-        minute_version = MinuteVersion(minute_id=minute.id, status=JobStatus.AWAITING_START)
-        session.add(transcription)
-        session.add(minute)
-        session.add(minute_version)
-        await session.commit()
-        ids.update(transcription_id=transcription.id, minute_id=minute.id, minute_version_id=minute_version.id)
-
-    yield ids
-
-    async with AsyncSession(async_engine) as session:
-        await session.exec(delete(MinuteVersion).where(MinuteVersion.id == ids["minute_version_id"]))
-        await session.exec(delete(Minute).where(Minute.id == ids["minute_id"]))
-        await session.exec(delete(Transcription).where(Transcription.id == ids["transcription_id"]))
-        await session.commit()
 
 
 @pytest.mark.asyncio(loop_scope="session")

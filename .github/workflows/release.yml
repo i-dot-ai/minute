@@ -179,6 +179,7 @@ jobs:
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
   notify-slack:
+    if: ${{ always() && needs.set-vars.result == 'success' }}
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/slack-notify.yml@main
     permissions: {}
     needs:
@@ -186,8 +187,8 @@ jobs:
       - start-runner
       - apply-infra
     with:
-      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
-      WORKFLOW_PASSED: "${{ needs.apply-infra.result  == 'success' }}"
+      RUNNER_LABEL: ubuntu-latest
+      WORKFLOW_PASSED: "${{ needs.apply-infra.result == 'success' }}"
       SUCCESS_PAYLOAD: '{"blocks":[{"type":"header","text":{"type":"plain_text","text":":airplane: ${{ github.repository }} - Deployment to ${{ needs.set-vars.outputs.environment }} Succeeded :large_green_circle:"}},{"type":"section","text":{"type":"mrkdwn","text":"${{ github.sha }} successfully deployed to ${{ needs.set-vars.outputs.environment }}"}}]}'
       FAILURE_PAYLOAD: '{"blocks":[{"type":"header","text":{"type":"plain_text","text":":x: ${{ github.repository }} - Deployment to ${{ needs.set-vars.outputs.environment }} Failed :x:"}},{"type":"section","text":{"type":"mrkdwn","text":"${{ github.sha }} failed to deploy to ${{ needs.set-vars.outputs.environment }}"}}]}'
     secrets:

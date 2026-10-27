@@ -218,6 +218,15 @@ def test_workflow_and_state_ownership_are_separate():
     assert 'key = "minute-temporal/terraform.tfstate"' in (ROOT / "terraform-temporal/provider.tf").read_text()
     assert "removed {" not in application
     assert 'key = "minute/terraform.tfstate"' in (ROOT / "terraform/provider.tf").read_text()
+
+
+def test_slack_runs_despite_failed_or_skipped_deployment_dependencies():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/release.yml").read_text())
+    notification = workflow["jobs"]["notify-slack"]
+    assert notification["if"] == "${{ always() && needs.set-vars.result == 'success' }}"
+    assert "apply-infra" in notification["needs"]
+    assert notification["with"]["RUNNER_LABEL"] == "ubuntu-latest"
+    assert "needs.apply-infra.result == 'success'" in notification["with"]["WORKFLOW_PASSED"]
     admin = (ROOT / "terraform-temporal/admin.tf").read_text()
     assert "amazonaws.com/minute-temporal:${var.image_tag}-admin" in admin
     assert "amazonaws.com/minute-temporal-admin:" not in admin

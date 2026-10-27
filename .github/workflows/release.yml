@@ -24,6 +24,10 @@ on:
         type: choice
         options: [dev, preprod, prod]
         default: dev
+      server_upgrade_reviewed:
+        description: For production server releases, confirm the supported upgrade path and restore procedure were reviewed
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -75,6 +79,7 @@ jobs:
           RELEASE_EVENT: ${{ github.event_name }}
           RELEASE_COMPONENT: ${{ inputs.component }}
           RELEASE_ENVIRONMENT: ${{ inputs.environment }}
+          SERVER_UPGRADE_REVIEWED: ${{ inputs.server_upgrade_reviewed }}
         run: |
           if [[ "$RELEASE_EVENT" == workflow_dispatch ]]; then
             component="$RELEASE_COMPONENT"
@@ -98,6 +103,10 @@ jobs:
             temporal-server) folder=terraform-temporal ;;
             *) exit 1 ;;
           esac
+          if [[ "$component" == temporal-server && "$environment" == prod && "$SERVER_UPGRADE_REVIEWED" != true ]]; then
+            echo "Review the Temporal upgrade path and restore procedure before a production server release" >&2
+            exit 1
+          fi
           echo "environment=$environment" >> "$GITHUB_OUTPUT"
           echo "component=$component" >> "$GITHUB_OUTPUT"
           echo "infrastructure-folder=$folder" >> "$GITHUB_OUTPUT"
@@ -112,6 +121,17 @@ jobs:
     uses: ./.github/workflows/build-one.yml
     with:
       service: temporal
+    secrets: inherit
+
+  build-temporal-admin:
+    needs: set-vars
+    if: needs.set-vars.outputs.component == 'temporal-server'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/build-one.yml
+    with:
+      service: temporal-admin
     secrets: inherit
 
   start-runner:
@@ -132,11 +152,12 @@ jobs:
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
   apply-infra:
-    if: ${{ !cancelled() && needs.set-vars.result == 'success' && needs.start-runner.result == 'success' && (needs.build-temporal.result == 'success' || needs.build-temporal.result == 'skipped') }}
+    if: ${{ !cancelled() && needs.set-vars.result == 'success' && needs.start-runner.result == 'success' && (needs.build-temporal.result == 'success' || needs.build-temporal.result == 'skipped') && (needs.build-temporal-admin.result == 'success' || needs.build-temporal-admin.result == 'skipped') }}
     needs:
       - set-vars
       - start-runner
       - build-temporal
+      - build-temporal-admin
     permissions:
       id-token: write
       contents: read
@@ -145,7 +166,7 @@ jobs:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
       ENVIRONMENT: ${{ needs.set-vars.outputs.environment }}
-      ECR_REPO: ${{ needs.set-vars.outputs.component == 'temporal-server' && 'minute-temporal' || needs.set-vars.outputs.ecr-repo }}
+      ECR_REPO: ${{ needs.set-vars.outputs.component == 'temporal-server' && 'minute-temporal,minute-temporal-admin' || needs.set-vars.outputs.ecr-repo }}
       INFRASTRUCTURE_FOLDER: ${{ needs.set-vars.outputs.infrastructure-folder }}
       TF_FILE: main/${{ needs.set-vars.outputs.infrastructure-folder }}/provider.tf
       PUBLIC_INFRA_DEPLOYMENT: false

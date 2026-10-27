@@ -8,22 +8,23 @@
 
 # --- persistence: dedicated Aurora Postgres, same module as the app database ---
 module "temporal_db" {
-  source                 = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/rds?ref=v4.0.1-rds"
-  db_name                = "temporal"
-  kms_secrets_arn        = data.terraform_remote_state.platform.outputs.kms_key_arn
-  name                   = "${local.name}-temporal-db"
-  public_subnet_ids_list = data.terraform_remote_state.vpc.outputs.public_subnets
-  service_sg_ids         = [module.temporal.ecs_sg_id]
-  vpc_id                 = data.terraform_remote_state.vpc.outputs.vpc_id
-  engine                 = "aurora-postgresql"
-  engine_version         = "16.11"
-  family                 = null
-  engine_mode            = "provisioned"
-  aurora_min_scaling     = 0.5
-  aurora_max_scaling     = 1
-  aurora_instance_count  = 1
-  deletion_protection    = var.env == "dev" ? false : true
-  env                    = var.env
+  source                  = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/rds?ref=v4.0.1-rds"
+  db_name                 = "temporal"
+  kms_secrets_arn         = data.terraform_remote_state.platform.outputs.kms_key_arn
+  name                    = "${local.name}-temporal-db"
+  public_subnet_ids_list  = data.terraform_remote_state.vpc.outputs.public_subnets
+  service_sg_ids          = [aws_security_group.temporal_admin.id]
+  vpc_id                  = data.terraform_remote_state.vpc.outputs.vpc_id
+  engine                  = "aurora-postgresql"
+  engine_version          = "16.11"
+  family                  = null
+  engine_mode             = "provisioned"
+  aurora_min_scaling      = 0.5
+  aurora_max_scaling      = 1
+  aurora_instance_count   = 1
+  deletion_protection     = var.env == "dev" ? false : true
+  backup_retention_period = 35
+  env                     = var.env
 }
 
 # The RDS module generates the master password, so surface it through SSM (under the prefix the task
@@ -70,6 +71,7 @@ module "temporal" {
   container_port             = 7233
   cpu                        = var.env == "prod" ? 2048 : 1024
   memory                     = var.env == "prod" ? 4096 : 2048
+  wait_for_ready_state       = true
   desired_app_count          = 1
   autoscaling_minimum_target = 1
   autoscaling_maximum_target = 1
@@ -82,17 +84,16 @@ module "temporal" {
   target_group_name_override    = "minute-temporal-${var.env}-tg"
   ecs_cluster_id                = data.terraform_remote_state.platform.outputs.ecs_cluster_id
   ecs_cluster_name              = data.terraform_remote_state.platform.outputs.ecs_cluster_name
-  task_additional_iam_policies  = { "0" = data.terraform_remote_state.application.outputs.temporal_dependencies.policy_arn }
+  task_additional_iam_policies  = { "0" = aws_iam_policy.temporal_runtime_secrets.arn }
   permissions_boundary_name     = "infra/i-dot-ai-${var.env}-minute-perms-boundary-app"
   service_discovery_service_arn = aws_service_discovery_service.temporal.arn
 
   create_networking = false
   create_listener   = false
   http_healthcheck  = false
-  # Readiness: healthy once the entrypoint has registered the default namespace. The frontend is not
-  # HTTP, so use the CLI (present in the image) rather than an HTTP probe.
+  # Namespace registration is a post-deploy admin task; server readiness must not depend on it.
   container_healthcheck = {
-    command     = ["CMD", "temporal", "operator", "namespace", "describe", "-n", "default", "--address", "localhost:7233"]
+    command     = ["CMD", "temporal", "operator", "cluster", "health", "--address", "localhost:7233"]
     interval    = 10
     retries     = 6
     startPeriod = 60
@@ -111,15 +112,19 @@ module "temporal" {
       port             = 7233
       additional_sg_id = data.terraform_remote_state.application.outputs.temporal_dependencies.worker_security_group_id
     },
+    {
+      purpose          = "admin-to-temporal"
+      port             = 7233
+      additional_sg_id = aws_security_group.temporal_admin.id
+    },
   ]
 
-  # The entrypoint (temporal/entrypoint.sh) prepares the schema and registers the default namespace
-  # on boot; these are the env vars both it and the server read.
+  # The running server cannot create databases or upgrade their schemas.
   environment_variables = {
     "DB"                = "postgres12"
     "DB_PORT"           = "5432"
     "POSTGRES_SEEDS"    = module.temporal_db.db_instance_address
-    "POSTGRES_USER"     = module.temporal_db.rds_instance_username
+    "POSTGRES_USER"     = "temporal_runtime"
     "DBNAME"            = "temporal"
     "VISIBILITY_DBNAME" = "temporal_visibility"
     # Bind the frontend on all interfaces so it is reachable over the Cloud Map address and loopback.
@@ -138,7 +143,7 @@ module "temporal" {
   secrets = [
     {
       name      = "POSTGRES_PWD"
-      valueFrom = aws_ssm_parameter.temporal_db_password.arn
+      valueFrom = aws_ssm_parameter.temporal_runtime_password.arn
     }
   ]
 }

@@ -20,6 +20,8 @@ services:
         condition: service_healthy
       temporal:
         condition: service_healthy
+      temporal-namespace:
+        condition: service_completed_successfully
     volumes:
       - type: bind
         source: ./.data
@@ -69,6 +71,8 @@ services:
         condition: service_healthy
       temporal:
         condition: service_healthy
+      temporal-namespace:
+        condition: service_completed_successfully
     develop:
       watch:
         - path: ./worker
@@ -80,12 +84,29 @@ services:
         - path: ./uv.lock
           action: rebuild
 
+  temporal-admin:
+    build:
+      context: .
+      dockerfile: ./temporal-admin/Dockerfile
+      args:
+        TEMPORAL_VERSION: ${TEMPORAL_VERSION:-1.32.1}
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_SEEDS=db
+      - POSTGRES_PWD=${POSTGRES_PASSWORD}
+      - DB_PORT=5432
+    depends_on:
+      db:
+        condition: service_healthy
+
   temporal:
-    # Same image and bootstrap as production (temporal/Dockerfile): schema setup + default namespace,
-    # then the server. Persistence is the app's Postgres, a different set of databases.
+    # Only the server: schema changes are completed by temporal-admin before it starts.
     build:
       context: .
       dockerfile: ./temporal/Dockerfile
+      args:
+        TEMPORAL_VERSION: ${TEMPORAL_VERSION:-1.32.1}
     environment:
       - DB=postgres12
       - DB_PORT=5432
@@ -100,17 +121,27 @@ services:
     ports:
       - "7233:7233"
     depends_on:
-      db:
-        condition: service_healthy
+      temporal-admin:
+        condition: service_completed_successfully
     healthcheck:
-      # Readiness, not just liveness: the entrypoint registers `default` a moment after the server
-      # answers, so wait until the namespace exists before declaring the container healthy (the
-      # worker depends_on this and fails fatally if it polls before the namespace exists).
-      test: ["CMD", "temporal", "operator", "namespace", "describe", "-n", "default", "--address", "localhost:7233"]
+      test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "localhost:7233"]
       interval: 5s
       retries: 20
       start_period: 10s
       timeout: 5s
+
+  temporal-namespace:
+    build:
+      context: .
+      dockerfile: ./temporal-admin/Dockerfile
+      args:
+        TEMPORAL_VERSION: ${TEMPORAL_VERSION:-1.32.1}
+    command: ["namespace"]
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+    depends_on:
+      temporal:
+        condition: service_healthy
 
   temporal-ui: # local convenience; not deployed
     image: temporalio/ui:latest

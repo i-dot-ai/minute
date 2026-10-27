@@ -58,10 +58,10 @@ run_worker:
 	uv run python worker/temporal_worker.py
 
 run:
-	docker compose up -d --wait
+	TEMPORAL_VERSION=$(TEMPORAL_VERSION) docker compose up -d --wait
 
 run_watch:
-	docker compose up --watch
+	TEMPORAL_VERSION=$(TEMPORAL_VERSION) docker compose up --watch
 
 stop:
 	docker compose down
@@ -82,6 +82,8 @@ IMAGE_TAG ?= $$(git rev-parse HEAD)
 IMAGE=$(ECR_REPO_URL):$(IMAGE_TAG)
 
 DOCKER_BUILDER_CONTAINER=$(APP_NAME)
+include temporal/version.env
+TEMPORAL_BUILD_ARGS = $(if $(filter temporal temporal-admin,$(service)),--build-arg TEMPORAL_VERSION=$(TEMPORAL_VERSION))
 
 
 docker_login:
@@ -94,12 +96,13 @@ endif
 docker_build: ## Build the docker container for the specified service when running in CI/CD
 	DOCKER_BUILDKIT=1 docker buildx build --platform linux/amd64 --load --builder=$(DOCKER_BUILDER_CONTAINER) -t $(IMAGE) \
 	$(DOCKER_BUILD_ARGS) \
+	$(TEMPORAL_BUILD_ARGS) \
 	--cache-to type=local,dest=$(cache) \
 	--cache-from type=local,src=$(cache) \
 	-f $(service)/Dockerfile .
 
 docker_build_local: ## Build the docker container for the specified service locally
-	DOCKER_BUILDKIT=1 docker build --platform=linux/amd64 -t $(IMAGE) -f $(service)/Dockerfile .
+	DOCKER_BUILDKIT=1 docker build --platform=linux/amd64 $(TEMPORAL_BUILD_ARGS) -t $(IMAGE) -f $(service)/Dockerfile .
 
 docker_push:
 	docker push $(IMAGE)
@@ -136,7 +139,7 @@ INFRASTRUCTURE_FOLDER ?= $(if $(infrastructure_folder),$(infrastructure_folder),
 tf_build_args = -var "image_tag=$(IMAGE_TAG)" -var-file="$(abspath terraform/variables/global.tfvars)" -var-file="$(abspath terraform/variables/$(env).tfvars)"
 TF_BACKEND_CONFIG ?= $(abspath terraform/backend.hcl)
 ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
-override ECR_REPO = minute-temporal
+override ECR_REPO = minute-temporal,minute-temporal-admin
 else
 override ECR_REPO = minute-backend,minute-frontend,minute-worker
 endif
@@ -179,8 +182,15 @@ tf_auto_apply:  ## Auto apply terraform
 	@for repository in $$(printf '%s' "$(ECR_REPO)" | tr ',' ' '); do \
 		$(MAKE) check_docker_tag_exists repo=$$repository IMAGE_TAG=$(IMAGE_TAG) || exit 1; \
 	done
-	make tf_init_and_set_workspace && \
+	$(MAKE) tf_init_and_set_workspace
+ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) apply ${tf_build_args} -target=aws_ecs_task_definition.temporal_admin -auto-approve
+	python3 temporal-admin/run_task.py schema
+endif
 	terraform -chdir=$(INFRASTRUCTURE_FOLDER) apply ${tf_build_args} ${args} -auto-approve
+ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
+	python3 temporal-admin/run_task.py namespace
+endif
 
 ## Release app
 # Note: `env` falls back to `default` above for the terraform targets (that is a real

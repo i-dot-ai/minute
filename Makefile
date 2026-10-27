@@ -75,11 +75,15 @@ generate_aws_diagram:
 # Docker
 
 ECR_REPO_NAME=$(APP_NAME)-$(service)
+ifeq ($(service),temporal-admin)
+ECR_REPO_NAME=$(APP_NAME)-temporal
+endif
 ECR_URL=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 ECR_REPO_URL=$(ECR_URL)/$(ECR_REPO_NAME)
 
 IMAGE_TAG ?= $$(git rev-parse HEAD)
-IMAGE=$(ECR_REPO_URL):$(IMAGE_TAG)
+DOCKER_IMAGE_TAG=$(IMAGE_TAG)$(if $(filter temporal-admin,$(service)),-admin)
+IMAGE=$(ECR_REPO_URL):$(DOCKER_IMAGE_TAG)
 
 DOCKER_BUILDER_CONTAINER=$(APP_NAME)
 include temporal/version.env
@@ -120,6 +124,9 @@ docker_update_tag: ## Tag the docker image(s) with the specified tag
 		for repository in $$(printf '%s' "$(ECR_REPO)" | tr ',' ' '); do \
 			$(MAKE) docker_update_tag repo=$$repository tag=$(tag) IMAGE_TAG=$(IMAGE_TAG) || exit 1; \
 		done; \
+		if [ "$(INFRASTRUCTURE_FOLDER)" = terraform-temporal ]; then \
+			$(MAKE) docker_update_tag repo=minute-temporal tag=$(tag)-admin IMAGE_TAG=$(IMAGE_TAG)-admin || exit 1; \
+		fi; \
 	else \
 		if $(MAKE) docker_tag_is_present_on_image repo=$(repo) tag=$(tag) IMAGE_TAG=$(IMAGE_TAG) 2>/dev/null; then exit 0; fi; \
 		MANIFEST=$$(aws ecr batch-get-image --repository-name $(repo) --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
@@ -139,7 +146,7 @@ INFRASTRUCTURE_FOLDER ?= $(if $(infrastructure_folder),$(infrastructure_folder),
 tf_build_args = -var "image_tag=$(IMAGE_TAG)" -var-file="$(abspath terraform/variables/global.tfvars)" -var-file="$(abspath terraform/variables/$(env).tfvars)"
 TF_BACKEND_CONFIG ?= $(abspath terraform/backend.hcl)
 ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
-override ECR_REPO = minute-temporal,minute-temporal-admin
+override ECR_REPO = minute-temporal
 else
 override ECR_REPO = minute-backend,minute-frontend,minute-worker
 endif
@@ -184,6 +191,7 @@ tf_auto_apply:  ## Auto apply terraform
 	done
 	$(MAKE) tf_init_and_set_workspace
 ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
+	$(MAKE) check_docker_tag_exists repo=minute-temporal IMAGE_TAG=$(IMAGE_TAG)-admin
 	terraform -chdir=$(INFRASTRUCTURE_FOLDER) apply ${tf_build_args} -target=aws_ecs_task_definition.temporal_admin -auto-approve
 	python3 temporal-admin/run_task.py schema
 endif

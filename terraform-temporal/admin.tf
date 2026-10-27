@@ -94,7 +94,7 @@ resource "aws_ecs_task_definition" "temporal_admin" {
   execution_role_arn       = aws_iam_role.temporal_admin.arn
   container_definitions = jsonencode([{
     name      = "temporal-admin"
-    image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-temporal-admin:${var.image_tag}"
+    image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-temporal:${var.image_tag}-admin"
     essential = true
     environment = [
       { name = "POSTGRES_SEEDS", value = module.temporal_db.db_instance_address },

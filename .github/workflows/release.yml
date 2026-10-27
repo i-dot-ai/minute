@@ -166,7 +166,7 @@ jobs:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
       ENVIRONMENT: ${{ needs.set-vars.outputs.environment }}
-      ECR_REPO: ${{ needs.set-vars.outputs.component == 'temporal-server' && 'minute-temporal,minute-temporal-admin' || needs.set-vars.outputs.ecr-repo }}
+      ECR_REPO: ${{ needs.set-vars.outputs.component == 'temporal-server' && 'minute-temporal' || needs.set-vars.outputs.ecr-repo }}
       INFRASTRUCTURE_FOLDER: ${{ needs.set-vars.outputs.infrastructure-folder }}
       TF_FILE: main/${{ needs.set-vars.outputs.infrastructure-folder }}/provider.tf
       PUBLIC_INFRA_DEPLOYMENT: false

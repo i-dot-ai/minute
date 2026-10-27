@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 @pytest.fixture
 def commands(tmp_path):
     log = tmp_path / "commands"
-    for command in ("git", "terraform", "aws", "jq", "python3"):
+    for command in ("git", "terraform", "aws", "jq", "python3", "docker"):
         script = tmp_path / command
         script.write_text(
             '#!/bin/sh\nprintf "%s %s\\n" "$(basename "$0")" "$*" >> "$COMMAND_LOG"\n'
@@ -53,11 +53,7 @@ def test_invalid_releases_do_not_push(commands, environment, component):
 @pytest.mark.parametrize("folder", ["terraform", "terraform-temporal"])
 def test_make_applies_and_tags_only_selected_component(commands, folder):
     env, log = commands
-    repos = (
-        "minute-temporal,minute-temporal-admin"
-        if folder == "terraform-temporal"
-        else "minute-backend,minute-frontend,minute-worker"
-    )
+    repos = "minute-temporal" if folder == "terraform-temporal" else "minute-backend,minute-frontend,minute-worker"
     args = ["make", f"INFRASTRUCTURE_FOLDER={folder}", "env=dev", "IMAGE_TAG=test-commit", "ECR_REPO=wrong-repository"]
     subprocess.run([*args, "tf_auto_apply"], cwd=ROOT, env=env, check=True, capture_output=True)
     subprocess.run([*args, "docker_update_tag", "tag=dev"], cwd=ROOT, env=env, check=True, capture_output=True)
@@ -119,7 +115,47 @@ def test_image_tagging_publishes_only_selected_repository(commands):
     published = [line for line in log.read_text().splitlines() if line.startswith("aws ecr put-image")]
     assert len(published) == 2
     assert "--repository-name minute-temporal --image-tag dev" in published[0]
-    assert "--repository-name minute-temporal-admin --image-tag dev" in published[1]
+    assert "--repository-name minute-temporal --image-tag dev-admin" in published[1]
+    fetched = [line for line in log.read_text().splitlines() if line.startswith("aws ecr batch-get-image")]
+    assert "imageTag=test-commit " in fetched[0]
+    assert "imageTag=test-commit-admin " in fetched[1]
+
+
+@pytest.mark.parametrize("service", ["temporal", "temporal-admin"])
+def test_server_and_admin_images_share_repository_not_tags(commands, service):
+    env, log = commands
+    args = [
+        "make",
+        f"service={service}",
+        "APP_NAME=minute",
+        "AWS_ACCOUNT_ID=123",
+        "AWS_REGION=eu-west-2",
+        "IMAGE_TAG=test-commit",
+    ]
+    subprocess.run([*args, "docker_build_local", "docker_push"], cwd=ROOT, env=env, check=True, capture_output=True)
+    tag = "test-commit-admin" if service == "temporal-admin" else "test-commit"
+    image = f"123.dkr.ecr.eu-west-2.amazonaws.com/minute-temporal:{tag}"
+    lines = log.read_text().splitlines()
+    assert any(f"-t {image} " in line and f"-f {service}/Dockerfile" in line for line in lines)
+    assert f"docker push {image}" in lines
+    assert "minute-temporal-admin:" not in log.read_text()
+
+
+def test_missing_admin_image_stops_before_migrations(commands):
+    env, log = commands
+    jq = Path(env["PATH"].split(":")[0]) / "jq"
+    jq.write_text('#!/bin/sh\nif grep -q "imageTag=test-commit-admin" "$COMMAND_LOG"; then exit 1; fi\n')
+    result = subprocess.run(
+        ["make", "tf_auto_apply", "env=dev", "INFRASTRUCTURE_FOLDER=terraform-temporal", "IMAGE_TAG=test-commit"],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "imageTag=test-commit-admin" in log.read_text()
+    assert " apply " not in log.read_text()
+    assert "python3 temporal-admin/" not in log.read_text()
 
 
 @pytest.mark.parametrize(
@@ -182,6 +218,9 @@ def test_workflow_and_state_ownership_are_separate():
     assert 'key = "minute-temporal/terraform.tfstate"' in (ROOT / "terraform-temporal/provider.tf").read_text()
     assert "removed {" not in application
     assert 'key = "minute/terraform.tfstate"' in (ROOT / "terraform/provider.tf").read_text()
+    admin = (ROOT / "terraform-temporal/admin.tf").read_text()
+    assert "amazonaws.com/minute-temporal:${var.image_tag}-admin" in admin
+    assert "amazonaws.com/minute-temporal-admin:" not in admin
 
 
 def test_production_server_release_requires_upgrade_acknowledgement(commands, tmp_path):

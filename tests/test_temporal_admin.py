@@ -28,11 +28,14 @@ def admin_commands(tmp_path):
     scripts = {
         "psql": """case "$*" in
   *pg_tables*) echo "${TABLE_COUNT:-0}" ;;
+  *"SELECT rolsuper"*) echo "${RUNTIME_SUPERUSER:-f}" ;;
   *) sql=$(cat); case "$sql" in
     *pg_database*) echo "${DATABASE_EXISTS:-t}" ;;
     *to_regclass*) echo "${SCHEMA_EXISTS:-t}" ;;
   esac ;;
 esac
+printf '%s\\n' "${sql:-}" >> "$COMMAND_LOG"
+case "${sql:-}" in *"PASSWORD :'password' NOSUPERUSER"*) exit 3 ;; esac
 exit "${PSQL_STATUS:-0}"
 """,
         "temporal-sql-tool": 'exit "${MIGRATION_STATUS:-0}"\n',
@@ -82,6 +85,23 @@ def test_schema_failure_is_not_swallowed(admin_commands, failure):
     )
     assert result.returncode != 0
     assert "namespace" not in log.read_text()
+
+
+@pytest.mark.parametrize("superuser", ["f", "t"])
+def test_runtime_role_setup_does_not_require_superuser_privileges(admin_commands, superuser):
+    env, log = admin_commands
+    result = subprocess.run(
+        ["sh", "temporal-admin/entrypoint.sh"],
+        cwd=ROOT,
+        env={**env, "TEMPORAL_RUNTIME_PASSWORD": "runtime-password", "RUNTIME_SUPERUSER": superuser},
+        check=False,
+        capture_output=True,
+    )
+    assert (result.returncode == 0) is (superuser == "f")
+    sql = log.read_text()
+    assert "PASSWORD :'password' NOCREATEDB NOCREATEROLE" in sql
+    assert "PASSWORD :'password' NOSUPERUSER" not in sql
+    assert ("GRANT USAGE ON SCHEMA" in sql) is (superuser == "f")
 
 
 @pytest.mark.parametrize(

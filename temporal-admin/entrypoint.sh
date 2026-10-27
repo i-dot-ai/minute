@@ -53,8 +53,11 @@ done
 if [ -n "${TEMPORAL_RUNTIME_PASSWORD:-}" ]; then
   query -d postgres -v password="$TEMPORAL_RUNTIME_PASSWORD" <<'SQL'
 SELECT 'CREATE ROLE temporal_runtime LOGIN' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'temporal_runtime') \gexec
-ALTER ROLE temporal_runtime WITH LOGIN PASSWORD :'password' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+-- Aurora's administrator is not a true superuser, so it cannot change the SUPERUSER attribute.
+ALTER ROLE temporal_runtime WITH LOGIN PASSWORD :'password' NOCREATEDB NOCREATEROLE;
 SQL
+  superuser=$(query -d postgres -c "SELECT rolsuper FROM pg_roles WHERE rolname = 'temporal_runtime'")
+  [ "$superuser" = f ] || { echo "Refusing to use a superuser as temporal_runtime" >&2; exit 1; }
   for database in "$DBNAME" "$VISIBILITY_DBNAME"; do
     query -d "$database" <<'SQL'
 GRANT USAGE ON SCHEMA public TO temporal_runtime;

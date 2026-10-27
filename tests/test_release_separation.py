@@ -144,7 +144,9 @@ def test_server_and_admin_images_share_repository_not_tags(commands, service):
 def test_missing_admin_image_stops_before_migrations(commands):
     env, log = commands
     jq = Path(env["PATH"].split(":")[0]) / "jq"
-    jq.write_text('#!/bin/sh\nif grep -q "imageTag=test-commit-admin" "$COMMAND_LOG"; then exit 1; fi\n')
+    jq.write_text(
+        '#!/bin/sh\ncat >/dev/null\nif grep -q "imageTag=test-commit-admin" "$COMMAND_LOG"; then exit 1; fi\n'
+    )
     result = subprocess.run(
         ["make", "tf_auto_apply", "env=dev", "INFRASTRUCTURE_FOLDER=terraform-temporal", "IMAGE_TAG=test-commit"],
         cwd=ROOT,

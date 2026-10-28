@@ -26,7 +26,7 @@ function applySecurityHeaders(req: NextRequest) {
     "font-src 'self'",
     "img-src 'self' data:",
     `media-src 'self' blob: https://*.s3.amazonaws.com https://*.s3.${process.env.AWS_REGION ?? 'eu-west-2'}.amazonaws.com`,
-    `connect-src 'self' https://eu.i.posthog.com https://*.s3.amazonaws.com https://*.s3.${process.env.AWS_REGION ?? 'eu-west-2'}.amazonaws.com`,
+    `connect-src 'self' https://eu.i.posthog.com https://eu-assets.i.posthog.com https://*.s3.amazonaws.com https://*.s3.${process.env.AWS_REGION ?? 'eu-west-2'}.amazonaws.com`,
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",

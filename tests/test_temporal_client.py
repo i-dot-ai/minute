@@ -13,6 +13,21 @@ from common.workflows.transcription import workflow_id
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("language", ["en", "cy"])
+async def test_start_transcription_passes_language_to_workflow_without_database(monkeypatch, language):
+    transcription_id, minute_id = uuid.uuid4(), uuid.uuid4()
+    client = SimpleNamespace(start_workflow=AsyncMock())
+    monkeypatch.setattr(temporal, "get_temporal_client", AsyncMock(return_value=client))
+    await temporal.start_transcription_workflow(transcription_id, minute_id, language)
+    client.start_workflow.assert_awaited_once_with(
+        temporal.TranscriptionWorkflow.run,
+        args=(str(minute_id), language),
+        id=workflow_id(str(transcription_id)),
+        task_queue=temporal.TASK_QUEUE,
+    )
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("status", list(WorkflowExecutionStatus))
 async def test_transcription_workflow_running_checks_latest_run(monkeypatch, status):
     transcription_id = uuid.uuid4()

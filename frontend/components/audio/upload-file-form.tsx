@@ -1,5 +1,6 @@
 'use client'
 
+import { TranscriptionForm } from '@/components/audio/types'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { Template } from '@/types/templates'
 import { useEffect, useRef } from 'react'
@@ -9,29 +10,31 @@ export function UploadFileForm({
   file,
   template,
   agenda,
+  language,
   onDiscard,
   onStarted,
 }: {
   file: File
   template: Template
   agenda?: string
+  language: TranscriptionForm['language']
   onDiscard?: () => void
   onStarted?: (transcriptionId: string) => void
 }) {
   const { isError, onSubmit } = useStartTranscription(
-    { file, template, agenda },
+    { file, template, agenda, language },
     onStarted
   )
 
-  // File, template and agenda were all chosen on the home page, so submit
+  // File, language, template and agenda were chosen on the home page, so submit
   // straight away. One-shot guard so Strict Mode's double-mount (dev) can't
   // create two transcriptions.
   const hasSubmitted = useRef(false)
   useEffect(() => {
     if (hasSubmitted.current) return
     hasSubmitted.current = true
-    onSubmit({ file, template, agenda })
-  }, [onSubmit, file, template, agenda])
+    onSubmit({ file, template, agenda, language })
+  }, [onSubmit, file, template, agenda, language])
 
   if (isError) {
     return (

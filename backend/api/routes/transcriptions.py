@@ -57,11 +57,13 @@ def _next_cleanup_cutoff(retention_days: int) -> datetime:
     return next_run - timedelta(days=retention_days)
 
 
-async def _enqueue_transcription(session: AsyncSession, transcription: Transcription, minute_id: uuid.UUID) -> None:
+async def _enqueue_transcription(
+    session: AsyncSession, transcription: Transcription, minute_id: uuid.UUID, language: str = "en"
+) -> None:
     """Commit before starting the workflow so the worker can always see the job row."""
     await session.commit()
     try:
-        await temporal.start_transcription_workflow(transcription.id, minute_id)
+        await temporal.start_transcription_workflow(transcription.id, minute_id, language)
     except Exception as exc:
         transcription.status = JobStatus.FAILED
         transcription.error = "Failed to enqueue transcription"
@@ -222,7 +224,7 @@ async def create_transcription(
     session.add(minute)
     session.add(minute_version)
     recording.transcription_id = transcription.id
-    await _enqueue_transcription(session, transcription, minute.id)
+    await _enqueue_transcription(session, transcription, minute.id, request.language)
 
     return TranscriptionCreateResponse(id=transcription.id)
 
@@ -311,7 +313,7 @@ async def retry_transcription(
     minute_version.error = None
     minute_version.html_content = ""
 
-    await _enqueue_transcription(session, transcription, minute.id)
+    await _enqueue_transcription(session, transcription, minute.id, request.language)
 
     return TranscriptionCreateResponse(id=transcription.id)
 

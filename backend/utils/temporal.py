@@ -30,12 +30,12 @@ async def get_temporal_client() -> Client:
     return _client
 
 
-async def _start_workflow(workflow: Any, arg: Any, *, workflow_id: str) -> None:
+async def _start_workflow(workflow: Any, *args: Any, workflow_id: str) -> None:
     """Start a run, tolerating the namespace-not-registered-yet window on a cold deploy."""
     client = await get_temporal_client()
     for attempt in range(1, _NAMESPACE_RETRY_ATTEMPTS + 1):
         try:
-            await client.start_workflow(workflow, arg, id=workflow_id, task_queue=TASK_QUEUE)
+            await client.start_workflow(workflow, args=args, id=workflow_id, task_queue=TASK_QUEUE)
             return
         except RPCError as e:
             if e.status != RPCStatusCode.NOT_FOUND or attempt == _NAMESPACE_RETRY_ATTEMPTS:
@@ -43,9 +43,11 @@ async def _start_workflow(workflow: Any, arg: Any, *, workflow_id: str) -> None:
             await asyncio.sleep(_NAMESPACE_RETRY_DELAY_SECONDS)
 
 
-async def start_transcription_workflow(transcription_id: UUID, minute_id: UUID) -> None:
+async def start_transcription_workflow(transcription_id: UUID, minute_id: UUID, language: str = "en") -> None:
     """Start the run. Default conflict policy: a start while a run is still open raises."""
-    await _start_workflow(TranscriptionWorkflow.run, str(minute_id), workflow_id=workflow_id(str(transcription_id)))
+    await _start_workflow(
+        TranscriptionWorkflow.run, str(minute_id), language, workflow_id=workflow_id(str(transcription_id))
+    )
 
 
 async def transcription_workflow_running(transcription_id: UUID) -> bool:

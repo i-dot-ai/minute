@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from enum import StrEnum, auto
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -39,12 +40,14 @@ class TranscriptionCreateRequest(BaseModel):
     template_id: uuid.UUID | None = None
     agenda: str | None = None
     title: str | None = None
+    language: Literal["en", "cy"] = "en"
 
 
 class TranscriptionRetryRequest(BaseModel):
     template_name: str
     template_id: uuid.UUID | None = None
     agenda: str | None = None
+    language: Literal["en", "cy"] = "en"
 
 
 class RecordingCreateRequest(BaseModel):

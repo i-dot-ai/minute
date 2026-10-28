@@ -190,7 +190,8 @@ async def test_minute_database_read_errors_are_retryable(monkeypatch, step):
 
 
 @pytest.mark.asyncio
-async def test_transcribe_passes_temporal_attempt_to_provider(monkeypatch, writes):
+@pytest.mark.parametrize("language", ["en", "cy"])
+async def test_transcribe_passes_temporal_attempt_to_provider(monkeypatch, writes, language):
     row = _row(entries=None)
     _patch_load(monkeypatch, row)
     monkeypatch.setattr(transcribe, "claim_job", lambda *_args: True)
@@ -198,8 +199,8 @@ async def test_transcribe_passes_temporal_attempt_to_provider(monkeypatch, write
     monkeypatch.setattr(transcribe.transcription_manager, "perform_transcription_steps", provider)
     env = ActivityEnvironment()
     env.info = replace(env.info, attempt=3)
-    assert await env.run(transcribe.transcribe, TRANSCRIBE_INPUT) == str(TRANSCRIPTION_ID)
-    provider.assert_awaited_once_with(transcription=row, timeout_seconds=60, attempt=3)
+    assert await env.run(transcribe.transcribe, replace(TRANSCRIBE_INPUT, language=language)) == str(TRANSCRIPTION_ID)
+    provider.assert_awaited_once_with(transcription=row, timeout_seconds=60, attempt=3, language=language)
     assert writes == [(TRANSCRIPTION_ID, {"dialogue_entries": ENTRIES})]
 
 

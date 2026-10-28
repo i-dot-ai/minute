@@ -116,6 +116,7 @@ export function NewMinuteDialog({
           onOpenChange={setOpen}
           onConfirm={form.handleSubmit(onSubmit)}
           disabled={isPending || (agendaRequired && !agendaValue)}
+          showLanguage={false}
         />
       </FormProvider>
     </>

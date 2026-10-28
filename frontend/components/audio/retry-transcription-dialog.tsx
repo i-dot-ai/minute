@@ -36,6 +36,7 @@ export function RetryTranscriptionDialog({
   const form = useForm<TranscriptionForm>({
     defaultValues: {
       file: null,
+      language: 'en',
       template: GENERAL_TEMPLATE,
       agenda,
     },
@@ -44,6 +45,7 @@ export function RetryTranscriptionDialog({
     if (open) {
       form.reset({
         file: null,
+        language: form.getValues('language'),
         template: defaultTemplate ?? GENERAL_TEMPLATE,
         agenda,
       })
@@ -65,7 +67,7 @@ export function RetryTranscriptionDialog({
     ...retryTranscriptionTranscriptionsTranscriptionIdRetryPostMutation(),
   })
 
-  const onSubmit = ({ template, agenda }: TranscriptionForm) => {
+  const onSubmit = ({ template, agenda, language }: TranscriptionForm) => {
     retryTranscription(
       {
         path: { transcription_id: transcriptionId },
@@ -73,6 +75,7 @@ export function RetryTranscriptionDialog({
           template_name: template.name,
           template_id: template.id,
           agenda: template.agenda_usage != 'not_used' ? agenda : undefined,
+          language,
         },
       },
       {

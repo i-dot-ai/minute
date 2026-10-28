@@ -15,6 +15,7 @@ from common.services.storage_services import get_storage_service
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.services.transcription_services.aws import AWSTranscribeAdapter
 from common.services.transcription_services.azure import AzureSpeechAdapter
+from common.services.transcription_services.sibrwdx import SibrwdxAdapter
 from common.settings import get_settings
 from common.types import TranscriptionJobMessageData
 
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 SUPPORTED_FORMATS = {".mp3"}
 # add any new adapters here
-_adapters = {adapter.name: adapter for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter]}
+_adapters = {adapter.name: adapter for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter, SibrwdxAdapter]}
 storage_service = get_storage_service(get_settings().STORAGE_SERVICE_NAME)
 
 
@@ -36,7 +37,8 @@ class TranscriptionServiceManager:
     def get_available_services(self) -> dict[str, TranscriptionAdapter]:
         """Get list of available (properly configured) services."""
         adapters = {}
-        for adapter_name in settings.TRANSCRIPTION_SERVICES:
+        # Enable the Welsh test service without changing existing deployment environment variables.
+        for adapter_name in [*settings.TRANSCRIPTION_SERVICES, SibrwdxAdapter.name]:
             adapter = _adapters.get(adapter_name)
             if not adapter:
                 logger.warning("Adapter not found %s", adapter_name)
@@ -55,8 +57,11 @@ class TranscriptionServiceManager:
 
         return adapters
 
-    def select_adaptor(self, duration_seconds: int) -> TranscriptionAdapter:
+    def select_adaptor(self, duration_seconds: int, language: str = "en") -> TranscriptionAdapter:
         for adaptor in self._available_adapters.values():
+            adapter_language = "cy" if adaptor.name == SibrwdxAdapter.name else "en"
+            if adapter_language != language:
+                continue
             if adaptor.max_audio_length >= duration_seconds:
                 return adaptor
         msg = f"No transcription services are available. Available services: {self._available_adapters}"
@@ -76,7 +81,11 @@ class TranscriptionServiceManager:
         return transcription_job
 
     async def perform_transcription_steps(
-        self, transcription: Transcription, timeout_seconds: float | None = None, attempt: int = 1
+        self,
+        transcription: Transcription,
+        timeout_seconds: float | None = None,
+        attempt: int = 1,
+        language: str = "en",
     ) -> TranscriptionJobMessageData:
         """One provider attempt, with the caller's timeout budget and Temporal attempt number."""
         recording = transcription.recordings[0]
@@ -93,15 +102,21 @@ class TranscriptionServiceManager:
                 transaction.set_data("file_size", file_path.stat().st_size)
                 transaction.set_data("file_type", file_path.suffix.lower())
 
-            adapter = self.select_adaptor(int(duration_seconds))
+            adapter = self.select_adaptor(int(duration_seconds), language)
             match adapter.adapter_type:
                 case AdapterType.SYNCHRONOUS:
                     transcription_job = await adapter.start(
-                        audio_file_path_or_recording=file_path, timeout_seconds=timeout_seconds, attempt=attempt
+                        audio_file_path_or_recording=file_path,
+                        timeout_seconds=timeout_seconds,
+                        attempt=attempt,
+                        transcription_id=str(transcription.id),
                     )
                 case AdapterType.ASYNC:
                     transcription_job = await adapter.start(
-                        audio_file_path_or_recording=recording, timeout_seconds=timeout_seconds, attempt=attempt
+                        audio_file_path_or_recording=recording,
+                        timeout_seconds=timeout_seconds,
+                        attempt=attempt,
+                        transcription_id=str(transcription.id),
                     )
                 case _:
                     msg = "adapter not recognised"

@@ -82,9 +82,19 @@ test('retrying a failed transcription reuses the same job and goes to status', a
   await expect(
     dialog.getByRole('heading', { name: 'Generate summary' })
   ).toBeVisible()
+  await expect(dialog.getByLabel('Choose a language')).toHaveValue('en')
+  await dialog.getByLabel('Choose a language').selectOption('cy')
+  await dialog.getByLabel('Choose a template:').selectOption('default:Cabinet')
+  await dialog
+    .getByRole('button', { name: 'Set Cabinet as default template' })
+    .click()
+  await expect(
+    dialog.getByRole('option', { name: 'Cabinet (Default)', exact: true })
+  ).toHaveCount(1)
+  await expect(dialog.getByLabel('Choose a language')).toHaveValue('cy')
   await dialog.getByRole('button', { name: 'Generate summary' }).click()
 
-  await retryRequest
+  expect((await retryRequest).postDataJSON().language).toBe('cy')
   await expect(page).toHaveURL(new RegExp(`/new/status/${meeting1.id}$`))
 })
 

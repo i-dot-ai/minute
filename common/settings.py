@@ -66,6 +66,10 @@ class Settings(BaseSettings):
     AZURE_SPEECH_FALLBACK_1_REGION: str | None = Field(description="Region for Azure STT fallback 1", default=None)
     AZURE_SPEECH_FALLBACK_2_KEY: str | None = Field(description="Azure STT speech key for fallback 2", default=None)
     AZURE_SPEECH_FALLBACK_2_REGION: str | None = Field(description="Region for Azure STT fallback 2", default=None)
+    SIBRWDX_URL: str = Field(
+        description="Sibrwdx synchronous Welsh transcription endpoint",
+        default="http://internal-dev-sibrwdx-alb-1311425474.eu-west-2.elb.amazonaws.com/transcribe/sync",
+    )
 
     MAX_LLM_PROCESSES: int = Field(
         description="Max concurrent LLM steps (speakers, title, summary, minute generation, edits) per node",

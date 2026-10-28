@@ -78,6 +78,7 @@ test('deleting the only summary leaves the meeting with no summary and option to
   await expect(createNewSummaryButton).toBeVisible()
 
   await createNewSummaryButton.click()
+  await expect(page.getByLabel('Choose a language')).toHaveCount(0)
 
   await page.getByRole('button', { name: 'Generate summary' }).click()
 

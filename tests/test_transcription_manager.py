@@ -9,6 +9,8 @@ from common.services.exceptions import TranscriptionFailedError
 from common.services.storage_services import StorageService
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.services.transcription_services.aws import AWSTranscribeAdapter
+from common.services.transcription_services.azure import AzureSpeechAdapter
+from common.services.transcription_services.sibrwdx import SibrwdxAdapter
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.types import TranscriptionJobMessageData
 
@@ -52,6 +54,7 @@ class MockAdapter(TranscriptionAdapter):
         audio_file_path_or_recording,  # noqa: ARG002
         timeout_seconds=None,  # noqa: ARG002
         attempt=1,  # noqa: ARG002
+        transcription_id=None,  # noqa: ARG002
     ) -> TranscriptionJobMessageData:
         return TranscriptionJobMessageData(
             job_name="test_job_name",
@@ -183,6 +186,21 @@ class TestTranscriptionServiceManager:
         with pytest.raises(RuntimeError, match="No transcription services are available"):
             manager.select_adaptor(5000)  # Exceeds all adapters' max length
 
+    def test_language_routing_registers_sibrwdx_without_env_changes(self, monkeypatch):
+        monkeypatch.setattr(
+            "common.services.transcription_services.transcription_manager.settings.TRANSCRIPTION_SERVICES",
+            [AzureSpeechAdapter.name],
+        )
+        monkeypatch.setattr(AzureSpeechAdapter, "is_available", lambda: True)
+        manager = TranscriptionServiceManager()
+        assert manager.select_adaptor(60) is AzureSpeechAdapter
+        assert manager.select_adaptor(60, "cy") is SibrwdxAdapter
+        with pytest.raises(RuntimeError, match="No transcription services are available"):
+            manager.select_adaptor(SibrwdxAdapter.max_audio_length + 1, "cy")
+        monkeypatch.setattr(SibrwdxAdapter, "is_available", lambda: False)
+        with pytest.raises(RuntimeError, match="No transcription services are available"):
+            TranscriptionServiceManager().select_adaptor(60, "cy")
+
     @pytest.mark.asyncio
     @patch("common.services.transcription_services.transcription_manager.convert_american_to_british_spelling")
     async def test_check_transcription_success(self, mock_convert_spelling, manager, sample_message_data):
@@ -215,12 +233,14 @@ class TestTranscriptionServiceManager:
         assert result.transcript is None
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize("language", ["en", "cy"])
     async def test_perform_transcription_steps_synchronous(
         self,
         mock_storage_service,  # noqa: ARG002
         manager,
         mock_recording,
         mock_transcription,
+        language,
     ):
         """Test perform_transcription_steps with synchronous adapter."""
         with (
@@ -231,6 +251,8 @@ class TestTranscriptionServiceManager:
             mock_duration = 1500.0
             mock_get_recording.return_value = (mock_recording, Path(temp_file.name), mock_duration)
             mock_adapter = manager.select_adaptor(int(mock_duration))
+            if language == "cy":
+                mock_adapter.name = SibrwdxAdapter.name
 
             with patch.object(mock_adapter, "start") as mock_start:
                 mock_start.return_value = TranscriptionJobMessageData(
@@ -239,12 +261,17 @@ class TestTranscriptionServiceManager:
                     transcription_service=mock_adapter.name,
                 )
 
-                result = await manager.perform_transcription_steps(mock_transcription, timeout_seconds=123, attempt=2)
+                result = await manager.perform_transcription_steps(
+                    mock_transcription, timeout_seconds=123, attempt=2, language=language
+                )
 
                 assert result.job_name == "test_job"
                 assert result.transcript is not None
                 mock_start.assert_called_once_with(
-                    audio_file_path_or_recording=Path(temp_file.name), timeout_seconds=123, attempt=2
+                    audio_file_path_or_recording=Path(temp_file.name),
+                    timeout_seconds=123,
+                    attempt=2,
+                    transcription_id=str(mock_transcription.id),
                 )
 
     @pytest.mark.asyncio
@@ -277,7 +304,10 @@ class TestTranscriptionServiceManager:
                 assert result.job_name == "test_job"
                 assert result.transcript is None
                 mock_start.assert_called_once_with(
-                    audio_file_path_or_recording=mock_recording, timeout_seconds=None, attempt=1
+                    audio_file_path_or_recording=mock_recording,
+                    timeout_seconds=None,
+                    attempt=1,
+                    transcription_id=str(mock_transcription.id),
                 )
 
     @pytest.mark.asyncio

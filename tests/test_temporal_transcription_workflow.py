@@ -29,6 +29,7 @@ def _activities(  # noqa: C901 # Each mock is one workflow step.
     retryable: frozenset = frozenset(),
     completed: bool = True,
     seen: dict | None = None,
+    audio_seconds: float = AUDIO_SECONDS,
 ):
     """Mock each activity; fail permanently or exhaust retries, and record its inputs/timeouts."""
     seen = {} if seen is None else seen
@@ -42,7 +43,7 @@ def _activities(  # noqa: C901 # Each mock is one workflow step.
     @activity.defn(name=wf.PREPARE_AUDIO)
     async def prepare_audio(_minute_id: str) -> wf.PreparedAudio:
         _maybe_fail(wf.PREPARE_AUDIO)
-        return wf.PreparedAudio(duration_seconds=AUDIO_SECONDS)
+        return wf.PreparedAudio(duration_seconds=audio_seconds)
 
     @activity.defn(name=wf.TRANSCRIBE)
     async def transcribe(params: wf.TranscribeInput) -> str:
@@ -101,13 +102,16 @@ def _workers(client, by_queue: dict, *, workflows=(wf.TranscriptionWorkflow,), *
     ]
 
 
-async def _run(**kwargs) -> tuple[list, dict, dict]:
+async def _run(language: str | None = None, **kwargs) -> tuple[list, dict, dict]:
     calls: list = []
     async with await WorkflowEnvironment.start_time_skipping() as env:
         workers = _workers(env.client, _activities(calls, **kwargs))
         async with workers[0], workers[1], workers[2]:
             outcome = await env.client.execute_workflow(
-                wf.TranscriptionWorkflow.run, MINUTE_ID, id=wf.workflow_id(TRANSCRIPTION_ID), task_queue=wf.TASK_QUEUE
+                wf.TranscriptionWorkflow.run,
+                args=[MINUTE_ID] if language is None else [MINUTE_ID, language],
+                id=wf.workflow_id(TRANSCRIPTION_ID),
+                task_queue=wf.TASK_QUEUE,
             )
     return [name for name, _ in calls], outcome, dict(calls)
 
@@ -148,17 +152,23 @@ def test_stt_timeout_scales_with_audio_duration():
         (7200, timedelta(minutes=17)),
     ):
         assert wf.stt_timeout(duration) == expected
+    assert wf.stt_timeout(60, "cy") == timedelta(seconds=960) + wf.STT_DOWNLOAD_MARGIN
+    assert wf.stt_timeout(17999, "cy") == wf.stt_timeout(17999)
 
 
 @pytest.mark.asyncio
-async def test_transcribe_gets_duration_based_timeout():
+@pytest.mark.parametrize(("audio_seconds", "language"), [(AUDIO_SECONDS, "en"), (60, "cy")])
+async def test_transcribe_gets_duration_based_timeout(audio_seconds, language):
     seen: dict = {}
-    await _run(seen=seen)
-    expected = wf.stt_timeout(AUDIO_SECONDS)
+    calls, outcome, _ = await _run(seen=seen, audio_seconds=audio_seconds, language=language)
+    _assert_all_steps_ran(calls)
+    assert all(result == "ok" for result in outcome.values())
+    expected = wf.stt_timeout(audio_seconds, language)
     assert seen["transcribe_timeout"] == expected
     assert seen["transcribe_heartbeat_timeout"] == timedelta(seconds=90)
     params = seen["transcribe_input"]
     assert params.minute_id == MINUTE_ID
+    assert params.language == language
     # Azure's budget leaves room inside the activity timeout for the mp3 download
     assert params.stt_timeout_seconds == (expected - wf.STT_DOWNLOAD_MARGIN).total_seconds()
 

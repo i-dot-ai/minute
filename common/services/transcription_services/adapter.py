@@ -21,8 +21,7 @@ class TranscriptionAdapter(ABC):
     functionality. Subclasses must implement attributes and methods to determine availability,
     start a transcription process, and check transcription status.
 
-    New Adapter implementations are discovered via inspection and are dynamically loaded (as long as they are
-    in the same package as the Adapter class).
+    New adapters are registered in transcription_manager.py.
 
     Attributes:
         max_audio_length (int): Defines the maximum supported length of an audio
@@ -52,7 +51,11 @@ class TranscriptionAdapter(ABC):
     @classmethod
     @overload
     async def start(
-        cls, audio_file_path_or_recording: Path, timeout_seconds: float | None = None, attempt: int = 1
+        cls,
+        audio_file_path_or_recording: Path,
+        timeout_seconds: float | None = None,
+        attempt: int = 1,
+        transcription_id: str | None = None,
     ) -> TranscriptionJobMessageData:
         """Starts a transcription job asynchronously.
 
@@ -68,6 +71,8 @@ class TranscriptionAdapter(ABC):
                 Total time budget for the provider call. None uses the adapter's default.
             attempt:
                 Temporal activity attempt number, used to select the Azure region.
+            transcription_id:
+                Transcription identifier, required by Sibrwdx.
 
         Returns:
             A TranscriptionJobMessageData object containing information about the
@@ -77,7 +82,11 @@ class TranscriptionAdapter(ABC):
     @classmethod
     @overload
     async def start(
-        cls, audio_file_path_or_recording: Recording, timeout_seconds: float | None = None, attempt: int = 1
+        cls,
+        audio_file_path_or_recording: Recording,
+        timeout_seconds: float | None = None,
+        attempt: int = 1,
+        transcription_id: str | None = None,
     ) -> TranscriptionJobMessageData:
         """Starts a transcription job asynchronously.
 
@@ -93,6 +102,8 @@ class TranscriptionAdapter(ABC):
                 Total time budget for the provider call. None uses the adapter's default.
             attempt:
                 Temporal activity attempt number, used to select the Azure region.
+            transcription_id:
+                Transcription identifier, required by Sibrwdx.
 
         Returns:
             A TranscriptionJobMessageData object containing information about the
@@ -102,7 +113,11 @@ class TranscriptionAdapter(ABC):
     @classmethod
     @abstractmethod
     async def start(
-        cls, audio_file_path_or_recording: Path | Recording, timeout_seconds: float | None = None, attempt: int = 1
+        cls,
+        audio_file_path_or_recording: Path | Recording,
+        timeout_seconds: float | None = None,
+        attempt: int = 1,
+        transcription_id: str | None = None,
     ) -> TranscriptionJobMessageData: ...
 
     @classmethod

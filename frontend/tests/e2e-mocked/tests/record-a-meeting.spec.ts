@@ -71,17 +71,53 @@ test('Virtual meeting to summary', async ({ page }) => {
   await statusToSummaryFlow(page)
 })
 
-test('Upload a file to summary', async ({ page }) => {
-  await page.goto('/')
+for (const language of ['en', 'cy']) {
+  test(`Upload a file to summary (${language})`, async ({ page }) => {
+    await page.goto('/')
 
-  await page.getByRole('radio', { name: 'Upload a file' }).check()
+    await page.getByRole('radio', { name: 'Upload a file' }).check()
 
-  await page
-    .locator('input[type="file"][name="file"]')
-    .setInputFiles(sampleMeeting)
+    await page
+      .locator('input[type="file"][name="file"]')
+      .setInputFiles(sampleMeeting)
 
-  await page.getByRole('button', { name: 'Upload file' }).click()
-  await page.getByRole('button', { name: 'Generate summary' }).click()
+    await page.getByRole('button', { name: 'Upload file' }).click()
+    const languageSelect = page.getByLabel('Choose a language')
+    await expect(languageSelect).toHaveValue('en')
+    for (const width of [1280, 375]) {
+      await page.setViewportSize({ width, height: 720 })
+      const pickers = await page.getByRole('dialog').evaluate((dialog) =>
+        ['language', 'template'].map((id) => {
+          const { width, height } = dialog
+            .querySelector(`#${id}`)!
+            .getBoundingClientRect()
+          const label = dialog.querySelector(`label[for="${id}"]`)!
+          return {
+            width: Math.round(width),
+            height: Math.round(height),
+            labelHeight: Math.round(label.getBoundingClientRect().height),
+            labelLineHeight: Math.round(
+              parseFloat(getComputedStyle(label).lineHeight)
+            ),
+          }
+        })
+      )
+      expect(pickers[0]).toEqual(pickers[1])
+      expect(pickers[0].width).toBeLessThanOrEqual(224)
+      expect(pickers[0].labelHeight).toBeLessThanOrEqual(
+        pickers[0].labelLineHeight + 1
+      )
+    }
+    await page.setViewportSize({ width: 1280, height: 720 })
+    await languageSelect.selectOption(language)
+    const transcriptionRequest = page.waitForRequest(
+      (req) =>
+        req.method() === 'POST' &&
+        /\/api\/proxy\/transcriptions$/.test(req.url())
+    )
+    await page.getByRole('button', { name: 'Generate summary' }).click()
+    expect((await transcriptionRequest).postDataJSON().language).toBe(language)
 
-  await statusToSummaryFlow(page)
-})
+    await statusToSummaryFlow(page)
+  })
+}

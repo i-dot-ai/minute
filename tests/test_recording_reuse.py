@@ -79,8 +79,8 @@ async def test_recording_reuse_boundary(recordings, monkeypatch):
     original transcription, or queue more work; a fresh recording still creates and queues one."""
     started: list = []
 
-    async def _start(transcription_id, minute_id):
-        started.append((transcription_id, minute_id))
+    async def _start(transcription_id, minute_id, language="en"):
+        started.append((transcription_id, minute_id, language))
 
     monkeypatch.setattr(
         "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
@@ -95,6 +95,12 @@ async def test_recording_reuse_boundary(recordings, monkeypatch):
         )
         assert rejected.status_code == 409
         assert started == []
+        invalid_language = await ac.post(
+            "/transcriptions",
+            json={"recording_id": str(fresh.id), "template_name": "General", "language": "fr"},
+        )
+        assert invalid_language.status_code == 422
+        assert started == []
         # the recording's linkage is unchanged (still points at the first transcription)
         async with AsyncSession(async_engine) as session:
             recording = await session.get(Recording, linked.id)
@@ -102,7 +108,7 @@ async def test_recording_reuse_boundary(recordings, monkeypatch):
 
         accepted = await ac.post(
             "/transcriptions",
-            json={"recording_id": str(fresh.id), "template_name": "General", "title": "New job"},
+            json={"recording_id": str(fresh.id), "template_name": "General", "title": "New job", "language": "cy"},
         )
     assert accepted.status_code == 201
     assert len(started) == 1
@@ -111,6 +117,8 @@ async def test_recording_reuse_boundary(recordings, monkeypatch):
         assert recording.transcription_id is not None
         transcription = await session.get(Transcription, recording.transcription_id)
         assert transcription is not None
+        assert started[0][0] == transcription.id
+        assert started[0][2] == "cy"
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -130,8 +138,8 @@ async def test_concurrent_reuse_creates_and_queues_only_one_transcription(record
             await asyncio.wait_for(both_checked_storage.wait(), timeout=0.1)
         return True
 
-    async def _start(transcription_id, minute_id):
-        started.append((transcription_id, minute_id))
+    async def _start(transcription_id, minute_id, language="en"):
+        started.append((transcription_id, minute_id, language))
 
     monkeypatch.setattr(
         "backend.api.routes.transcriptions.storage_service.check_object_exists",
@@ -176,7 +184,7 @@ async def test_publish_failure_marks_transcription_failed(recordings, monkeypatc
     """A definite enqueue failure leaves the committed job explicitly retryable."""
     fresh = recordings["fresh"]
 
-    async def _boom(_transcription_id, _minute_id):
+    async def _boom(_transcription_id, _minute_id, _language="en"):
         msg = "temporal unavailable"
         raise RuntimeError(msg)
 

@@ -59,7 +59,13 @@ export const useStartTranscription = (
   })
 
   const onSubmit = useCallback(
-    async ({ file, template, agenda, recordingId }: TranscriptionForm) => {
+    async ({
+      file,
+      template,
+      agenda,
+      recordingId,
+      language,
+    }: TranscriptionForm) => {
       if (!file) {
         return
       }
@@ -93,6 +99,7 @@ export const useStartTranscription = (
             template_id: template.id,
             template_name: template.name,
             agenda,
+            language,
           },
         })
         // Store before navigating so the status page can read the estimate on
@@ -125,6 +132,7 @@ export const useStartTranscription = (
   const form = useForm<TranscriptionForm>({
     defaultValues: {
       file: null,
+      language: 'en',
       template: {
         name: 'General',
         description:

@@ -20,8 +20,13 @@ const GENERAL_TEMPLATE: Template = {
 
 export const AudioUploadForm = () => {
   const router = useRouter()
-  const { setMode, setUploadFile, setUploadTemplate, setUploadAgenda } =
-    useRecordingSession()
+  const {
+    setMode,
+    setUploadFile,
+    setUploadTemplate,
+    setUploadAgenda,
+    setUploadLanguage,
+  } = useRecordingSession()
   const [fileError, setFileError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -30,6 +35,7 @@ export const AudioUploadForm = () => {
   const form = useForm<TranscriptionForm>({
     defaultValues: {
       file: null,
+      language: 'en',
       template: GENERAL_TEMPLATE,
     },
   })
@@ -77,6 +83,7 @@ export const AudioUploadForm = () => {
     setUploadFile(values.file)
     setUploadTemplate(values.template)
     setUploadAgenda(values.agenda)
+    setUploadLanguage(values.language)
     setMode('upload-file')
     router.push('/new')
   }

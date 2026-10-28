@@ -27,6 +27,7 @@ class AWSTranscribeAdapter(TranscriptionAdapter):
         audio_file_path_or_recording: Path | Recording,
         timeout_seconds: float | None = None,  # noqa: ARG003
         attempt: int = 1,  # noqa: ARG003
+        transcription_id: str | None = None,  # noqa: ARG003
     ) -> TranscriptionJobMessageData:
         """
         Async version of transcribe audio using Azure Speech-to-Text API

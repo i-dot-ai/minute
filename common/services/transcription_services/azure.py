@@ -73,7 +73,11 @@ class AzureSpeechAdapter(TranscriptionAdapter):
 
     @classmethod
     async def start(
-        cls, audio_file_path_or_recording: Path | Recording, timeout_seconds: float | None = None, attempt: int = 1
+        cls,
+        audio_file_path_or_recording: Path | Recording,
+        timeout_seconds: float | None = None,
+        attempt: int = 1,
+        transcription_id: str | None = None,  # noqa: ARG003
     ) -> TranscriptionJobMessageData:
         """One request per Temporal attempt, rotating through configured regions on retries."""
         if not isinstance(audio_file_path_or_recording, Path):

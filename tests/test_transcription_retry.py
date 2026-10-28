@@ -104,8 +104,8 @@ def started_workflows(monkeypatch):
     async def _object_exists(_key: str) -> bool:
         return True
 
-    async def _start(transcription_id, minute_id):
-        started.append((transcription_id, minute_id))
+    async def _start(transcription_id, minute_id, language="en"):
+        started.append((transcription_id, minute_id, language))
 
     async def _running(_transcription_id):
         return False
@@ -173,8 +173,8 @@ async def test_retry_concurrent_requests_publish_once(
             await first_started.wait()
         return True
 
-    async def _start(tid, mid):
-        started_workflows.append((tid, mid))
+    async def _start(tid, mid, language="en"):
+        started_workflows.append((tid, mid, language))
         if fails_immediately:
             async with AsyncSession(async_engine) as session:
                 transcription = await session.get(Transcription, tid)
@@ -202,7 +202,7 @@ async def test_retry_concurrent_requests_publish_once(
     status_codes = sorted(response.status_code for response in responses)
     assert status_codes == [201, 400]
     assert len(started_workflows) == 1
-    assert started_workflows[0] == (transcription_id, minute_id)
+    assert started_workflows[0] == (transcription_id, minute_id, "en")
 
     async with AsyncSession(async_engine) as session:
         transcription = await session.get(Transcription, transcription_id)
@@ -222,9 +222,15 @@ async def test_retry_resets_existing_transcription(failed_transcription, started
     minute_id = failed_transcription["minute_id"]
 
     async with get_test_client() as ac:
+        invalid_language = await ac.post(
+            f"/transcriptions/{transcription_id}/retry",
+            json={"template_name": "New template", "language": "fr"},
+        )
+        assert invalid_language.status_code == 422
+        assert started_workflows == []
         response = await ac.post(
             f"/transcriptions/{transcription_id}/retry",
-            json={"template_name": "New template", "agenda": "New agenda"},
+            json={"template_name": "New template", "agenda": "New agenda", "language": "cy"},
         )
 
     assert response.status_code == 201
@@ -248,7 +254,7 @@ async def test_retry_resets_existing_transcription(failed_transcription, started
 
     published = started_workflows
     assert len(published) == 1
-    assert published[0] == (transcription_id, minute_id)
+    assert published[0] == (transcription_id, minute_id, "cy")
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -284,7 +290,7 @@ async def test_retry_publish_failure_marks_failed(failed_transcription, monkeypa
     """A definite enqueue failure leaves the retry explicitly retryable."""
     transcription_id = failed_transcription["transcription_id"]
 
-    async def _boom(_transcription_id, _minute_id):
+    async def _boom(_transcription_id, _minute_id, _language="en"):
         msg = "temporal unavailable"
         raise RuntimeError(msg)
 

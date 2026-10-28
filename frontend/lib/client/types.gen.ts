@@ -587,6 +587,10 @@ export type TranscriptionCreateRequest = {
    * Title
    */
   title?: string | null
+  /**
+   * Language
+   */
+  language?: 'en' | 'cy'
 }
 
 /**
@@ -690,6 +694,10 @@ export type TranscriptionRetryRequest = {
    * Agenda
    */
   agenda?: string | null
+  /**
+   * Language
+   */
+  language?: 'en' | 'cy'
 }
 
 /**

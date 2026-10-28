@@ -89,7 +89,11 @@ function getSelectedOptionValue(
   return `default:${template.name}`
 }
 
-export const StartTranscriptionSection = () => {
+export const StartTranscriptionSection = ({
+  showLanguage = true,
+}: {
+  showLanguage?: boolean
+}) => {
   const form = useFormContext<TranscriptionForm>()
   const queryClient = useQueryClient()
   const selectedTemplate = form.watch('template')
@@ -181,14 +185,33 @@ export const StartTranscriptionSection = () => {
 
   return (
     <div>
-      <div className="govuk-form-group flex items-center gap-2">
-        <div>
-          <label className="govuk-label" htmlFor="template">
-            Choose a template:
+      {showLanguage && (
+        <div className="govuk-form-group flex flex-wrap items-center gap-2">
+          <label
+            className="govuk-label w-44 shrink-0 whitespace-nowrap"
+            htmlFor="language"
+          >
+            Choose a language
           </label>
+          <select
+            className="govuk-select govuk-select--subtle w-52 max-w-full"
+            id="language"
+            {...form.register('language')}
+          >
+            <option value="en">English</option>
+            <option value="cy">Welsh</option>
+          </select>
         </div>
+      )}
+      <div className="govuk-form-group flex flex-wrap items-center gap-2">
+        <label
+          className="govuk-label w-44 shrink-0 whitespace-nowrap"
+          htmlFor="template"
+        >
+          Choose a template:
+        </label>
         <select
-          className="govuk-select govuk-select--subtle"
+          className="govuk-select govuk-select--subtle w-52 max-w-full"
           id="template"
           value={selectedOptionValue}
           onChange={(e) => handleTemplateChange(e.target.value)}

@@ -48,6 +48,7 @@ async def _transcribe(params: wf.TranscribeInput) -> str:
             transcription=transcription,
             timeout_seconds=params.stt_timeout_seconds,
             attempt=activity.info().attempt,
+            language=params.language,
         )
     except Exception as e:
         if is_transient(e):

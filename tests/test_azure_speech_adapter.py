@@ -144,7 +144,7 @@ async def test_temporal_retries_use_distinct_regions(monkeypatch, azure_response
     monkeypatch.setattr(_shared, "update_in_progress", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(transcribe, "claim_job", lambda *_args: True)
 
-    async def _provider(transcription, timeout_seconds, attempt):  # noqa: ARG001
+    async def _provider(transcription, timeout_seconds, attempt, language="en"):  # noqa: ARG001
         return await AzureSpeechAdapter.start(audio_file, timeout_seconds=timeout_seconds, attempt=attempt)
 
     monkeypatch.setattr(transcribe.transcription_manager, "perform_transcription_steps", _provider)

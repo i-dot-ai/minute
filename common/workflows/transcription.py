@@ -83,6 +83,7 @@ class PreparedAudio:
 class TranscribeInput:
     minute_id: str
     stt_timeout_seconds: float
+    language: str = "en"
 
 
 @dataclass
@@ -95,17 +96,19 @@ def workflow_id(transcription_id: str) -> str:
     return f"transcription-{transcription_id}"
 
 
-def stt_timeout(duration_seconds: float) -> timedelta:
-    return STT_TIMEOUT_FLOOR + timedelta(seconds=duration_seconds * STT_TIMEOUT_PER_AUDIO_SECOND)
+def stt_timeout(duration_seconds: float, language: str = "en") -> timedelta:
+    timeout = STT_TIMEOUT_FLOOR + timedelta(seconds=duration_seconds * STT_TIMEOUT_PER_AUDIO_SECOND)
+    # Sibrwdx needs up to 960s, plus the download margin, even for short Welsh recordings.
+    return max(timeout, timedelta(seconds=960) + STT_DOWNLOAD_MARGIN) if language == "cy" else timeout
 
 
 @workflow.defn(name="TranscriptionWorkflow")
 class TranscriptionWorkflow:
     @workflow.run
-    async def run(self, minute_id: str) -> dict[str, str]:
+    async def run(self, minute_id: str, language: str = "en") -> dict[str, str]:
         """Returns the outcome of each optional step, e.g. {"title": "failed: ..."}."""
         try:
-            return await self._run(minute_id)
+            return await self._run(minute_id, language)
         except ActivityError as e:
             # Retries exhausted (or a non-retryable failure) anywhere in the run: mark the row
             # terminal now rather than leaving it IN_PROGRESS for the 24h cleanup sweeper.
@@ -118,8 +121,8 @@ class TranscriptionWorkflow:
             )
             raise
 
-    async def _run(self, minute_id: str) -> dict[str, str]:
-        transcription_id = await self._transcribe(minute_id)
+    async def _run(self, minute_id: str, language: str) -> dict[str, str]:
+        transcription_id = await self._transcribe(minute_id, language)
 
         outcome: dict[str, str] = {}
         # Speaker naming before title and summary: both are generated from the named transcript.
@@ -146,7 +149,7 @@ class TranscriptionWorkflow:
         outcome[SUMMARISE] = await self._optional(SUMMARISE, minute_id, timedelta(minutes=30), LLM_RETRY)
         return outcome
 
-    async def _transcribe(self, minute_id: str) -> str:
+    async def _transcribe(self, minute_id: str, language: str) -> str:
         audio: PreparedAudio = await workflow.execute_activity(
             PREPARE_AUDIO,
             minute_id,
@@ -155,12 +158,13 @@ class TranscriptionWorkflow:
             start_to_close_timeout=timedelta(minutes=10),  # 2h wav converted in ~22s
             retry_policy=_PREPARE_RETRY,
         )
-        timeout = stt_timeout(audio.duration_seconds)
+        timeout = stt_timeout(audio.duration_seconds, language)
         return await workflow.execute_activity(
             TRANSCRIBE,
             TranscribeInput(
                 minute_id=minute_id,
                 stt_timeout_seconds=(timeout - STT_DOWNLOAD_MARGIN).total_seconds(),
+                language=language,
             ),
             result_type=str,
             task_queue=STT_TASK_QUEUE,

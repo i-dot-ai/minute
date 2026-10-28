@@ -1,6 +1,7 @@
 'use client'
 
 import { AudioDevice } from '@/components/audio/microphone-permission'
+import { TranscriptionForm } from '@/components/audio/types'
 import { Template } from '@/types/templates'
 import { ReactNode, createContext, useContext, useState } from 'react'
 
@@ -17,6 +18,8 @@ type RecordingSessionValue = {
   setUploadTemplate: (template: Template | null) => void
   uploadAgenda: string | undefined
   setUploadAgenda: (agenda: string | undefined) => void
+  uploadLanguage: TranscriptionForm['language']
+  setUploadLanguage: (language: TranscriptionForm['language']) => void
   devices: AudioDevice[]
   setDevices: (devices: AudioDevice[]) => void
   selectedDeviceId: string
@@ -37,6 +40,8 @@ export function RecordingSessionProvider({
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploadTemplate, setUploadTemplate] = useState<Template | null>(null)
+  const [uploadLanguage, setUploadLanguage] =
+    useState<TranscriptionForm['language']>('en')
   const [uploadAgenda, setUploadAgenda] = useState<string | undefined>(
     undefined
   )
@@ -49,6 +54,7 @@ export function RecordingSessionProvider({
     setUploadFile(null)
     setUploadTemplate(null)
     setUploadAgenda(undefined)
+    setUploadLanguage('en')
   }
 
   return (
@@ -64,6 +70,8 @@ export function RecordingSessionProvider({
         setUploadTemplate,
         uploadAgenda,
         setUploadAgenda,
+        uploadLanguage,
+        setUploadLanguage,
         devices,
         setDevices,
         selectedDeviceId,

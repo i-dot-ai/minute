@@ -2,6 +2,7 @@
 
 import { AudioUploadForm } from '@/components/audio/AudioUploadForm'
 import { PosthogBanner } from '@/components/posthog-banner'
+import { ProcessingStatusPanel } from '@/components/processing-status-panel'
 import { useIsOldUrl } from '@/hooks/use-is-old-url'
 import { AudioDevice } from '@/components/audio/microphone-permission'
 import { useRecordingSession } from '@/providers/recording-session-provider'
@@ -134,6 +135,7 @@ export default function Home() {
       )}
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
+          <ProcessingStatusPanel />
           <h1 className="govuk-heading-l govuk-!-margin-bottom-3">
             Record a meeting
           </h1>

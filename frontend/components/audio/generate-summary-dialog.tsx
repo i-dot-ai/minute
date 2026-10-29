@@ -1,6 +1,7 @@
 'use client'
 
 import { StartTranscriptionSection } from './start-transcription-section-2'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Dialog,
   DialogContent,
@@ -16,12 +17,14 @@ export const GenerateSummaryDialog = ({
   warningText,
   onConfirm,
   disabled = false,
+  errorText,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   warningText?: string
   onConfirm: () => void
   disabled?: boolean
+  errorText?: string
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -48,6 +51,11 @@ export const GenerateSummaryDialog = ({
           </p>
         )}
         <StartTranscriptionSection />
+        {errorText && (
+          <Alert variant="destructive">
+            <AlertDescription>{errorText}</AlertDescription>
+          </Alert>
+        )}
         <DialogFooter className="govuk-button-group sm:ml-auto sm:justify-end">
           <button
             type="button"

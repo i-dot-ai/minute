@@ -56,7 +56,12 @@ export function RetryTranscriptionDialog({
     typeof selectedTemplate !== 'string' &&
     selectedTemplate?.agenda_usage === 'required'
 
-  const { mutate: retryTranscription, isPending } = useMutation({
+  const {
+    mutate: retryTranscription,
+    isPending,
+    error,
+    reset,
+  } = useMutation({
     ...retryTranscriptionTranscriptionsTranscriptionIdRetryPostMutation(),
   })
 
@@ -91,7 +96,10 @@ export function RetryTranscriptionDialog({
       <button
         type="button"
         className="govuk-button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          reset()
+          setOpen(true)
+        }}
       >
         Try again
       </button>
@@ -101,6 +109,13 @@ export function RetryTranscriptionDialog({
           onOpenChange={setOpen}
           onConfirm={form.handleSubmit(onSubmit)}
           disabled={isPending || (agendaRequired && !agendaValue)}
+          errorText={
+            error
+              ? typeof error.detail === 'string'
+                ? error.detail
+                : 'Could not restart the transcription. Please try again.'
+              : undefined
+          }
         />
       </FormProvider>
     </>

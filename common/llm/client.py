@@ -5,11 +5,6 @@ from google.genai.types import (
     GenerateContentConfig,
 )
 from pydantic import BaseModel
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_random_exponential,
-)
 
 from common.llm.adapters import GeminiModelAdapter, ModelAdapter, OpenAIModelAdapter
 from common.settings import get_settings
@@ -30,9 +25,8 @@ class ChatBot:
     and structured interactions.
 
     This class provides methods for interacting with an underlying model adapter to perform various
-    chat functionalities. It includes support for retry mechanisms to ensure robust performance in
-    case of failures, with methods optimized for both general conversation and specific structured
-    responses.
+    chat functionalities, with methods for both general conversation and specific structured
+    responses. It does not retry: the Temporal activity that calls it does.
 
     Attributes:
         adapter (ModelAdapter): The underlying adapter interface that handles communication
@@ -43,14 +37,12 @@ class ChatBot:
         self.adapter = adapter
         self.messages = []
 
-    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
     async def chat(self, messages: list[dict[str, str]]) -> str:
         response = await self.adapter.chat(messages=self.messages + messages)
         self.messages.extend(messages)
         self.messages.append({"role": "assistant", "content": response})
         return response
 
-    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
     async def structured_chat(self, messages: list[dict[str, str]], response_format: type[T]) -> T:
         response = await self.adapter.structured_chat(messages=messages, response_format=response_format)
         self.messages.extend(messages)

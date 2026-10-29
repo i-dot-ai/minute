@@ -6,22 +6,26 @@
 set -euo pipefail
 
 ENV=${1:-}
+COMPONENT=${2:-app}
+case "$COMPONENT" in
+    app) PREFIX=release ;;
+    temporal-server) PREFIX=release-temporal-server ;;
+    *) echo "Invalid release component: '$COMPONENT'" >&2; exit 1 ;;
+esac
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 CURRENT_USER=$(whoami)
 TIMESTAMP=$(date +%d-%m-%y--%H%M%S)
-TAG_NAME="release-$ENV-$BRANCH-$CURRENT_USER-$TIMESTAMP"
+TAG_NAME="$PREFIX-$ENV-$BRANCH-$CURRENT_USER-$TIMESTAMP"
 
 if [ "$ENV" == 'prod' ]; then
     echo -e "\033[0;31mYou can only deploy to prod through a merge into main.\033[0m"
     exit 1
 fi
 
-# Only these produce a tag that .github/workflows/release.yml matches
-# (release-dev-** / release-preprod-**). Any other value pushes a tag that no
-# workflow is listening for, so the release silently does nothing.
+# Only dev/preprod tags trigger automatic releases; production uses a manual workflow on main.
 if [ "$ENV" != 'dev' ] && [ "$ENV" != 'preprod' ]; then
     echo -e "\033[0;31mInvalid environment: '$ENV'\033[0m"
-    echo "Usage: ./release.sh <dev|preprod>   (or: make release env=dev)"
+    echo "Usage: ./release.sh <dev|preprod> [app|temporal-server]"
     exit 1
 fi
 

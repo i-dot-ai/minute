@@ -7,11 +7,10 @@ from tests.utils import get_test_client
 
 
 @pytest.mark.asyncio(loop_scope="session")
-@pytest.mark.parametrize("expected_status_code", [200])
-async def test_get_templates_success(expected_status_code):
+async def test_get_templates_success():
     async with get_test_client() as ac:
         response = await ac.get("/templates")
-        assert response.status_code == expected_status_code
+        assert response.status_code == 200
         assert len(response.json()) == len(TemplateManager.templates)
 
 
@@ -36,10 +35,13 @@ async def _clear_default(ac) -> None:
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_set_default_user_template():
+async def test_set_default_template():
+    """Setting, overwriting (either direction) and validating the user's default template."""
     async with get_test_client() as ac:
+        system_name = (await ac.get("/templates")).json()[0]["name"]
         template_id = await _create_user_template(ac, "Default me")
         try:
+            # A user template can be the default.
             response = await ac.patch("/users/default-template", json={"template_id": template_id})
             assert response.status_code == 200
             assert response.json()["default_template_id"] == template_id
@@ -50,16 +52,8 @@ async def test_set_default_user_template():
 
             me = (await ac.get("/users/me")).json()
             assert me["default_template_id"] == template_id
-        finally:
-            await _clear_default(ac)
-            await ac.delete(f"/user-templates/{template_id}")
 
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_set_default_system_template():
-    async with get_test_client() as ac:
-        system_name = (await ac.get("/templates")).json()[0]["name"]
-        try:
+            # A system template can be the default, overwriting the user one.
             response = await ac.patch("/users/default-template", json={"template_name": system_name})
             assert response.status_code == 200
             assert response.json()["default_template_name"] == system_name
@@ -67,33 +61,15 @@ async def test_set_default_system_template():
 
             templates = (await ac.get("/templates")).json()
             assert all(t["is_default"] == (t["name"] == system_name) for t in templates)
-        finally:
-            await _clear_default(ac)
 
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_set_default_overwrites_previous():
-    async with get_test_client() as ac:
-        system_name = (await ac.get("/templates")).json()[0]["name"]
-        template_id = await _create_user_template(ac, "Overwrite me")
-        try:
+            # ...and the user template overwrites it back.
             await ac.patch("/users/default-template", json={"template_name": system_name})
             await ac.patch("/users/default-template", json={"template_id": template_id})
-
             me = (await ac.get("/users/me")).json()
             assert me["default_template_id"] == template_id
             assert me["default_template_name"] is None
-        finally:
-            await _clear_default(ac)
-            await ac.delete(f"/user-templates/{template_id}")
 
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_set_default_validation():
-    async with get_test_client() as ac:
-        template_id = await _create_user_template(ac, "Validate me")
-        system_name = (await ac.get("/templates")).json()[0]["name"]
-        try:
+            # Supplying both, or an unknown name/id, is rejected.
             both = await ac.patch(
                 "/users/default-template",
                 json={"template_id": template_id, "template_name": system_name},
@@ -127,7 +103,7 @@ _SANITISED_CONTENT = "<p>Legit <strong>bold</strong></p>"
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_create_user_template_sanitises_content():
+async def test_user_template_content_is_sanitised():
     async with get_test_client() as ac:
         response = await ac.post(
             "/user-templates",
@@ -141,18 +117,11 @@ async def test_create_user_template_sanitises_content():
         )
         assert response.status_code == 200
         templates = (await ac.get("/user-templates")).json()
-        template = next(t for t in templates if t["name"] == "XSS create")
+        template_id = next(t["id"] for t in templates if t["name"] == "XSS create")
         try:
-            assert template["content"] == _SANITISED_CONTENT
-        finally:
-            await ac.delete(f"/user-templates/{template['id']}")
+            assert next(t for t in templates if t["id"] == template_id)["content"] == _SANITISED_CONTENT
 
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_edit_user_template_sanitises_content():
-    async with get_test_client() as ac:
-        template_id = await _create_user_template(ac, "XSS patch")
-        try:
+            # Editing goes through the same sanitiser.
             response = await ac.patch(f"/user-templates/{template_id}", json={"content": _XSS_CONTENT})
             assert response.status_code == 200
 

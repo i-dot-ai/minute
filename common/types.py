@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from enum import IntEnum, StrEnum, auto
+from enum import StrEnum, auto
 
 from pydantic import BaseModel, Field
 
@@ -170,17 +170,6 @@ class MeetingCheck(BaseModel):
     is_long_meeting: bool
 
 
-class TaskType(IntEnum):
-    # messages have a natural ordering in which we want them to happen
-    TRANSCRIPTION = 1
-    MINUTE = 2
-    EDIT = 3
-
-
-class EditMessageData(BaseModel):
-    source_id: uuid.UUID = Field(description="ID of the source message")
-
-
 class TranscriptionJobMessageData(BaseModel):
     transcription_service: str = Field(description="Name of the transcription service")
     job_name: str = Field(
@@ -188,20 +177,10 @@ class TranscriptionJobMessageData(BaseModel):
         default="synchronous",
     )
     transcript: list[DialogueEntry] | None = Field(description="Transcript of the transcription", default=None)
-    claim_token: datetime | None = Field(
-        description="Fencing token from the original claim, carried so async poll completions are fenced too",
-        default=None,
-    )
     transcript_key: str | None = Field(
         description="Provider output object to delete once the transcript is persisted",
         default=None,
     )
-
-
-class WorkerMessage(BaseModel):
-    id: uuid.UUID
-    type: TaskType
-    data: EditMessageData | TranscriptionJobMessageData | None = Field(default=None)
 
 
 class MeetingType(StrEnum):

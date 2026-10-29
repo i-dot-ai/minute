@@ -7,6 +7,7 @@ from google.genai.types import (
     Content,
     GenerateContentConfig,
     HttpOptions,
+    HttpRetryOptions,
     ModelContent,
     Part,
     UserContent,
@@ -33,7 +34,13 @@ class GeminiModelAdapter(ModelAdapter):
         self._model = model
         # Note, env vars GOOGLE_CLOUD_PROJECT and GOOGLE_APPLICATION_CREDENTIALS are automatically used by the client
         # GOOGLE_CLOUD_LOCATION 'should' also be according to docs, but this doesn't appear to be true...
-        self.client = genai.Client(http_options=http_options, vertexai=True, location=settings.GOOGLE_CLOUD_LOCATION)
+        # Temporal owns retries; pin the SDK to one attempt (its default is version-dependent) so it
+        # cannot add a hidden second retry layer.
+        self.client = genai.Client(
+            http_options=http_options or HttpOptions(retryOptions=HttpRetryOptions(attempts=1)),
+            vertexai=True,
+            location=settings.GOOGLE_CLOUD_LOCATION,
+        )
         self._kwargs = kwargs
 
     @staticmethod

@@ -8,6 +8,7 @@ from common.database.postgres_models import Recording, Transcription
 from common.services.exceptions import TranscriptionFailedError
 from common.services.storage_services import StorageService
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
+from common.services.transcription_services.aws import AWSTranscribeAdapter
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.types import TranscriptionJobMessageData
 
@@ -46,7 +47,12 @@ class MockAdapter(TranscriptionAdapter):
     def is_available(self) -> bool:
         return self._is_available
 
-    async def start(self, audio_file_path_or_recording) -> TranscriptionJobMessageData:  # noqa: ARG002
+    async def start(
+        self,
+        audio_file_path_or_recording,  # noqa: ARG002
+        timeout_seconds=None,  # noqa: ARG002
+        attempt=1,  # noqa: ARG002
+    ) -> TranscriptionJobMessageData:
         return TranscriptionJobMessageData(
             job_name="test_job_name",
             transcript=[{"text": "Test transcript", "speaker": "Speaker1", "start": 0.0, "end": 1.0}],
@@ -130,51 +136,47 @@ def sample_message_data():
 class TestTranscriptionServiceManager:
     """Test class for TranscriptionServiceManager."""
 
-    def test_init_with_available_adapters(self, manager):
-        """Test initialization with available adapters."""
-        # Should only include available adapters that are in settings
+    def test_init_selects_only_available_registered_adapters(self, manager):
+        """Only available adapters that are in settings are registered."""
         assert len(manager._available_adapters) == 2  # noqa: SLF001
         assert "MockAdapter1" in manager._available_adapters  # noqa: SLF001
         assert "MockAdapter2" in manager._available_adapters  # noqa: SLF001
         assert "MockAdapter3" not in manager._available_adapters  # noqa: SLF001
 
-    def test_init_with_no_available_adapters(self, mock_adapters):  # noqa: ARG002
-        """Test initialization when no adapters are available."""
         with patch("common.services.transcription_services.transcription_manager.settings") as mock_settings:
             mock_settings.TRANSCRIPTION_SERVICES = ["NonExistentAdapter"]
-
-            manager = TranscriptionServiceManager()
-            assert len(manager._available_adapters) == 0  # noqa: SLF001
+            assert len(TranscriptionServiceManager()._available_adapters) == 0  # noqa: SLF001
 
     def test_get_available_services(self, manager):
-        """Test get_available_services method."""
+        """Only available adapters that are in settings are listed."""
         available_services = manager.get_available_services()
 
         assert len(available_services) == 2
         assert "MockAdapter1" in available_services
         assert "MockAdapter2" in available_services
 
-    def test_get_available_services_with_unavailable_adapter(self, mock_adapters):  # noqa: ARG002
-        """Test get_available_services when adapter is unavailable."""
         with patch("common.services.transcription_services.transcription_manager.settings") as mock_settings:
             mock_settings.TRANSCRIPTION_SERVICES = ["MockAdapter3"]  # This one is not available
+            assert TranscriptionServiceManager().get_available_services() == {}
 
-            manager = TranscriptionServiceManager()
-            available_services = manager.get_available_services()
+    def test_async_aws_adapter_fails_registration(self):
+        """An async provider (AWS) is not supported by the Temporal workflow, so registration fails fast."""
+        with (
+            patch(
+                "common.services.transcription_services.transcription_manager._adapters",
+                {"aws_transcribe": AWSTranscribeAdapter},
+            ),
+            patch("common.services.transcription_services.transcription_manager.settings") as mock_settings,
+        ):
+            mock_settings.TRANSCRIPTION_SERVICES = ["aws_transcribe"]
+            with pytest.raises(RuntimeError, match="not supported by the Temporal transcription workflow"):
+                TranscriptionServiceManager()
 
-            assert len(available_services) == 0
-
-    @pytest.mark.parametrize(
-        "duration,expected_adapter",  # noqa: PT006
-        [
-            (1500, "MockAdapter1"),  # Should select MockAdapter1 (1800s max) for 1500s duration
-            (2000, "MockAdapter2"),  # Should select MockAdapter2 (3600s max) for 2000s duration
-        ],
-    )
-    def test_select_adaptor_success(self, manager, duration, expected_adapter):
+    def test_select_adaptor_success(self, manager):
         """Test successful adapter selection based on duration."""
-        adapter = manager.select_adaptor(duration)
-        assert adapter.name == expected_adapter
+        # Picks the smallest available adapter that can handle the duration.
+        for duration, expected_adapter in ((1500, "MockAdapter1"), (2000, "MockAdapter2")):
+            assert manager.select_adaptor(duration).name == expected_adapter, duration
 
     def test_select_adaptor_no_suitable_adapter(self, manager):
         """Test adapter selection when no adapter can handle the duration."""
@@ -237,11 +239,13 @@ class TestTranscriptionServiceManager:
                     transcription_service=mock_adapter.name,
                 )
 
-                result = await manager.perform_transcription_steps(mock_transcription)
+                result = await manager.perform_transcription_steps(mock_transcription, timeout_seconds=123, attempt=2)
 
                 assert result.job_name == "test_job"
                 assert result.transcript is not None
-                mock_start.assert_called_once()
+                mock_start.assert_called_once_with(
+                    audio_file_path_or_recording=Path(temp_file.name), timeout_seconds=123, attempt=2
+                )
 
     @pytest.mark.asyncio
     async def test_perform_transcription_steps_asynchronous(
@@ -272,7 +276,9 @@ class TestTranscriptionServiceManager:
 
                 assert result.job_name == "test_job"
                 assert result.transcript is None
-                mock_start.assert_called_once_with(audio_file_path_or_recording=mock_recording)
+                mock_start.assert_called_once_with(
+                    audio_file_path_or_recording=mock_recording, timeout_seconds=None, attempt=1
+                )
 
     @pytest.mark.asyncio
     async def test_perform_transcription_steps_unknown_adapter_type(

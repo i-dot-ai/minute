@@ -1,12 +1,6 @@
 FROM python:3.12-slim
 
-# The following three ENVs are to ensure ray logs appear properly
-ENV RAY_ROTATION_MAX_BYTES=10485760
-ENV RAY_ROTATION_BACKUP_COUNT=1
 ENV PYTHONUNBUFFERED=1
-# Stop Ray collapsing repeated lines across actors and appending "[repeated Nx across cluster]",
-# which breaks structured JSON logs
-ENV RAY_DEDUP_LOGS=0
 
 # uv configuration: install into a project virtualenv at a known path and put it on PATH
 ENV UV_PROJECT_ENVIRONMENT=/app/.venv
@@ -16,7 +10,7 @@ ENV UV_NO_SYNC=1
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y ffmpeg curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
@@ -40,11 +34,9 @@ RUN uv sync --frozen --no-default-groups --group worker
 RUN chmod +x worker/entrypoint.sh
 
 # Run as a non-root user. chown /app so the entrypoint can write runtime files
-# (e.g. /app/config/google-credentials.json); --create-home gives Ray a writable HOME.
-# /healthcheck is the heartbeat dir (worker/healthcheck.py) and must be writable too.
+# (e.g. /app/config/google-credentials.json); --create-home gives the user a writable HOME.
 RUN useradd --create-home appuser \
-    && mkdir -p /healthcheck \
-    && chown -R appuser /app /healthcheck
+    && chown -R appuser /app
 USER appuser
 
 CMD [ "worker/entrypoint.sh" ]

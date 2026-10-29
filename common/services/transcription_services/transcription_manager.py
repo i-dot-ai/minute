@@ -40,6 +40,11 @@ class TranscriptionServiceManager:
             adapter = _adapters.get(adapter_name)
             if not adapter:
                 logger.warning("Adapter not found %s", adapter_name)
+            elif adapter is AWSTranscribeAdapter:
+                # Async providers return a job to poll; the Temporal transcribe activity only
+                # supports synchronous ones, so fail fast rather than register a dead service.
+                msg = f"{adapter.name} is async and is not supported by the Temporal transcription workflow"
+                raise RuntimeError(msg)
             elif not adapter.is_available():
                 logger.warning("Transcription service %s is not available", adapter.name)
             else:
@@ -70,7 +75,10 @@ class TranscriptionServiceManager:
                 entry["text"] = convert_american_to_british_spelling(entry["text"])
         return transcription_job
 
-    async def perform_transcription_steps(self, transcription: Transcription) -> TranscriptionJobMessageData:
+    async def perform_transcription_steps(
+        self, transcription: Transcription, timeout_seconds: float | None = None, attempt: int = 1
+    ) -> TranscriptionJobMessageData:
+        """One provider attempt, with the caller's timeout budget and Temporal attempt number."""
         recording = transcription.recordings[0]
         file_extension = Path(recording.s3_file_key).suffix.lower()
         with tempfile.TemporaryDirectory() as tempdir:
@@ -88,9 +96,13 @@ class TranscriptionServiceManager:
             adapter = self.select_adaptor(int(duration_seconds))
             match adapter.adapter_type:
                 case AdapterType.SYNCHRONOUS:
-                    transcription_job = await adapter.start(audio_file_path_or_recording=file_path)
+                    transcription_job = await adapter.start(
+                        audio_file_path_or_recording=file_path, timeout_seconds=timeout_seconds, attempt=attempt
+                    )
                 case AdapterType.ASYNC:
-                    transcription_job = await adapter.start(audio_file_path_or_recording=recording)
+                    transcription_job = await adapter.start(
+                        audio_file_path_or_recording=recording, timeout_seconds=timeout_seconds, attempt=attempt
+                    )
                 case _:
                     msg = "adapter not recognised"
                     raise RuntimeError(msg)

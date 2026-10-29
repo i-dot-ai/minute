@@ -1,7 +1,7 @@
 """Tests for the POST /transcriptions/{id}/retry endpoint.
 
-Rows are seeded straight into Postgres. The S3 existence check and the queue
-publish are patched so the test neither touches object storage nor enqueues
+Rows are seeded straight into Postgres. The S3 existence check and the workflow
+start are patched so the test neither touches object storage nor enqueues
 real transcription work.
 
 Requires the docker-compose Postgres (`make run`).
@@ -98,47 +98,126 @@ async def in_progress_transcription():
 
 
 @pytest.fixture(autouse=True)
-def published_messages(monkeypatch):
-    published: list = []
+def started_workflows(monkeypatch):
+    started: list = []
 
     async def _object_exists(_key: str) -> bool:
         return True
+
+    async def _start(transcription_id, minute_id):
+        started.append((transcription_id, minute_id))
+
+    async def _running(_transcription_id):
+        return False
 
     monkeypatch.setattr(
         "backend.api.routes.transcriptions.storage_service.check_object_exists",
         _object_exists,
     )
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
-        published.append,
+        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
+        _start,
     )
-    return published
+    monkeypatch.setattr("backend.api.routes.transcriptions.temporal.transcription_workflow_running", _running)
+    return started
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_retry_concurrent_requests_publish_once(failed_transcription, published_messages):
-    """Vuln-0003 regression: only one of two concurrent retries may reset and publish."""
+@pytest.mark.parametrize("running", [True, None])
+async def test_retry_does_not_reset_data_until_previous_workflow_is_closed(
+    failed_transcription, started_workflows, monkeypatch, running
+):
+    async def _running(_transcription_id):
+        if running is None:
+            msg = "Temporal unavailable"
+            raise ConnectionError(msg)
+        return running
+
+    monkeypatch.setattr("backend.api.routes.transcriptions.temporal.transcription_workflow_running", _running)
+    transcription_id = failed_transcription["transcription_id"]
+    async with get_test_client() as ac:
+        response = await ac.post(f"/transcriptions/{transcription_id}/retry", json={"template_name": "New template"})
+    assert response.status_code == (409 if running else 503)
+    assert started_workflows == []
+    async with AsyncSession(async_engine) as session:
+        transcription = await session.get(Transcription, transcription_id)
+        assert transcription.status == JobStatus.FAILED
+        assert transcription.error == "boom"
+        assert transcription.dialogue_entries[0]["text"] == "body"
+        assert transcription.created_datetime == SEED_TIME
+        minute = await session.get(Minute, failed_transcription["minute_id"])
+        assert minute.template_name == "Old template"
+        version = await session.get(MinuteVersion, failed_transcription["minute_version_id"])
+        assert version.status == JobStatus.FAILED
+        assert version.html_content == "stale content"
+
+
+@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.parametrize("fails_immediately", [False, True])
+async def test_retry_concurrent_requests_publish_once(
+    failed_transcription, started_workflows, monkeypatch, fails_immediately
+):
+    """A stale request cannot reset a newer attempt, even when it has already failed again."""
     transcription_id = failed_transcription["transcription_id"]
     minute_id = failed_transcription["minute_id"]
+    both_checked, first_started = asyncio.Event(), asyncio.Event()
+    checks = 0
+
+    async def _object_exists(_key):
+        nonlocal checks
+        checks += 1
+        if checks == 1:
+            await both_checked.wait()
+        else:
+            both_checked.set()
+            await first_started.wait()
+        return True
+
+    async def _start(tid, mid):
+        started_workflows.append((tid, mid))
+        if fails_immediately:
+            async with AsyncSession(async_engine) as session:
+                transcription = await session.get(Transcription, tid)
+                transcription.status = JobStatus.FAILED
+                transcription.error = "New attempt failed"
+                version = await session.get(MinuteVersion, failed_transcription["minute_version_id"])
+                version.status = JobStatus.FAILED
+                version.error = "New attempt failed"
+                version.html_content = "New attempt content"
+                await session.commit()
+        first_started.set()
+
+    monkeypatch.setattr("backend.api.routes.transcriptions.storage_service.check_object_exists", _object_exists)
+    monkeypatch.setattr("backend.api.routes.transcriptions.temporal.start_transcription_workflow", _start)
 
     async with get_test_client() as ac:
-        responses = await asyncio.gather(
-            ac.post(f"/transcriptions/{transcription_id}/retry", json={"template_name": "General"}),
-            ac.post(f"/transcriptions/{transcription_id}/retry", json={"template_name": "General"}),
+        responses = await asyncio.wait_for(
+            asyncio.gather(
+                ac.post(f"/transcriptions/{transcription_id}/retry", json={"template_name": "General"}),
+                ac.post(f"/transcriptions/{transcription_id}/retry", json={"template_name": "Stale template"}),
+            ),
+            timeout=10,
         )
 
     status_codes = sorted(response.status_code for response in responses)
     assert status_codes == [201, 400]
-    assert len(published_messages) == 1
-    assert published_messages[0].id == minute_id
+    assert len(started_workflows) == 1
+    assert started_workflows[0] == (transcription_id, minute_id)
 
     async with AsyncSession(async_engine) as session:
         transcription = await session.get(Transcription, transcription_id)
-        assert transcription.status == JobStatus.AWAITING_START
+        assert transcription.status == (JobStatus.FAILED if fails_immediately else JobStatus.AWAITING_START)
+        assert transcription.error == ("New attempt failed" if fails_immediately else None)
+        minute = await session.get(Minute, minute_id)
+        assert minute.template_name == "General"
+        version = await session.get(MinuteVersion, failed_transcription["minute_version_id"])
+        assert version.status == (JobStatus.FAILED if fails_immediately else JobStatus.AWAITING_START)
+        assert version.error == ("New attempt failed" if fails_immediately else None)
+        assert version.html_content == ("New attempt content" if fails_immediately else "")
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_retry_resets_existing_transcription(failed_transcription, published_messages):
+async def test_retry_resets_existing_transcription(failed_transcription, started_workflows):
     transcription_id = failed_transcription["transcription_id"]
     minute_id = failed_transcription["minute_id"]
 
@@ -167,43 +246,35 @@ async def test_retry_resets_existing_transcription(failed_transcription, publish
         assert version.error is None
         assert version.html_content == ""
 
-    published = published_messages
+    published = started_workflows
     assert len(published) == 1
-    assert published[0].id == minute_id
+    assert published[0] == (transcription_id, minute_id)
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_retry_rejects_non_failed_transcription(in_progress_transcription):
-    transcription_id = in_progress_transcription["transcription_id"]
+async def test_retry_rejections(in_progress_transcription, started_workflows):
     async with get_test_client() as ac:
-        response = await ac.post(
-            f"/transcriptions/{transcription_id}/retry",
+        # Unknown transcription.
+        unknown = await ac.post(f"/transcriptions/{uuid.uuid4()}/retry", json={"template_name": "General"})
+        assert unknown.status_code == 404
+
+        # Not in a failed (terminal) state.
+        not_failed = await ac.post(
+            f"/transcriptions/{in_progress_transcription['transcription_id']}/retry",
             json={"template_name": "General"},
         )
-    assert response.status_code == 400
+        assert not_failed.status_code == 400
 
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_retry_returns_404_for_unknown_transcription():
-    async with get_test_client() as ac:
-        response = await ac.post(
-            f"/transcriptions/{uuid.uuid4()}/retry",
-            json={"template_name": "General"},
-        )
-    assert response.status_code == 404
-
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_retry_rejects_minute_with_multiple_versions(published_messages):
+    # A minute with more than one version cannot be retried.
     ids = await _seed_failed_transcription(extra_versions=1)
     try:
         async with get_test_client() as ac:
-            response = await ac.post(
+            multi = await ac.post(
                 f"/transcriptions/{ids['transcription_id']}/retry",
                 json={"template_name": "General"},
             )
-        assert response.status_code == 400
-        assert published_messages == []
+        assert multi.status_code == 400
+        assert started_workflows == []
     finally:
         await _delete_transcription(ids["transcription_id"])
 
@@ -213,12 +284,12 @@ async def test_retry_publish_failure_marks_failed(failed_transcription, monkeypa
     """A definite enqueue failure leaves the retry explicitly retryable."""
     transcription_id = failed_transcription["transcription_id"]
 
-    def _boom(_message):
-        msg = "queue unavailable"
+    async def _boom(_transcription_id, _minute_id):
+        msg = "temporal unavailable"
         raise RuntimeError(msg)
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.transcription_queue_service.publish_message",
+        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
         _boom,
     )
 
@@ -236,8 +307,8 @@ async def test_retry_publish_failure_marks_failed(failed_transcription, monkeypa
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_patch_rejected_while_processing(in_progress_transcription, failed_transcription):
-    """Finding 2: a PATCH would bump updated_datetime (the worker's claim token) and
-    void the in-flight claim, so it is refused until the job is terminal."""
+    """Finding 2: a PATCH while processing would race the workflow's writes, so it is
+    refused until the job is terminal."""
     async with get_test_client() as ac:
         blocked = await ac.patch(
             f"/transcriptions/{in_progress_transcription['transcription_id']}", json={"title": "renamed"}

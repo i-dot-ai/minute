@@ -17,43 +17,39 @@ DRAFT = """# Meeting Minutes: Delivery Board
 """
 
 
-def test_strip_preamble_removes_commentary_before_the_first_heading():
-    minute = (
+def test_strip_preamble():
+    prose_draft = "The board met on 10 September 2026.\n\n## Actions\n"
+    preceded_by_prose = "Here are the minutes.\n\n" + prose_draft
+    no_heading = "The board met on 10 September 2026 [1]."
+    preamble = (
         "An analysis of the transcript has been performed to map key details to the meeting summary. "
-        "Below are the updated meeting minutes with citations added.\n\n" + DRAFT
+        "Below are the updated meeting minutes with citations added.\n\n"
     )
-    assert strip_preamble(DRAFT, minute) == DRAFT
-
-
-def test_strip_preamble_leaves_a_clean_minute_untouched():
-    assert strip_preamble(DRAFT, DRAFT) == DRAFT
-
-
-def test_strip_preamble_keeps_content_when_the_draft_does_not_start_with_a_heading():
-    """Templates that open with prose have no heading to anchor on, so nothing is dropped."""
-    draft = "The board met on 10 September 2026.\n\n## Actions\n"
-    minute = "Here are the minutes.\n\n" + draft
-    assert strip_preamble(draft, minute) == minute
-
-
-def test_strip_preamble_keeps_content_when_the_model_returns_no_heading():
-    minute = "The board met on 10 September 2026 [1]."
-    assert strip_preamble(DRAFT, minute) == minute
+    cases = [
+        # Commentary before the first heading is dropped.
+        (DRAFT, preamble + DRAFT, DRAFT),
+        # A clean minute is untouched.
+        (DRAFT, DRAFT, DRAFT),
+        # Templates that open with prose have no heading to anchor on, so nothing is dropped.
+        (prose_draft, preceded_by_prose, preceded_by_prose),
+        # Nothing to strip when the model returns no heading.
+        (DRAFT, no_heading, no_heading),
+    ]
+    for draft, minute, expected in cases:
+        assert strip_preamble(draft, minute) == expected
 
 
 def test_unwrap_backticked_citations():
     minute = "The dry run finished on Friday `[1]`. Two findings were raised `[3-4][7]`."
-    expected = "The dry run finished on Friday [1]. Two findings were raised [3-4][7]."
-    assert unwrap_backticked_citations(minute) == expected
+    assert (
+        unwrap_backticked_citations(minute) == "The dry run finished on Friday [1]. Two findings were raised [3-4][7]."
+    )
 
+    # Real code spans are left alone.
+    code = "Daniel wrote the `normalise_address` step [3]."
+    assert unwrap_backticked_citations(code) == code
 
-def test_unwrap_backticked_citations_leaves_real_code_spans_alone():
-    minute = "Daniel wrote the `normalise_address` step [3]."
-    assert unwrap_backticked_citations(minute) == minute
-
-
-def test_backticked_citations_would_otherwise_render_as_code():
-    """The reason the unwrapping exists: mistune turns `[1]` into a <code> element."""
+    # The reason the unwrapping exists: mistune turns `[1]` into a <code> element.
     assert "<code>[1]</code>" in mistune.html("The dry run finished `[1]`.")
     assert "<code>" not in mistune.html(unwrap_backticked_citations("The dry run finished `[1]`."))
 
@@ -63,16 +59,11 @@ def test_combine_consecutive_citations_still_groups_runs():
     assert combine_consecutive_citations(minute) == "A statement [1-3] and another [9]."
 
 
-def test_strip_document_code_fence_unwraps_a_fenced_minute():
+def test_strip_document_code_fence():
     fenced = "```markdown\n# Meeting Minutes\n\n- A point\n```"
     assert strip_document_code_fence(fenced) == "# Meeting Minutes\n\n- A point"
-
-
-def test_strip_document_code_fence_leaves_an_unfenced_minute_alone():
     assert strip_document_code_fence(DRAFT) == DRAFT
 
-
-def test_fenced_minute_would_otherwise_render_as_one_code_block():
-    fenced = "```markdown\n# Meeting Minutes\n\n- A point\n```"
+    # The reason for stripping: a fenced minute renders as one code block instead of headings.
     assert "<pre>" in mistune.html(fenced)
     assert "<h1>" in mistune.html(strip_document_code_fence(fenced))

@@ -33,41 +33,13 @@ Conversation:
 {transcript_as_speaker_and_utterance(dialogue_entries)}
     """  # noqa: E501
 
-    try:
-        chatbot = create_default_chatbot(FastOrBestLLM.FAST)
-        messages = [
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": user_message},
-        ]
-
-        speaker_prediction = await chatbot.structured_chat(messages, response_format=SpeakerPredictionOutput)
-
-        if not speaker_prediction.predictions:
-            logger.warning("No predictions found, returning original speaker labels")
-            return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}
-
-        return {pred.original_speaker: pred.predicted_name for pred in speaker_prediction.predictions}
-    except Exception as e:  # noqa: BLE001 # flagged by ruff - investigate when we have time.
-        error_message = str(e)
-        # Check for content filter errors from Azure OpenAI
-        if any(
-            term in error_message.lower()
-            for term in [
-                "content_filter",
-                "content filter",
-                "content management policy",
-                "filtered",
-                "policy violation",
-            ]
-        ):
-            # Log the content filter error but continue with original speaker labels
-            logger.warning(
-                "Content filter detected in transcript. Continuing with original speaker labels: %s", error_message
-            )
-
-            # Return original speaker labels
-            return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}
-        else:
-            # For other errors, log and return original speaker labels
-            logger.error("Error predicting speaker names: %s", error_message)
-            return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}
+    chatbot = create_default_chatbot(FastOrBestLLM.FAST)
+    messages = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": user_message},
+    ]
+    speaker_prediction = await chatbot.structured_chat(messages, response_format=SpeakerPredictionOutput)
+    if not speaker_prediction.predictions:
+        logger.warning("No predictions found, returning original speaker labels")
+        return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}
+    return {pred.original_speaker: pred.predicted_name for pred in speaker_prediction.predictions}

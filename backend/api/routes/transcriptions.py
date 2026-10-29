@@ -12,6 +12,7 @@ from sqlmodel import col, func, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from backend.api.dependencies import SQLSessionDep, UserDep
+from backend.utils import temporal
 from backend.utils.get_file_s3_key import get_file_s3_key
 from common.database.postgres_models import (
     JobStatus,
@@ -21,7 +22,6 @@ from common.database.postgres_models import (
     Transcription,
     UserTemplate,
 )
-from common.services.queue_services import get_queue_service
 from common.services.storage_services import get_storage_service
 from common.settings import get_settings
 from common.types import (
@@ -29,7 +29,6 @@ from common.types import (
     RecordingCreateRequest,
     RecordingCreateResponse,
     SingleRecording,
-    TaskType,
     TranscriptionCreateRequest,
     TranscriptionCreateResponse,
     TranscriptionGetResponse,
@@ -37,7 +36,6 @@ from common.types import (
     TranscriptionMetadata,
     TranscriptionPatchRequest,
     TranscriptionRetryRequest,
-    WorkerMessage,
 )
 
 settings = get_settings()
@@ -46,9 +44,6 @@ storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
 transcriptions_router = APIRouter(tags=["Transcriptions"])
-transcription_queue_service = get_queue_service(
-    settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
-)
 
 logger = logging.getLogger(__name__)
 
@@ -63,15 +58,24 @@ def _next_cleanup_cutoff(retention_days: int) -> datetime:
 
 
 async def _enqueue_transcription(session: AsyncSession, transcription: Transcription, minute_id: uuid.UUID) -> None:
-    """Commit before publish so workers can always see the job row."""
+    """Commit before starting the workflow so the worker can always see the job row."""
     await session.commit()
     try:
-        transcription_queue_service.publish_message(WorkerMessage(id=minute_id, type=TaskType.TRANSCRIPTION))
+        await temporal.start_transcription_workflow(transcription.id, minute_id)
     except Exception as exc:
         transcription.status = JobStatus.FAILED
         transcription.error = "Failed to enqueue transcription"
         await session.commit()
         raise HTTPException(status_code=503, detail="Failed to enqueue transcription") from exc
+
+
+async def _check_retry_workflow(transcription_id: uuid.UUID) -> None:
+    try:
+        running = await temporal.transcription_workflow_running(transcription_id)
+    except Exception as exc:
+        raise HTTPException(503, detail="Could not check transcription workflow; please try again") from exc
+    if running:
+        raise HTTPException(409, detail="The previous transcription is still finishing; please try again shortly")
 
 
 @transcriptions_router.get("/transcriptions", response_model=PaginatedTranscriptionsResponse)
@@ -249,6 +253,7 @@ async def retry_transcription(
         raise HTTPException(404, detail="Transcription not found")
     if transcription.status != JobStatus.FAILED:
         raise HTTPException(400, detail="Only failed transcriptions can be retried")
+    await _check_retry_workflow(transcription.id)
 
     recording = transcription.recordings[0] if transcription.recordings else None
     if not recording:
@@ -279,11 +284,14 @@ async def retry_transcription(
             msg = f"User template not found: {request.template_id}"
             raise HTTPException(status_code=404, detail=msg)
 
-    # Atomic FAILED -> AWAITING_START transition: only one concurrent retry can
-    # win, so exactly one request ever publishes retry work.
+    # Fence against the row we read: a newer attempt may already have failed again.
     retry_claim = await session.exec(
         update(Transcription)
-        .where(Transcription.id == transcription.id, Transcription.status == JobStatus.FAILED)
+        .where(
+            Transcription.id == transcription.id,
+            Transcription.status == JobStatus.FAILED,
+            Transcription.updated_datetime == transcription.updated_datetime,
+        )
         .values(status=JobStatus.AWAITING_START)
     )
     if retry_claim.rowcount != 1:
@@ -372,8 +380,8 @@ async def save_transcription(
     transcription = await session.get(Transcription, transcription_id)
     if not transcription or transcription.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Transcription not found")
-    # updated_datetime is the worker's claim token (common/services/job_claim.py): any
-    # write while the job is processing would silently void the worker's claim.
+    # The workflow writes the row (speakers, title) while it is processing, so an edit now
+    # would race those writes.
     if transcription.status in (JobStatus.AWAITING_START, JobStatus.IN_PROGRESS):
         raise HTTPException(status_code=409, detail="Transcription cannot be edited while it is processing")
 

@@ -49,23 +49,6 @@ data "aws_iam_policy_document" "ecs_exec_custom_policy" {
       data.terraform_remote_state.platform.outputs.kms_key_arn,
     ]
   }
-
-  statement {
-    effect = "Allow"
-    actions = [
-      "sqs:GetQueueUrl",
-      "sqs:ReceiveMessage",
-      "sqs:SendMessage",
-      "sqs:DeleteMessage",
-      "sqs:ChangeMessageVisibility",
-    ]
-    resources = [
-      aws_sqs_queue.transcription_queue.arn,
-      aws_sqs_queue.transcription_queue_deadletter.arn,
-      aws_sqs_queue.llm_queue.arn,
-      aws_sqs_queue.llm_queue_deadletter.arn
-    ]
-  }
 }
 
 resource "aws_iam_policy" "ecs_exec_custom_policy" {

@@ -29,15 +29,9 @@ CA_SH = if [ -f "$(CA_BUNDLE)" ]; then \
 	GRPC_DEFAULT_SSL_ROOTS_FILE_PATH="$(CA_BUNDLE)"; \
 	fi;
 
-# The worker's Ray actors write heartbeats to HEARTBEAT_DIR, which defaults to
-# /healthcheck. That path exists in the worker container but the macOS root volume
-# is read-only, so the actors die on creation and silently consume nothing. Point
-# it somewhere writable for host-run tests.
-HEARTBEAT_SH = HEARTBEAT_DIR="$(CURDIR)/.worker-tmp/healthcheck";
-
 # Source .env via the shell (not make's `export`, which keeps the literal quotes
 # around values like TRANSCRIPTION_SERVICES='[...]' and breaks pydantic parsing).
-ENV_SH = set -a; if [ -f .env ]; then . ./.env; fi; $(CA_SH) $(HEARTBEAT_SH) set +a;
+ENV_SH = set -a; if [ -f .env ]; then . ./.env; fi; $(CA_SH) set +a;
 
 # Fast, offline unit tests. Paid-API / e2e tests are skipped here (run `make test_e2e`).
 test:
@@ -61,13 +55,13 @@ run_backend:
 	uv run uvicorn backend.main:app --reload --port 8080
 
 run_worker:
-	uv run python backend/services/queue_service.py
+	uv run python worker/temporal_worker.py
 
 run:
-	docker compose up -d --wait
+	TEMPORAL_VERSION=$(TEMPORAL_VERSION) docker compose up -d --wait
 
 run_watch:
-	docker compose up --watch
+	TEMPORAL_VERSION=$(TEMPORAL_VERSION) docker compose up --watch
 
 stop:
 	docker compose down
@@ -81,13 +75,19 @@ generate_aws_diagram:
 # Docker
 
 ECR_REPO_NAME=$(APP_NAME)-$(service)
+ifeq ($(service),temporal-admin)
+ECR_REPO_NAME=$(APP_NAME)-temporal
+endif
 ECR_URL=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 ECR_REPO_URL=$(ECR_URL)/$(ECR_REPO_NAME)
 
-IMAGE_TAG=$$(git rev-parse HEAD)
-IMAGE=$(ECR_REPO_URL):$(IMAGE_TAG)
+IMAGE_TAG ?= $$(git rev-parse HEAD)
+DOCKER_IMAGE_TAG=$(IMAGE_TAG)$(if $(filter temporal-admin,$(service)),-admin)
+IMAGE=$(ECR_REPO_URL):$(DOCKER_IMAGE_TAG)
 
 DOCKER_BUILDER_CONTAINER=$(APP_NAME)
+include temporal/version.env
+TEMPORAL_BUILD_ARGS = $(if $(filter temporal temporal-admin,$(service)),--build-arg TEMPORAL_VERSION=$(TEMPORAL_VERSION))
 
 
 docker_login:
@@ -100,12 +100,13 @@ endif
 docker_build: ## Build the docker container for the specified service when running in CI/CD
 	DOCKER_BUILDKIT=1 docker buildx build --platform linux/amd64 --load --builder=$(DOCKER_BUILDER_CONTAINER) -t $(IMAGE) \
 	$(DOCKER_BUILD_ARGS) \
+	$(TEMPORAL_BUILD_ARGS) \
 	--cache-to type=local,dest=$(cache) \
 	--cache-from type=local,src=$(cache) \
 	-f $(service)/Dockerfile .
 
 docker_build_local: ## Build the docker container for the specified service locally
-	DOCKER_BUILDKIT=1 docker build --platform=linux/amd64 -t $(IMAGE) -f $(service)/Dockerfile .
+	DOCKER_BUILDKIT=1 docker build --platform=linux/amd64 $(TEMPORAL_BUILD_ARGS) -t $(IMAGE) -f $(service)/Dockerfile .
 
 docker_push:
 	docker push $(IMAGE)
@@ -118,11 +119,19 @@ check_docker_tag_exists:
 		echo "Error: ECR tag $(IMAGE_TAG) does not exist." && exit 1; \
 	fi
 
-docker_update_tag: ## Tag the docker image with the specified tag
-	# repo and tag variable are set from git-hub core workflow. example: repo=ecr-repo-name, tag=dev
-	if make docker_tag_is_present_on_image 2>/dev/null; then echo "Image already tagged with $(tag)" && exit 0; fi && \
-	MANIFEST=$$(aws ecr batch-get-image --repository-name $(repo) --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
-	aws ecr put-image --repository-name $(repo) --image-tag $(tag) --image-manifest "$$MANIFEST"
+docker_update_tag: ## Tag the docker image(s) with the specified tag
+	@if [ -z "$(repo)" ]; then \
+		for repository in $$(printf '%s' "$(ECR_REPO)" | tr ',' ' '); do \
+			$(MAKE) docker_update_tag repo=$$repository tag=$(tag) IMAGE_TAG=$(IMAGE_TAG) || exit 1; \
+		done; \
+		if [ "$(INFRASTRUCTURE_FOLDER)" = terraform-temporal ]; then \
+			$(MAKE) docker_update_tag repo=minute-temporal tag=$(tag)-admin IMAGE_TAG=$(IMAGE_TAG)-admin || exit 1; \
+		fi; \
+	else \
+		if $(MAKE) docker_tag_is_present_on_image repo=$(repo) tag=$(tag) IMAGE_TAG=$(IMAGE_TAG) 2>/dev/null; then exit 0; fi; \
+		MANIFEST=$$(aws ecr batch-get-image --repository-name $(repo) --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
+		aws ecr put-image --repository-name $(repo) --image-tag $(tag) --image-manifest "$$MANIFEST"; \
+	fi
 
 docker_echo:
 	echo $($(value))
@@ -133,14 +142,20 @@ ifndef env
 override env = default
 endif
 workspace = $(env)
-tf_build_args =-var "image_tag=$(IMAGE_TAG)" -var-file="variables/global.tfvars" -var-file="variables/$(env).tfvars"  
-TF_BACKEND_CONFIG=backend.hcl
+INFRASTRUCTURE_FOLDER ?= $(if $(infrastructure_folder),$(infrastructure_folder),terraform)
+tf_build_args = -var "image_tag=$(IMAGE_TAG)" -var-file="$(abspath terraform/variables/global.tfvars)" -var-file="$(abspath terraform/variables/$(env).tfvars)"
+TF_BACKEND_CONFIG ?= $(abspath terraform/backend.hcl)
+ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
+override ECR_REPO = minute-temporal
+else
+override ECR_REPO = minute-backend,minute-frontend,minute-worker
+endif
 
 tf_set_workspace:
-	terraform -chdir=terraform/ workspace select $(workspace)
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) workspace select $(workspace)
 
 tf_new_workspace:
-	terraform -chdir=terraform/ workspace new $(workspace)
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) workspace new $(workspace)
 
 tf_set_or_create_workspace:
 	make tf_set_workspace || make tf_new_workspace
@@ -150,42 +165,52 @@ tf_init_and_set_workspace:
 
 .PHONY: tf_init
 tf_init:
-	terraform -chdir=./terraform/ init \
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) init \
 		-backend-config=$(TF_BACKEND_CONFIG) \
 		-backend-config="dynamodb_table=i-dot-ai-$(env)-dynamo-lock" \
 		-reconfigure \
 
 .PHONY: tf_fmt
 tf_fmt:
-	terraform fmt
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) fmt
 
 .PHONY: tf_plan
 tf_plan:
 	make tf_init_and_set_workspace && \
-	terraform -chdir=./terraform/ plan ${tf_build_args} ${args}
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) plan ${tf_build_args} ${args}
 
 .PHONY: tf_apply
 tf_apply:
 	make tf_init_and_set_workspace && \
-	terraform -chdir=./terraform/ apply ${tf_build_args} ${args}
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) apply ${tf_build_args} ${args}
 
 .PHONY: tf_auto_apply
 tf_auto_apply:  ## Auto apply terraform
-	make check_docker_tag_exists repo=$(ECR_REPO_NAME)
-	make tf_init_and_set_workspace && \
-	terraform -chdir=./terraform/ apply  ${tf_build_args} ${args} -auto-approve
+	@for repository in $$(printf '%s' "$(ECR_REPO)" | tr ',' ' '); do \
+		$(MAKE) check_docker_tag_exists repo=$$repository IMAGE_TAG=$(IMAGE_TAG) || exit 1; \
+	done
+	$(MAKE) tf_init_and_set_workspace
+ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
+	$(MAKE) check_docker_tag_exists repo=minute-temporal IMAGE_TAG=$(IMAGE_TAG)-admin
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) apply ${tf_build_args} -target=aws_ecs_task_definition.temporal_admin -auto-approve
+	python3 temporal-admin/run_task.py schema
+endif
+	terraform -chdir=$(INFRASTRUCTURE_FOLDER) apply ${tf_build_args} ${args} -auto-approve
+ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
+	python3 temporal-admin/run_task.py namespace
+endif
 
 ## Release app
 # Note: `env` falls back to `default` above for the terraform targets (that is a real
 # terraform workspace). A release has no such fallback -- deploying needs an explicit
 # environment, otherwise you tag `release-default-*`, which no workflow matches.
-.PHONY: release
-release:
+.PHONY: release release-temporal-server
+release release-temporal-server:
 	@if [ "$(env)" = "default" ]; then \
 		printf '\033[0;31mrelease needs an explicit environment, e.g. `make release env=dev`\033[0m\n'; \
 		exit 1; \
 	fi
-	chmod +x ./release.sh && ./release.sh $(env)
+	bash ./release.sh $(env) $(if $(filter release-temporal-server,$@),temporal-server,app)
 
 generate_api_types:
 	cd frontend && npm run openapi-ts

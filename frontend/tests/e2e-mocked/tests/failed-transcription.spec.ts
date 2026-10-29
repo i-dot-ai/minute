@@ -87,3 +87,47 @@ test('retrying a failed transcription reuses the same job and goes to status', a
   await retryRequest
   await expect(page).toHaveURL(new RegExp(`/new/status/${meeting1.id}$`))
 })
+
+for (const [status, detail] of [
+  [
+    409,
+    'The previous transcription is still finishing; please try again shortly',
+  ],
+  [503, 'Could not check transcription workflow; please try again'],
+  [503, undefined],
+] as const) {
+  test(`a rejected retry shows an error and can be retried (${status}, ${detail ?? 'fallback'})`, async ({
+    page,
+  }) => {
+    await mockBackend(page)
+    await routeFailedTranscription(page, {
+      transcription: meeting1,
+      error: 'Something exploded',
+      recordings: meeting1Recordings,
+    })
+    const retryUrl = `**/api/proxy/transcriptions/${meeting1.id}/retry`
+    await page.route(retryUrl, (route) =>
+      route.fulfill({ status, json: { detail } })
+    )
+    await page.goto(`/transcriptions/${meeting1.id}`)
+    await page.getByRole('button', { name: 'Try again' }).click()
+    const dialog = page.getByRole('dialog')
+    await dialog.getByRole('button', { name: 'Generate summary' }).click()
+    await expect(dialog.getByRole('alert')).toHaveText(
+      detail ?? 'Could not restart the transcription. Please try again.'
+    )
+    await expect(page).toHaveURL(new RegExp(`/transcriptions/${meeting1.id}$`))
+    await expect(
+      dialog.getByRole('button', { name: 'Generate summary' })
+    ).toBeEnabled()
+    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await page.getByRole('button', { name: 'Try again' }).click()
+    await expect(dialog.getByRole('alert')).toHaveCount(0)
+    await page.unroute(retryUrl)
+    await page.route(retryUrl, (route) =>
+      route.fulfill({ status: 201, json: { id: meeting1.id } })
+    )
+    await dialog.getByRole('button', { name: 'Generate summary' }).click()
+    await expect(page).toHaveURL(new RegExp(`/new/status/${meeting1.id}$`))
+  })
+}

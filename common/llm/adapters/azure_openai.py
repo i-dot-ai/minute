@@ -30,6 +30,8 @@ class OpenAIModelAdapter(ModelAdapter):
             api_key=api_key,
             api_version=api_version,
             azure_deployment=azure_deployment,
+            # Temporal owns retries; the SDK's default of 2 would hide a second retry layer.
+            max_retries=0,
         )
         self._kwargs = kwargs
 
@@ -37,8 +39,8 @@ class OpenAIModelAdapter(ModelAdapter):
         response = await self.async_azure_client.beta.chat.completions.parse(
             model=self._model, messages=messages, response_format=response_format, **self._kwargs
         )
-        choice = self.handle_response(response)
-
+        choice = response.choices[0]
+        self.choice_incomplete(choice, response)
         return choice.message.parsed
 
     async def chat(self, messages: list[dict[str, str]]) -> str:

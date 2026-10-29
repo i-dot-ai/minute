@@ -19,6 +19,9 @@ uv run python load_testing/run.py --scenario=bbc-podcasting-house --n=16 --cooki
 
 # all these fancy pens (1s)
 uv run python load_testing/run.py --scenario=bbc-podcasting-house --n=16 --cookie=X-Amzn-Oidc-Data-0=tHXL...
+
+# local (docker compose up, no cookie needed, metrics need n>=2)
+uv run python load_testing/run.py --env=local --scenario=all_these_fancy_pens --n=2
 ```
 
 ## Health and Metrics

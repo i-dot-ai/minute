@@ -51,7 +51,9 @@ class TranscriptionAdapter(ABC):
 
     @classmethod
     @overload
-    async def start(cls, audio_file_path_or_recording: Path) -> TranscriptionJobMessageData:
+    async def start(
+        cls, audio_file_path_or_recording: Path, timeout_seconds: float | None = None, attempt: int = 1
+    ) -> TranscriptionJobMessageData:
         """Starts a transcription job asynchronously.
 
         This method begins the transcription process for the given audio file path
@@ -62,6 +64,10 @@ class TranscriptionAdapter(ABC):
             audio_file_path_or_recording:
                 A Path object representing the file path to the audio or a
                 recording to be processed.
+            timeout_seconds:
+                Total time budget for the provider call. None uses the adapter's default.
+            attempt:
+                Temporal activity attempt number, used to select the Azure region.
 
         Returns:
             A TranscriptionJobMessageData object containing information about the
@@ -70,7 +76,9 @@ class TranscriptionAdapter(ABC):
 
     @classmethod
     @overload
-    async def start(cls, audio_file_path_or_recording: Recording) -> TranscriptionJobMessageData:
+    async def start(
+        cls, audio_file_path_or_recording: Recording, timeout_seconds: float | None = None, attempt: int = 1
+    ) -> TranscriptionJobMessageData:
         """Starts a transcription job asynchronously.
 
         This method begins the transcription process for the given audio file path
@@ -81,6 +89,10 @@ class TranscriptionAdapter(ABC):
             audio_file_path_or_recording:
                 A Recording object representing the file path to the audio or a
                 recording to be processed.
+            timeout_seconds:
+                Total time budget for the provider call. None uses the adapter's default.
+            attempt:
+                Temporal activity attempt number, used to select the Azure region.
 
         Returns:
             A TranscriptionJobMessageData object containing information about the
@@ -89,7 +101,9 @@ class TranscriptionAdapter(ABC):
 
     @classmethod
     @abstractmethod
-    async def start(cls, audio_file_path_or_recording: Path | Recording) -> TranscriptionJobMessageData: ...
+    async def start(
+        cls, audio_file_path_or_recording: Path | Recording, timeout_seconds: float | None = None, attempt: int = 1
+    ) -> TranscriptionJobMessageData: ...
 
     @classmethod
     @abstractmethod

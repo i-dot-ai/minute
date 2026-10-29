@@ -85,11 +85,11 @@ The frontend uses Next.js. Calls to the API are made from the client-side and pr
 
 #### `backend/`
 
-The backend uses FastAPI and is responsible for making initial database writes and sending long running processes to a queue (typically SQS)
+The backend uses FastAPI to manage meeting data and start processing workflows in Temporal.
 
 #### `worker/`
 
-The worker reads from the queue and executes transcription/file conversion/llm calls, and updates the database with the results
+The worker runs the tasks coordinated by Temporal: audio conversion, transcription and AI-generated minutes. Results are saved in the database.
 
 ## Deployment
 
@@ -97,9 +97,11 @@ Application and Temporal server releases use separate Terraform configurations a
 
 #### Architecture diagram
 
-Minute runs on AWS, with SQS for message queues and S3 for cloud storage.
+Minute runs on AWS. Internal Access is managed separately and signs users in before they use Minute. Audio uploads use a time-limited link authorised by the backend. Temporal coordinates processing, S3 stores audio, and Aurora PostgreSQL stores meetings and minutes. Azure Speech transcribes the audio, and Gemini generates the summaries.
 
-<img src="minute_architecture_diagram.png" height="800" alt="Minute architecture diagram"/>
+<img src="minute_architecture_diagram.png" width="100%" alt="Minute architecture: Internal Access signs users in before app access and authorised audio uploads; Temporal coordinates processing, Azure transcribes audio, and Gemini generates summaries"/>
+
+Regenerate the diagram with `uv run python terraform/diagram_script.py` (requires Graphviz).
 
 #### Database schema
 

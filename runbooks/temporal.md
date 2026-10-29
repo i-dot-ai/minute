@@ -45,3 +45,30 @@ aws ssm describe-sessions --state Active \
 # terminate by id (yours was diego.peteiro@dsit.gov.uk-fcg3xoiktu2svznu27qzrtfrye)
 aws ssm terminate-session --session-id "<SessionId>"
 ```
+
+## Processing status API
+
+Authenticated Minute users can request `GET /status?horizon=10m` from the backend.
+The horizon defaults to `10m`; whole minutes/hours from `1m` to `24h` are accepted.
+Responses are cached for 30 seconds per backend process and include:
+
+- Approximate workflow-run counts and failure rates overall and for transcription,
+  minute generation and AI editing. Starts/closures are counted within the horizon;
+  in-progress counts include older runs.
+- P50, P90, P99 and maximum successful processing time and current in-progress age
+  per workflow type, in seconds, with sample counts. Percentiles use nearest rank.
+- The collection window/timestamp. Empty distributions and failure rates without
+  outcomes are `null`, not zero. Temporal errors/timeouts return HTTP 503.
+
+Processing time includes queue waiting, execution and retries, but not upload time.
+The transcription pipeline includes summarisation after the transcript becomes ready;
+optional enrichment/summary failures do not necessarily fail the workflow. The failure
+rate is `(failed + timed_out) / (completed + failed + timed_out)`, excluding cancellations,
+terminations and continue-as-new. Runs are not unique recordings or activity tasks.
+
+Visibility is eventually consistent. Verify namespace retention covers the requested
+horizon. Timing reads are capped at 1,000 runs per workflow type/population: if exceeded,
+that distribution has `truncated: true` and null timings, and the response has `partial: true`.
+Counts still use the Count API; they are not capped. No histories or execution payloads
+are read or exposed. These metrics are not a service-availability verdict; show running
+counts/ages alongside successful processing times, especially with small samples.

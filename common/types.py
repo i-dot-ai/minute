@@ -237,3 +237,49 @@ class CreateUserTemplateRequest(BaseModel):
     description: str
     type: TemplateType
     questions: list[CreateQuestion] | None = None
+
+
+class StatusCounts(BaseModel):
+    started: int = 0
+    completed: int = 0
+    failed: int = 0
+    timed_out: int = 0
+    canceled: int = 0
+    terminated: int = 0
+    continued_as_new: int = 0
+    in_progress: int = 0
+
+
+class StatusSummary(StatusCounts):
+    failure_rate: float | None = Field(description="(failed + timed_out) / (completed + failed + timed_out); 0-1")
+    completed_per_minute: float
+
+
+class StatusDistribution(BaseModel):
+    sample_count: int = Field(default=0, description="Number of durations read, not an approximate Count API total")
+    p50: float | None = None
+    p90: float | None = None
+    p99: float | None = None
+    max: float | None = None
+    truncated: bool = Field(default=False, description="Percentiles are omitted when more than 1,000 runs match")
+
+
+class StatusComponent(BaseModel):
+    workflow_type: str
+    counts: StatusCounts
+    failure_rate: float | None
+    completed_per_minute: float
+    processing_time_seconds: StatusDistribution
+    in_progress_age_seconds: StatusDistribution
+
+
+class StatusResponse(BaseModel):
+    horizon_seconds: int
+    window_start: datetime
+    window_end: datetime
+    collected_at: datetime
+    source: str = "temporal_visibility"
+    counts_are_approximate: bool = True
+    partial: bool
+    summary: StatusSummary
+    components: dict[str, StatusComponent]

@@ -154,6 +154,8 @@ module "worker" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v7.0.1-ecs"
   desired_app_count            = terraform.workspace == "prod" ? 2 : 1
+  autoscaling_minimum_target   = terraform.workspace == "prod" ? 2 : 1
+  autoscaling_maximum_target   = terraform.workspace == "prod" ? 4 : 2
   image_tag                    = var.image_tag
   ecr_repository_uri           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/minute-worker"
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id

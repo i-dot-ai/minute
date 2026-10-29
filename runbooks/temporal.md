@@ -1,23 +1,26 @@
 # Access the Temporal UI
 
-Connect to the development Temporal server through an AWS Systems Manager port-forwarding session, then run the Temporal UI locally to inspect workflows and activity retries. The commands below also show how to close the session when you finish.
+Connect to the selected environment's Temporal server through an AWS Systems Manager port-forwarding session, then run the Temporal UI locally to inspect workflows and activity retries. The commands below also show how to close the session when you finish.
 
-Run `aws-login` first to authenticate with AWS, then run the commands below.
+Run `aws-login` first to authenticate with AWS for the intended environment, then set `ENV` to `dev`, `preprod`, or `prod` in the commands below.
 
 For the independent application/server release commands and the one-time state migration, see [Temporal releases](temporal-releases.md).
 
 ```console
 aws-login
 
+ENV=preprod
+
 REGION=eu-west-2
-CLUSTER=i-dot-ai-dev-ecs-cluster
-SERVICE=i-dot-ai-dev-minute-temporal-ecs-service
+CLUSTER="i-dot-ai-${ENV}-ecs-cluster"
+SERVICE="i-dot-ai-${ENV}-minute-temporal-ecs-service"
+CONTAINER="i-dot-ai-${ENV}-minute-temporal-container"
 
 TASK=$(aws ecs list-tasks --region $REGION --cluster "$CLUSTER" --service-name "$SERVICE" --query 'taskArns[0]' --output text)
 TASK_IP=$(aws ecs describe-tasks --region $REGION --cluster "$CLUSTER" --tasks "$TASK" \
-  --query 'tasks[0].containers[?name==`i-dot-ai-dev-minute-temporal-container`].networkInterfaces[0].privateIpv4Address | [0]' --output text)
+  --query "tasks[0].containers[?name=='${CONTAINER}'].networkInterfaces[0].privateIpv4Address | [0]" --output text)
 RUNTIME=$(aws ecs describe-tasks --region $REGION --cluster "$CLUSTER" --tasks "$TASK" \
-  --query 'tasks[0].containers[?name==`i-dot-ai-dev-minute-temporal-container`].runtimeId | [0]' --output text)
+  --query "tasks[0].containers[?name=='${CONTAINER}'].runtimeId | [0]" --output text)
 
 TARGET="ecs:${CLUSTER}_${TASK##*/}_${RUNTIME}"
 

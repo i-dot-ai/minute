@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-from temporalio.client import WorkflowExecutionCount, WorkflowExecutionCountAggregationGroup
+from temporalio.client import WorkflowExecutionCount, WorkflowExecutionCountAggregationGroup, WorkflowExecutionStatus
 
 from backend.utils import temporal_status
 
@@ -133,3 +133,72 @@ async def test_cache_shares_refresh_expires_and_never_hides_failure(monkeypatch)
     collect.side_effect = None
     assert await temporal_status.get_status(3_600) is response
     assert collect.await_count == 4
+
+
+@pytest.mark.asyncio
+async def test_hourly_buckets_by_close_time_with_audio_rate(monkeypatch):
+    this_hour = datetime(2026, 10, 30, 13, tzinfo=UTC)
+    now = this_hour + timedelta(minutes=30)
+    monkeypatch.setattr(temporal_status, "datetime", Mock(now=Mock(return_value=now)))
+
+    def run(status, closed, seconds, audio=None):
+        memo = AsyncMock(return_value=audio)
+        return SimpleNamespace(
+            status=status, start_time=closed - timedelta(seconds=seconds), close_time=closed, memo_value=memo
+        )
+
+    runs = [
+        run(WorkflowExecutionStatus.COMPLETED, this_hour + timedelta(seconds=1), 120, audio=3_600),
+        run(WorkflowExecutionStatus.COMPLETED, this_hour + timedelta(seconds=2), 30, audio=1_800),
+        run(WorkflowExecutionStatus.COMPLETED, now - timedelta(minutes=1), 60),  # pre-deploy: no audio memo
+        run(WorkflowExecutionStatus.FAILED, now - timedelta(minutes=2), 30),
+        run(WorkflowExecutionStatus.TIMED_OUT, this_hour - timedelta(hours=23) + timedelta(seconds=1), 10),
+    ]
+
+    async def workflows(query, **_kwargs):
+        assert 'WorkflowType = "TranscriptionWorkflow"' in query
+        for r in runs:
+            yield r
+
+    client = Mock(list_workflows=Mock(side_effect=workflows))
+    monkeypatch.setattr(temporal_status, "get_temporal_client", AsyncMock(return_value=client))
+    response = await temporal_status._collect_hourly()  # noqa: SLF001
+
+    assert len(response.hours) == 24
+    assert response.hours[-1].start == this_hour
+    assert response.partial is False
+    latest, oldest = response.hours[-1], response.hours[0]
+    assert (latest.completed, latest.failed) == (3, 1)
+    assert latest.failure_rate == pytest.approx(1 / 4)
+    assert latest.avg_processing_seconds == 70
+    assert latest.audio_hours == 1.5
+    assert latest.processing_seconds_per_audio_hour == 100  # only runs with recorded audio
+    rates = latest.per_audio_hour_seconds  # per run: 120s for 1h, 30s for 0.5h -> 120, 60
+    assert (rates.sample_count, rates.p50, rates.p90, rates.p99, rates.max) == (2, 60, 120, 120, 120)
+    assert (oldest.failed, oldest.failure_rate, oldest.avg_processing_seconds) == (1, 1.0, None)
+    assert response.hours[5].failure_rate is None
+    assert response.hours[5].processing_seconds_per_audio_hour is None
+    assert response.hours[5].per_audio_hour_seconds.p50 is None
+    recent = response.last_10_minutes
+    assert recent.start == now - timedelta(minutes=10)
+    assert (recent.completed, recent.failed, recent.avg_processing_seconds) == (1, 1, 60)
+    assert recent.failure_rate == 0.5
+    assert recent.processing_seconds_per_audio_hour is None
+    assert recent.per_audio_hour_seconds.sample_count == 0
+
+
+@pytest.mark.asyncio
+async def test_hourly_read_limit_marks_partial(monkeypatch):
+    monkeypatch.setattr(temporal_status, "_MAX_HOURLY_RUNS", 2)
+    closed = datetime.now(UTC)
+
+    async def workflows(_query, **_kwargs):
+        for _ in range(3):
+            yield SimpleNamespace(status=WorkflowExecutionStatus.FAILED, start_time=closed, close_time=closed)
+
+    client = Mock(list_workflows=Mock(side_effect=workflows))
+    monkeypatch.setattr(temporal_status, "get_temporal_client", AsyncMock(return_value=client))
+    response = await temporal_status._collect_hourly()  # noqa: SLF001
+    assert response.partial is True
+    assert sum(hour.failed for hour in response.hours) == 2
+    assert response.last_10_minutes.failed == 2

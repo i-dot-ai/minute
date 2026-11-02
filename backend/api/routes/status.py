@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from backend.api.dependencies import UserDep
 from backend.utils import temporal_status
-from common.types import StatusResponse
+from common.types import HourlyStatusResponse, StatusResponse
 
 status_router = APIRouter(tags=["Status"])
 logger = logging.getLogger(__name__)
@@ -34,4 +34,16 @@ async def get_status(
         return await temporal_status.get_status(seconds)
     except Exception as exc:
         logger.exception("Failed to collect Temporal status")
+        raise HTTPException(status_code=503, detail="Processing status is temporarily unavailable") from exc
+
+
+@status_router.get("/status/hourly", response_model=HourlyStatusResponse)
+async def get_hourly_status(_current_user: UserDep) -> HourlyStatusResponse:
+    """Transcriptions per hour for the last 24 hours, by close time: counts, failure rate, mean
+    processing time and processing seconds per audio hour, plus the same for the last 10 minutes.
+    Cached for 1 minute."""
+    try:
+        return await temporal_status.get_hourly_status()
+    except Exception as exc:
+        logger.exception("Failed to collect hourly Temporal status")
         raise HTTPException(status_code=503, detail="Processing status is temporarily unavailable") from exc

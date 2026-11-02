@@ -31,6 +31,7 @@ GENERATE_TITLE = "generate_title"
 COMPLETE_TRANSCRIPTION = "complete_transcription"
 SUMMARISE = "summarise"
 FAIL_SUMMARISE = "fail_summarise"
+AUDIO_SECONDS_MEMO = "audio_seconds"
 
 # STT timeout = floor + factor x audio duration. Measured: Azure took 119s for a 2h file (~2% of
 # the duration), so 10% is ~5x headroom; the floor covers download, upload and short files.
@@ -155,6 +156,9 @@ class TranscriptionWorkflow:
             start_to_close_timeout=timedelta(minutes=10),  # 2h wav converted in ~22s
             retry_policy=_PREPARE_RETRY,
         )
+        # Read back by the hourly status view; the patch keeps runs started before this deploy replayable.
+        if workflow.patched("audio-seconds-memo"):
+            workflow.upsert_memo({AUDIO_SECONDS_MEMO: audio.duration_seconds})
         timeout = stt_timeout(audio.duration_seconds)
         return await workflow.execute_activity(
             TRANSCRIBE,

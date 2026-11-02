@@ -141,6 +141,19 @@ async def test_happy_path_runs_every_step_in_order_on_its_queue():
     assert outcome == {wf.IDENTIFY_SPEAKERS: "ok", wf.GENERATE_TITLE: "ok", wf.SUMMARISE: "ok"}
 
 
+@pytest.mark.asyncio
+async def test_audio_duration_is_recorded_in_memo():
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        workers = _workers(env.client, _activities([]))
+        async with workers[0], workers[1], workers[2]:
+            handle = await env.client.start_workflow(
+                wf.TranscriptionWorkflow.run, MINUTE_ID, id=str(uuid.uuid4()), task_queue=wf.TASK_QUEUE
+            )
+            await handle.result()
+            description = await handle.describe()
+    assert await description.memo_value(wf.AUDIO_SECONDS_MEMO) == AUDIO_SECONDS
+
+
 def test_stt_timeout_scales_with_audio_duration():
     for duration, expected in (
         (0, timedelta(minutes=5)),

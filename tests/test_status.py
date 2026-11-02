@@ -12,7 +12,7 @@ from backend.api.dependencies.get_session import get_session
 from backend.api.routes.status import status_router
 from backend.utils import temporal_status
 from common.services.exceptions import MissingAuthTokenError
-from common.types import StatusResponse, StatusSummary
+from common.types import HourlyStatusResponse, StatusBucket, StatusDistribution, StatusResponse, StatusSummary
 
 
 @pytest.fixture
@@ -49,6 +49,29 @@ async def test_route_defaults_normalizes_and_rejects_bad_horizons(status_app, mo
         for horizon in ("0m", "-1m", "1.5h", "10s", "25h", "1441m", "10m OR 1=1"):
             assert (await client.get("/status", params={"horizon": horizon})).status_code == 422
     assert collect.await_count == 5
+
+
+@pytest.mark.asyncio
+async def test_hourly_route_and_failure(status_app, monkeypatch):
+    now = datetime.now(UTC)
+    recent = StatusBucket(
+        start=now,
+        completed=0,
+        failed=0,
+        failure_rate=None,
+        avg_processing_seconds=None,
+        audio_hours=0,
+        processing_seconds_per_audio_hour=None,
+        per_audio_hour_seconds=StatusDistribution(),
+    )
+    response = HourlyStatusResponse(
+        workflow_type="TranscriptionWorkflow", collected_at=now, partial=False, hours=[], last_10_minutes=recent
+    )
+    monkeypatch.setattr(temporal_status, "get_hourly_status", AsyncMock(return_value=response))
+    async with AsyncClient(transport=ASGITransport(app=status_app), base_url="http://test") as client:
+        assert (await client.get("/status/hourly")).json()["workflow_type"] == "TranscriptionWorkflow"
+        monkeypatch.setattr(temporal_status, "get_hourly_status", AsyncMock(side_effect=TimeoutError))
+        assert (await client.get("/status/hourly")).status_code == 503
 
 
 @pytest.mark.asyncio

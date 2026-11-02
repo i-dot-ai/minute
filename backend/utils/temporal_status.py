@@ -5,10 +5,19 @@ import math
 from datetime import UTC, datetime, timedelta
 from time import monotonic
 
-from temporalio.client import Client
+from temporalio.client import Client, WorkflowExecutionStatus
 
 from backend.utils.temporal import get_temporal_client
-from common.types import StatusComponent, StatusCounts, StatusDistribution, StatusResponse, StatusSummary
+from common.types import (
+    HourlyStatusResponse,
+    StatusBucket,
+    StatusComponent,
+    StatusCounts,
+    StatusDistribution,
+    StatusResponse,
+    StatusSummary,
+)
+from common.workflows.transcription import AUDIO_SECONDS_MEMO
 
 _COMPONENTS = {
     "transcription": "TranscriptionWorkflow",
@@ -31,10 +40,10 @@ _lock = asyncio.Lock()
 _cache: tuple[int, float, StatusResponse] | None = None
 
 
-def _distribution(values: list[float]) -> StatusDistribution:
+def _distribution(values: list[float], *, cap: bool = True) -> StatusDistribution:
     count = len(values)
-    if not values or count > _MAX_RUNS:
-        return StatusDistribution(sample_count=count, truncated=count > _MAX_RUNS)
+    if not values or (cap and count > _MAX_RUNS):
+        return StatusDistribution(sample_count=count, truncated=cap and count > _MAX_RUNS)
     values = sorted(values)
     return StatusDistribution(
         sample_count=count,
@@ -128,4 +137,82 @@ async def get_status(horizon_seconds: int) -> StatusResponse:
             return _cache[2]
         response = await _collect_status(horizon_seconds)
         _cache = (horizon_seconds, monotonic() + _CACHE_SECONDS, response)
+        return response
+
+
+_HOURS = 24
+_MAX_HOURLY_RUNS = 20_000
+_HOURLY_CACHE_SECONDS = 60
+_RECENT = timedelta(minutes=10)
+_hourly_lock = asyncio.Lock()
+_hourly_cache: tuple[float, HourlyStatusResponse] | None = None
+
+
+def _bucket(
+    start: datetime, completed: int, failed: int, processing: float, audio: float, audio_processing: float, rates
+):
+    return StatusBucket(
+        start=start,
+        completed=completed,
+        failed=failed,
+        failure_rate=failed / (completed + failed) if completed + failed else None,
+        avg_processing_seconds=processing / completed if completed else None,
+        audio_hours=audio / 3_600,
+        processing_seconds_per_audio_hour=audio_processing / (audio / 3_600) if audio else None,
+        # Rates are already read (capped by _MAX_HOURLY_RUNS), so no per-bucket cap.
+        per_audio_hour_seconds=_distribution(rates, cap=False),
+    )
+
+
+async def _collect_hourly() -> HourlyStatusResponse:
+    now = datetime.now(UTC)
+    first = now.replace(minute=0, second=0, microsecond=0) - timedelta(hours=_HOURS - 1)
+    workflow_type = _COMPONENTS["transcription"]
+    query = (
+        f'WorkflowType = "{workflow_type}" AND CloseTime >= "{first.isoformat()}"'
+        ' AND ExecutionStatus IN ("Completed", "Failed", "TimedOut")'
+    )
+    # [completed, failed, processing s, audio s, processing s of runs with audio, per-run s per audio hour]
+    totals = [[0, 0, 0.0, 0.0, 0.0, []] for _ in range(_HOURS)]
+    recent = [0, 0, 0.0, 0.0, 0.0, []]
+    read = 0
+    client = await get_temporal_client()
+    runs = client.list_workflows(query, limit=_MAX_HOURLY_RUNS + 1, page_size=1_000, rpc_timeout=_RPC_TIMEOUT)
+    async for run in runs:
+        read += 1
+        if read > _MAX_HOURLY_RUNS:
+            break
+        buckets = [totals[min(int((run.close_time - first).total_seconds() // 3_600), _HOURS - 1)]]
+        if run.close_time >= now - _RECENT:
+            buckets.append(recent)
+        if run.status != WorkflowExecutionStatus.COMPLETED:
+            for bucket in buckets:
+                bucket[1] += 1
+            continue
+        seconds = (run.close_time - run.start_time).total_seconds()
+        audio = await run.memo_value(AUDIO_SECONDS_MEMO, None)
+        for bucket in buckets:
+            bucket[0] += 1
+            bucket[2] += seconds
+            if audio:  # skips pre-deploy runs (None) and zero-length audio
+                bucket[3] += audio
+                bucket[4] += seconds
+                bucket[5].append(seconds / (audio / 3_600))
+
+    return HourlyStatusResponse(
+        workflow_type=workflow_type,
+        collected_at=now,
+        partial=read > _MAX_HOURLY_RUNS,
+        hours=[_bucket(first + timedelta(hours=i), *values) for i, values in enumerate(totals)],
+        last_10_minutes=_bucket(now - _RECENT, *recent),
+    )
+
+
+async def get_hourly_status() -> HourlyStatusResponse:
+    global _hourly_cache  # noqa: PLW0603
+    async with asyncio.timeout(20), _hourly_lock:
+        if _hourly_cache is not None and monotonic() < _hourly_cache[0]:
+            return _hourly_cache[1]
+        response = await _collect_hourly()
+        _hourly_cache = (monotonic() + _HOURLY_CACHE_SECONDS, response)
         return response

@@ -283,3 +283,24 @@ class StatusResponse(BaseModel):
     partial: bool
     summary: StatusSummary
     components: dict[str, StatusComponent]
+
+
+class StatusBucket(BaseModel):
+    start: datetime
+    completed: int
+    failed: int = Field(description="Failed or timed out runs")
+    failure_rate: float | None = Field(description="failed / (completed + failed); 0-1, null without outcomes")
+    avg_processing_seconds: float | None = Field(description="Mean start-to-close time of completed runs")
+    audio_hours: float = Field(description="Audio in completed runs that recorded its duration")
+    processing_seconds_per_audio_hour: float | None = Field(description="Total processing / total audio hours")
+    per_audio_hour_seconds: StatusDistribution = Field(
+        description="Percentiles of each run's processing seconds per audio hour"
+    )
+
+
+class HourlyStatusResponse(BaseModel):
+    workflow_type: str
+    collected_at: datetime
+    partial: bool = Field(description="Run read limit reached; any bucket may be missing runs")
+    hours: list[StatusBucket] = Field(description="Oldest first, bucketed by close time; last hour is partial")
+    last_10_minutes: StatusBucket = Field(description="Runs that closed in the 10 minutes before collected_at")

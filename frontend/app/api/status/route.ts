@@ -1,4 +1,5 @@
 import type { HourlyProcessingStatus } from '@/lib/processing-status'
+import { mocked } from './mocked'
 
 // Shared across authorised users, not keyed by their authentication token. Cached for 1 minute like the backend.
 // shortcut: cache is per frontend instance; use a shared store if replicas need one global snapshot.
@@ -20,6 +21,9 @@ async function loadStatus(request: Request): Promise<HourlyProcessingStatus> {
 }
 
 export async function GET(request: Request) {
+  // /status?mocked shows sample data with a few bad hours, for demos.
+  if (new URL(request.url).searchParams.has('mocked'))
+    return Response.json(mocked)
   try {
     if (!cached || Date.now() >= cached.expiresAt) {
       pending ??= loadStatus(request).finally(() => {

@@ -2,6 +2,7 @@
 
 # ruff: noqa: S603, S607 # Tests execute fixed scripts with fake local commands, never AWS.
 
+import asyncio
 import importlib.util
 import json
 import os
@@ -10,6 +11,12 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
+from google.protobuf.json_format import MessageToJson
+from temporalio.api.operatorservice.v1 import ListSearchAttributesRequest
+from temporalio.common import SearchAttributeKey
+from temporalio.testing import WorkflowEnvironment
+
+from common.workflows import search_attributes as sa
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,6 +48,7 @@ exit "${PSQL_STATUS:-0}"
         "temporal-sql-tool": 'exit "${MIGRATION_STATUS:-0}"\n',
         "temporal": """case "$*" in
   *"namespace list"*) printf '%s' "${NAMESPACES:-[]}"; exit "${NAMESPACE_STATUS:-0}" ;;
+  *"search-attribute list"*) printf '%s' "${ATTRIBUTES:-invalid-json}"; exit "${ATTRIBUTE_STATUS:-0}" ;;
 esac
 """,
     }
@@ -125,10 +133,61 @@ def test_namespace_creation_only_after_successful_lookup(admin_commands, namespa
     assert (result.returncode == 0) is (status == "0" and namespaces != "invalid-json")
     assert ("namespace create" in log.read_text()) is creates
     assert "temporal-sql-tool" not in log.read_text()
+    assert "search-attribute" not in log.read_text()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("state", ["missing", "wrong_type", "valid"])
+async def test_attribute_preflight_checks_real_temporal_types_and_never_changes_them(admin_commands, state):
+    env, log = admin_commands
+    keys = [sa.USER_ID, sa.TRANSCRIPTION_ID, sa.MINUTE_ID, sa.MINUTE_VERSION_ID]
+    expected_errors = [key.name for key in keys] if state == "missing" else []
+    if state == "wrong_type":
+        keys[-1] = SearchAttributeKey.for_text("MinuteVersionId")
+        expected_errors = ["MinuteVersionId"]
+    async with await WorkflowEnvironment.start_local(search_attributes=[] if state == "missing" else keys) as temporal:
+        actual = await temporal.client.operator_service.list_search_attributes(
+            ListSearchAttributesRequest(namespace="default")
+        )
+        result = await asyncio.to_thread(
+            subprocess.run,
+            ["sh", "temporal-admin/entrypoint.sh", "check-search-attributes"],
+            cwd=ROOT,
+            env={**env, "ATTRIBUTES": MessageToJson(actual)},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert (result.returncode == 0) is (not expected_errors)
+        for name in expected_errors:
+            assert f"{name}: expected Keyword; found " in result.stderr
+        if not expected_errors:
+            assert "preflight passed" in result.stdout
+        assert (
+            await temporal.client.operator_service.list_search_attributes(
+                ListSearchAttributesRequest(namespace="default")
+            )
+            == actual
+        )
+    assert all("search-attribute list" in command for command in log.read_text().splitlines())
+
+
+@pytest.mark.parametrize("failure", [{"ATTRIBUTE_STATUS": "1"}, {"ATTRIBUTES": "invalid-json"}, {"ATTRIBUTES": ""}])
+def test_attribute_preflight_fails_on_lookup_or_json_errors(admin_commands, failure):
+    env, _ = admin_commands
+    result = subprocess.run(
+        ["sh", "temporal-admin/entrypoint.sh", "check-search-attributes"],
+        cwd=ROOT,
+        env={**env, **failure},
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode != 0
 
 
 @pytest.mark.parametrize("exit_code", [0, 1, None])
-def test_ecs_task_requires_successful_exit(monkeypatch, exit_code, task_runner):
+@pytest.mark.parametrize("mode", ["schema", "check-search-attributes"])
+def test_ecs_task_requires_successful_exit(monkeypatch, exit_code, task_runner, mode):
     module = task_runner
     config = {
         "region": "eu-west-2",
@@ -149,12 +208,15 @@ def test_ecs_task_requires_successful_exit(monkeypatch, exit_code, task_runner):
     wait = Mock()
     monkeypatch.setattr(module.subprocess, "run", wait)
     if exit_code == 0:
-        module.run("schema")
+        module.run(mode)
     else:
         with pytest.raises(RuntimeError):
-            module.run("schema")
-    wait.assert_called_once()
-    assert wait.call_args.kwargs["check"]
+            module.run(mode)
+    assert wait.call_args_list[0].kwargs["check"]
+    if mode == "check-search-attributes":
+        assert wait.call_args_list[1].args[0][3:5] == ["logs", "get-log-events"]
+    else:
+        wait.assert_called_once()
 
 
 def test_ecs_task_start_failure_stops_release(monkeypatch, task_runner):

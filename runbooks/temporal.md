@@ -9,7 +9,7 @@ For the independent application/server release commands and the one-time state m
 ```console
 aws-login
 
-ENV=preprod
+ENV=dev
 
 REGION=eu-west-2
 CLUSTER="i-dot-ai-${ENV}-ecs-cluster"
@@ -35,6 +35,55 @@ Leave that running ("Waiting for connections…"), then:
 docker run --rm -p 8081:8080 -e TEMPORAL_ADDRESS=host.docker.internal:7233 temporalio/ui
 # http://localhost:8081
 ```
+
+## Search jobs and find assets
+
+In the UI's workflow list, use these visibility queries (replace the placeholders with UUIDs):
+
+```sql
+UserId = '<user UUID>'
+UserId = '<user UUID>' AND WorkflowType = 'TranscriptionWorkflow'
+UserId = '<user UUID>' AND WorkflowType IN ('MinuteGenerationWorkflow', 'MinuteEditWorkflow')
+MinuteId = '<minute UUID>'
+MinuteVersionId = '<minute version UUID>'
+TranscriptionId = '<transcription UUID>'
+```
+
+Temporal search attributes use PascalCase; application/API fields keep snake_case (`MinuteVersionId` corresponds to `minute_version_id`, not `version_minute_id`). Every new transcription, minute-generation and AI-edit run is indexed by all four IDs at start, including queued/failed runs. The initial minute version is produced inside `TranscriptionWorkflow`, so include that workflow type when looking for all minutes. Manual edits have no Temporal workflow.
+
+Register `UserId`, `TranscriptionId`, `MinuteId` and `MinuteVersionId` as **Keyword**. These are the only four custom search attributes needed.
+
+After audio preparation succeeds, open the transcription workflow's **Memo** to see `AudioUploadSizeMb` (megabytes of the original upload, **not** the converted MP3; 1 MB = 1,000,000 bytes) and `AudioDurationSeconds` (seconds measured from the prepared audio). These are display-only metadata: they need no registration and cannot be used in workflow-list queries. For example, 985,225 bytes is `0.985225` MB. Unknown/invalid audio duration fails preparation instead of being reported as an estimated value. Metrics remain visible if later STT or summary processing fails. Older audio-preparation results without upload size remain readable; they do not invent a size value.
+
+Use the indexed IDs to find the corresponding transcript, minute and version records in Postgres. Audio assets are linked through `recording.transcription_id`. New runs store business IDs as search attributes and audio metrics as Memo metadata, not storage keys or bucket names.
+
+### Rollout and limits
+
+Register the four ID attributes manually through the Temporal CLI **before** deploying the application change. Releases and local Compose do not register them. Application releases run a read-only preflight before Terraform applies any application changes: missing attributes, wrong types, an unreachable Temporal server or a failed check task stop the release. Audio Memo fields need no setup. No server redeployment is needed to register attributes.
+
+With the tunnel above open and the local server stopped so it does not occupy port `7233`, use the CLI from the locally built `minute-temporal:latest` image without starting a server. First confirm the namespace belongs to the intended environment, then list existing attributes:
+
+```console
+docker run --rm --entrypoint temporal minute-temporal:latest operator namespace describe \
+  --address host.docker.internal:7233 --namespace default --output json
+
+docker run --rm --entrypoint temporal minute-temporal:latest operator search-attribute list \
+  --address host.docker.internal:7233 --namespace default --output json
+
+# Omit any name/type pairs that already exist; verify their types match.
+docker run --rm --entrypoint temporal minute-temporal:latest operator search-attribute create \
+  --address host.docker.internal:7233 --namespace default \
+  --name UserId --type Keyword \
+  --name TranscriptionId --type Keyword \
+  --name MinuteId --type Keyword \
+  --name MinuteVersionId --type Keyword
+```
+
+Repeat the list command to verify all four names and types before releasing the application. For local development, use `docker compose exec temporal temporal operator ... --address localhost:7233 --namespace default` with the same list/create arguments instead of the tunnel commands. Register ID attributes before submitting jobs or running the paid end-to-end test. Existing runs are not backfilled.
+
+To run the same deployment preflight explicitly, authenticate to the target AWS environment and run `make check_temporal_search_attributes env=dev`. It selects the `terraform-temporal` workspace and runs the deployed one-off admin task in `check-search-attributes` mode. The task must already contain this check (deploy the updated admin image through a Temporal server release first). It only lists attributes; it never registers attributes or runs schema migrations. Failures report missing/wrong-type names in the admin task logs, which the runner also attempts to print in the release log.
+
+Uploads never submitted for transcription and manual-only edits are not indexed. Temporal visibility is eventually consistent and workflow history/metadata expires with namespace retention; it is not the permanent asset inventory or a replacement for user data-retention/deletion handling. Local experimental runs using older attribute names are not migrated or replay-compatible; start new runs to use the final names. Their existing history is not purged by this change.
 
 If you've lost that terminal (or want to kill it remotely):
 ```bash

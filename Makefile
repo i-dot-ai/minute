@@ -33,7 +33,7 @@ CA_SH = if [ -f "$(CA_BUNDLE)" ]; then \
 # around values like TRANSCRIPTION_SERVICES='[...]' and breaks pydantic parsing).
 ENV_SH = set -a; if [ -f .env ]; then . ./.env; fi; $(CA_SH) set +a;
 
-# Fast, offline unit tests. Paid-API / e2e tests are skipped here (run `make test_e2e`).
+# Non-paid suite: requires Compose Postgres/MiniStack and local ffprobe; paid e2e uses `make test_e2e`.
 test:
 	$(ENV_SH) ALLOW_TESTS_TO_ACCESS_PAID_APIS=0 uv run pytest tests/
 
@@ -189,6 +189,9 @@ tf_auto_apply:  ## Auto apply terraform
 	@for repository in $$(printf '%s' "$(ECR_REPO)" | tr ',' ' '); do \
 		$(MAKE) check_docker_tag_exists repo=$$repository IMAGE_TAG=$(IMAGE_TAG) || exit 1; \
 	done
+ifeq ($(INFRASTRUCTURE_FOLDER),terraform)
+	$(MAKE) check_temporal_search_attributes
+endif
 	$(MAKE) tf_init_and_set_workspace
 ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
 	$(MAKE) check_docker_tag_exists repo=minute-temporal IMAGE_TAG=$(IMAGE_TAG)-admin
@@ -199,6 +202,11 @@ endif
 ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
 	python3 temporal-admin/run_task.py namespace
 endif
+
+.PHONY: check_temporal_search_attributes
+check_temporal_search_attributes: ## Read-only preflight against the deployed Temporal namespace
+	$(MAKE) tf_init_and_set_workspace INFRASTRUCTURE_FOLDER=terraform-temporal
+	python3 temporal-admin/run_task.py check-search-attributes
 
 ## Release app
 # Note: `env` falls back to `default` above for the terraform targets (that is a real

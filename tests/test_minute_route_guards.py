@@ -74,11 +74,11 @@ async def tenants() -> dict[str, dict[str, uuid.UUID]]:
 def started(monkeypatch):
     started: list = []
 
-    async def _start_generation(minute_version_id):
-        started.append(("generate", str(minute_version_id)))
+    async def _start_generation(minute_version_id, **metadata):
+        started.append(("generate", str(minute_version_id), metadata))
 
-    async def _start_edit(minute_version_id, source_minute_version_id):
-        started.append(("edit", str(minute_version_id), str(source_minute_version_id)))
+    async def _start_edit(minute_version_id, source_minute_version_id, **metadata):
+        started.append(("edit", str(minute_version_id), str(source_minute_version_id), metadata))
 
     monkeypatch.setattr("backend.api.routes.minutes.temporal.start_minute_generation_workflow", _start_generation)
     monkeypatch.setattr("backend.api.routes.minutes.temporal.start_minute_edit_workflow", _start_edit)
@@ -104,6 +104,11 @@ async def test_create_minute_template_tenant_boundary(tenants, started):
     assert accepted.status_code == 200
     assert len(started) == 1
     assert started[0][0] == "generate"
+    assert started[0][2] == {
+        "user_id": own["user_id"],
+        "transcription_id": own["transcription_id"],
+        "minute_id": uuid.UUID(accepted.json()["id"]),
+    }
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -133,10 +138,15 @@ async def test_create_minute_version_source_tenant_boundary(tenants, started):
         )
     assert accepted.status_code == 200
     assert len(started) == 1
-    assert started[0] == ("edit", accepted.json()["id"], str(own["minute_version_id"]))
+    assert started[0] == (
+        "edit",
+        accepted.json()["id"],
+        str(own["minute_version_id"]),
+        {"user_id": own["user_id"], "transcription_id": own["transcription_id"], "minute_id": own["minute_id"]},
+    )
 
 
-async def _start_boom(*_args):
+async def _start_boom(*_args, **_metadata):
     msg = "temporal unavailable"
     raise RuntimeError(msg)
 

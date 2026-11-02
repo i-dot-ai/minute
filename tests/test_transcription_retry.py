@@ -104,7 +104,7 @@ def started_workflows(monkeypatch):
     async def _object_exists(_key: str) -> bool:
         return True
 
-    async def _start(transcription_id, minute_id):
+    async def _start(transcription_id, minute_id, **_metadata):
         started.append((transcription_id, minute_id))
 
     async def _running(_transcription_id):
@@ -173,7 +173,7 @@ async def test_retry_concurrent_requests_publish_once(
             await first_started.wait()
         return True
 
-    async def _start(tid, mid):
+    async def _start(tid, mid, **_metadata):
         started_workflows.append((tid, mid))
         if fails_immediately:
             async with AsyncSession(async_engine) as session:
@@ -284,7 +284,7 @@ async def test_retry_publish_failure_marks_failed(failed_transcription, monkeypa
     """A definite enqueue failure leaves the retry explicitly retryable."""
     transcription_id = failed_transcription["transcription_id"]
 
-    async def _boom(_transcription_id, _minute_id):
+    async def _boom(_transcription_id, _minute_id, **_metadata):
         msg = "temporal unavailable"
         raise RuntimeError(msg)
 

@@ -7,6 +7,12 @@ make release-temporal-server env=dev  # build and release only the Temporal serv
 
 Application releases use `terraform/`; server releases use `terraform-temporal/`, with separate state. The server image is built only during a server release. Both commands release the current **committed** revision, not uncommitted files. Terraform 1.7 or newer is required.
 
+Search attributes are managed manually through the Temporal CLI, not by releases. [Register and verify them](temporal.md#rollout-and-limits) in each namespace before deploying application code that writes them.
+
+Application releases check `UserId`, `TranscriptionId`, `MinuteId` and `MinuteVersionId` are all **Keyword** before applying the application Terraform root. The check runs as the deployed one-off Temporal admin task, inside the VPC. It does not change attributes or deploy Temporal. A missing/wrong-type attribute, unreachable server or failed check stops the release; task diagnostics are printed from CloudWatch when permitted. The deployment role needs `logs:GetLogEvents` in addition to the existing task permissions. You can run it independently with `make check_temporal_search_attributes env=dev`.
+
+Release the updated Temporal server/admin image before the first app release using this check. An older admin image without `check-search-attributes` fails closed. The namespace task still does not create search attributes: registration remains manual.
+
 ## What a server release does
 
 Every explicit server release builds separate server and admin images at the version in `temporal/version.env`. Both are pushed to the existing `minute-temporal` ECR repository: `<commit-sha>` for the server and `<commit-sha>-admin` for admin tools. The release then:
@@ -30,13 +36,13 @@ Dev is disposable, so recreate Temporal rather than transfer its state. **This d
 
 Include the new `terraform-temporal/` directory, application outputs, release changes and tests, and the deletion of `terraform/temporal.tf`. Wait for the application image builds and checks to pass.
 
-### 2. Release the application and let Terraform clean up
+### 2. Provision application infrastructure and let Terraform clean up
 
 ```console
-make release env=dev
+make tf_apply env=dev IMAGE_TAG=<committed-SHA-with-built-application-images>
 ```
 
-Wait for **release-infrastructure** in GitHub Actions to finish successfully. On this first release, Terraform deletes the old Temporal resources because they are no longer in the application configuration. It also publishes the networking outputs the standalone server needs. The application database stays in the application configuration and is not removed.
+This is an explicit, reviewed bootstrap Terraform apply, not a normal app release: it provisions the application networking outputs required by Temporal before the server exists. It can start application containers, but do not submit jobs until Temporal and its attributes are ready. On this first apply, Terraform deletes the old Temporal resources because they are no longer in the application configuration. The application database stays in the application configuration and is not removed. Normal `make release` is blocked at this point by the new preflight.
 
 If cleanup fails, or the old Temporal resources were previously forgotten from application state, stop and investigate before creating same-named replacements. Transcription will be unavailable until the server is created.
 
@@ -46,13 +52,13 @@ If cleanup fails, or the old Temporal resources were previously forgotten from a
 make release-temporal-server env=dev
 ```
 
-Wait for **release-infrastructure** to finish successfully. Confirm the Temporal ECS service is healthy and the application worker is running, then test an upload. If state access is denied, the deployment role needs access to the new `minute-temporal/terraform.tfstate` key under the dev workspace prefix.
+Wait for **release-infrastructure** to finish successfully. Confirm the Temporal ECS service is healthy, then [register the four Keyword attributes](temporal.md#rollout-and-limits). Run `make release env=dev`; its preflight must pass before the normal application rollout. Once the application worker is running, test an upload. If state access is denied, the deployment role needs access to the new `minute-temporal/terraform.tfstate` key under the dev workspace prefix.
 
 ## Subsequent releases
 
 Release application changes with `make release env=dev`; Temporal stays running. Release changes to the server image/configuration with `make release-temporal-server env=dev`; application containers stay unchanged. Check Temporal's upstream upgrade requirements before changing its version.
 
-Preprod has no old Temporal deployment: release the application first, then run both commands with `env=preprod`. For production, use **release-infrastructure** manually on `main`, selecting environment `prod` and releasing component `app` first, then `temporal-server`. No state migration is needed for either environment.
+For a fresh preprod or production environment, provision the initial application infrastructure with a reviewed bootstrap Terraform apply, release `temporal-server`, register the four ID attributes, then release `app`. Normal app releases deliberately do not bypass the preflight for a fresh environment. For production, server/app releases use **release-infrastructure** manually on `main`. No state migration is needed for either environment.
 
 ## Before production and version upgrades
 

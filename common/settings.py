@@ -136,6 +136,11 @@ class Settings(BaseSettings):
     POSTHOG_API_KEY: str | None = Field(description="PostHog API key for analytics", default=None)
     POSTHOG_HOST: str = Field(description="PostHog service host URL", default="https://eu.i.posthog.com")
 
+    # if using Linear for support tickets
+    LINEAR_API_KEY: str | None = Field(description="Linear API key for creating support tickets", default=None)
+    LINEAR_TEAM_ID: str | None = Field(description="Linear team ID for support tickets", default=None)
+    LINEAR_PROJECT_ID: str | None = Field(description="Linear project ID for support tickets", default=None)
+
     MIN_WORD_COUNT_FOR_SUMMARY: int = Field(
         default=200, description="Transcript must have at least this many words to be passed to summary stage"
     )

@@ -19,7 +19,7 @@ class LinearError(Exception):
     pass
 
 
-async def create_linear_issue(title: str, description: str) -> str:
+async def create_linear_issue(title: str, description: str, label_ids: list[str] | None = None) -> str:
     """Create an issue in Linear and return its identifier, e.g. MIN-123."""
     settings = get_settings()
     if not settings.LINEAR_API_KEY or not settings.LINEAR_TEAM_ID:
@@ -28,6 +28,8 @@ async def create_linear_issue(title: str, description: str) -> str:
     issue_input = {"teamId": settings.LINEAR_TEAM_ID, "title": title, "description": description}
     if settings.LINEAR_PROJECT_ID:
         issue_input["projectId"] = settings.LINEAR_PROJECT_ID
+    if label_ids:
+        issue_input["labelIds"] = label_ids
 
     async with httpx.AsyncClient(timeout=10) as client:
         response = await client.post(

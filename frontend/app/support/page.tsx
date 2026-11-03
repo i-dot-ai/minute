@@ -1,7 +1,6 @@
 'use client'
 
 import CopyButton from '@/components/ui/copy-button'
-import supportContent from '@/content/support-page.html'
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
 
@@ -13,7 +12,16 @@ export default function SupportPage() {
     <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-two-thirds">
-          <div dangerouslySetInnerHTML={{ __html: supportContent }} />
+          <h1 className="govuk-heading-l">Contact us</h1>
+          <p className="govuk-body">
+            Email us at:{' '}
+            <a href="mailto:minute-support@dsit.gov.uk" className="govuk-link">
+              minute-support@dsit.gov.uk
+            </a>
+          </p>
+          <p className="govuk-body">
+            We aim to respond to all inquiries within 24 hours.
+          </p>
           {userId && (
             <>
               <h2 className="govuk-heading-m">User id</h2>

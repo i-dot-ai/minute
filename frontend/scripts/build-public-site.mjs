@@ -29,7 +29,7 @@ const pages = [
   },
   {
     title: 'Support',
-    contentPath: join(contentRoot, 'support-page.html'),
+    contentPath: join(publicSiteRoot, 'pages/support.html'),
     outputPath: 'support/index.html',
     wrap: true,
   },

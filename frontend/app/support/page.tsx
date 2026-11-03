@@ -94,7 +94,6 @@ function SupportForm() {
         <select
           className="govuk-select"
           id="category"
-          aria-describedby="category-hint"
           {...form.register('category')}
         >
           {CATEGORIES.map((c) => (

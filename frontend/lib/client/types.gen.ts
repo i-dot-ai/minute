@@ -47,6 +47,31 @@ export type CreateQuestion = {
 }
 
 /**
+ * CreateSupportTicketRequest
+ */
+export type CreateSupportTicketRequest = {
+  category: SupportCategory
+  /**
+   * Subject
+   */
+  subject: string
+  /**
+   * Message
+   */
+  message: string
+}
+
+/**
+ * CreateSupportTicketResponse
+ */
+export type CreateSupportTicketResponse = {
+  /**
+   * Reference
+   */
+  reference: string
+}
+
+/**
  * CreateUserTemplateRequest
  */
 export type CreateUserTemplateRequest = {
@@ -466,6 +491,11 @@ export type SingleRecording = {
 }
 
 /**
+ * SupportCategory
+ */
+export type SupportCategory = 'access' | 'issue' | 'recommendation' | 'general'
+
+/**
  * TemplateMetadata
  */
 export type TemplateMetadata = {
@@ -708,6 +738,16 @@ export type ValidationError = {
    * Error Type
    */
   type: string
+  /**
+   * Input
+   */
+  input?: unknown
+  /**
+   * Context
+   */
+  ctx?: {
+    [key: string]: unknown
+  }
 }
 
 export type HealthcheckHealthcheckGetData = {
@@ -1697,3 +1737,36 @@ export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses =
 
 export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse =
   DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses[keyof DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses]
+
+export type CreateSupportTicketSupportTicketsPostData = {
+  body: CreateSupportTicketRequest
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query?: never
+  url: '/support/tickets'
+}
+
+export type CreateSupportTicketSupportTicketsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type CreateSupportTicketSupportTicketsPostError =
+  CreateSupportTicketSupportTicketsPostErrors[keyof CreateSupportTicketSupportTicketsPostErrors]
+
+export type CreateSupportTicketSupportTicketsPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: CreateSupportTicketResponse
+}
+
+export type CreateSupportTicketSupportTicketsPostResponse =
+  CreateSupportTicketSupportTicketsPostResponses[keyof CreateSupportTicketSupportTicketsPostResponses]

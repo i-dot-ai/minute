@@ -12,6 +12,8 @@ support_router = APIRouter(tags=["Support"])
 
 logger = logging.getLogger(__name__)
 
+TITLE_SUMMARY_LENGTH = 80
+
 
 class SupportCategory(StrEnum):
     ACCESS = "access"
@@ -22,7 +24,6 @@ class SupportCategory(StrEnum):
 
 class CreateSupportTicketRequest(BaseModel):
     category: SupportCategory
-    subject: str = Field(min_length=1, max_length=200)
     message: str = Field(min_length=1, max_length=5000)
 
 
@@ -34,7 +35,10 @@ class CreateSupportTicketResponse(BaseModel):
 async def create_support_ticket(
     data: CreateSupportTicketRequest, user: UserDep, request: Request
 ) -> CreateSupportTicketResponse:
-    title = f"[{data.category.capitalize()}] {data.subject}"
+    summary = " ".join(data.message.split())
+    if len(summary) > TITLE_SUMMARY_LENGTH:
+        summary = summary[:TITLE_SUMMARY_LENGTH].rstrip() + "…"
+    title = f"[{data.category.capitalize()}] {summary}"
     description = (
         f"User id: {user.id}\n"
         f"Email: {user.email}\n"

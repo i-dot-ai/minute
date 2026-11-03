@@ -13,6 +13,7 @@ import {
   createMinuteTranscriptionTranscriptionIdMinutesPost,
   createMinuteVersionMinutesMinuteIdVersionsPost,
   createRecordingRecordingsPost,
+  createSupportTicketSupportTicketsPost,
   createTranscriptionTranscriptionsPost,
   createUserTemplateUserTemplatesPost,
   deleteMinuteMinutesMinuteIdDelete,
@@ -49,6 +50,9 @@ import type {
   CreateRecordingRecordingsPostData,
   CreateRecordingRecordingsPostError,
   CreateRecordingRecordingsPostResponse,
+  CreateSupportTicketSupportTicketsPostData,
+  CreateSupportTicketSupportTicketsPostError,
+  CreateSupportTicketSupportTicketsPostResponse,
   CreateTranscriptionTranscriptionsPostData,
   CreateTranscriptionTranscriptionsPostError,
   CreateTranscriptionTranscriptionsPostResponse,
@@ -1059,3 +1063,30 @@ export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation =
     }
     return mutationOptions
   }
+
+/**
+ * Create Support Ticket
+ */
+export const createSupportTicketSupportTicketsPostMutation = (
+  options?: Partial<Options<CreateSupportTicketSupportTicketsPostData>>
+): UseMutationOptions<
+  CreateSupportTicketSupportTicketsPostResponse,
+  CreateSupportTicketSupportTicketsPostError,
+  Options<CreateSupportTicketSupportTicketsPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateSupportTicketSupportTicketsPostResponse,
+    CreateSupportTicketSupportTicketsPostError,
+    Options<CreateSupportTicketSupportTicketsPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createSupportTicketSupportTicketsPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}

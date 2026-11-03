@@ -12,6 +12,9 @@ import type {
   CreateRecordingRecordingsPostData,
   CreateRecordingRecordingsPostErrors,
   CreateRecordingRecordingsPostResponses,
+  CreateSupportTicketSupportTicketsPostData,
+  CreateSupportTicketSupportTicketsPostErrors,
+  CreateSupportTicketSupportTicketsPostResponses,
   CreateTranscriptionTranscriptionsPostData,
   CreateTranscriptionTranscriptionsPostErrors,
   CreateTranscriptionTranscriptionsPostResponses,
@@ -613,3 +616,24 @@ export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost = <
     DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostErrors,
     ThrowOnError
   >({ url: '/user-templates/{template_id}/duplicate', ...options })
+
+/**
+ * Create Support Ticket
+ */
+export const createSupportTicketSupportTicketsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateSupportTicketSupportTicketsPostData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    CreateSupportTicketSupportTicketsPostResponses,
+    CreateSupportTicketSupportTicketsPostErrors,
+    ThrowOnError
+  >({
+    url: '/support/tickets',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })

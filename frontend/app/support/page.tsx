@@ -61,7 +61,11 @@ function SupportForm() {
       onSubmit={form.handleSubmit((body) => createTicket({ body }))}
     >
       {(fieldErrors.length > 0 || isError) && (
-        <div className="govuk-error-summary" role="alert" tabIndex={-1}>
+        <div
+          className="govuk-error-summary bg-white"
+          role="alert"
+          tabIndex={-1}
+        >
           <h2 className="govuk-error-summary__title">There is a problem</h2>
           <div className="govuk-error-summary__body">
             {isError && (
@@ -140,7 +144,7 @@ export default function SupportPage() {
   return (
     <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
-        <div className="govuk-grid-column-two-thirds">
+        <div className="govuk-grid-column-two-thirds-from-desktop">
           <h1 className="govuk-heading-xl">Contact us</h1>
           {user && (
             <>

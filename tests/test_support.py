@@ -97,6 +97,26 @@ async def test_create_linear_issue_raises_on_graphql_failure(monkeypatch, respon
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("linear_settings")
+async def test_create_linear_issue_error_does_not_leak_input(monkeypatch):
+    # Linear echoes the submitted input back in validation errors
+    error = {
+        "message": "Argument Validation Error",
+        "extensions": {
+            "code": "INVALID_INPUT",
+            "validationErrors": [{"target": {"description": "jane@example.com secret message"}}],
+        },
+    }
+    mock_linear(monkeypatch, {"errors": [error], "data": None})
+
+    with pytest.raises(LinearError) as exc_info:
+        await create_linear_issue("Title", "jane@example.com secret message")
+
+    assert "INVALID_INPUT" in str(exc_info.value)
+    assert "jane@example.com" not in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("linear_settings")
 async def test_create_linear_issue_raises_on_http_error(monkeypatch):
     mock_linear(monkeypatch, {"error": "unauthorised"}, status_code=401)
 
@@ -208,6 +228,7 @@ async def test_create_support_ticket_linear_failure(monkeypatch, error, expected
     [
         {"category": "not-a-category"},
         {"message": ""},
+        {"message": "   \n\t "},
         {"message": "x" * 5001},
     ],
 )

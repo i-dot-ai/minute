@@ -122,6 +122,7 @@ function SupportForm() {
           rows={6}
           {...form.register('message', {
             required: 'Enter a message',
+            validate: (v) => v.trim() !== '' || 'Enter a message',
             maxLength: {
               value: 5000,
               message: 'Message must be 5000 characters or fewer',
@@ -161,8 +162,7 @@ export default function SupportPage() {
           )}
           <h2 className="govuk-heading-l govuk-!-margin-top-6">Email</h2>
           <p className="govuk-body">
-            You can email us at:
-            <EmailLink />
+            You can email us at: <EmailLink />
           </p>
           <p className="govuk-body">
             We aim to respond to all inquiries within 24 hours.

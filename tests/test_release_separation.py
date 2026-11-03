@@ -39,7 +39,14 @@ def test_release_tags_select_only_one_component(commands, target, prefix):
 
 
 @pytest.mark.parametrize(
-    ("environment", "component"), [("prod", "app"), ("prod", "temporal-server"), ("invalid", "app"), ("dev", "unknown")]
+    ("environment", "component"),
+    [
+        ("prod", "app"),
+        ("prod", "temporal-server"),
+        ("dev", "temporal-admin"),
+        ("invalid", "app"),
+        ("dev", "unknown"),
+    ],
 )
 def test_invalid_releases_do_not_push(commands, environment, component):
     env, log = commands
@@ -53,6 +60,8 @@ def test_invalid_releases_do_not_push(commands, environment, component):
 @pytest.mark.parametrize("folder", ["terraform", "terraform-temporal"])
 def test_make_applies_and_tags_only_selected_component(commands, folder):
     env, log = commands
+    if folder == "terraform":
+        env = {**env, "ADMIN_STATUS": "1"}
     repos = "minute-temporal" if folder == "terraform-temporal" else "minute-backend,minute-frontend,minute-worker"
     args = ["make", f"INFRASTRUCTURE_FOLDER={folder}", "env=dev", "IMAGE_TAG=test-commit", "ECR_REPO=wrong-repository"]
     subprocess.run([*args, "tf_auto_apply"], cwd=ROOT, env=env, check=True, capture_output=True)
@@ -169,6 +178,7 @@ def test_missing_admin_image_stops_before_migrations(commands):
         ("push", "release-temporal-server-preprod-feature-test", "", "", "terraform-temporal"),
         ("workflow_dispatch", "main", "app", "prod", "terraform"),
         ("workflow_dispatch", "main", "temporal-server", "prod", "terraform-temporal"),
+        ("workflow_dispatch", "main", "temporal-admin", "dev", None),
         ("workflow_dispatch", "feature", "temporal-server", "prod", None),
     ],
 )

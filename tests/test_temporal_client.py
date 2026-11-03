@@ -38,3 +38,24 @@ async def test_only_missing_workflows_allow_retry_on_rpc_error(monkeypatch, stat
     else:
         with pytest.raises(RPCError):
             await temporal.transcription_workflow_running(uuid.uuid4())
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", [RPCStatusCode.NOT_FOUND, RPCStatusCode.UNAVAILABLE])
+async def test_indexed_start_still_only_retries_namespace_not_found(monkeypatch, status):
+    error = RPCError("start failed", status, b"")
+    client = SimpleNamespace(start_workflow=AsyncMock(side_effect=[error, None]))
+    sleep = AsyncMock()
+    monkeypatch.setattr(temporal, "get_temporal_client", AsyncMock(return_value=client))
+    monkeypatch.setattr(temporal.asyncio, "sleep", sleep)
+    ids = [uuid.uuid4() for _ in range(4)]
+    if status == RPCStatusCode.NOT_FOUND:
+        await temporal.start_transcription_workflow(ids[0], ids[1], user_id=ids[2], minute_version_id=ids[3])
+        assert client.start_workflow.await_count == 2
+        assert client.start_workflow.await_args_list[0] == client.start_workflow.await_args_list[1]
+        sleep.assert_awaited_once()
+    else:
+        with pytest.raises(RPCError):
+            await temporal.start_transcription_workflow(ids[0], ids[1], user_id=ids[2], minute_version_id=ids[3])
+        client.start_workflow.assert_awaited_once()
+        sleep.assert_not_awaited()

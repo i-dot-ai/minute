@@ -34,6 +34,10 @@ class LocalStorageService(StorageService):
         return storage_path.exists()
 
     @classmethod
+    async def get_object_size(cls, key: str) -> int:
+        return (Path(settings.LOCAL_STORAGE_PATH) / key).stat().st_size
+
+    @classmethod
     async def delete(cls, key: str) -> None:
         storage_path = Path(settings.LOCAL_STORAGE_PATH) / key
         storage_path.unlink(missing_ok=True)

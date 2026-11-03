@@ -7,6 +7,10 @@ make release-temporal-server env=dev  # build and release only the Temporal serv
 
 Application releases use `terraform/`; server releases use `terraform-temporal/`, with separate state. The server image is built only during a server release. Both commands release the current **committed** revision, not uncommitted files. Terraform 1.7 or newer is required.
 
+Search attributes are managed manually through the Temporal CLI, not by releases. [Register and verify them](temporal.md#rollout-and-limits) in each namespace before deploying application code that writes them.
+
+Application releases do not check Temporal, read its Terraform state or run admin tasks. They do not require a Temporal server/admin release. The application still needs a reachable Temporal server and the four registered ID attributes at runtime.
+
 ## What a server release does
 
 Every explicit server release builds separate server and admin images at the version in `temporal/version.env`. Both are pushed to the existing `minute-temporal` ECR repository: `<commit-sha>` for the server and `<commit-sha>-admin` for admin tools. The release then:
@@ -36,7 +40,7 @@ Include the new `terraform-temporal/` directory, application outputs, release ch
 make release env=dev
 ```
 
-Wait for **release-infrastructure** in GitHub Actions to finish successfully. On this first release, Terraform deletes the old Temporal resources because they are no longer in the application configuration. It also publishes the networking outputs the standalone server needs. The application database stays in the application configuration and is not removed.
+Wait for **release-infrastructure** in GitHub Actions to finish successfully. This provisions the application networking outputs required by Temporal before the server exists. It can start application containers, but do not submit jobs until Temporal and its attributes are ready. On this first release, Terraform deletes the old Temporal resources because they are no longer in the application configuration. The application database stays in the application configuration and is not removed.
 
 If cleanup fails, or the old Temporal resources were previously forgotten from application state, stop and investigate before creating same-named replacements. Transcription will be unavailable until the server is created.
 
@@ -46,13 +50,13 @@ If cleanup fails, or the old Temporal resources were previously forgotten from a
 make release-temporal-server env=dev
 ```
 
-Wait for **release-infrastructure** to finish successfully. Confirm the Temporal ECS service is healthy and the application worker is running, then test an upload. If state access is denied, the deployment role needs access to the new `minute-temporal/terraform.tfstate` key under the dev workspace prefix.
+Wait for **release-infrastructure** to finish successfully. Confirm the Temporal ECS service is healthy, then [register and verify the four Keyword attributes](temporal.md#rollout-and-limits). Once the application worker is running, test an upload. If state access is denied, the deployment role needs access to the new `minute-temporal/terraform.tfstate` key under the dev workspace prefix.
 
 ## Subsequent releases
 
 Release application changes with `make release env=dev`; Temporal stays running. Release changes to the server image/configuration with `make release-temporal-server env=dev`; application containers stay unchanged. Check Temporal's upstream upgrade requirements before changing its version.
 
-Preprod has no old Temporal deployment: release the application first, then run both commands with `env=preprod`. For production, use **release-infrastructure** manually on `main`, selecting environment `prod` and releasing component `app` first, then `temporal-server`. No state migration is needed for either environment.
+For a fresh preprod or production environment, release `app` to provision its networking outputs, release `temporal-server`, then register and verify the four ID attributes before submitting jobs. For production, server/app releases use **release-infrastructure** manually on `main`. No state migration is needed for either environment.
 
 ## Before production and version upgrades
 

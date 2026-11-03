@@ -33,7 +33,7 @@ CA_SH = if [ -f "$(CA_BUNDLE)" ]; then \
 # around values like TRANSCRIPTION_SERVICES='[...]' and breaks pydantic parsing).
 ENV_SH = set -a; if [ -f .env ]; then . ./.env; fi; $(CA_SH) set +a;
 
-# Fast, offline unit tests. Paid-API / e2e tests are skipped here (run `make test_e2e`).
+# Non-paid suite: requires Compose Postgres/MiniStack and local ffprobe; paid e2e uses `make test_e2e`.
 test:
 	$(ENV_SH) ALLOW_TESTS_TO_ACCESS_PAID_APIS=0 uv run pytest tests/
 

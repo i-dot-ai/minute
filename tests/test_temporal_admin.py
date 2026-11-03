@@ -125,6 +125,7 @@ def test_namespace_creation_only_after_successful_lookup(admin_commands, namespa
     assert (result.returncode == 0) is (status == "0" and namespaces != "invalid-json")
     assert ("namespace create" in log.read_text()) is creates
     assert "temporal-sql-tool" not in log.read_text()
+    assert "search-attribute" not in log.read_text()
 
 
 @pytest.mark.parametrize("exit_code", [0, 1, None])

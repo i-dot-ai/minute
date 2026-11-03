@@ -1,4 +1,5 @@
 import logging
+import math
 import subprocess
 from pathlib import Path
 
@@ -96,27 +97,28 @@ def get_duration(file_path: Path) -> float:
                 "-select_streams",
                 "a:0",
                 "-show_entries",
-                "stream=duration",
+                "stream=duration:format=duration",
                 "-of",
                 "default=noprint_wrappers=1:nokey=1",
                 str(file_path),
             ],
             capture_output=True,
             text=True,
-            check=False,
+            check=True,
         )
 
-        if result.returncode != 0:
-            msg = f"ffprobe command failed with return code {result.returncode},ffprobe stderr: {result.stderr}"
-            logger.error(msg)
-            return 14400.0
-        duration = result.stdout.strip()
-        duration = float(duration)
-        msg = f"Successfully got duration using ffprobe: {duration=}"
-        logger.info(msg)
-        return duration
+        # Some containers expose duration only on the format, not the audio stream.
+        for value in result.stdout.splitlines():
+            if value == "N/A":
+                continue
+            duration = float(value)
+            if math.isfinite(duration) and duration > 0:
+                logger.info("Successfully got duration using ffprobe: %s", duration)
+                return duration
+        msg = "Audio duration must be finite and positive"
+        raise ValueError(msg)
 
-    except Exception as e:
-        msg = f"Failed to get duration: {e!s}"
-        logger.exception(msg)
+    except (OSError, subprocess.SubprocessError, ValueError) as e:
+        logger.warning("Failed to get duration for %s: %s; defaulting to 4 hours (14400 seconds)", file_path, e)
+        # shortcut: unknown durations use 4h; track estimates separately if metrics must be measured-only.
         return 14400.0

@@ -77,6 +77,7 @@ DB_RETRY = RetryPolicy(
 @dataclass
 class PreparedAudio:
     duration_seconds: float
+    upload_size_bytes: int | None = None  # Older activity results contain only duration.
 
 
 @dataclass
@@ -155,6 +156,11 @@ class TranscriptionWorkflow:
             start_to_close_timeout=timedelta(minutes=10),  # 2h wav converted in ~22s
             retry_policy=_PREPARE_RETRY,
         )
+        if workflow.patched("transcription-audio-memo"):
+            memo = {"AudioDurationSeconds": audio.duration_seconds}
+            if audio.upload_size_bytes is not None:
+                memo["AudioUploadSizeMb"] = audio.upload_size_bytes / 1_000_000
+            workflow.upsert_memo(memo)
         timeout = stt_timeout(audio.duration_seconds)
         return await workflow.execute_activity(
             TRANSCRIBE,

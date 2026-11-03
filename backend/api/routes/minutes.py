@@ -19,11 +19,15 @@ from common.types import (
 minutes_router = APIRouter(tags=["Minutes"])
 
 
-async def _start_generation(session: AsyncSession, minute_version: MinuteVersion) -> None:
+async def _start_generation(
+    session: AsyncSession, minute_version: MinuteVersion, minute: Minute, user_id: uuid.UUID
+) -> None:
     """Commit before starting the workflow so the worker can always see the row."""
     await session.commit()
     try:
-        await temporal.start_minute_generation_workflow(minute_version.id)
+        await temporal.start_minute_generation_workflow(
+            minute_version.id, user_id=user_id, transcription_id=minute.transcription_id, minute_id=minute.id
+        )
     except Exception as exc:
         minute_version.status = JobStatus.FAILED
         minute_version.error = "Failed to enqueue minute generation"
@@ -32,11 +36,21 @@ async def _start_generation(session: AsyncSession, minute_version: MinuteVersion
 
 
 async def _start_edit(
-    session: AsyncSession, minute_version: MinuteVersion, source_minute_version_id: uuid.UUID
+    session: AsyncSession,
+    minute_version: MinuteVersion,
+    source_minute_version_id: uuid.UUID,
+    minute: Minute,
+    user_id: uuid.UUID,
 ) -> None:
     await session.commit()
     try:
-        await temporal.start_minute_edit_workflow(minute_version.id, source_minute_version_id)
+        await temporal.start_minute_edit_workflow(
+            minute_version.id,
+            source_minute_version_id,
+            user_id=user_id,
+            transcription_id=minute.transcription_id,
+            minute_id=minute.id,
+        )
     except Exception as exc:
         minute_version.status = JobStatus.FAILED
         minute_version.error = "Failed to enqueue minute edit"
@@ -112,7 +126,7 @@ async def create_minute(
     session.add(minute)
     minute_version = MinuteVersion(id=uuid.uuid4(), minute_id=minute.id)
     session.add(minute_version)
-    await _start_generation(session, minute_version)
+    await _start_generation(session, minute_version, minute, user.id)
     await session.refresh(minute_version)
     await session.refresh(minute)
     return MinuteListItem(
@@ -216,7 +230,7 @@ async def create_minute_version(
     minute.updated_datetime = datetime.now(tz=UTC)
     session.add(minute_version)
     if request.ai_edit_instructions:
-        await _start_edit(session, minute_version, request.ai_edit_instructions.source_id)
+        await _start_edit(session, minute_version, request.ai_edit_instructions.source_id, minute, user.id)
     else:
         await session.commit()
     await session.refresh(minute_version)

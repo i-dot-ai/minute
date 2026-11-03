@@ -8,6 +8,7 @@ Requires the docker-compose Postgres (`make run`).
 """
 
 import asyncio
+import json
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -104,7 +105,7 @@ def started_workflows(monkeypatch):
     async def _object_exists(_key: str) -> bool:
         return True
 
-    async def _start(transcription_id, minute_id):
+    async def _start(transcription_id, minute_id, **_metadata):
         started.append((transcription_id, minute_id))
 
     async def _running(_transcription_id):
@@ -173,7 +174,7 @@ async def test_retry_concurrent_requests_publish_once(
             await first_started.wait()
         return True
 
-    async def _start(tid, mid):
+    async def _start(tid, mid, **_metadata):
         started_workflows.append((tid, mid))
         if fails_immediately:
             async with AsyncSession(async_engine) as session:
@@ -203,13 +204,15 @@ async def test_retry_concurrent_requests_publish_once(
     assert status_codes == [201, 400]
     assert len(started_workflows) == 1
     assert started_workflows[0] == (transcription_id, minute_id)
+    # Database scheduling can let either HTTP request win the retry claim.
+    winning_request = next(response.request for response in responses if response.status_code == 201)
 
     async with AsyncSession(async_engine) as session:
         transcription = await session.get(Transcription, transcription_id)
         assert transcription.status == (JobStatus.FAILED if fails_immediately else JobStatus.AWAITING_START)
         assert transcription.error == ("New attempt failed" if fails_immediately else None)
         minute = await session.get(Minute, minute_id)
-        assert minute.template_name == "General"
+        assert minute.template_name == json.loads(winning_request.content)["template_name"]
         version = await session.get(MinuteVersion, failed_transcription["minute_version_id"])
         assert version.status == (JobStatus.FAILED if fails_immediately else JobStatus.AWAITING_START)
         assert version.error == ("New attempt failed" if fails_immediately else None)
@@ -284,7 +287,7 @@ async def test_retry_publish_failure_marks_failed(failed_transcription, monkeypa
     """A definite enqueue failure leaves the retry explicitly retryable."""
     transcription_id = failed_transcription["transcription_id"]
 
-    async def _boom(_transcription_id, _minute_id):
+    async def _boom(_transcription_id, _minute_id, **_metadata):
         msg = "temporal unavailable"
         raise RuntimeError(msg)
 

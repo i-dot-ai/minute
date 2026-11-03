@@ -52,10 +52,6 @@ export type CreateQuestion = {
 export type CreateSupportTicketRequest = {
   category: SupportCategory
   /**
-   * Subject
-   */
-  subject: string
-  /**
    * Message
    */
   message: string

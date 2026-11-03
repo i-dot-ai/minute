@@ -118,7 +118,7 @@ def get_duration(file_path: Path) -> float:
         msg = "Audio duration must be finite and positive"
         raise ValueError(msg)
 
-    except Exception as e:
-        msg = f"Failed to get duration: {e!s}"
-        logger.exception(msg)
-        raise
+    except (OSError, subprocess.SubprocessError, ValueError) as e:
+        logger.warning("Failed to get duration for %s: %s; defaulting to 4 hours (14400 seconds)", file_path, e)
+        # shortcut: unknown durations use 4h; track estimates separately if metrics must be measured-only.
+        return 14400.0

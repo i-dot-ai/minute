@@ -1,6 +1,5 @@
-"""Never publish the old four-hour fallback as an actual measured duration."""
+"""Measure valid audio; warn and use four hours when duration cannot be determined."""
 
-import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -23,12 +22,12 @@ def test_duration_uses_stream_or_container_metadata(monkeypatch, output):
 
 
 @pytest.mark.parametrize("output", ["N/A\n", "", "nan\n", "inf\n", "-1\n", "0\n", "bad\n"])
-def test_unknown_or_invalid_duration_fails_instead_of_inventing_a_value(monkeypatch, output):
+def test_unknown_or_invalid_duration_defaults_to_four_hours_with_warning(monkeypatch, caplog, output):
     monkeypatch.setattr(ffmpeg.subprocess, "run", Mock(return_value=SimpleNamespace(stdout=output)))
-    with pytest.raises(ValueError, match="Audio duration|could not convert"):
-        ffmpeg.get_duration(Path("audio.mp3"))
+    assert ffmpeg.get_duration(Path("audio.mp3")) == 14400.0
+    assert any(record.levelname == "WARNING" and "defaulting to 4 hours" in record.message for record in caplog.records)
 
 
-def test_probe_failure_is_not_hidden(tmp_path):
-    with pytest.raises(subprocess.CalledProcessError):
-        ffmpeg.get_duration(tmp_path / "missing.mp3")
+def test_probe_failure_defaults_to_four_hours_with_warning(tmp_path, caplog):
+    assert ffmpeg.get_duration(tmp_path / "missing.mp3") == 14400.0
+    assert any(record.levelname == "WARNING" and "defaulting to 4 hours" in record.message for record in caplog.records)

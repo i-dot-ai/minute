@@ -13,7 +13,7 @@ from common.services import linear_client
 from common.services.linear_client import LinearError, LinearNotConfiguredError, create_linear_issue
 from tests.utils import get_test_client
 
-VALID_TICKET = {"category": "issue", "subject": "Upload keeps failing", "message": "It fails at 50%"}
+VALID_TICKET = {"category": "issue", "message": "It fails at 50%"}
 
 
 @pytest.fixture
@@ -118,11 +118,31 @@ async def test_create_support_ticket_success(monkeypatch):
     assert response.status_code == 200
     assert response.json() == {"reference": "MIN-123"}
     title, description = calls[0]
-    assert title == "[Issue] Upload keeps failing"
+    assert title == "[Issue] It fails at 50%"
     assert description.startswith("User id: ")
     assert description.endswith("\n---\nIt fails at 50%")
     for expected in ("Email: ", "Sent: ", " UTC", "Browser: test-browser/1.0"):
         assert expected in description
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_create_support_ticket_title_is_shortened_message(monkeypatch):
+    calls = []
+
+    async def fake_create(title, _description):
+        calls.append(title)
+        return "MIN-123"
+
+    monkeypatch.setattr(support, "create_linear_issue", fake_create)
+    message = "First line\nsecond line " + "x" * 200
+
+    async with get_test_client() as ac:
+        await ac.post("/support/tickets", json={**VALID_TICKET, "message": message})
+
+    title = calls[0]
+    assert title.startswith("[Issue] First line second line x")
+    assert title.endswith("…")
+    assert len(title) == len("[Issue] ") + support.TITLE_SUMMARY_LENGTH + 1
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -147,9 +167,7 @@ async def test_create_support_ticket_linear_failure(monkeypatch, error, expected
     "changes",
     [
         {"category": "not-a-category"},
-        {"subject": ""},
         {"message": ""},
-        {"subject": "x" * 201},
         {"message": "x" * 5001},
     ],
 )

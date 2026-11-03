@@ -43,6 +43,8 @@ async def create_linear_issue(title: str, description: str, label_ids: list[str]
     # Linear returns HTTP 200 for GraphQL errors, so check the body too
     result = (body.get("data") or {}).get("issueCreate") or {}
     if body.get("errors") or not result.get("success"):
-        msg = f"Linear issueCreate failed: {body.get('errors')}"
+        # Only keep message and code: Linear echoes the full input (user email, message) back in its errors
+        errors = [(e.get("message"), (e.get("extensions") or {}).get("code")) for e in body.get("errors") or []]
+        msg = f"Linear issueCreate failed: {errors}"
         raise LinearError(msg)
     return result["issue"]["identifier"]

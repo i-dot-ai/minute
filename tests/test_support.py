@@ -69,6 +69,17 @@ async def test_create_linear_issue_omits_project_when_not_set(monkeypatch):
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("linear_settings")
+async def test_create_linear_issue_sends_label_ids(monkeypatch):
+    requests = mock_linear(monkeypatch, {"data": {"issueCreate": {"success": True, "issue": {"identifier": "MIN-1"}}}})
+
+    await create_linear_issue("Title", "Body", ["label-id"])
+
+    issue_input = json.loads(requests[0].content)["variables"]["input"]
+    assert issue_input["labelIds"] == ["label-id"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("linear_settings")
 @pytest.mark.parametrize(
     "response_json",
     [
@@ -102,47 +113,76 @@ async def test_create_linear_issue_not_configured(monkeypatch, linear_settings, 
         await create_linear_issue("Title", "Body")
 
 
-@pytest.mark.asyncio(loop_scope="session")
-async def test_create_support_ticket_success(monkeypatch):
+def fake_linear(monkeypatch):
+    """Replace the route's Linear call; returns the captured (title, description, label_ids) calls."""
     calls = []
 
-    async def fake_create(title, description):
-        calls.append((title, description))
+    async def fake_create(title, description, label_ids=None):
+        calls.append((title, description, label_ids))
         return "MIN-123"
 
     monkeypatch.setattr(support, "create_linear_issue", fake_create)
+    return calls
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_create_support_ticket_success(monkeypatch):
+    monkeypatch.setenv("LINEAR_LABEL_ID_ISSUE", "issue-label-id")
+    calls = fake_linear(monkeypatch)
 
     async with get_test_client() as ac:
         response = await ac.post("/support/tickets", json=VALID_TICKET, headers={"User-Agent": "test-browser/1.0"})
 
     assert response.status_code == 200
     assert response.json() == {"reference": "MIN-123"}
-    title, description = calls[0]
-    assert title == "[Issue] It fails at 50%"
-    assert description.startswith("User id: ")
+    title, description, label_ids = calls[0]
+    assert title == "It fails at 50%"
+    assert label_ids == ["issue-label-id"]
+    assert description.startswith("Category: Issue\nUser id: ")
     assert description.endswith("\n---\nIt fails at 50%")
     for expected in ("Email: ", "Sent: ", " UTC", "Browser: test-browser/1.0"):
         assert expected in description
 
 
 @pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.parametrize("category", ["access", "issue", "recommendation", "general"])
+async def test_create_support_ticket_uses_category_label(monkeypatch, category):
+    for name in ("ACCESS", "ISSUE", "RECOMMENDATION", "GENERAL"):
+        monkeypatch.setenv(f"LINEAR_LABEL_ID_{name}", f"{name.lower()}-label-id")
+    calls = fake_linear(monkeypatch)
+
+    async with get_test_client() as ac:
+        await ac.post("/support/tickets", json={**VALID_TICKET, "category": category})
+
+    assert calls[0][2] == [f"{category}-label-id"]
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_create_support_ticket_without_label_configured(monkeypatch):
+    monkeypatch.setenv("LINEAR_LABEL_ID_ISSUE", "")
+    calls = fake_linear(monkeypatch)
+
+    async with get_test_client() as ac:
+        response = await ac.post("/support/tickets", json=VALID_TICKET)
+
+    assert response.status_code == 200
+    _, description, label_ids = calls[0]
+    assert label_ids is None
+    assert description.startswith("Category: Issue\n")
+
+
+@pytest.mark.asyncio(loop_scope="session")
 async def test_create_support_ticket_title_is_shortened_message(monkeypatch):
-    calls = []
-
-    async def fake_create(title, _description):
-        calls.append(title)
-        return "MIN-123"
-
-    monkeypatch.setattr(support, "create_linear_issue", fake_create)
+    calls = fake_linear(monkeypatch)
     message = "First line\nsecond line " + "x" * 200
 
     async with get_test_client() as ac:
         await ac.post("/support/tickets", json={**VALID_TICKET, "message": message})
 
-    title = calls[0]
-    assert title.startswith("[Issue] First line second line x")
+    title = calls[0][0]
+    assert title.startswith("First line second line x")
     assert title.endswith("…")
-    assert len(title) == len("[Issue] ") + support.TITLE_SUMMARY_LENGTH + 1
+    assert len(title) == support.TITLE_SUMMARY_LENGTH + 1
 
 
 @pytest.mark.asyncio(loop_scope="session")

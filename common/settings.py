@@ -140,6 +140,10 @@ class Settings(BaseSettings):
     LINEAR_API_KEY: str | None = Field(description="Linear API key for creating support tickets", default=None)
     LINEAR_TEAM_ID: str | None = Field(description="Linear team ID for support tickets", default=None)
     LINEAR_PROJECT_ID: str | None = Field(description="Linear project ID for support tickets", default=None)
+    LINEAR_LABEL_ID_ACCESS: str | None = Field(description="Linear label ID for access requests", default=None)
+    LINEAR_LABEL_ID_ISSUE: str | None = Field(description="Linear label ID for issues", default=None)
+    LINEAR_LABEL_ID_RECOMMENDATION: str | None = Field(description="Linear label ID for recommendations", default=None)
+    LINEAR_LABEL_ID_GENERAL: str | None = Field(description="Linear label ID for general enquiries", default=None)
 
     MIN_WORD_COUNT_FOR_SUMMARY: int = Field(
         default=200, description="Transcript must have at least this many words to be passed to summary stage"

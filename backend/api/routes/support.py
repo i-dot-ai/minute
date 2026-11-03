@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from backend.api.dependencies import UserDep
 from common.services.linear_client import LinearNotConfiguredError, create_linear_issue
+from common.settings import get_settings
 
 support_router = APIRouter(tags=["Support"])
 
@@ -38,16 +39,17 @@ async def create_support_ticket(
     summary = " ".join(data.message.split())
     if len(summary) > TITLE_SUMMARY_LENGTH:
         summary = summary[:TITLE_SUMMARY_LENGTH].rstrip() + "…"
-    title = f"[{data.category.capitalize()}] {summary}"
     description = (
+        f"Category: {data.category.capitalize()}\n"
         f"User id: {user.id}\n"
         f"Email: {user.email}\n"
         f"Sent: {datetime.now(UTC):%Y-%m-%d %H:%M} UTC\n"
         f"Browser: {request.headers.get('user-agent', 'unknown')}"
         f"\n\n---\n{data.message}"
     )
+    label_id = getattr(get_settings(), f"LINEAR_LABEL_ID_{data.category.upper()}")
     try:
-        reference = await create_linear_issue(title, description)
+        reference = await create_linear_issue(summary, description, [label_id] if label_id else None)
     except LinearNotConfiguredError as e:
         raise HTTPException(status_code=503, detail="Support tickets are not configured") from e
     except Exception as e:

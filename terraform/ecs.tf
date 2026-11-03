@@ -23,6 +23,13 @@ locals {
     "FAST_LLM_MODEL_NAME" = "gemini-3.5-flash"
     "BEST_LLM_PROVIDER"   = "gemini"
     "BEST_LLM_MODEL_NAME" = "gemini-3.5-flash"
+    "LINEAR_TEAM_ID"      = "9d22ea41-d2da-4fa9-be1e-f45ca9f6a170"
+    "LINEAR_PROJECT_ID"   = "7310478b-768a-40ae-865d-325fb5444638"
+
+    "LINEAR_LABEL_ID_ACCESS"         = "00dc78ba-3fad-4b0b-aa9f-0bf861c6a21e"
+    "LINEAR_LABEL_ID_ISSUE"          = "d8caf6e7-64e5-47bd-ae8a-200193d4841a"
+    "LINEAR_LABEL_ID_RECOMMENDATION" = "766656f5-5eec-43af-aba1-303b43ff5c6a"
+    "LINEAR_LABEL_ID_GENERAL"        = "aedb6092-0a26-45af-b14b-fa356f52e14e"
   }
 
 }

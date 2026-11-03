@@ -189,9 +189,6 @@ tf_auto_apply:  ## Auto apply terraform
 	@for repository in $$(printf '%s' "$(ECR_REPO)" | tr ',' ' '); do \
 		$(MAKE) check_docker_tag_exists repo=$$repository IMAGE_TAG=$(IMAGE_TAG) || exit 1; \
 	done
-ifeq ($(INFRASTRUCTURE_FOLDER),terraform)
-	$(MAKE) check_temporal_search_attributes
-endif
 	$(MAKE) tf_init_and_set_workspace
 ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
 	$(MAKE) check_docker_tag_exists repo=minute-temporal IMAGE_TAG=$(IMAGE_TAG)-admin
@@ -202,11 +199,6 @@ endif
 ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
 	python3 temporal-admin/run_task.py namespace
 endif
-
-.PHONY: check_temporal_search_attributes
-check_temporal_search_attributes: ## Read-only preflight against the deployed Temporal namespace
-	$(MAKE) tf_init_and_set_workspace INFRASTRUCTURE_FOLDER=terraform-temporal
-	python3 temporal-admin/run_task.py check-search-attributes
 
 ## Release app
 # Note: `env` falls back to `default` above for the terraform targets (that is a real

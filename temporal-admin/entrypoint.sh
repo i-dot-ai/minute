@@ -1,26 +1,7 @@
 #!/bin/sh
 # A release task, never a server entrypoint. Fail immediately on SQL or migration errors.
 set -eu
-case "${1:-schema}" in schema|namespace|check-search-attributes) ;; *) echo "Expected schema, namespace or check-search-attributes" >&2; exit 1 ;; esac
-
-if [ "${1:-schema}" = check-search-attributes ]; then
-  : "${TEMPORAL_ADDRESS:?TEMPORAL_ADDRESS is required}"
-  namespace=${TEMPORAL_NAMESPACE:-default}
-  attributes=$(temporal operator search-attribute list -n "$namespace" --address "$TEMPORAL_ADDRESS" --output json)
-  invalid=$(printf '%s' "$attributes" | jq -er '[
-    ["UserId", "TranscriptionId", "MinuteId", "MinuteVersionId"][] as $name |
-    select(.customAttributes[$name] != "INDEXED_VALUE_TYPE_KEYWORD") |
-    "\($name): expected Keyword; found \(.customAttributes[$name] // "missing")"
-  ] | join("\n")')
-  if [ -n "$invalid" ]; then
-    echo "Temporal search attribute preflight FAILED in namespace $namespace:" >&2
-    printf '%s\n' "$invalid" >&2
-    echo "Register the four ID attributes as Keyword through the Temporal CLI before releasing the app." >&2
-    exit 1
-  fi
-  echo "Temporal search attribute preflight passed in namespace $namespace: all four ID attributes are Keyword."
-  exit 0
-fi
+case "${1:-schema}" in schema|namespace) ;; *) echo "Expected schema or namespace" >&2; exit 1 ;; esac
 
 if [ "${1:-schema}" = namespace ]; then
   : "${TEMPORAL_ADDRESS:?TEMPORAL_ADDRESS is required}"

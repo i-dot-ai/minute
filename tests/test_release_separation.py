@@ -60,6 +60,8 @@ def test_invalid_releases_do_not_push(commands, environment, component):
 @pytest.mark.parametrize("folder", ["terraform", "terraform-temporal"])
 def test_make_applies_and_tags_only_selected_component(commands, folder):
     env, log = commands
+    if folder == "terraform":
+        env = {**env, "ADMIN_STATUS": "1"}
     repos = "minute-temporal" if folder == "terraform-temporal" else "minute-backend,minute-frontend,minute-worker"
     args = ["make", f"INFRASTRUCTURE_FOLDER={folder}", "env=dev", "IMAGE_TAG=test-commit", "ECR_REPO=wrong-repository"]
     subprocess.run([*args, "tf_auto_apply"], cwd=ROOT, env=env, check=True, capture_output=True)
@@ -67,8 +69,7 @@ def test_make_applies_and_tags_only_selected_component(commands, folder):
     lines = log.read_text().splitlines()
     terraform = [line for line in lines if line.startswith("terraform ")]
     assert terraform
-    applies = [line for line in terraform if " apply " in line]
-    assert all(line.startswith(f"terraform -chdir={folder} ") for line in applies)
+    assert all(line.startswith(f"terraform -chdir={folder} ") for line in terraform)
     assert any(" apply " in line for line in terraform)
     aws = [line for line in lines if line.startswith("aws ")]
     assert aws
@@ -79,24 +80,7 @@ def test_make_applies_and_tags_only_selected_component(commands, folder):
         applies = [i for i, line in enumerate(lines) if line.startswith("terraform ") and " apply " in line]
         assert applies[0] < schema < applies[1] < namespace
     else:
-        check = lines.index("python3 temporal-admin/run_task.py check-search-attributes")
-        assert check < lines.index(applies[0])
-        assert not any("run_task.py schema" in line or "run_task.py namespace" in line for line in lines)
-
-
-def test_failed_attribute_preflight_stops_before_application_apply(commands):
-    env, log = commands
-    result = subprocess.run(
-        ["make", "tf_auto_apply", "env=dev", "INFRASTRUCTURE_FOLDER=terraform", "IMAGE_TAG=test-commit"],
-        cwd=ROOT,
-        env={**env, "ADMIN_STATUS": "1"},
-        capture_output=True,
-        check=False,
-    )
-    assert result.returncode != 0
-    lines = log.read_text()
-    assert "python3 temporal-admin/run_task.py check-search-attributes" in lines
-    assert " apply " not in lines
+        assert not any(line.startswith("python3 temporal-admin/") for line in lines)
 
 
 def test_missing_images_stop_before_terraform_apply(commands):

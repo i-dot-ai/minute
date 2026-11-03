@@ -67,27 +67,6 @@ def run(mode: str) -> None:
         msg = f"Temporal {mode} waiter failed; task stop requested. Inspect {config['log_group']} before retrying"
         raise RuntimeError(msg) from error
     stopped = aws("describe-tasks", "--cluster", config["cluster"], "--tasks", task)
-    if mode == "check-search-attributes":
-        # Surface the task's exact missing/wrong-type messages in the release log.
-        subprocess.run(
-            [
-                "aws",
-                "--region",
-                config["region"],
-                "logs",
-                "get-log-events",
-                "--log-group-name",
-                config["log_group"],
-                "--log-stream-name",
-                f"release/temporal-admin/{task.rsplit('/', 1)[-1]}",
-                "--query",
-                "events[].message",
-                "--output",
-                "text",
-            ],
-            stdout=sys.stderr,
-            check=False,
-        )
     tasks = stopped.get("tasks", [])
     if stopped.get("failures") or len(tasks) != 1:
         msg = f"Could not inspect Temporal admin task: {stopped}"
@@ -99,6 +78,6 @@ def run(mode: str) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2 or sys.argv[1] not in ("schema", "namespace", "check-search-attributes"):  # noqa: PLR2004
-        sys.exit("Usage: run_task.py <schema|namespace|check-search-attributes>")
+    if len(sys.argv) != 2 or sys.argv[1] not in ("schema", "namespace"):  # noqa: PLR2004
+        sys.exit("Usage: run_task.py <schema|namespace>")
     run(sys.argv[1])

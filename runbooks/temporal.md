@@ -59,7 +59,7 @@ Use the indexed IDs to find the corresponding transcript, minute and version rec
 
 ### Rollout and limits
 
-Register the four ID attributes manually through the Temporal CLI **before** deploying the application change. Releases and local Compose do not register them. Application releases run a read-only preflight before Terraform applies any application changes: missing attributes, wrong types, an unreachable Temporal server or a failed check task stop the release. Audio Memo fields need no setup. No server redeployment is needed to register attributes.
+Register and verify the four ID attributes manually through the Temporal CLI **before** deploying the application change. Releases and local Compose do not register them. Application releases do not check Temporal or run admin tasks; missing or wrongly typed ID attributes can cause workflow starts to fail at runtime. Audio Memo fields need no setup. No server redeployment is needed to register attributes.
 
 With the tunnel above open and the local server stopped so it does not occupy port `7233`, use the CLI from the locally built `minute-temporal:latest` image without starting a server. First confirm the namespace belongs to the intended environment, then list existing attributes:
 
@@ -80,8 +80,6 @@ docker run --rm --entrypoint temporal minute-temporal:latest operator search-att
 ```
 
 Repeat the list command to verify all four names and types before releasing the application. For local development, use `docker compose exec temporal temporal operator ... --address localhost:7233 --namespace default` with the same list/create arguments instead of the tunnel commands. Register ID attributes before submitting jobs or running the paid end-to-end test. Existing runs are not backfilled.
-
-To run the same deployment preflight explicitly, authenticate to the target AWS environment and run `make check_temporal_search_attributes env=dev`. It selects the `terraform-temporal` workspace and runs the deployed one-off admin task in `check-search-attributes` mode. The task must already contain this check (deploy the updated admin image through a Temporal server release first). It only lists attributes; it never registers attributes or runs schema migrations. Failures report missing/wrong-type names in the admin task logs, which the runner also attempts to print in the release log.
 
 Uploads never submitted for transcription and manual-only edits are not indexed. Temporal visibility is eventually consistent and workflow history/metadata expires with namespace retention; it is not the permanent asset inventory or a replacement for user data-retention/deletion handling. Local experimental runs using older attribute names are not migrated or replay-compatible; start new runs to use the final names. Their existing history is not purged by this change.
 

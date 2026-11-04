@@ -61,6 +61,10 @@ locals {
     {
       name  = "POSTHOG_API_KEY"
       value = "placeholder" # Update value in SSM - Do not hardcode
+    },
+    {
+      name  = "LINEAR_API_KEY"
+      value = "placeholder" # Update value in SSM - Do not hardcode
     }
   ]
 

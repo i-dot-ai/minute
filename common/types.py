@@ -237,3 +237,70 @@ class CreateUserTemplateRequest(BaseModel):
     description: str
     type: TemplateType
     questions: list[CreateQuestion] | None = None
+
+
+class StatusCounts(BaseModel):
+    started: int = 0
+    completed: int = 0
+    failed: int = 0
+    timed_out: int = 0
+    canceled: int = 0
+    terminated: int = 0
+    continued_as_new: int = 0
+    in_progress: int = 0
+
+
+class StatusSummary(StatusCounts):
+    failure_rate: float | None = Field(description="(failed + timed_out) / (completed + failed + timed_out); 0-1")
+    completed_per_minute: float
+
+
+class StatusDistribution(BaseModel):
+    sample_count: int = Field(default=0, description="Number of durations read, not an approximate Count API total")
+    p50: float | None = None
+    p90: float | None = None
+    p99: float | None = None
+    max: float | None = None
+    truncated: bool = Field(default=False, description="Percentiles are omitted when more than 1,000 runs match")
+
+
+class StatusComponent(BaseModel):
+    workflow_type: str
+    counts: StatusCounts
+    failure_rate: float | None
+    completed_per_minute: float
+    processing_time_seconds: StatusDistribution
+    in_progress_age_seconds: StatusDistribution
+
+
+class StatusResponse(BaseModel):
+    horizon_seconds: int
+    window_start: datetime
+    window_end: datetime
+    collected_at: datetime
+    source: str = "temporal_visibility"
+    counts_are_approximate: bool = True
+    partial: bool
+    summary: StatusSummary
+    components: dict[str, StatusComponent]
+
+
+class StatusBucket(BaseModel):
+    start: datetime
+    completed: int
+    failed: int = Field(description="Failed or timed out runs")
+    failure_rate: float | None = Field(description="failed / (completed + failed); 0-1, null without outcomes")
+    avg_processing_seconds: float | None = Field(description="Mean start-to-close time of listed completed runs")
+    audio_hours: float = Field(description="Audio in listed completed runs that recorded its duration")
+    processing_seconds_per_audio_hour: float | None = Field(description="Total processing / total audio hours")
+    per_audio_hour_seconds: StatusDistribution = Field(
+        description="Percentiles of each run's processing seconds per audio hour"
+    )
+
+
+class HourlyStatusResponse(BaseModel):
+    workflow_type: str
+    collected_at: datetime
+    partial: bool = Field(description="Timing read limit reached; counts and failure rates are not capped")
+    hours: list[StatusBucket] = Field(description="Oldest first, bucketed by close time; last hour is partial")
+    last_10_minutes: StatusBucket = Field(description="Runs that closed in the 10 minutes before collected_at")

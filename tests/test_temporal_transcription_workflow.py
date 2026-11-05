@@ -152,6 +152,19 @@ async def test_happy_path_runs_every_step_with_expected_routing_and_timeouts():
     assert params.stt_timeout_seconds == (expected - wf.STT_DOWNLOAD_MARGIN).total_seconds()
 
 
+@pytest.mark.asyncio
+async def test_audio_duration_is_recorded_in_memo():
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        workers = _workers(env.client, _activities([]))
+        async with workers[0], workers[1], workers[2]:
+            handle = await env.client.start_workflow(
+                wf.TranscriptionWorkflow.run, MINUTE_ID, id=str(uuid.uuid4()), task_queue=wf.TASK_QUEUE
+            )
+            await handle.result()
+            description = await handle.describe()
+    assert await description.memo_value(wf.AUDIO_SECONDS_MEMO) == AUDIO_SECONDS
+
+
 def test_stt_timeout_scales_with_audio_duration():
     for duration, expected in (
         (0, timedelta(minutes=5)),

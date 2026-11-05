@@ -7,7 +7,7 @@ make release-temporal-server env=dev  # build and release only the Temporal serv
 
 Application releases use `terraform/`; server releases use `terraform-temporal/`, with separate state. The server image is built only during a server release. Both commands release the current **committed** revision, not uncommitted files. Terraform 1.7 or newer is required.
 
-Search attributes are managed manually through the Temporal CLI, not by releases. [Register and verify them](temporal.md#rollout-and-limits) in each namespace before deploying application code that writes them.
+The Temporal namespace task registers the four ID search attributes during server releases and local Compose startup. Application-only releases do not run this task; [verify or register them](temporal.md#rollout-and-limits) before deploying application code to an existing server.
 
 Application releases do not check Temporal, read its Terraform state or run admin tasks. They do not require a Temporal server/admin release. The application still needs a reachable Temporal server and the four registered ID attributes at runtime.
 
@@ -18,7 +18,7 @@ Every explicit server release builds separate server and admin images at the ver
 1. Provisions the database and one-off admin task definition without updating the running server.
 2. Runs the admin task to initialise empty databases or apply missing schema migrations to both databases. An up-to-date schema is a no-op; any failure stops the release before server rollout.
 3. Deploys the server and waits for ECS readiness.
-4. Runs a namespace task, creating `default` only if it is absent. Failure marks the release unsuccessful.
+4. Runs a namespace task, creating `default` only if it is absent and registering the four ID search attributes. Failure marks the release unsuccessful.
 
 There is no continuously running admin service. Server restarts do not run migrations. The server uses `temporal_runtime`, a non-owner database user; only the schema task receives master credentials. The release's targeted Terraform apply is restricted to admin-task provisioning; the subsequent apply covers the whole server stack.
 

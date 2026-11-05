@@ -739,3 +739,18 @@ html body[data-scroll-locked] {
     background-color: #d2e2f1;
   }
 }
+
+.analytics-card {
+  border-left: 3px solid;
+  padding: 1rem;
+}
+
+.analytics-card--teal {
+  border-color: #50a1a5;
+}
+.analytics-card--red {
+  border-color: #ca357c;
+}
+.analytics-card--blue {
+  border-color: #1d70bb;
+}

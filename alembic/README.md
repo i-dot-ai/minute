@@ -4,7 +4,7 @@ example uses a persistent data store using postgresql, running in a docker conta
 
 Models for the database are kept in `common/database/postgres_models.py`.
 
-Pydantic models for the database interaction are kept in `common/database/pydantic_schemas.py`.
+Pydantic models for the database interaction are kept in `common/types.py`.
 
 A function interface for interacting with the database is kept in `common/database/postgres_interface.py`.
 

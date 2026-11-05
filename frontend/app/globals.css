@@ -272,7 +272,7 @@
 
   .govuk-service-navigation--side-nav .govuk-service-navigation__link {
     display: flex;
-    font-size: 0.875rem;
+    font-size: 1rem;
     height: 22px;
     gap: 0.5rem;
   }

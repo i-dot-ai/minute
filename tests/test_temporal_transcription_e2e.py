@@ -5,6 +5,7 @@ Hits the running docker compose stack over HTTP (not in-process), so the real
 backend, temporal server and worker are exercised. Calls Azure STT and the LLM.
 
     docker compose up -d --build --wait
+    # Manually register the four ID search attributes first (runbooks/temporal.md).
     ALLOW_TESTS_TO_ACCESS_PAID_APIS=1 uv run pytest tests/test_temporal_transcription_e2e.py -s
 
 Env: BACKEND_URL (default http://localhost:8080), TEMPORAL_ADDRESS (from .env).
@@ -19,6 +20,7 @@ import pytest
 from temporalio.client import Client, WorkflowExecutionStatus
 
 from common.settings import get_settings
+from common.workflows import search_attributes as sa
 from common.workflows.minute_version import workflow_id as minute_version_workflow_id
 from common.workflows.transcription import (
     COMPLETE_TRANSCRIPTION,
@@ -115,6 +117,15 @@ async def test_upload_creates_transcription_via_temporal():
     assert body["title"], "no title generated"
     assert versions[0]["status"] == "completed", versions[0].get("error")
     assert versions[0]["html_content"], "no summary generated"
+    description = await handle.describe()
+    assert description.typed_search_attributes[sa.TRANSCRIPTION_ID] == transcription_id
+    assert description.typed_search_attributes[sa.MINUTE_ID] == minutes[0]["id"]
+    assert description.typed_search_attributes[sa.MINUTE_VERSION_ID] == versions[0]["id"]
+    assert await description.memo() == {
+        "AudioUploadSizeMb": pytest.approx(AUDIO.stat().st_size / 1_000_000),
+        "AudioDurationSeconds": pytest.approx(98.45, abs=0.1),
+    }
+    user_id = description.typed_search_attributes[sa.USER_ID]
 
     # User-created minute: its own Temporal workflow (MinuteGenerationWorkflow).
     async with httpx.AsyncClient(base_url=BACKEND_URL, timeout=60) as api:
@@ -150,4 +161,9 @@ async def test_upload_creates_transcription_via_temporal():
 
     for version_id in (generated["id"], edited["id"]):
         version_handle = client.get_workflow_handle(minute_version_workflow_id(version_id))
-        assert (await version_handle.describe()).status == WorkflowExecutionStatus.COMPLETED
+        description = await version_handle.describe()
+        assert description.status == WorkflowExecutionStatus.COMPLETED
+        assert description.typed_search_attributes[sa.USER_ID] == user_id
+        assert description.typed_search_attributes[sa.TRANSCRIPTION_ID] == transcription_id
+        assert description.typed_search_attributes[sa.MINUTE_ID] == created_minute["id"]
+        assert description.typed_search_attributes[sa.MINUTE_VERSION_ID] == version_id

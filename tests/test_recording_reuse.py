@@ -79,7 +79,9 @@ async def test_recording_reuse_boundary(recordings, monkeypatch):
     original transcription, or queue more work; a fresh recording still creates and queues one."""
     started: list = []
 
-    async def _start(transcription_id, minute_id):
+    async def _start(transcription_id, minute_id, *, user_id, minute_version_id):
+        assert user_id == recordings["fresh"].user_id
+        assert isinstance(minute_version_id, uuid.UUID)
         started.append((transcription_id, minute_id))
 
     monkeypatch.setattr(
@@ -130,7 +132,7 @@ async def test_concurrent_reuse_creates_and_queues_only_one_transcription(record
             await asyncio.wait_for(both_checked_storage.wait(), timeout=0.1)
         return True
 
-    async def _start(transcription_id, minute_id):
+    async def _start(transcription_id, minute_id, **_metadata):
         started.append((transcription_id, minute_id))
 
     monkeypatch.setattr(
@@ -176,7 +178,7 @@ async def test_publish_failure_marks_transcription_failed(recordings, monkeypatc
     """A definite enqueue failure leaves the committed job explicitly retryable."""
     fresh = recordings["fresh"]
 
-    async def _boom(_transcription_id, _minute_id):
+    async def _boom(_transcription_id, _minute_id, **_metadata):
         msg = "temporal unavailable"
         raise RuntimeError(msg)
 

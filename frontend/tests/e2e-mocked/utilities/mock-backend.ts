@@ -79,6 +79,12 @@ export async function mockBackend(
   const staticMocks: StaticMock[] = [
     { method: 'GET', path: '/users/me', status: 200, response: usersMe },
     {
+      method: 'GET',
+      path: '/support/tickets/configuration',
+      status: 200,
+      response: { tickets_enabled: true },
+    },
+    {
       method: 'POST',
       path: '/recordings',
       status: 200,

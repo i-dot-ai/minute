@@ -35,7 +35,7 @@ export function TranscriptMenu() {
 
   return (
     <div id="transcript-details-menu" className="sm:w-[150px] lg:w-[200px]">
-      <h2 className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 ml-2 text-[0.875rem] lg:ml-5">
+      <h2 className="govuk-!-padding-top-2 govuk-!-padding-bottom-2 ml-2 text-[1rem] lg:ml-5">
         {transcription?.title}
       </h2>
       <ul className="govuk-list ml-2 lg:ml-5">
@@ -45,7 +45,7 @@ export function TranscriptMenu() {
         >
           <Link
             href={`/transcriptions/${transcriptionId}/transcript`}
-            className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline text-[0.875rem] ${transcriptPage ? '!text-(--govuk-text-colour)' : ''}`}
+            className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline text-[1rem] ${transcriptPage ? '!text-(--govuk-text-colour)' : ''}`}
             aria-current={transcriptPage ? 'page' : undefined}
           >
             Transcript
@@ -58,7 +58,7 @@ export function TranscriptMenu() {
             aria-expanded={!areSummariesCollapsed}
             aria-controls={areSummariesCollapsed ? undefined : 'summary-list'}
           >
-            <span className="govuk-caption-s text-[0.875rem] font-normal text-(--govuk-text-colour)">
+            <span className="govuk-caption-s text-[1rem] font-normal text-(--govuk-text-colour)">
               Summaries
             </span>
             {areSummariesCollapsed ? <ChevronDown /> : <ChevronUp />}
@@ -90,7 +90,7 @@ export function TranscriptMenu() {
                   >
                     <Link
                       href={href}
-                      className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline text-[0.875rem] ${isActive ? '!text-(--govuk-text-colour)' : ''}`}
+                      className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline text-[1rem] ${isActive ? '!text-(--govuk-text-colour)' : ''}`}
                       aria-current={isActive ? 'page' : undefined}
                     >
                       {minute.template_name}
@@ -107,7 +107,7 @@ export function TranscriptMenu() {
                 >
                   <Link
                     href={`/transcriptions/${transcriptionId}/summary`}
-                    className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline text-[0.875rem] ${transcriptPage ? '' : '!text-(--govuk-text-colour)'}`}
+                    className={`govuk-link govuk-link--no-visited-state govuk-link--no-underline text-[1rem] ${transcriptPage ? '' : '!text-(--govuk-text-colour)'}`}
                     aria-current={transcriptPage ? undefined : 'page'}
                   >
                     No summary yet

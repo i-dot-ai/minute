@@ -5,7 +5,7 @@ import math
 from datetime import UTC, datetime, timedelta
 from time import monotonic
 
-from temporalio.client import Client, WorkflowExecutionStatus
+from temporalio.client import Client, WorkflowExecutionCount
 
 from backend.utils.temporal import get_temporal_client
 from common.types import (
@@ -149,14 +149,23 @@ _hourly_cache: tuple[float, HourlyStatusResponse] | None = None
 
 
 def _bucket(
-    start: datetime, completed: int, failed: int, processing: float, audio: float, audio_processing: float, rates
+    start: datetime,
+    counts: WorkflowExecutionCount,
+    sampled: int,
+    processing: float,
+    audio: float,
+    audio_processing: float,
+    rates: list[float],
 ):
+    closed = {group.group_values[0]: group.count for group in counts.groups}
+    completed = closed.get("Completed", 0)
+    failed = closed.get("Failed", 0) + closed.get("TimedOut", 0)
     return StatusBucket(
         start=start,
         completed=completed,
         failed=failed,
         failure_rate=failed / (completed + failed) if completed + failed else None,
-        avg_processing_seconds=processing / completed if completed else None,
+        avg_processing_seconds=processing / sampled if sampled else None,
         audio_hours=audio / 3_600,
         processing_seconds_per_audio_hour=audio_processing / (audio / 3_600) if audio else None,
         # Rates are already read (capped by _MAX_HOURLY_RUNS), so no per-bucket cap.
@@ -168,13 +177,14 @@ async def _collect_hourly() -> HourlyStatusResponse:
     now = datetime.now(UTC)
     first = now.replace(minute=0, second=0, microsecond=0) - timedelta(hours=_HOURS - 1)
     workflow_type = _COMPONENTS["transcription"]
+    base = f'WorkflowType = "{workflow_type}"'
     query = (
-        f'WorkflowType = "{workflow_type}" AND CloseTime >= "{first.isoformat()}"'
-        ' AND ExecutionStatus IN ("Completed", "Failed", "TimedOut")'
+        f'{base} AND CloseTime >= "{first.isoformat()}" AND CloseTime < "{now.isoformat()}"'
+        ' AND ExecutionStatus = "Completed"'
     )
-    # [completed, failed, processing s, audio s, processing s of runs with audio, per-run s per audio hour]
-    totals = [[0, 0, 0.0, 0.0, 0.0, []] for _ in range(_HOURS)]
-    recent = [0, 0, 0.0, 0.0, 0.0, []]
+    # [sampled completed runs, processing s, audio s, processing s of runs with audio, per-run s per audio hour]
+    totals = [[0, 0.0, 0.0, 0.0, []] for _ in range(_HOURS)]
+    recent = [0, 0.0, 0.0, 0.0, []]
     read = 0
     client = await get_temporal_client()
     runs = client.list_workflows(query, limit=_MAX_HOURLY_RUNS + 1, page_size=1_000, rpc_timeout=_RPC_TIMEOUT)
@@ -185,26 +195,37 @@ async def _collect_hourly() -> HourlyStatusResponse:
         buckets = [totals[min(int((run.close_time - first).total_seconds() // 3_600), _HOURS - 1)]]
         if run.close_time >= now - _RECENT:
             buckets.append(recent)
-        if run.status != WorkflowExecutionStatus.COMPLETED:
-            for bucket in buckets:
-                bucket[1] += 1
-            continue
         seconds = (run.close_time - run.start_time).total_seconds()
         audio = await run.memo_value(AUDIO_SECONDS_MEMO, None)
+        if audio is None:
+            audio = await run.memo_value("audio_seconds", None)
         for bucket in buckets:
             bucket[0] += 1
-            bucket[2] += seconds
+            bucket[1] += seconds
             if audio:  # skips pre-deploy runs (None) and zero-length audio
-                bucket[3] += audio
-                bucket[4] += seconds
-                bucket[5].append(seconds / (audio / 3_600))
+                bucket[2] += audio
+                bucket[3] += seconds
+                bucket[4].append(seconds / (audio / 3_600))
+
+    starts = [first + timedelta(hours=i) for i in range(_HOURS)] + [now - _RECENT]
+    async with asyncio.TaskGroup() as tasks:
+        counts = [
+            tasks.create_task(
+                client.count_workflows(
+                    f'{base} AND CloseTime >= "{start.isoformat()}"'
+                    f' AND CloseTime < "{min(start + timedelta(hours=1), now).isoformat()}" GROUP BY ExecutionStatus',
+                    rpc_timeout=_RPC_TIMEOUT,
+                )
+            )
+            for start in starts
+        ]
 
     return HourlyStatusResponse(
         workflow_type=workflow_type,
         collected_at=now,
         partial=read > _MAX_HOURLY_RUNS,
-        hours=[_bucket(first + timedelta(hours=i), *values) for i, values in enumerate(totals)],
-        last_10_minutes=_bucket(now - _RECENT, *recent),
+        hours=[_bucket(starts[i], counts[i].result(), *values) for i, values in enumerate(totals)],
+        last_10_minutes=_bucket(starts[-1], counts[-1].result(), *recent),
     )
 
 

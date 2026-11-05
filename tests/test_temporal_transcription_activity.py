@@ -92,10 +92,33 @@ def _patch_load(monkeypatch, row):
 
 
 @pytest.mark.asyncio
-async def test_prepare_audio_reports_duration(monkeypatch):
-    audio = wf.PreparedAudio(duration_seconds=7200.0)
-    monkeypatch.setattr(prepare_audio, "_prepare_audio", AsyncMock(return_value=audio))
-    assert await _run(prepare_audio.prepare_audio, str(MINUTE_ID)) == audio
+@pytest.mark.parametrize("converted", [False, True])
+async def test_prepare_audio_measures_original_upload_even_on_retry(monkeypatch, converted):
+    original = SimpleNamespace(id=uuid.uuid4(), s3_file_key="uploads/original.wav")
+    processed = SimpleNamespace(id=uuid.uuid4(), s3_file_key="uploads/processed.mp3")
+    row = _row()
+    row.recordings = [processed, original] if converted else [original]
+    _patch_load(monkeypatch, row)
+    monkeypatch.setattr(prepare_audio, "claim_job", lambda *_args: True)
+
+    async def download(_key, path):
+        path.write_bytes(b"mp3" if converted else b"original")
+
+    size = AsyncMock(return_value=len(b"original"))
+    storage = SimpleNamespace(name="s3", download=download, get_object_size=size)
+    monkeypatch.setattr(prepare_audio, "storage_service", storage)
+    convert = AsyncMock(return_value=(processed, None, 7200.0))
+    monkeypatch.setattr(prepare_audio.transcription_manager, "get_recording_to_process", convert)
+    audio = await _run(prepare_audio.prepare_audio, str(MINUTE_ID))
+    assert audio == wf.PreparedAudio(
+        duration_seconds=7200.0,
+        upload_size_bytes=len(b"original"),
+    )
+    assert convert.call_args.kwargs["recording"] == (processed if converted else original)
+    if converted:
+        size.assert_awaited_once_with(original.s3_file_key)
+    else:
+        size.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -112,14 +135,6 @@ async def test_prepare_audio_bad_audio_is_non_retryable(monkeypatch):
 
 
 # --- transcribe ---
-
-
-@pytest.mark.asyncio
-async def test_transcribe_returns_id(monkeypatch):
-    step = AsyncMock(return_value=str(TRANSCRIPTION_ID))
-    monkeypatch.setattr(transcribe, "_transcribe", step)
-    assert await _run(transcribe.transcribe, TRANSCRIBE_INPUT) == str(TRANSCRIPTION_ID)
-    step.assert_awaited_once_with(TRANSCRIBE_INPUT)
 
 
 @pytest.mark.asyncio

@@ -29,6 +29,7 @@ def _activities(  # noqa: C901 # Each mock is one workflow step.
     retryable: frozenset = frozenset(),
     completed: bool = True,
     seen: dict | None = None,
+    audio: wf.PreparedAudio | None = None,
 ):
     """Mock each activity; fail permanently or exhaust retries, and record its inputs/timeouts."""
     seen = {} if seen is None else seen
@@ -42,7 +43,9 @@ def _activities(  # noqa: C901 # Each mock is one workflow step.
     @activity.defn(name=wf.PREPARE_AUDIO)
     async def prepare_audio(_minute_id: str) -> wf.PreparedAudio:
         _maybe_fail(wf.PREPARE_AUDIO)
-        return wf.PreparedAudio(duration_seconds=AUDIO_SECONDS)
+        return (
+            audio if audio is not None else wf.PreparedAudio(duration_seconds=AUDIO_SECONDS, upload_size_bytes=985225)
+        )
 
     @activity.defn(name=wf.TRANSCRIBE)
     async def transcribe(params: wf.TranscribeInput) -> str:
@@ -127,8 +130,9 @@ def _assert_all_steps_ran(calls: list) -> None:
 
 
 @pytest.mark.asyncio
-async def test_happy_path_runs_every_step_in_order_on_its_queue():
-    calls, outcome, queue_of = await _run()
+async def test_happy_path_runs_every_step_with_expected_routing_and_timeouts():
+    seen: dict = {}
+    calls, outcome, queue_of = await _run(seen=seen)
     _assert_all_steps_ran(calls)
     assert queue_of == {
         wf.PREPARE_AUDIO: wf.STT_TASK_QUEUE,
@@ -139,6 +143,13 @@ async def test_happy_path_runs_every_step_in_order_on_its_queue():
         wf.COMPLETE_TRANSCRIPTION: wf.TASK_QUEUE,
     }
     assert outcome == {wf.IDENTIFY_SPEAKERS: "ok", wf.GENERATE_TITLE: "ok", wf.SUMMARISE: "ok"}
+    expected = wf.stt_timeout(AUDIO_SECONDS)
+    assert seen["transcribe_timeout"] == expected
+    assert seen["transcribe_heartbeat_timeout"] == timedelta(seconds=90)
+    params = seen["transcribe_input"]
+    assert params.minute_id == MINUTE_ID
+    # Azure's budget leaves room inside the activity timeout for the mp3 download
+    assert params.stt_timeout_seconds == (expected - wf.STT_DOWNLOAD_MARGIN).total_seconds()
 
 
 @pytest.mark.asyncio
@@ -161,19 +172,6 @@ def test_stt_timeout_scales_with_audio_duration():
         (7200, timedelta(minutes=17)),
     ):
         assert wf.stt_timeout(duration) == expected
-
-
-@pytest.mark.asyncio
-async def test_transcribe_gets_duration_based_timeout():
-    seen: dict = {}
-    await _run(seen=seen)
-    expected = wf.stt_timeout(AUDIO_SECONDS)
-    assert seen["transcribe_timeout"] == expected
-    assert seen["transcribe_heartbeat_timeout"] == timedelta(seconds=90)
-    params = seen["transcribe_input"]
-    assert params.minute_id == MINUTE_ID
-    # Azure's budget leaves room inside the activity timeout for the mp3 download
-    assert params.stt_timeout_seconds == (expected - wf.STT_DOWNLOAD_MARGIN).total_seconds()
 
 
 @pytest.mark.asyncio

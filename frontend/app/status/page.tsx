@@ -57,6 +57,19 @@ function Status(): React.JSX.Element {
         </div>
       ) : (
         <>
+          {data.partial && (
+            <div className="govuk-warning-text" role="status">
+              <span className="govuk-warning-text__icon" aria-hidden="true">
+                !
+              </span>
+              <strong className="govuk-warning-text__text">
+                <span className="govuk-visually-hidden">Warning</span>
+                Processing times are based on incomplete data because the
+                reporting limit was reached. Transcription counts and error
+                rates are not affected by this limit.
+              </strong>
+            </div>
+          )}
           <div className="govuk-grid-row">
             <div className="govuk-grid-column-two-thirds">
               <h2 className="govuk-heading-l">Last 10 mins</h2>

@@ -71,6 +71,35 @@ test('shows the last 10 minutes', async ({ page }) => {
   await expect(card('Processing time per audio hour:')).toContainText('45s')
   await expect(card('Error rate:')).toContainText('2.00%')
   await expect(card('Transcriptions completed:')).toContainText('20')
+  await expect(page.getByRole('status')).toHaveCount(0)
+})
+
+test('warns about incomplete timings without hiding counts or error rates', async ({
+  page,
+}) => {
+  await openStatus(page, { ...status, partial: true })
+  await expect(page.getByRole('status')).toContainText(
+    'Processing times are based on incomplete data'
+  )
+  await expect(page.getByRole('status')).toContainText(
+    'Transcription counts and error rates are not affected by this limit.'
+  )
+  await expect(
+    page.locator('.analytics-card').filter({ hasText: 'Error rate:' })
+  ).toContainText('2.00%')
+  await expect(
+    page
+      .locator('.analytics-card')
+      .filter({ hasText: 'Transcriptions completed:' })
+  ).toContainText('20')
+  const completed = await chartTable(page, 'Transcriptions completed per hour')
+  await expect(
+    completed.getByRole('row').filter({ hasText: '01:00' })
+  ).toHaveText(/01:00\s*7/)
+  const errors = await chartTable(page, 'Error rate per hour')
+  await expect(errors.getByRole('row').filter({ hasText: '01:00' })).toHaveText(
+    /01:00\s*12\.5%/
+  )
 })
 
 test('charts the last 24 hours with a data table for each', async ({

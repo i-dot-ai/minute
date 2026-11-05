@@ -9,7 +9,7 @@ For the independent application/server release commands and the one-time state m
 ```console
 aws-login
 
-ENV=preprod
+ENV=dev
 
 REGION=eu-west-2
 CLUSTER="i-dot-ai-${ENV}-ecs-cluster"
@@ -35,6 +35,53 @@ Leave that running ("Waiting for connections…"), then:
 docker run --rm -p 8081:8080 -e TEMPORAL_ADDRESS=host.docker.internal:7233 temporalio/ui
 # http://localhost:8081
 ```
+
+## Search jobs and find assets
+
+In the UI's workflow list, use these visibility queries (replace the placeholders with UUIDs):
+
+```sql
+UserId = '<user UUID>'
+UserId = '<user UUID>' AND WorkflowType = 'TranscriptionWorkflow'
+UserId = '<user UUID>' AND WorkflowType IN ('MinuteGenerationWorkflow', 'MinuteEditWorkflow')
+MinuteId = '<minute UUID>'
+MinuteVersionId = '<minute version UUID>'
+TranscriptionId = '<transcription UUID>'
+```
+
+Temporal search attributes use PascalCase; application/API fields keep snake_case (`MinuteVersionId` corresponds to `minute_version_id`, not `version_minute_id`). Every new transcription, minute-generation and AI-edit run is indexed by all four IDs at start, including queued/failed runs. The initial minute version is produced inside `TranscriptionWorkflow`, so include that workflow type when looking for all minutes. Manual edits have no Temporal workflow.
+
+Register `UserId`, `TranscriptionId`, `MinuteId` and `MinuteVersionId` as **Keyword**. These are the only four custom search attributes needed.
+
+After audio preparation succeeds, open the transcription workflow's **Memo** to see `AudioUploadSizeMb` (megabytes of the original upload, **not** the converted MP3; 1 MB = 1,000,000 bytes) and `AudioDurationSeconds` (seconds measured from the prepared audio, or a four-hour fallback if duration probing fails). These are display-only metadata: they need no registration and cannot be used in workflow-list queries. For example, 985,225 bytes is `0.985225` MB. If duration cannot be determined, the worker logs a warning and continues using 14,400 seconds for processing; the Memo duration also reflects that fallback rather than a measurement. Metrics remain visible if later STT or summary processing fails. Older audio-preparation results without upload size remain readable; they do not invent a size value.
+
+Use the indexed IDs to find the corresponding transcript, minute and version records in Postgres. Audio assets are linked through `recording.transcription_id`. New runs store business IDs as search attributes and audio metrics as Memo metadata, not storage keys or bucket names.
+
+### Rollout and limits
+
+The Temporal namespace task registers the four ID attributes during server releases and local Compose startup. Application-only releases do not run this task: verify the attributes before deploying application code to an existing server, and register any missing names manually using the commands below. Missing or wrongly typed ID attributes can cause workflow starts to fail at runtime. Audio Memo fields need no setup. No server redeployment is needed for manual registration.
+
+With the tunnel above open and the local server stopped so it does not occupy port `7233`, use the CLI from the locally built `minute-temporal:latest` image without starting a server. First confirm the namespace belongs to the intended environment, then list existing attributes:
+
+```console
+docker run --rm --entrypoint temporal minute-temporal:latest operator namespace describe \
+  --address host.docker.internal:7233 --namespace default --output json
+
+docker run --rm --entrypoint temporal minute-temporal:latest operator search-attribute list \
+  --address host.docker.internal:7233 --namespace default --output json
+
+# Omit any name/type pairs that already exist; verify their types match.
+docker run --rm --entrypoint temporal minute-temporal:latest operator search-attribute create \
+  --address host.docker.internal:7233 --namespace default \
+  --name UserId --type Keyword \
+  --name TranscriptionId --type Keyword \
+  --name MinuteId --type Keyword \
+  --name MinuteVersionId --type Keyword
+```
+
+Repeat the list command to verify all four names and types before releasing the application. For local development, Compose registers them automatically; use `docker compose exec temporal temporal operator ... --address localhost:7233 --namespace default` with the same list/create arguments to verify or repair an existing namespace. Verify ID attributes before submitting jobs or running the paid end-to-end test. Existing runs are not backfilled.
+
+Uploads never submitted for transcription and manual-only edits are not indexed. Temporal visibility is eventually consistent and workflow history/metadata expires with namespace retention; it is not the permanent asset inventory or a replacement for user data-retention/deletion handling. Local experimental runs using older attribute names are not migrated or replay-compatible; start new runs to use the final names. Their existing history is not purged by this change.
 
 If you've lost that terminal (or want to kill it remotely):
 ```bash
@@ -72,3 +119,19 @@ that distribution has `truncated: true` and null timings, and the response has `
 Counts still use the Count API; they are not capped. No histories or execution payloads
 are read or exposed. These metrics are not a service-availability verdict; show running
 counts/ages alongside successful processing times, especially with small samples.
+
+### Hourly transcription status
+
+`GET /status/hourly` supplies the `/status` page with 24 hourly buckets (the current
+hour is incomplete) and a separate last-10-minutes window, cached for one minute.
+All windows include their start and exclude their end, bounded by `collected_at`.
+Completed, failed and timed-out counts come from Temporal's Count API, grouped by
+execution status for each window. Counts and error rates are not capped, but still
+reflect eventually consistent visibility data.
+
+Processing times use up to 20,000 listed completed runs. Audio duration comes from
+the `AudioDurationSeconds` Memo key, with `audio_seconds` accepted for older status-page
+runs. Runs without the audio duration memo still contribute to mean processing time,
+but not per-audio-hour metrics. If the read limit is exceeded, `partial: true` means timing figures are
+incomplete; the page warns about this without hiding counts or error rates. Mean
+processing time divides by the number of listed runs, not the uncapped count.

@@ -87,6 +87,12 @@ class S3StorageService(StorageService):
                 return True
 
     @classmethod
+    async def get_object_size(cls, key: str) -> int:
+        async with _create_boto3_s3_client() as session:
+            metadata = await session.head_object(Bucket=cls.DATA_S3_BUCKET, Key=key)
+            return metadata["ContentLength"]
+
+    @classmethod
     async def delete(cls, key: str) -> None:
         async with _create_boto3_s3_client() as session:
             await session.delete_object(Bucket=settings.DATA_S3_BUCKET, Key=key)

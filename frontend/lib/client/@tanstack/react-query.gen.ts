@@ -13,6 +13,7 @@ import {
   createMinuteTranscriptionTranscriptionIdMinutesPost,
   createMinuteVersionMinutesMinuteIdVersionsPost,
   createRecordingRecordingsPost,
+  createSupportTicketSupportTicketsPost,
   createTranscriptionTranscriptionsPost,
   createUserTemplateUserTemplatesPost,
   deleteMinuteMinutesMinuteIdDelete,
@@ -24,6 +25,7 @@ import {
   getMinuteMinutesMinutesIdGet,
   getMinuteVersionMinuteVersionsMinuteVersionIdGet,
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGet,
+  getSupportTicketsConfigurationSupportTicketsConfigurationGet,
   getTemplatesTemplatesGet,
   getTranscriptionTranscriptionsTranscriptionIdGet,
   getUserTemplatesUserTemplatesGet,
@@ -49,6 +51,9 @@ import type {
   CreateRecordingRecordingsPostData,
   CreateRecordingRecordingsPostError,
   CreateRecordingRecordingsPostResponse,
+  CreateSupportTicketSupportTicketsPostData,
+  CreateSupportTicketSupportTicketsPostError,
+  CreateSupportTicketSupportTicketsPostResponse,
   CreateTranscriptionTranscriptionsPostData,
   CreateTranscriptionTranscriptionsPostError,
   CreateTranscriptionTranscriptionsPostResponse,
@@ -78,6 +83,8 @@ import type {
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetData,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetError,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponse,
+  GetSupportTicketsConfigurationSupportTicketsConfigurationGetData,
+  GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponse,
   GetTemplatesTemplatesGetData,
   GetTemplatesTemplatesGetError,
   GetTemplatesTemplatesGetResponse,
@@ -1059,3 +1066,72 @@ export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation =
     }
     return mutationOptions
   }
+
+export const getSupportTicketsConfigurationSupportTicketsConfigurationGetQueryKey =
+  (
+    options?: Options<GetSupportTicketsConfigurationSupportTicketsConfigurationGetData>
+  ) =>
+    createQueryKey(
+      'getSupportTicketsConfigurationSupportTicketsConfigurationGet',
+      options
+    )
+
+/**
+ * Get Support Tickets Configuration
+ *
+ * Whether ticket submission is available; the support page degrades to email-only when not.
+ */
+export const getSupportTicketsConfigurationSupportTicketsConfigurationGetOptions =
+  (
+    options?: Options<GetSupportTicketsConfigurationSupportTicketsConfigurationGetData>
+  ) =>
+    queryOptions<
+      GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponse,
+      DefaultError,
+      GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponse,
+      ReturnType<
+        typeof getSupportTicketsConfigurationSupportTicketsConfigurationGetQueryKey
+      >
+    >({
+      queryFn: async ({ queryKey, signal }) => {
+        const { data } =
+          await getSupportTicketsConfigurationSupportTicketsConfigurationGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true,
+          })
+        return data
+      },
+      queryKey:
+        getSupportTicketsConfigurationSupportTicketsConfigurationGetQueryKey(
+          options
+        ),
+    })
+
+/**
+ * Create Support Ticket
+ */
+export const createSupportTicketSupportTicketsPostMutation = (
+  options?: Partial<Options<CreateSupportTicketSupportTicketsPostData>>
+): UseMutationOptions<
+  CreateSupportTicketSupportTicketsPostResponse,
+  CreateSupportTicketSupportTicketsPostError,
+  Options<CreateSupportTicketSupportTicketsPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateSupportTicketSupportTicketsPostResponse,
+    CreateSupportTicketSupportTicketsPostError,
+    Options<CreateSupportTicketSupportTicketsPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createSupportTicketSupportTicketsPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}

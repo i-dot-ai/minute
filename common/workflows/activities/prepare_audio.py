@@ -33,8 +33,15 @@ async def _prepare_audio(minute_id: UUID) -> wf.PreparedAudio:
     try:
         with tempfile.TemporaryDirectory() as work_dir:
             recording = transcription.recordings[0]
+            # Recordings are newest first; the oldest is the upload, not a converted retry input.
+            upload = transcription.recordings[-1]
             temp_file_path = Path(work_dir) / Path(recording.s3_file_key).name
             await storage_service.download(recording.s3_file_key, temp_file_path)
+            upload_size_bytes = (
+                temp_file_path.stat().st_size
+                if upload.id == recording.id
+                else await storage_service.get_object_size(upload.s3_file_key)
+            )
             # Uploads the converted copy and records it, so the transcribe step (a separate
             # attempt/process) can pick the newest recording and skip conversion.
             # ponytail: on retry the newest recording is the converted mp3, so conversion is skipped;
@@ -51,12 +58,12 @@ async def _prepare_audio(minute_id: UUID) -> wf.PreparedAudio:
         if (msg := _shared.mark_failed(transcription, e)) is None:
             raise _shared.TranscriptionTransientError(str(e)) from e
         raise TranscriptionFailedError(msg) from e
-    return wf.PreparedAudio(duration_seconds=duration)
+    return wf.PreparedAudio(duration_seconds=duration, upload_size_bytes=upload_size_bytes)
 
 
 @activity.defn(name=wf.PREPARE_AUDIO)
 async def prepare_audio(minute_id: str) -> wf.PreparedAudio:
-    """Convert the upload to a mono mp3 and report its duration, so the workflow sizes the STT timeout."""
+    """Prepare a mono MP3 and return its duration and original upload size."""
     slogger.refresh_context()
     try:
         return await _prepare_audio(UUID(minute_id))

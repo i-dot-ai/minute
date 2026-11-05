@@ -133,6 +133,24 @@ async def test_create_linear_issue_not_configured(monkeypatch, linear_settings, 
         await create_linear_issue("Title", "Body")
 
 
+@pytest.mark.asyncio(loop_scope="session")
+async def test_support_tickets_configuration_reflects_settings(monkeypatch):
+    monkeypatch.setenv("LINEAR_API_KEY", "")
+    monkeypatch.setenv("LINEAR_TEAM_ID", "")
+
+    async with get_test_client() as ac:
+        response = await ac.get("/support/tickets/configuration")
+        assert response.status_code == 200
+        assert response.json() == {"tickets_enabled": False}
+
+        monkeypatch.setenv("LINEAR_API_KEY", "lin_api_test")
+        monkeypatch.setenv("LINEAR_TEAM_ID", "team-id")
+
+        response = await ac.get("/support/tickets/configuration")
+        assert response.status_code == 200
+        assert response.json() == {"tickets_enabled": True}
+
+
 def fake_linear(monkeypatch):
     """Replace the route's Linear call; returns the captured (title, description, label_ids) calls."""
     calls = []

@@ -48,6 +48,8 @@ import type {
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetData,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetErrors,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponses,
+  GetSupportTicketsConfigurationSupportTicketsConfigurationGetData,
+  GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponses,
   GetTemplatesTemplatesGetData,
   GetTemplatesTemplatesGetErrors,
   GetTemplatesTemplatesGetResponses,
@@ -616,6 +618,25 @@ export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost = <
     DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostErrors,
     ThrowOnError
   >({ url: '/user-templates/{template_id}/duplicate', ...options })
+
+/**
+ * Get Support Tickets Configuration
+ *
+ * Whether ticket submission is available; the support page degrades to email-only when not.
+ */
+export const getSupportTicketsConfigurationSupportTicketsConfigurationGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    GetSupportTicketsConfigurationSupportTicketsConfigurationGetData,
+    ThrowOnError
+  >
+) =>
+  (options?.client ?? client).get<
+    GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponses,
+    unknown,
+    ThrowOnError
+  >({ url: '/support/tickets/configuration', ...options })
 
 /**
  * Create Support Ticket

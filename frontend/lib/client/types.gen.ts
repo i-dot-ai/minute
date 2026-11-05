@@ -492,6 +492,16 @@ export type SingleRecording = {
 export type SupportCategory = 'access' | 'issue' | 'recommendation' | 'general'
 
 /**
+ * SupportTicketsConfigurationResponse
+ */
+export type SupportTicketsConfigurationResponse = {
+  /**
+   * Tickets Enabled
+   */
+  tickets_enabled: boolean
+}
+
+/**
  * TemplateMetadata
  */
 export type TemplateMetadata = {
@@ -1733,6 +1743,24 @@ export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses =
 
 export type DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse =
   DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses[keyof DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponses]
+
+export type GetSupportTicketsConfigurationSupportTicketsConfigurationGetData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/support/tickets/configuration'
+}
+
+export type GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: SupportTicketsConfigurationResponse
+  }
+
+export type GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponse =
+  GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponses[keyof GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponses]
 
 export type CreateSupportTicketSupportTicketsPostData = {
   body: CreateSupportTicketRequest

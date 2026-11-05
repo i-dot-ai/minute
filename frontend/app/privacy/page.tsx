@@ -9,6 +9,7 @@ export default function PrivacyPage() {
           dangerouslySetInnerHTML={{ __html: privacyContent }}
         />
       </div>
+      <h2 className="govuk-heading-m">Some excellent work</h2>
     </div>
   )
 }

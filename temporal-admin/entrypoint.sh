@@ -10,6 +10,24 @@ if [ "${1:-schema}" = namespace ]; then
   if [ "$exists" = false ]; then
     temporal operator namespace create -n default --address "$TEMPORAL_ADDRESS"
   fi
+  # Search attributes the app attaches to every workflow start
+  # (common/workflows/search_attributes.py); creating duplicates is a no-op.
+  register_search_attributes() {
+    for attribute in UserId TranscriptionId MinuteId MinuteVersionId; do
+      temporal operator search-attribute create -n default --address "$TEMPORAL_ADDRESS" \
+        --name "$attribute" --type Keyword || return 1
+    done
+  }
+  # A cold server can briefly report its own namespace as NOT_FOUND (see
+  # backend/utils/temporal.py), so retry the registration briefly.
+  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+    register_search_attributes && break
+    if [ "$attempt" = 10 ]; then
+      echo "Could not register search attributes" >&2
+      exit 1
+    fi
+    sleep 1
+  done
   temporal operator namespace describe -n default --address "$TEMPORAL_ADDRESS"
   exit 0
 fi

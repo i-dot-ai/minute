@@ -4,8 +4,7 @@ Also covers the minute workflows: generating a user-created minute, and applying
 Hits the running docker compose stack over HTTP (not in-process), so the real
 backend, temporal server and worker are exercised. Calls Azure STT and the LLM.
 
-    docker compose up -d --build --wait
-    # Manually register the four ID search attributes first (runbooks/temporal.md).
+    make run  # Temporal namespace bootstrap registers the four ID search attributes.
     ALLOW_TESTS_TO_ACCESS_PAID_APIS=1 uv run pytest tests/test_temporal_transcription_e2e.py -s
 
 Env: BACKEND_URL (default http://localhost:8080), TEMPORAL_ADDRESS (from .env).

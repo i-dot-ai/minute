@@ -2,8 +2,9 @@
 export
 
 PY_VERSION := $(shell cat .python-version)
+include temporal/version.env
 
-.PHONY: build-pyenv install pre-commit-setup test test_e2e run_frontend run_backend run stop
+.PHONY: build-pyenv install run-pre-commit test test_e2e test_e2e_integrated test_e2e_mocked run_frontend run_backend run_worker run run_watch stop generate_api_types
 
 build-pyenv:
 	uv python install ${PY_VERSION}
@@ -17,11 +18,7 @@ install:
 run-pre-commit:
 	uv run pre-commit run --all-files
 
-# If your network intercepts outbound HTTPS, Python's bundled certifi roots won't
-# include your network's root certificate and verification fails.
-# docker-compose.override.yaml injects a CA bundle into the containers; host-run
-# tests need it too. Generate the bundle with: ./certs/gen-ca-bundle.sh
-# (certs/ is gitignored, so this is a no-op in CI and where it does not apply).
+# A local CA bundle supports networks that inspect HTTPS; never committed.
 CA_BUNDLE = $(CURDIR)/certs/host-ca-bundle.pem
 CA_SH = if [ -f "$(CA_BUNDLE)" ]; then \
 	REQUESTS_CA_BUNDLE="$(CA_BUNDLE)"; SSL_CERT_FILE="$(CA_BUNDLE)"; \
@@ -29,16 +26,13 @@ CA_SH = if [ -f "$(CA_BUNDLE)" ]; then \
 	GRPC_DEFAULT_SSL_ROOTS_FILE_PATH="$(CA_BUNDLE)"; \
 	fi;
 
-# Source .env via the shell (not make's `export`, which keeps the literal quotes
-# around values like TRANSCRIPTION_SERVICES='[...]' and breaks pydantic parsing).
+# Shell sourcing avoids make retaining literal quotes in JSON settings.
 ENV_SH = set -a; if [ -f .env ]; then . ./.env; fi; $(CA_SH) set +a;
 
-# Non-paid suite: requires Compose Postgres/MiniStack and local ffprobe; paid e2e uses `make test_e2e`.
+# Requires local Compose Postgres/MiniStack and ffprobe; paid APIs are disabled.
 test:
 	$(ENV_SH) ALLOW_TESTS_TO_ACCESS_PAID_APIS=0 uv run pytest tests/
 
-# Full suite including tests that hit paid APIs and external services (ministack,
-# audio data in .data/test_audio/). Requires valid credentials in .env.
 test_e2e:
 	$(ENV_SH) uv run pytest tests/
 
@@ -58,159 +52,13 @@ run_worker:
 	uv run python worker/temporal_worker.py
 
 run:
-	TEMPORAL_VERSION=$(TEMPORAL_VERSION) docker compose up -d --wait
+	TEMPORAL_VERSION=$(TEMPORAL_VERSION) docker compose up --build -d --wait
 
 run_watch:
 	TEMPORAL_VERSION=$(TEMPORAL_VERSION) docker compose up --watch
 
 stop:
 	docker compose down
-
-
-.PHONY: generate_aws_diagram
-generate_aws_diagram:
-	uv sync --group dev
-	uv run python terraform/diagram_script.py
-
-# Docker
-
-ECR_REPO_NAME=$(APP_NAME)-$(service)
-ifeq ($(service),temporal-admin)
-ECR_REPO_NAME=$(APP_NAME)-temporal
-endif
-ECR_URL=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
-ECR_REPO_URL=$(ECR_URL)/$(ECR_REPO_NAME)
-
-IMAGE_TAG ?= $$(git rev-parse HEAD)
-DOCKER_IMAGE_TAG=$(IMAGE_TAG)$(if $(filter temporal-admin,$(service)),-admin)
-IMAGE=$(ECR_REPO_URL):$(DOCKER_IMAGE_TAG)
-
-DOCKER_BUILDER_CONTAINER=$(APP_NAME)
-include temporal/version.env
-TEMPORAL_BUILD_ARGS = $(if $(filter temporal temporal-admin,$(service)),--build-arg TEMPORAL_VERSION=$(TEMPORAL_VERSION))
-
-
-docker_login:
-	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_URL)
-
-ifndef cache
-	override cache = ./.build-cache
-endif
-
-docker_build: ## Build the docker container for the specified service when running in CI/CD
-	DOCKER_BUILDKIT=1 docker buildx build --platform linux/amd64 --load --builder=$(DOCKER_BUILDER_CONTAINER) -t $(IMAGE) \
-	$(DOCKER_BUILD_ARGS) \
-	$(TEMPORAL_BUILD_ARGS) \
-	--cache-to type=local,dest=$(cache) \
-	--cache-from type=local,src=$(cache) \
-	-f $(service)/Dockerfile .
-
-docker_build_local: ## Build the docker container for the specified service locally
-	DOCKER_BUILDKIT=1 docker build --platform=linux/amd64 $(TEMPORAL_BUILD_ARGS) -t $(IMAGE) -f $(service)/Dockerfile .
-
-docker_push:
-	docker push $(IMAGE)
-
-docker_tag_is_present_on_image:
-	aws ecr describe-images --repository-name $(repo) --image-ids imageTag=$(IMAGE_TAG) --query 'imageDetails[].imageTags' | jq -e '.[]|any(. == "$(tag)")' >/dev/null
-
-check_docker_tag_exists:
-	if ! make docker_tag_is_present_on_image tag=$(IMAGE_TAG) 2>/dev/null; then \
-		echo "Error: ECR tag $(IMAGE_TAG) does not exist." && exit 1; \
-	fi
-
-docker_update_tag: ## Tag the docker image(s) with the specified tag
-	@if [ -z "$(repo)" ]; then \
-		for repository in $$(printf '%s' "$(ECR_REPO)" | tr ',' ' '); do \
-			$(MAKE) docker_update_tag repo=$$repository tag=$(tag) IMAGE_TAG=$(IMAGE_TAG) || exit 1; \
-		done; \
-		if [ "$(INFRASTRUCTURE_FOLDER)" = terraform-temporal ]; then \
-			$(MAKE) docker_update_tag repo=minute-temporal tag=$(tag)-admin IMAGE_TAG=$(IMAGE_TAG)-admin || exit 1; \
-		fi; \
-	else \
-		if $(MAKE) docker_tag_is_present_on_image repo=$(repo) tag=$(tag) IMAGE_TAG=$(IMAGE_TAG) 2>/dev/null; then exit 0; fi; \
-		MANIFEST=$$(aws ecr batch-get-image --repository-name $(repo) --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
-		aws ecr put-image --repository-name $(repo) --image-tag $(tag) --image-manifest "$$MANIFEST"; \
-	fi
-
-docker_echo:
-	echo $($(value))
-
-## Terraform 
-
-ifndef env
-override env = default
-endif
-workspace = $(env)
-INFRASTRUCTURE_FOLDER ?= $(if $(infrastructure_folder),$(infrastructure_folder),terraform)
-tf_build_args = -var "image_tag=$(IMAGE_TAG)" -var-file="$(abspath terraform/variables/global.tfvars)" -var-file="$(abspath terraform/variables/$(env).tfvars)"
-TF_BACKEND_CONFIG ?= $(abspath terraform/backend.hcl)
-ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
-override ECR_REPO = minute-temporal
-else
-override ECR_REPO = minute-backend,minute-frontend,minute-worker
-endif
-
-tf_set_workspace:
-	terraform -chdir=$(INFRASTRUCTURE_FOLDER) workspace select $(workspace)
-
-tf_new_workspace:
-	terraform -chdir=$(INFRASTRUCTURE_FOLDER) workspace new $(workspace)
-
-tf_set_or_create_workspace:
-	make tf_set_workspace || make tf_new_workspace
-
-tf_init_and_set_workspace:
-	make tf_init && make tf_set_or_create_workspace
-
-.PHONY: tf_init
-tf_init:
-	terraform -chdir=$(INFRASTRUCTURE_FOLDER) init \
-		-backend-config=$(TF_BACKEND_CONFIG) \
-		-backend-config="dynamodb_table=i-dot-ai-$(env)-dynamo-lock" \
-		-reconfigure \
-
-.PHONY: tf_fmt
-tf_fmt:
-	terraform -chdir=$(INFRASTRUCTURE_FOLDER) fmt
-
-.PHONY: tf_plan
-tf_plan:
-	make tf_init_and_set_workspace && \
-	terraform -chdir=$(INFRASTRUCTURE_FOLDER) plan ${tf_build_args} ${args}
-
-.PHONY: tf_apply
-tf_apply:
-	make tf_init_and_set_workspace && \
-	terraform -chdir=$(INFRASTRUCTURE_FOLDER) apply ${tf_build_args} ${args}
-
-.PHONY: tf_auto_apply
-tf_auto_apply:  ## Auto apply terraform
-	@for repository in $$(printf '%s' "$(ECR_REPO)" | tr ',' ' '); do \
-		$(MAKE) check_docker_tag_exists repo=$$repository IMAGE_TAG=$(IMAGE_TAG) || exit 1; \
-	done
-	$(MAKE) tf_init_and_set_workspace
-ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
-	$(MAKE) check_docker_tag_exists repo=minute-temporal IMAGE_TAG=$(IMAGE_TAG)-admin
-	terraform -chdir=$(INFRASTRUCTURE_FOLDER) apply ${tf_build_args} -target=aws_ecs_task_definition.temporal_admin -auto-approve
-	python3 temporal-admin/run_task.py schema
-endif
-	terraform -chdir=$(INFRASTRUCTURE_FOLDER) apply ${tf_build_args} ${args} -auto-approve
-ifeq ($(INFRASTRUCTURE_FOLDER),terraform-temporal)
-	python3 temporal-admin/run_task.py namespace
-endif
-
-## Release app
-# Note: `env` falls back to `default` above for the terraform targets (that is a real
-# terraform workspace). A release has no such fallback -- deploying needs an explicit
-# environment, otherwise you tag `release-default-*`, which no workflow matches.
-.PHONY: release release-temporal-server
-release release-temporal-server:
-	@if [ "$(env)" = "default" ]; then \
-		printf '\033[0;31mrelease needs an explicit environment, e.g. `make release env=dev`\033[0m\n'; \
-		exit 1; \
-	fi
-	bash ./release.sh $(env) $(if $(filter release-temporal-server,$@),temporal-server,app)
 
 generate_api_types:
 	cd frontend && npm run openapi-ts

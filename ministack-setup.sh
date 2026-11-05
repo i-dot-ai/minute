@@ -26,8 +26,7 @@ AWS="aws --endpoint-url $AWS_ENDPOINT_URL"
 ## DATA BUCKET
 ################################
 
-# Mirrors the real bucket in terraform/s3.tf so local dev and the e2e tests never
-# touch dev AWS. create-bucket is not idempotent, so tolerate an existing bucket.
+# Local development and tests use only the emulator. Tolerate an existing bucket.
 echo "Creating S3 bucket $DATA_S3_BUCKET"
 $AWS s3api create-bucket \
   --bucket "$DATA_S3_BUCKET" \

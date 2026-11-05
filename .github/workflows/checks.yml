@@ -1,16 +1,17 @@
-# Put action within a raw block so that the curly bracket expressions aren't picked up by the cookiecutter
-#
 name: Checks
 
 env:
   DOCKER_BUILDKIT: 1
 
 on:
+  pull_request:
   push:
     paths:
       - backend/**
       - common/**
       - worker/**
+      - temporal/**
+      - temporal-admin/**
       - tests/**
       - alembic/**
       - frontend/**
@@ -19,6 +20,9 @@ on:
       - uv.lock
       - .env.example
       - Makefile
+      - docker-compose.yaml
+      - ministack-setup.sh
+      - .dockerignore
       - .github/workflows/checks.yml
     branches:
       - "main"
@@ -31,11 +35,14 @@ on:
       - "security/**"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   static_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
@@ -57,10 +64,9 @@ jobs:
     name: Run tests
 
     runs-on: ubuntu-latest
-    environment: release
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
@@ -97,4 +103,18 @@ jobs:
           docker compose logs db ministack
           docker compose down -v
 
-#
+  local_build:
+    name: Local container builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: cp .env.example .env
+      - name: Validate and build local services without publishing
+        run: |
+          set -a
+          source temporal/version.env
+          set +a
+          docker compose config --quiet
+          docker compose build

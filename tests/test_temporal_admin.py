@@ -2,24 +2,13 @@
 
 # ruff: noqa: S603, S607 # Tests execute fixed scripts with fake local commands, never AWS.
 
-import importlib.util
-import json
 import os
 import subprocess
 from pathlib import Path
-from unittest.mock import Mock
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-
-
-@pytest.fixture
-def task_runner():
-    spec = importlib.util.spec_from_file_location("temporal_admin_task", ROOT / "temporal-admin/run_task.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
 
 
 @pytest.fixture
@@ -41,8 +30,18 @@ exit "${PSQL_STATUS:-0}"
         "temporal-sql-tool": 'exit "${MIGRATION_STATUS:-0}"\n',
         "temporal": """case "$*" in
   *"namespace list"*) printf '%s' "${NAMESPACES:-[]}"; exit "${NAMESPACE_STATUS:-0}" ;;
+  *"search-attribute create"*)
+    count_file="$COMMAND_LOG.registration-count"
+    count=0
+    if [ -f "$count_file" ]; then count=$(cat "$count_file"); fi
+    count=$((count + 1))
+    printf '%s' "$count" > "$count_file"
+    [ "$count" -gt "${SEARCH_ATTRIBUTE_FAILURES:-0}" ] || exit 1
+    exit "${SEARCH_ATTRIBUTE_STATUS:-0}"
+    ;;
 esac
 """,
+        "sleep": "exit 0\n",
     }
     for name, body in scripts.items():
         script = tmp_path / name
@@ -85,6 +84,7 @@ def test_schema_failure_is_not_swallowed(admin_commands, failure):
     )
     assert result.returncode != 0
     assert "namespace" not in log.read_text()
+    assert "search-attribute" not in log.read_text()
 
 
 @pytest.mark.parametrize("superuser", ["f", "t"])
@@ -125,68 +125,62 @@ def test_namespace_creation_only_after_successful_lookup(admin_commands, namespa
     assert (result.returncode == 0) is (status == "0" and namespaces != "invalid-json")
     assert ("namespace create" in log.read_text()) is creates
     assert "temporal-sql-tool" not in log.read_text()
-    assert "search-attribute" not in log.read_text()
-
-
-@pytest.mark.parametrize("exit_code", [0, 1, None])
-def test_ecs_task_requires_successful_exit(monkeypatch, exit_code, task_runner):
-    module = task_runner
-    config = {
-        "region": "eu-west-2",
-        "cluster": "cluster",
-        "task_definition": "task-definition",
-        "subnets": ["subnet"],
-        "security_group": "sg",
-        "log_group": "logs",
-    }
-    commands = Mock(
-        side_effect=[
-            json.dumps(config),
-            json.dumps({"tasks": [{"taskArn": "task"}]}),
-            json.dumps({"tasks": [{"containers": [{"exitCode": exit_code}]}]}),
+    registrations = [line for line in log.read_text().splitlines() if "search-attribute create" in line]
+    if result.returncode == 0:
+        assert registrations == [
+            "temporal operator search-attribute create -n default --address test-server:7233 "
+            f"--name {name} --type Keyword"
+            for name in ("UserId", "TranscriptionId", "MinuteId", "MinuteVersionId")
         ]
-    )
-    monkeypatch.setattr(module.subprocess, "check_output", commands)
-    wait = Mock()
-    monkeypatch.setattr(module.subprocess, "run", wait)
-    if exit_code == 0:
-        module.run("schema")
+        assert log.read_text().index("search-attribute create") < log.read_text().index("namespace describe")
     else:
-        with pytest.raises(RuntimeError):
-            module.run("schema")
-    wait.assert_called_once()
-    assert wait.call_args.kwargs["check"]
+        assert not registrations
 
 
-def test_ecs_task_start_failure_stops_release(monkeypatch, task_runner):
-    module = task_runner
-    config = {
-        "region": "eu-west-2",
-        "cluster": "cluster",
-        "task_definition": "task",
-        "subnets": [],
-        "security_group": "sg",
-    }
-    monkeypatch.setattr(
-        module.subprocess, "check_output", Mock(side_effect=[json.dumps(config), '{"failures":[{"reason":"DENIED"}]}'])
+@pytest.mark.parametrize("failures", [1, 3])
+def test_search_attribute_registration_retries_cold_start(admin_commands, failures):
+    env, log = admin_commands
+    subprocess.run(
+        ["sh", "temporal-admin/entrypoint.sh", "namespace"],
+        cwd=ROOT,
+        env={**env, "SEARCH_ATTRIBUTE_FAILURES": str(failures)},
+        check=True,
+        capture_output=True,
     )
-    with pytest.raises(RuntimeError, match="Could not start"):
-        module.run("schema")
+    commands = log.read_text().splitlines()
+    registrations = [line for line in commands if "search-attribute create" in line]
+    assert len(registrations) == failures + 4
+    assert registrations[-1].endswith("--name MinuteVersionId --type Keyword")
+    assert commands.count("sleep 1") == failures
+    assert "namespace describe" in commands[-1]
 
 
-def test_ecs_waiter_failure_requests_stop(monkeypatch, task_runner):
-    module = task_runner
-    config = {
-        "region": "eu-west-2",
-        "cluster": "cluster",
-        "task_definition": "task",
-        "subnets": [],
-        "security_group": "sg",
-        "log_group": "logs",
-    }
-    commands = Mock(side_effect=[json.dumps(config), '{"tasks":[{"taskArn":"task"}]}', "{}"])
-    monkeypatch.setattr(module.subprocess, "check_output", commands)
-    monkeypatch.setattr(module.subprocess, "run", Mock(side_effect=subprocess.CalledProcessError(1, "wait")))
-    with pytest.raises(RuntimeError, match="stop requested"):
-        module.run("schema")
-    assert "stop-task" in commands.call_args.args[0]
+@pytest.mark.parametrize("status", ["1", "2"])
+def test_persistent_registration_failure_stops_namespace_task(admin_commands, status):
+    env, log = admin_commands
+    result = subprocess.run(
+        ["sh", "temporal-admin/entrypoint.sh", "namespace"],
+        cwd=ROOT,
+        env={**env, "SEARCH_ATTRIBUTE_STATUS": status},
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "Could not register search attributes" in result.stderr
+    commands = log.read_text().splitlines()
+    assert sum("search-attribute create" in line for line in commands) == 10
+    assert commands.count("sleep 1") == 9
+    assert "namespace describe" not in log.read_text()
+
+
+def test_existing_namespace_can_be_registered_again(admin_commands):
+    env, log = admin_commands
+    env = {**env, "NAMESPACES": '[{"namespaceInfo":{"name":"default"}}]'}
+    for _ in range(2):
+        subprocess.run(
+            ["sh", "temporal-admin/entrypoint.sh", "namespace"], cwd=ROOT, env=env, check=True, capture_output=True
+        )
+    commands = log.read_text().splitlines()
+    assert sum("search-attribute create" in line for line in commands) == 8
+    assert "namespace create" not in log.read_text()

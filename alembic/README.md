@@ -1,6 +1,7 @@
 # Database
 
-example uses a persistent data store using postgresql, running in a docker container locally (called db), and using aurora when deployed to aws.
+Local development uses PostgreSQL in the Compose service `db`, with persistent data in a named volume.
+See the [local setup](../README.md#run-the-app-locally). The backend container applies migrations on startup.
 
 Models for the database are kept in `common/database/postgres_models.py`.
 

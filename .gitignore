@@ -13,16 +13,12 @@ Brewfile.lock.json
 *.pdf
 .mypy_cache
 
-# Terraform
-**/.terraform/*
-**/terraform/terraform.tfstate.d
-**/.terraform*
-# Terraform lock files
-*/.terraform.lock.hcl
-.terraform.lock.hcl
-*.terraform.lock.hcl 
+# Local leftovers from the infrastructure checkout; never publish caches or state.
+**/.terraform/
+**/.terraform.lock.hcl
 *.tfstate
-*.tfstate.backup
+*.tfstate.*
+load_testing/.downloads/
 
 # Data
 *.csv
@@ -45,7 +41,6 @@ Brewfile.lock.json
 *.html
 !frontend/content/*.html
 !frontend/public-site/**/*.html
-!terraform/waf_block_page/index.html
 
 *_files/
 # Docker cache

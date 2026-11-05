@@ -1,6 +1,8 @@
 name: E2E Mocked
 
 on:
+  pull_request:
+    paths: ['frontend/**', '.github/workflows/e2e-mocked.yml']
   workflow_dispatch:
 
 permissions: {}

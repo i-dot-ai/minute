@@ -43,7 +43,7 @@
     "govuk-frontend": "^6.4.0",
     "html-docx-js-typescript": "^0.1.5",
     "lucide-react": "^0.544.0",
-    "next": "^15.5.28",
+    "next": "^15.5.29",
     "posthog-js": "^1.391.7",
     "posthog-node": "^5.9.1",
     "prosemirror-state": "^1.4.3",

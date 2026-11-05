@@ -145,7 +145,7 @@ export default function SupportPage() {
   return (
     <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
-        <div className="govuk-grid-column-two-thirds-from-desktop">
+        <div className="govuk-grid-column-full">
           <h1 className="govuk-heading-xl">Contact us</h1>
           {user && (
             <>

@@ -7,7 +7,7 @@ function Unauthorised(): React.JSX.Element {
   return (
     <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
-        <div className="govuk-grid-column-two-thirds">
+        <div className="govuk-grid-column-two-thirds-from-desktop">
           {isOldUrl && (
             <div
               className="govuk-notification-banner"

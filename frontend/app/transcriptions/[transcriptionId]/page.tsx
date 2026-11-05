@@ -154,7 +154,7 @@ export default function TranscriptionPage() {
     return (
       <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
         <div className="govuk-grid-row">
-          <div className="govuk-grid-column-two-thirds">
+          <div className="govuk-grid-column-two-thirds-from-desktop">
             <h1 className="govuk-heading-l">Empty meeting</h1>
             <p className="govuk-body">{date}</p>
             <p className="govuk-body">
@@ -229,20 +229,13 @@ export default function TranscriptionPage() {
         </div>
         <div className="govuk-width-container govuk-width-container--with-secondary-nav govuk-main-wrapper">
           <div className="govuk-grid-row govuk-!-margin-bottom-2">
-            <div className="govuk-grid-column-two-thirds">
+            <div className="govuk-grid-column-two-thirds-from-desktop">
               {!isRenaming && (
                 <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
                   {transcription.title ?? 'No title'}
                 </h1>
               )}
             </div>
-            <div
-              className={
-                isRenaming
-                  ? 'govuk-grid-column-full'
-                  : 'govuk-grid-column-one-third'
-              }
-            ></div>
           </div>
           {isRenaming && (
             <form
@@ -288,7 +281,7 @@ export default function TranscriptionPage() {
             </form>
           )}
           <div className="govuk-grid-row govuk-!-margin-bottom-2">
-            <div className="govuk-grid-column-two-thirds">
+            <div className="govuk-grid-column-two-thirds-from-desktop">
               <p className="govuk-body">{date}</p>
               <div className="govuk-warning-text">
                 <span className="govuk-warning-text__icon" aria-hidden="true">

@@ -2,6 +2,14 @@ name: E2E Mocked
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+    - "frontend/**"
+    - ".github/workflows/e2e-mocked.yml"
+
+concurrency:
+  group: e2e-mocked-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions: {}
 

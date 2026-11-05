@@ -1,4 +1,4 @@
-"""Namespace search attributes, registered manually via the Temporal CLI before deployment."""
+"""Namespace search attributes, registered by the temporal-namespace release task (temporal-admin/entrypoint.sh)."""
 
 from temporalio.common import SearchAttributeKey
 

@@ -2,6 +2,7 @@
 
 import {
   createSupportTicketSupportTicketsPostMutation,
+  getSupportTicketsConfigurationSupportTicketsConfigurationGetOptions,
   getUserUsersMeGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { CreateSupportTicketRequest } from '@/lib/client/types.gen'
@@ -141,13 +142,16 @@ function SupportForm() {
 
 export default function SupportPage() {
   const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
+  const { data: ticketsConfiguration } = useQuery({
+    ...getSupportTicketsConfigurationSupportTicketsConfigurationGetOptions(),
+  })
 
   return (
     <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
           <h1 className="govuk-heading-xl">Contact us</h1>
-          {user && (
+          {user && ticketsConfiguration?.tickets_enabled !== false && (
             <>
               <h2 className="govuk-heading-l">Raise a ticket</h2>
               <p className="govuk-body">

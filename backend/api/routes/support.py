@@ -33,11 +33,24 @@ class CreateSupportTicketResponse(BaseModel):
     reference: str
 
 
+class SupportTicketsConfigurationResponse(BaseModel):
+    tickets_enabled: bool
+
+
 def _title(message: str) -> str:
     summary = " ".join(message.split())
     if len(summary) <= TITLE_SUMMARY_LENGTH:
         return summary
     return summary[:TITLE_SUMMARY_LENGTH].rstrip() + "…"
+
+
+@support_router.get("/support/tickets/configuration")
+async def get_support_tickets_configuration() -> SupportTicketsConfigurationResponse:
+    """Whether ticket submission is available; the support page degrades to email-only when not."""
+    settings = get_settings()
+    return SupportTicketsConfigurationResponse(
+        tickets_enabled=bool(settings.LINEAR_API_KEY and settings.LINEAR_TEAM_ID)
+    )
 
 
 @support_router.post("/support/tickets")

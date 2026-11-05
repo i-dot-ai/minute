@@ -25,6 +25,7 @@ import {
   getMinuteMinutesMinutesIdGet,
   getMinuteVersionMinuteVersionsMinuteVersionIdGet,
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGet,
+  getSupportTicketsConfigurationSupportTicketsConfigurationGet,
   getTemplatesTemplatesGet,
   getTranscriptionTranscriptionsTranscriptionIdGet,
   getUserTemplatesUserTemplatesGet,
@@ -82,6 +83,8 @@ import type {
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetData,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetError,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponse,
+  GetSupportTicketsConfigurationSupportTicketsConfigurationGetData,
+  GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponse,
   GetTemplatesTemplatesGetData,
   GetTemplatesTemplatesGetError,
   GetTemplatesTemplatesGetResponse,
@@ -1063,6 +1066,48 @@ export const duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation =
     }
     return mutationOptions
   }
+
+export const getSupportTicketsConfigurationSupportTicketsConfigurationGetQueryKey =
+  (
+    options?: Options<GetSupportTicketsConfigurationSupportTicketsConfigurationGetData>
+  ) =>
+    createQueryKey(
+      'getSupportTicketsConfigurationSupportTicketsConfigurationGet',
+      options
+    )
+
+/**
+ * Get Support Tickets Configuration
+ *
+ * Whether ticket submission is available; the support page degrades to email-only when not.
+ */
+export const getSupportTicketsConfigurationSupportTicketsConfigurationGetOptions =
+  (
+    options?: Options<GetSupportTicketsConfigurationSupportTicketsConfigurationGetData>
+  ) =>
+    queryOptions<
+      GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponse,
+      DefaultError,
+      GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponse,
+      ReturnType<
+        typeof getSupportTicketsConfigurationSupportTicketsConfigurationGetQueryKey
+      >
+    >({
+      queryFn: async ({ queryKey, signal }) => {
+        const { data } =
+          await getSupportTicketsConfigurationSupportTicketsConfigurationGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true,
+          })
+        return data
+      },
+      queryKey:
+        getSupportTicketsConfigurationSupportTicketsConfigurationGetQueryKey(
+          options
+        ),
+    })
 
 /**
  * Create Support Ticket

@@ -124,6 +124,9 @@ counts/ages alongside successful processing times, especially with small samples
 
 `GET /status/hourly` supplies the `/status` page with 24 hourly buckets (the current
 hour is incomplete) and a separate last-10-minutes window, cached for one minute.
+The frontend API also caches successful responses for one minute per process and
+shares in-flight refreshes across users. The page renders before metrics arrive
+and refreshes once a minute while visible. Failed refreshes are not cached.
 All windows include their start and exclude their end, bounded by `collected_at`.
 Completed, failed and timed-out counts come from Temporal's Count API, grouped by
 execution status for each window. Counts and error rates are not capped, but still

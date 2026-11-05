@@ -136,6 +136,47 @@ async def test_cache_shares_refresh_expires_and_never_hides_failure(monkeypatch)
 
 
 @pytest.mark.asyncio
+async def test_hourly_cache_shares_refresh_expires_and_recovers_from_failure(monkeypatch):
+    monkeypatch.setattr(temporal_status, "_hourly_cache", None)
+    monkeypatch.setattr(temporal_status, "_hourly_lock", asyncio.Lock())
+    clock = Mock(return_value=0)
+    monkeypatch.setattr(temporal_status, "monotonic", clock)
+    started, release = asyncio.Event(), asyncio.Event()
+    response = object()
+
+    async def refresh():
+        started.set()
+        await release.wait()
+        return response
+
+    collect = AsyncMock(side_effect=refresh)
+    monkeypatch.setattr(temporal_status, "_collect_hourly", collect)
+    pending = [asyncio.create_task(temporal_status.get_hourly_status()) for _ in range(8)]
+    await started.wait()
+    collect.assert_awaited_once()
+    release.set()
+    assert await asyncio.gather(*pending) == [response] * 8
+    collect.assert_awaited_once()
+
+    clock.return_value = 59.999
+    assert await temporal_status.get_hourly_status() is response
+    collect.assert_awaited_once()
+    clock.return_value = 60
+    response = object()
+    assert await temporal_status.get_hourly_status() is response
+    assert collect.await_count == 2
+
+    clock.return_value = 120
+    collect.side_effect = TimeoutError
+    with pytest.raises(TimeoutError):
+        await temporal_status.get_hourly_status()
+    collect.side_effect = refresh
+    response = object()
+    assert await temporal_status.get_hourly_status() is response
+    assert collect.await_count == 4
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("memo_key", [temporal_status.AUDIO_SECONDS_MEMO, "audio_seconds"])
 async def test_hourly_buckets_by_close_time_with_audio_rate(monkeypatch, memo_key):
     this_hour = datetime(2026, 10, 30, 13, tzinfo=UTC)

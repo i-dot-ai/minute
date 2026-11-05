@@ -19,11 +19,12 @@ function Status(): React.JSX.Element {
   const { data, isPending, isError } = useQuery<HourlyProcessingStatus>({
     queryKey: ['processing-status-hourly'],
     queryFn: async () => {
-      const response = await fetch(`/api/status${window.location.search}`)
+      const response = await fetch('/api/status')
       if (!response.ok) throw new Error('Processing status unavailable')
       return response.json()
     },
     staleTime: 60_000,
+    refetchInterval: 60_000,
     refetchOnWindowFocus: false,
     retry: false,
   })

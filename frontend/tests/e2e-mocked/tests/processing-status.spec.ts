@@ -61,6 +61,73 @@ test.beforeEach(async ({ page }) => {
   await mockBackend(page)
 })
 
+test('renders the page and navigation before metrics finish loading', async ({
+  page,
+}) => {
+  let release!: () => void
+  const pending = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  await page.route('**/api/status', async (route) => {
+    await pending
+    await route.fulfill({ json: status })
+  })
+  try {
+    await page.goto('/status')
+    await expect(
+      page.getByRole('heading', { name: 'Status', exact: true })
+    ).toBeVisible()
+    await expect(page.getByText('Checking metrics…')).toBeVisible()
+    await expect(
+      page.getByRole('link', { name: 'Record', exact: true })
+    ).toBeVisible()
+    await expect(page.locator('.analytics-card')).toHaveCount(0)
+  } finally {
+    release()
+  }
+  await expect(page.locator('.analytics-card')).toHaveCount(3)
+})
+
+test('refreshes live metrics after one minute without hiding existing metrics', async ({
+  page,
+}) => {
+  await page.clock.install()
+  let requests = 0
+  let release!: () => void
+  const pending = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  await page.route('**/api/status', async (route) => {
+    requests += 1
+    if (requests > 1) await pending
+    await route.fulfill({
+      json: {
+        ...status,
+        last_10_minutes: {
+          ...status.last_10_minutes,
+          completed: requests * 20,
+        },
+      },
+    })
+  })
+  const card = page
+    .locator('.analytics-card')
+    .filter({ hasText: 'Transcriptions completed:' })
+  try {
+    await page.goto('/status')
+    await expect(card).toContainText('20')
+    await page.clock.runFor(30_000)
+    expect(requests).toBe(1)
+    await page.clock.runFor(30_000)
+    await expect.poll(() => requests).toBe(2)
+    await expect(card).toContainText('20')
+    await expect(page.getByText('Checking metrics…')).toHaveCount(0)
+  } finally {
+    release()
+  }
+  await expect(card).toContainText('40')
+})
+
 test('shows the last 10 minutes', async ({ page }) => {
   await openStatus(page)
   await expect(
@@ -186,6 +253,7 @@ test('server cache shares one snapshot across users for one minute', async () =>
     }
     const responses = await Promise.all([GET(firstUser), GET(secondUser)])
     expect(await responses[0].json()).toEqual(await responses[1].json())
+    expect(responses[0].headers.get('Cache-Control')).toBe('private, no-store')
     expect(calls).toBe(1)
     now = 59_999
     expect((await GET(secondUser)).status).toBe(200)
@@ -193,6 +261,32 @@ test('server cache shares one snapshot across users for one minute', async () =>
     now = 60_000
     expect((await GET(secondUser)).status).toBe(200)
     expect(calls).toBe(2)
+    now = 120_000
+    global.fetch = async () => {
+      calls += 1
+      return Response.json(
+        { detail: 'private backend failure' },
+        { status: 500 }
+      )
+    }
+    const failures = await Promise.all([GET(firstUser), GET(secondUser)])
+    expect(failures.map((response) => response.status)).toEqual([503, 503])
+    expect(await failures[0].json()).toEqual({
+      detail: 'Processing status is temporarily unavailable',
+    })
+    expect(calls).toBe(3)
+    const fresh = {
+      ...status,
+      last_10_minutes: { ...status.last_10_minutes, completed: 99 },
+    }
+    global.fetch = async () => {
+      calls += 1
+      return Response.json(fresh)
+    }
+    expect(await (await GET(secondUser)).json()).toEqual(fresh)
+    expect(calls).toBe(4)
+    expect(await (await GET(firstUser)).json()).toEqual(fresh)
+    expect(calls).toBe(4)
   } finally {
     global.fetch = originalFetch
     Date.now = originalNow

@@ -94,15 +94,15 @@ docker_login:
 	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_URL)
 
 ifndef cache
-	override cache = ./.build-cache
+override cache = ./.build-cache
 endif
 
 docker_build: ## Build the docker container for the specified service when running in CI/CD
 	DOCKER_BUILDKIT=1 docker buildx build --platform linux/amd64 --load --builder=$(DOCKER_BUILDER_CONTAINER) -t $(IMAGE) \
 	$(DOCKER_BUILD_ARGS) \
 	$(TEMPORAL_BUILD_ARGS) \
-	--cache-to type=local,dest=$(cache) \
-	--cache-from type=local,src=$(cache) \
+	--cache-to type=local,dest=$(cache)/$(APP_NAME)/$(service),mode=max \
+	--cache-from type=local,src=$(cache)/$(APP_NAME)/$(service) \
 	-f $(service)/Dockerfile .
 
 docker_build_local: ## Build the docker container for the specified service locally

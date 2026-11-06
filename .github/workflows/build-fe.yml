@@ -165,9 +165,8 @@ jobs:
           build-args: |
             NEXT_PUBLIC_SENTRY_DSN=${{ secrets.SENTRY_DSN }}
             NEXT_PUBLIC_POSTHOG_API_KEY=${{ secrets.POSTHOG_API_KEY }}
-          load: true
-          cache-to: type=local,dest=${{ env.EFS_MOUNT_PATH }}
-          cache-from: type=local,src=${{ env.EFS_MOUNT_PATH }}
+          cache-to: type=local,dest=${{ env.EFS_MOUNT_PATH }}/minute/frontend,mode=max
+          cache-from: type=local,src=${{ env.EFS_MOUNT_PATH }}/minute/frontend
           tags: ${{ env.ECR_REPO_URL }}:${{ inputs.image_tag }}
 
   stop-runner:

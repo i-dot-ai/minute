@@ -120,6 +120,39 @@ def test_server_and_admin_images_share_repository_not_tags(commands, service):
     assert "minute-temporal-admin:" not in log.read_text()
 
 
+@pytest.mark.parametrize("service", ["backend", "worker", "temporal", "temporal-admin"])
+@pytest.mark.parametrize("cache", [None, "/mnt/efs"])
+def test_docker_build_isolates_service_caches_and_keeps_intermediate_layers(commands, service, cache):
+    env, log = commands
+    args = ["make", "docker_build", f"service={service}", "APP_NAME=minute", "IMAGE_TAG=test-commit"]
+    if cache:
+        args.append(f"cache={cache}")
+    subprocess.run(args, cwd=ROOT, env=env, check=True, capture_output=True)
+    path = f"{cache or './.build-cache'}/minute/{service}"
+    command = next(line for line in log.read_text().splitlines() if line.startswith("docker buildx build"))
+    assert f"--cache-to type=local,dest={path},mode=max " in command
+    assert f"--cache-from type=local,src={path} " in command
+
+
+def test_frontend_release_pushes_without_loading_and_keeps_its_own_cache():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/build-fe.yml").read_text())
+    build = next(step["with"] for step in workflow["jobs"]["build-image"]["steps"] if step.get("name") == "Build")
+    assert build["push"] is True
+    assert not build.get("load", False)
+    assert build["cache-to"] == "type=local,dest=${{ env.EFS_MOUNT_PATH }}/minute/frontend,mode=max"
+    assert build["cache-from"] == "type=local,src=${{ env.EFS_MOUNT_PATH }}/minute/frontend"
+
+
+@pytest.mark.parametrize("service", ["backend", "worker"])
+def test_python_images_keep_non_root_runtime_without_recursively_chowning_dependencies(service):
+    dockerfile = (ROOT / service / "Dockerfile").read_text()
+    assert "USER appuser" in dockerfile
+    assert "useradd --create-home appuser" in dockerfile
+    assert "mkdir -p /app/config && chown appuser:appuser /app /app/config" in dockerfile
+    assert "chown -R" not in dockerfile
+    assert dockerfile.index("useradd") < dockerfile.index("uv sync")
+
+
 def test_missing_admin_image_stops_before_migrations(commands):
     env, log = commands
     jq = Path(env["PATH"].split(":")[0]) / "jq"
@@ -292,10 +325,19 @@ def test_commit_checks_build_locally_without_publishing():
     assert workflow["permissions"] == {"contents": "read"}
     build = workflow["jobs"]["local_build"]
     assert build["runs-on"] == "ubuntu-latest"
-    script = build["steps"][-1]["run"]
+    script = next(
+        step["run"]
+        for step in build["steps"]
+        if step.get("name") == "Validate and build local services without publishing"
+    )
     assert "source temporal/version.env" in script
     assert "docker compose config --quiet" in script
     assert "docker compose build" in script
+    permissions = build["steps"][-1]["run"]
+    assert "for service in backend worker" in permissions
+    assert "--no-deps -T --entrypoint python" in permissions
+    assert "assert os.getuid() != 0" in permissions
+    assert 'TemporaryDirectory(dir="/app/config")' in permissions
     text = (ROOT / ".github/workflows/checks.yml").read_text()
     for forbidden in ("docker push", "push: true", "secrets.", "id-token: write", "apt-get"):
         assert forbidden not in text

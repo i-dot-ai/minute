@@ -20,6 +20,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # Set the working directory
 WORKDIR /app
 
+# Keep dependencies root-owned; the non-root entrypoint writes only runtime configuration.
+RUN useradd --create-home appuser && mkdir -p /app/config && chown appuser:appuser /app /app/config
+
 # Copy only dependency manifests to cache them in a docker layer
 COPY pyproject.toml uv.lock README.md ./
 
@@ -36,9 +39,6 @@ COPY alembic.ini alembic.ini
 EXPOSE 8080
 RUN chmod +x backend/entrypoint.sh
 
-# Run as a non-root user. chown /app so the entrypoint can write runtime files
-# (e.g. /app/config/google-credentials.json).
-RUN useradd --create-home appuser && chown -R appuser /app
 USER appuser
 
 # Command to run the FastAPI app using Uvicorn

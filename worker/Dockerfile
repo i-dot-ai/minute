@@ -17,6 +17,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
+# Keep dependencies root-owned; the non-root entrypoint writes only runtime configuration.
+RUN useradd --create-home appuser && mkdir -p /app/config && chown appuser:appuser /app /app/config
+
 # Copy only dependency manifests to cache them in a docker layer
 COPY pyproject.toml uv.lock README.md ./
 
@@ -33,10 +36,6 @@ RUN uv sync --frozen --no-default-groups --group worker
 
 RUN chmod +x worker/entrypoint.sh
 
-# Run as a non-root user. chown /app so the entrypoint can write runtime files
-# (e.g. /app/config/google-credentials.json); --create-home gives the user a writable HOME.
-RUN useradd --create-home appuser \
-    && chown -R appuser /app
 USER appuser
 
 CMD [ "worker/entrypoint.sh" ]

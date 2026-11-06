@@ -111,3 +111,17 @@ jobs:
           set +a
           docker compose config --quiet
           docker compose build
+      - name: Verify non-root runtime permissions
+        run: |
+          for service in backend worker; do
+            docker compose run --rm --no-deps -T --entrypoint python "$service" -c '
+          import os
+          from pathlib import Path
+          from tempfile import TemporaryDirectory
+          assert os.getuid() != 0
+          assert Path("/app/.venv/bin/python").is_file()
+          assert Path("/app/common/settings.py").read_text()
+          with TemporaryDirectory(dir="/app/config") as directory:
+              Path(directory, "google-credentials.json").write_text("{}")
+          '
+          done

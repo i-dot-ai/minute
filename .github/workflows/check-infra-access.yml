@@ -1,0 +1,21 @@
+name: Check private infrastructure access
+
+on:
+  push:
+    branches: [probe/minute-infra-access]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check-access:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Verify private infrastructure file-read access
+        env:
+          GH_TOKEN: ${{ secrets.AWS_GITHUBRUNNER_PAT }}
+        run: |
+          test -n "$GH_TOKEN" || { echo 'AWS_GITHUBRUNNER_PAT is unavailable.' >&2; exit 1; }
+          gh api 'repos/i-dot-ai/minute-infra/contents/README.md?ref=main' --silent
+          echo 'AWS_GITHUBRUNNER_PAT can read minute-infra files.' >> "$GITHUB_STEP_SUMMARY"

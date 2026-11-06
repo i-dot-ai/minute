@@ -29,7 +29,7 @@ CA_SH = if [ -f "$(CA_BUNDLE)" ]; then \
 # Shell sourcing avoids make retaining literal quotes in JSON settings.
 ENV_SH = set -a; if [ -f .env ]; then . ./.env; fi; $(CA_SH) set +a;
 
-# Requires local Compose Postgres/MiniStack and ffprobe; paid APIs are disabled.
+# Requires local Compose Postgres/MiniStack; paid APIs are disabled.
 test:
 	$(ENV_SH) ALLOW_TESTS_TO_ACCESS_PAID_APIS=0 uv run pytest tests/
 

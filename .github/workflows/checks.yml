@@ -79,9 +79,6 @@ jobs:
         run: |
           cp .env.example .env
 
-      - name: Install ffprobe for audio tests
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
-
       # backend.main builds a queue service and resolves the SQS queue URL at
       # import time, and the auth dependency hits postgres, so the suite cannot
       # be collected without these two running.

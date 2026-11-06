@@ -1,5 +1,6 @@
 """Measure valid audio; warn and use four hours when duration cannot be determined."""
 
+import shutil
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -9,6 +10,7 @@ import pytest
 from common.audio import ffmpeg
 
 
+@pytest.mark.skipif(shutil.which("ffprobe") is None, reason="Real audio duration check requires ffprobe")
 def test_sample_audio_has_measured_duration():
     sample = Path(__file__).resolve().parents[1] / "frontend/tests/fixtures/sample-meeting.mp3"
     assert ffmpeg.get_duration(sample) == pytest.approx(98.45, abs=0.1)

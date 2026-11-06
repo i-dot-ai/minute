@@ -180,7 +180,8 @@ make test
 ```
 
 Start the local dependencies with `docker compose up -d --wait db ministack`, then run
-`uv run alembic upgrade head` before the first test run. Install ffmpeg/ffprobe locally.
+`uv run alembic upgrade head` before the first test run. The real-file duration test is skipped
+when ffprobe is unavailable; install ffmpeg locally to run it and optional audio-fixture tests.
 
 ### Testing paid APIs and LLM prompt evaluations
 

@@ -112,6 +112,17 @@ jobs:
           echo "infrastructure-folder=$folder" >> "$GITHUB_OUTPUT"
           echo "image-tag=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
+  build-app:
+    needs: set-vars
+    if: needs.set-vars.outputs.component == 'app'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/build.yml
+    with:
+      image_tag: ${{ needs.set-vars.outputs.image-tag }}
+    secrets: inherit
+
   build-temporal:
     needs: set-vars
     if: needs.set-vars.outputs.component == 'temporal-server'
@@ -121,6 +132,7 @@ jobs:
     uses: ./.github/workflows/build-one.yml
     with:
       service: temporal
+      image_tag: ${{ needs.set-vars.outputs.image-tag }}
     secrets: inherit
 
   build-temporal-admin:
@@ -132,6 +144,7 @@ jobs:
     uses: ./.github/workflows/build-one.yml
     with:
       service: temporal-admin
+      image_tag: ${{ needs.set-vars.outputs.image-tag }}
     secrets: inherit
 
   start-runner:
@@ -152,10 +165,11 @@ jobs:
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
   apply-infra:
-    if: ${{ !cancelled() && needs.set-vars.result == 'success' && needs.start-runner.result == 'success' && (needs.build-temporal.result == 'success' || needs.build-temporal.result == 'skipped') && (needs.build-temporal-admin.result == 'success' || needs.build-temporal-admin.result == 'skipped') }}
+    if: ${{ !cancelled() && needs.set-vars.result == 'success' && needs.start-runner.result == 'success' && ((needs.set-vars.outputs.component == 'app' && needs.build-app.result == 'success') || (needs.set-vars.outputs.component == 'temporal-server' && needs.build-temporal.result == 'success' && needs.build-temporal-admin.result == 'success')) }}
     needs:
       - set-vars
       - start-runner
+      - build-app
       - build-temporal
       - build-temporal-admin
     permissions:
@@ -198,6 +212,9 @@ jobs:
     needs:
       - set-vars
       - start-runner
+      - build-app
+      - build-temporal
+      - build-temporal-admin
       - apply-infra
       - notify-slack
     permissions:

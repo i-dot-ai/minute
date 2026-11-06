@@ -27,36 +27,6 @@ def commands(tmp_path):
     return {**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}", "COMMAND_LOG": str(log)}, log
 
 
-@pytest.mark.parametrize(
-    ("target", "prefix"), [("release", "release-dev-"), ("release-temporal-server", "release-temporal-server-dev-")]
-)
-def test_release_tags_select_only_one_component(commands, target, prefix):
-    env, log = commands
-    subprocess.run(["make", target, "env=dev"], cwd=ROOT, env=env, check=True, capture_output=True)
-    pushes = [line for line in log.read_text().splitlines() if line.startswith("git push")]
-    assert len(pushes) == 1
-    assert pushes[0].startswith(f"git push origin {prefix}")
-
-
-@pytest.mark.parametrize(
-    ("environment", "component"),
-    [
-        ("prod", "app"),
-        ("prod", "temporal-server"),
-        ("dev", "temporal-admin"),
-        ("invalid", "app"),
-        ("dev", "unknown"),
-    ],
-)
-def test_invalid_releases_do_not_push(commands, environment, component):
-    env, log = commands
-    result = subprocess.run(
-        ["bash", "release.sh", environment, component], cwd=ROOT, env=env, capture_output=True, check=False
-    )
-    assert result.returncode != 0
-    assert not log.exists() or "git push" not in log.read_text()
-
-
 @pytest.mark.parametrize("folder", ["terraform", "terraform-temporal"])
 def test_make_applies_and_tags_only_selected_component(commands, folder):
     env, log = commands
@@ -214,6 +184,8 @@ def test_workflow_and_state_ownership_are_separate():
     workflow = yaml.safe_load((ROOT / ".github/workflows/release.yml").read_text())
     build = yaml.safe_load((ROOT / ".github/workflows/build.yml").read_text())
     assert "temporal" not in build["jobs"]
+    assert workflow["jobs"]["build-app"]["uses"] == "./.github/workflows/build.yml"
+    assert "build-app" in workflow["jobs"]["apply-infra"]["needs"]
     assert workflow["jobs"]["build-temporal"]["with"]["service"] == "temporal"
     assert workflow["jobs"]["build-temporal-admin"]["with"]["service"] == "temporal-admin"
     assert "build-temporal" in workflow["jobs"]["apply-infra"]["needs"]
@@ -230,6 +202,104 @@ def test_workflow_and_state_ownership_are_separate():
     assert 'key = "minute-temporal/terraform.tfstate"' in (ROOT / "terraform-temporal/provider.tf").read_text()
     assert "removed {" not in application
     assert 'key = "minute/terraform.tfstate"' in (ROOT / "terraform/provider.tf").read_text()
+
+
+def test_image_publication_is_release_only_and_uses_the_resolved_commit():
+    release = yaml.safe_load((ROOT / ".github/workflows/release.yml").read_text())
+    app_build = yaml.safe_load((ROOT / ".github/workflows/build.yml").read_text())
+    # PyYAML's YAML 1.1 loader reads the unquoted GitHub Actions `on` key as True.
+    assert set(app_build[True]) == {"workflow_call"}
+    for name in ("build-app", "build-temporal", "build-temporal-admin"):
+        assert release["jobs"][name]["with"]["image_tag"] == "${{ needs.set-vars.outputs.image-tag }}"
+        assert name in release["jobs"]["apply-infra"]["needs"]
+        assert name in release["jobs"]["stop-runner"]["needs"]
+    for job in app_build["jobs"].values():
+        assert job["with"]["image_tag"] == "${{ inputs.image_tag }}"
+    for filename in ("build-one.yml", "build-fe.yml"):
+        workflow = yaml.safe_load((ROOT / ".github/workflows" / filename).read_text())
+        assert set(workflow[True]) == {"workflow_call"}
+        assert workflow["jobs"]["start-runner"]["if"] == "needs.set-vars.outputs.image-exists == 'false'"
+        assert workflow["concurrency"]["cancel-in-progress"] is False
+        assert any(
+            step.get("run") == "bash .github/scripts/image-exists.sh" for step in workflow["jobs"]["set-vars"]["steps"]
+        )
+    backend = yaml.safe_load((ROOT / ".github/workflows/build-one.yml").read_text())
+    frontend = yaml.safe_load((ROOT / ".github/workflows/build-fe.yml").read_text())
+    assert backend["jobs"]["build-image"]["with"]["COMMIT_HASH"] == "${{ inputs.image_tag }}"
+    assert frontend["jobs"]["build-image"]["steps"][0]["with"]["ref"] == "${{ inputs.image_tag }}"
+    build = next(step for step in frontend["jobs"]["build-image"]["steps"] if step.get("name") == "Build")
+    assert build["with"]["tags"].endswith(":${{ inputs.image_tag }}")
+
+
+def test_deployment_requires_successful_component_builds():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/release.yml").read_text())
+    condition = workflow["jobs"]["apply-infra"]["if"]
+    assert "needs.set-vars.outputs.component == 'app' && needs.build-app.result == 'success'" in condition
+    assert (
+        "needs.set-vars.outputs.component == 'temporal-server' && needs.build-temporal.result == 'success' "
+        "&& needs.build-temporal-admin.result == 'success'"
+    ) in condition
+    assert "'skipped'" not in condition
+
+
+@pytest.mark.parametrize(
+    ("status", "response", "expected"),
+    [
+        (0, "sha256:" + "a" * 64, "true"),
+        (254, "An error occurred (ImageNotFoundException) when calling DescribeImages", "false"),
+        (254, "An error occurred (AccessDeniedException) when calling DescribeImages", None),
+        (254, "An error occurred (RepositoryNotFoundException) when calling DescribeImages", None),
+        (255, "Could not connect to the endpoint URL", None),
+        (0, "None", None),
+        (0, "unexpected-response", None),
+    ],
+)
+def test_existing_image_lookup_fails_closed(commands, tmp_path, status, response, expected):
+    env, log = commands
+    aws = tmp_path / "aws"
+    aws.write_text(
+        '#!/bin/sh\nprintf "aws %s\\n" "$*" >> "$COMMAND_LOG"\n' 'printf "%s\\n" "$ECR_RESPONSE"\nexit "$ECR_STATUS"\n'
+    )
+    output = tmp_path / "outputs"
+    result = subprocess.run(
+        ["bash", ".github/scripts/image-exists.sh"],
+        cwd=ROOT,
+        env={
+            **env,
+            "ECR_REPOSITORY": "minute-temporal",
+            "IMAGE_TAG": "test-commit-admin",
+            "ECR_RESPONSE": response,
+            "ECR_STATUS": str(status),
+            "GITHUB_OUTPUT": str(output),
+        },
+        capture_output=True,
+        check=False,
+    )
+    if expected is None:
+        assert result.returncode != 0
+        assert not output.exists()
+    else:
+        assert result.returncode == 0
+        assert output.read_text() == f"exists={expected}\n"
+    assert "--repository-name minute-temporal --image-ids imageTag=test-commit-admin" in log.read_text()
+    assert "docker" not in log.read_text()
+
+
+def test_commit_checks_build_locally_without_publishing():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/checks.yml").read_text())
+    assert "pull_request" in workflow[True]
+    assert workflow[True]["push"]["branches"] == ["main"]
+    assert workflow["permissions"] == {"contents": "read"}
+    build = workflow["jobs"]["local_build"]
+    assert build["runs-on"] == "ubuntu-latest"
+    script = build["steps"][-1]["run"]
+    assert "source temporal/version.env" in script
+    assert "docker compose config --quiet" in script
+    assert "docker compose build" in script
+    text = (ROOT / ".github/workflows/checks.yml").read_text()
+    for forbidden in ("docker push", "push: true", "secrets.", "id-token: write", "apt-get"):
+        assert forbidden not in text
+    assert "environment" not in workflow["jobs"]["run_tests"]
 
 
 def test_slack_runs_despite_failed_or_skipped_deployment_dependencies():

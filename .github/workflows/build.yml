@@ -2,10 +2,12 @@
 #
 name: build-push
 on:
-  push:
-    branches: "**"
-    paths-ignore:
-      - "runbooks/**"
+  workflow_call:
+    inputs:
+      image_tag:
+        description: Exact commit to build and publish
+        required: true
+        type: string
 
 permissions: {}
 
@@ -15,6 +17,8 @@ jobs:
       contents: read
       id-token: write
     uses: ./.github/workflows/build-fe.yml
+    with:
+      image_tag: ${{ inputs.image_tag }}
     secrets: inherit
   backend:
     permissions:
@@ -23,6 +27,7 @@ jobs:
     uses: ./.github/workflows/build-one.yml
     with:
       service: backend
+      image_tag: ${{ inputs.image_tag }}
     secrets: inherit
   worker:
     permissions:
@@ -31,4 +36,5 @@ jobs:
     uses: ./.github/workflows/build-one.yml
     with:
       service: worker
+      image_tag: ${{ inputs.image_tag }}
     secrets: inherit

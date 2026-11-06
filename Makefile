@@ -33,7 +33,7 @@ CA_SH = if [ -f "$(CA_BUNDLE)" ]; then \
 # around values like TRANSCRIPTION_SERVICES='[...]' and breaks pydantic parsing).
 ENV_SH = set -a; if [ -f .env ]; then . ./.env; fi; $(CA_SH) set +a;
 
-# Non-paid suite: requires Compose Postgres/MiniStack and local ffprobe; paid e2e uses `make test_e2e`.
+# Non-paid suite: requires Compose Postgres/MiniStack; paid e2e uses `make test_e2e`.
 test:
 	$(ENV_SH) ALLOW_TESTS_TO_ACCESS_PAID_APIS=0 uv run pytest tests/
 
@@ -205,6 +205,8 @@ endif
 # terraform workspace). A release has no such fallback -- deploying needs an explicit
 # environment, otherwise you tag `release-default-*`, which no workflow matches.
 .PHONY: release release-temporal-server
+RELEASE_PR := $(pr)
+export RELEASE_PR
 release release-temporal-server:
 	@if [ "$(env)" = "default" ]; then \
 		printf '\033[0;31mrelease needs an explicit environment, e.g. `make release env=dev`\033[0m\n'; \

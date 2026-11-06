@@ -5,6 +5,10 @@ on:
       service:
         required: true
         type: string
+      image_tag:
+        description: Exact commit to build and publish
+        required: true
+        type: string
     secrets:
       AWS_GITHUBRUNNER_USER_ACCESS_KEY:
         required: false
@@ -25,22 +29,29 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: minute-image-${{ inputs.service }}
+  cancel-in-progress: false
+
 jobs:
   set-vars:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
     outputs:
       app-name: ${{ steps.export.outputs.app-name }}
       ec2-instance-type: ${{ steps.export.outputs.ec2-instance-type }}
       version: ${{ steps.export.outputs.version }}
       runner-size: ${{ steps.export.outputs.runner-size }}
       docker-build-instance: ${{ steps.export.outputs.docker-build-instance }}
+      image-exists: ${{ steps.image.outputs.exists }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.image_tag }}
           persist-credentials: false
       - id: export
         run: |
@@ -51,7 +62,22 @@ jobs:
           echo "runner-size=${RUNNER_SIZE}" >> $GITHUB_OUTPUT
           echo "docker-build-instance=${DOCKER_BUILD_INSTANCE}" >> $GITHUB_OUTPUT
 
+      - name: Authenticate image lookup
+        uses: i-dot-ai/i-dot-ai-core-github-actions/.github/actions/authenticate-aws@main
+        with:
+          APP_NAME: ${{ steps.export.outputs.app-name }}
+          ENVIRONMENT: prod
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      - name: Check for existing release image
+        id: image
+        env:
+          ECR_REPOSITORY: ${{ format('{0}-{1}', steps.export.outputs.app-name, inputs.service == 'temporal-admin' && 'temporal' || inputs.service) }}
+          IMAGE_TAG: ${{ format('{0}{1}', inputs.image_tag, inputs.service == 'temporal-admin' && '-admin' || '') }}
+        run: bash .github/scripts/image-exists.sh
+
   start-runner:
+    if: needs.set-vars.outputs.image-exists == 'false'
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
     needs: set-vars
     permissions:
@@ -81,7 +107,7 @@ jobs:
       INFRASTRUCTURE_FOLDER: "terraform"
       DOCKER_BUILD_INSTANCE: ${{ needs.set-vars.outputs.docker-build-instance }}
       SERVICE: ${{ inputs.service }}
-      COMMIT_HASH: ${{ github.sha }}
+      COMMIT_HASH: ${{ inputs.image_tag }}
       USE_OIDC: true
     secrets:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}

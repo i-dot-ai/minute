@@ -17,6 +17,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
+# Keep dependencies root-owned; runtime configuration and watched source remain writable.
+RUN useradd --create-home appuser && mkdir -p /app/config && chown appuser:appuser /app /app/config
+
 # Copy only dependency manifests to cache them in a docker layer
 COPY pyproject.toml uv.lock README.md ./
 
@@ -24,19 +27,15 @@ COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --frozen --no-install-project --no-group dev 
 
 # Copy the FastAPI application code
-COPY common common
+COPY --chown=appuser:appuser common common
 COPY backend/__init__.py backend/__init__.py
-COPY worker worker
+COPY --chown=appuser:appuser worker worker
 
 # Install the project itself now that the source is present
 RUN uv sync --frozen --no-default-groups --group worker
 
 RUN chmod +x worker/entrypoint.sh
 
-# Run as a non-root user. chown /app so the entrypoint can write runtime files
-# (e.g. /app/config/google-credentials.json); --create-home gives the user a writable HOME.
-RUN useradd --create-home appuser \
-    && chown -R appuser /app
 USER appuser
 
 CMD [ "worker/entrypoint.sh" ]

@@ -20,6 +20,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # Set the working directory
 WORKDIR /app
 
+# Keep dependencies root-owned; runtime configuration and watched source remain writable.
+RUN useradd --create-home appuser && mkdir -p /app/config && chown appuser:appuser /app /app/config
+
 # Copy only dependency manifests to cache them in a docker layer
 COPY pyproject.toml uv.lock README.md ./
 
@@ -27,8 +30,8 @@ COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --frozen --no-install-project --no-group dev
 
 # Copy the FastAPI application code
-COPY backend backend
-COPY common common
+COPY --chown=appuser:appuser backend backend
+COPY --chown=appuser:appuser common common
 COPY worker/__init__.py worker/__init__.py
 COPY alembic alembic
 COPY alembic.ini alembic.ini
@@ -36,9 +39,6 @@ COPY alembic.ini alembic.ini
 EXPOSE 8080
 RUN chmod +x backend/entrypoint.sh
 
-# Run as a non-root user. chown /app so the entrypoint can write runtime files
-# (e.g. /app/config/google-credentials.json).
-RUN useradd --create-home appuser && chown -R appuser /app
 USER appuser
 
 # Command to run the FastAPI app using Uvicorn

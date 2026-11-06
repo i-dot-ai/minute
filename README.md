@@ -1,4 +1,4 @@
-[![build](https://github.com/i-dot-ai/minute/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/i-dot-ai/minute/actions/workflows/build.yml?query=branch%3Amain)
+[![checks](https://github.com/i-dot-ai/minute/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/i-dot-ai/minute/actions/workflows/checks.yml?query=branch%3Amain)
 
 # Minute
 
@@ -93,6 +93,32 @@ The worker runs the tasks coordinated by Temporal: audio conversion, transcripti
 
 ## Deployment
 
+PRs and pushes to `main` run lint, tests and local Compose image builds without publishing images.
+`make release env=dev pr=2673` selects the latest head commit of open Minute PR #2673;
+`env=preprod` works the same way. Without `pr`, it selects your current committed local revision,
+which must already exist on GitHub. Python 3.12+ and authenticated GitHub CLI (`gh auth login`) are
+required. A confirmation table compares the proposed branch/SHA/PR with the last successful
+GitHub-recorded release for that component/environment, including the deployer, UTC timestamp and
+relative age. This is release history, not a live AWS inventory. Only `y`/`yes` creates a lightweight
+release tag at the confirmed SHA; Enter, EOF or Ctrl-C cancels. Later PR pushes do not change that tag.
+Fork and closed PRs are rejected. Tags are created remotely; your local checkout is not changed.
+
+The existing release-tag flow builds and pushes missing commit-SHA images before deployment. Existing images are reused on
+repeat releases and promotions; do not overwrite or delete those tags. `make release-temporal-server`
+builds only the Temporal server/admin images. Production still uses the manual release workflow
+on `main`. Frontend telemetry settings are baked into the first image built for a commit.
+
+```sh
+make release env=dev pr=2673
+make release env=preprod pr=2673
+make release-temporal-server env=dev pr=2673
+make release env=dev  # explicitly confirm the current committed local revision
+```
+
+The selected revision supplies its release workflow and Terraform, so review the PR and wait for
+its checks before confirming. Historical records can have no PR association; the table shows `—`
+rather than guessing between multiple PRs. Production remains main-only through Actions.
+
 Application and Temporal server releases use separate Terraform configurations and state. See [Temporal releases](https://github.com/i-dot-ai/minute-infra/blob/main/runbooks/temporal/releases.md) for the release commands and the required migration of existing deployments.
 
 Operational runbooks are maintained in [minute-infra](https://github.com/i-dot-ai/minute-infra/blob/main/runbooks/README.md) (repository access required). Builds, releases, Terraform, load-testing scripts and local development remain here.
@@ -135,6 +161,9 @@ To run unit tests:
 ```bash
 make test
 ```
+
+The real-file duration test skips when `ffprobe` is unavailable; mocked duration tests still run.
+Install FFmpeg locally to include the real-file check and optional audio-fixture tests.
 
 ### Testing paid APIs and LLM prompt evaluations
 

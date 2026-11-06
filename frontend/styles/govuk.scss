@@ -1,4 +1,5 @@
 @use 'govuk-frontend/dist/govuk';
 
 // i.AI override layer — must come after govuk base styles.
-@use '@i-dot-ai-npm/component-library-frontend/dist/i-ai-design-system.min.css' as iai;
+@use '@i-dot-ai-npm/component-library-frontend/dist/i-ai-design-system.min.css'
+  as iai;

@@ -31,6 +31,7 @@ GENERATE_TITLE = "generate_title"
 COMPLETE_TRANSCRIPTION = "complete_transcription"
 SUMMARISE = "summarise"
 FAIL_SUMMARISE = "fail_summarise"
+AUDIO_SECONDS_MEMO = "AudioDurationSeconds"
 
 # STT timeout = floor + factor x audio duration. Measured: Azure took 119s for a 2h file (~2% of
 # the duration), so 10% is ~5x headroom; the floor covers download, upload and short files.
@@ -157,10 +158,13 @@ class TranscriptionWorkflow:
             retry_policy=_PREPARE_RETRY,
         )
         if workflow.patched("transcription-audio-memo"):
-            memo = {"AudioDurationSeconds": audio.duration_seconds}
+            memo = {AUDIO_SECONDS_MEMO: audio.duration_seconds}
             if audio.upload_size_bytes is not None:
                 memo["AudioUploadSizeMb"] = audio.upload_size_bytes / 1_000_000
             workflow.upsert_memo(memo)
+        elif workflow.patched("audio-seconds-memo"):
+            # Preserve the Memo command recorded by workflows started on the status-page branch.
+            workflow.upsert_memo({"audio_seconds": audio.duration_seconds})
         timeout = stt_timeout(audio.duration_seconds)
         return await workflow.execute_activity(
             TRANSCRIBE,

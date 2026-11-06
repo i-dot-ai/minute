@@ -135,3 +135,34 @@ async def test_history_without_audio_memo_replays(monkeypatch):
                 assert await (await handle.describe()).memo() == {}
                 history = await handle.fetch_history()
     await Replayer(workflows=[wf.TranscriptionWorkflow]).replay_workflow(history)
+
+
+@pytest.mark.asyncio
+async def test_status_page_audio_memo_history_replays(monkeypatch):
+    """Keep the old status-page patch marker and Memo command readable after merging main."""
+    patched = wf.workflow.patched
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        with monkeypatch.context() as legacy:
+            legacy.setattr(
+                wf.workflow,
+                "patched",
+                lambda patch_id: False if patch_id == "transcription-audio-memo" else patched(patch_id),
+            )
+            workers = [
+                Worker(
+                    env.client,
+                    task_queue=queue,
+                    activities=activities,
+                    workflows=[wf.TranscriptionWorkflow] if queue == wf.TASK_QUEUE else [],
+                    workflow_runner=UnsandboxedWorkflowRunner(),
+                )
+                for queue, activities in _activities([]).items()
+            ]
+            async with workers[0], workers[1], workers[2]:
+                handle = await env.client.start_workflow(
+                    wf.TranscriptionWorkflow.run, str(uuid.uuid4()), id=str(uuid.uuid4()), task_queue=wf.TASK_QUEUE
+                )
+                await handle.result()
+                assert await (await handle.describe()).memo() == {"audio_seconds": 7200.0}
+                history = await handle.fetch_history()
+    await Replayer(workflows=[wf.TranscriptionWorkflow]).replay_workflow(history)

@@ -112,6 +112,9 @@ mkdirSync(assetsDist, { recursive: true })
 cpSync(join(govukDist, 'assets/images'), join(assetsDist, 'images'), {
   recursive: true,
 })
+cpSync(join(govukDist, 'assets/fonts'), join(assetsDist, 'fonts'), {
+  recursive: true,
+})
 cpSync(
   join(govukDist, 'assets/manifest.json'),
   join(assetsDist, 'manifest.json')

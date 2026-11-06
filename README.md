@@ -93,7 +93,9 @@ The worker runs the tasks coordinated by Temporal: audio conversion, transcripti
 
 ## Deployment
 
-Application and Temporal server releases use separate Terraform configurations and state. See [Temporal releases](runbooks/temporal-releases.md) for the release commands and the required migration of existing deployments.
+Application and Temporal server releases use separate Terraform configurations and state. See [Temporal releases](https://github.com/i-dot-ai/minute-infra/blob/main/runbooks/temporal/releases.md) for the release commands and the required migration of existing deployments.
+
+Operational runbooks are maintained in [minute-infra](https://github.com/i-dot-ai/minute-infra/blob/main/runbooks/README.md) (repository access required). Builds, releases, Terraform, load-testing scripts and local development remain here.
 
 #### Architecture diagram
 

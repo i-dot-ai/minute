@@ -13,6 +13,10 @@ let nextConfig = {
     })
     return config
   },
+  transpilePackages: [
+    '@i-dot-ai-npm/component-library-react',
+    '@i-dot-ai-npm/component-library-frontend',
+  ],
 }
 
 const sentryConfig = {

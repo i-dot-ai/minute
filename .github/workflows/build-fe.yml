@@ -36,6 +36,7 @@ permissions: {}
 concurrency:
   group: minute-image-frontend
   cancel-in-progress: false
+  queue: max
 
 jobs:
   set-vars:

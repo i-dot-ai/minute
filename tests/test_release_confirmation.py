@@ -277,6 +277,21 @@ def test_associated_pr_resolves_old_commits_and_does_not_guess_between_prs(relea
     assert release.associated_pr(SHA) is None
 
 
+@pytest.mark.parametrize("target", ["release", "release-temporal-server"])
+@pytest.mark.parametrize("branch", ["main", "feature/release-with-hyphens"])
+def test_branch_tag_preserves_source_branch_when_commit_has_merged_pr(gh, target, branch):
+    _, responses, _ = gh
+    responses["repos/i-dot-ai/minute/deployments?environment=dev&per_page=100&page=1"][0]["ref"] = (
+        f"{target}-dev-{branch}-deploying-user-05-11-26--123456"
+    )
+    responses[f"repos/i-dot-ai/minute/commits/{OLD_SHA}/pulls?per_page=100"][0]["merge_commit_sha"] = OLD_SHA
+    result, _ = request(gh, [target, "env=dev", "pr=2673"], answer="no\n")
+    assert result.returncode == 0, result.stderr
+    branch_row = next(line for line in result.stdout.splitlines() if line.startswith("│ Branch "))
+    assert [cell.strip() for cell in branch_row.split("│")[1:-1]] == ["Branch", f"{branch} -> feature/new"]
+    assert "#12 -> #2673" in result.stdout
+
+
 def test_pr_tag_preserves_history_after_pr_head_moves(gh):
     _, responses, _ = gh
     responses["repos/i-dot-ai/minute/deployments?environment=dev&per_page=100&page=1"][0]["ref"] = (

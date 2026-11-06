@@ -90,7 +90,7 @@ def last_release(environment: str, component: str):
             actor = (run.get("triggering_actor") or run["actor"])["login"]
             branch = ref
             if ref.startswith("release-"):
-                if pr:
+                if tagged_pr:
                     branch = pr["head"]["ref"]
                 else:
                     prefix = f"release-{'temporal-server-' if component == 'temporal-server' else ''}{environment}-"

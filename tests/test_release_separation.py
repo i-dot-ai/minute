@@ -151,6 +151,8 @@ def test_python_images_keep_non_root_runtime_without_recursively_chowning_depend
     assert "mkdir -p /app/config && chown appuser:appuser /app /app/config" in dockerfile
     assert "chown -R" not in dockerfile
     assert dockerfile.index("useradd") < dockerfile.index("uv sync")
+    for source in (service, "common"):
+        assert f"COPY --chown=appuser:appuser {source} {source}" in dockerfile
 
 
 def test_missing_admin_image_stops_before_migrations(commands):
@@ -253,6 +255,7 @@ def test_image_publication_is_release_only_and_uses_the_resolved_commit():
         assert set(workflow[True]) == {"workflow_call"}
         assert workflow["jobs"]["start-runner"]["if"] == "needs.set-vars.outputs.image-exists == 'false'"
         assert workflow["concurrency"]["cancel-in-progress"] is False
+        assert workflow["concurrency"]["queue"] == "max"
         assert any(
             step.get("run") == "bash .github/scripts/image-exists.sh" for step in workflow["jobs"]["set-vars"]["steps"]
         )
@@ -333,11 +336,18 @@ def test_commit_checks_build_locally_without_publishing():
     assert "source temporal/version.env" in script
     assert "docker compose config --quiet" in script
     assert "docker compose build" in script
+    production = next(
+        step["run"] for step in build["steps"] if step.get("name") == "Build production frontend without publishing"
+    )
+    assert production == "docker build -f frontend/Dockerfile ."
     permissions = build["steps"][-1]["run"]
     assert "for service in backend worker" in permissions
     assert "--no-deps -T --entrypoint python" in permissions
     assert "assert os.getuid() != 0" in permissions
-    assert 'TemporaryDirectory(dir="/app/config")' in permissions
+    assert 'Path("/app/.venv").stat().st_uid == 0' in permissions
+    assert '("/app/config", "/app/common", f"/app/{sys.argv[1]}")' in permissions
+    assert "TemporaryDirectory(dir=parent)" in permissions
+    assert '\' "$service"' in permissions
     text = (ROOT / ".github/workflows/checks.yml").read_text()
     for forbidden in ("docker push", "push: true", "secrets.", "id-token: write", "apt-get"):
         assert forbidden not in text

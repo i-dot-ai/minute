@@ -2,7 +2,7 @@
 
 import type { HourlyProcessingStatus } from '@/lib/processing-status'
 import { useQuery } from '@tanstack/react-query'
-import { LineChart } from '@/components/ui/line-chart'
+import { Chart } from '@i-dot-ai-npm/component-library-react'
 
 function formatProcessingTime(seconds: number | null): string {
   if (seconds == null) return 'N/A'
@@ -120,59 +120,68 @@ function Status(): React.JSX.Element {
           </div>
           <div className="govuk-grid-row">
             <div className="govuk-grid-column-full govuk-grid-column-one-half-from-desktop">
-              <LineChart
+              <Chart
                 title="Processing time per audio hour"
-                format={formatProcessingTime}
-                labels={labels}
-                series={[
-                  {
-                    label: 'Median',
-                    colour: '#0F385C',
-                    data: data.hours.map((h) => h.per_audio_hour_seconds.p50),
-                  },
-                  {
-                    label: 'Slowest 10%',
-                    colour: '#5694CA',
-                    dash: [6, 4],
-                    data: data.hours.map((h) => h.per_audio_hour_seconds.p90),
-                  },
-                  {
-                    label: 'Slowest 1%',
-                    colour: '#8EB8DC',
-                    dash: [2, 3],
-                    data: data.hours.map((h) => h.per_audio_hour_seconds.p99),
-                  },
-                ]}
+                variant="line"
+                format={(value) => formatProcessingTime(value as number)}
+                data={{
+                  heading: 'Time',
+                  labels: labels,
+                  datasets: [
+                    {
+                      label: 'Median',
+                      colour: 'blue-shade-50',
+                      data: data.hours.map((h) => h.per_audio_hour_seconds.p50),
+                    },
+                    {
+                      label: 'Slowest 10%',
+                      colour: 'blue-tint-25',
+                      data: data.hours.map((h) => h.per_audio_hour_seconds.p90),
+                    },
+                    {
+                      label: 'Slowest 1%',
+                      colour: 'blue-tint-50',
+                      data: data.hours.map((h) => h.per_audio_hour_seconds.p99),
+                    },
+                  ],
+                }}
               />
-              <LineChart
+              <Chart
                 title="Transcriptions completed per hour"
-                integer
-                labels={labels}
-                series={[
-                  {
-                    label: 'Completed',
-                    colour: '#50A1A5',
-                    data: data.hours.map((h) => h.completed),
-                  },
-                ]}
+                variant="line"
+                data={{
+                  heading: 'Count',
+                  labels: labels,
+                  datasets: [
+                    {
+                      label: 'Completed',
+                      colour: 'teal-tint-25',
+                      data: data.hours.map((h) => h.completed),
+                    },
+                  ],
+                }}
               />
             </div>
             <div className="govuk-grid-column-full govuk-grid-column-one-half-from-desktop">
-              <LineChart
+              <Chart
                 title="Error rate per hour"
+                variant="line"
                 format={(value) =>
                   `${value.toLocaleString('en-GB', { maximumFractionDigits: 2 })}%`
                 }
-                labels={labels}
-                series={[
-                  {
-                    label: 'Error rate',
-                    colour: '#CA357C',
-                    data: data.hours.map((h) =>
-                      h.failure_rate == null ? null : h.failure_rate * 100
-                    ),
-                  },
-                ]}
+                data={{
+                  heading: 'Error rate',
+                  labels: labels,
+                  datasets: [
+                    {
+                      label: 'Error rate',
+                      colour: 'magenta',
+                      data: data.hours.map((h) =>
+                        h.failure_rate == null ? null : h.failure_rate * 100
+                      ),
+                    },
+                  ],
+                }}
               />
             </div>
           </div>

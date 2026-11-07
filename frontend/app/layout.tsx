@@ -1,5 +1,4 @@
 import { OnboardingTour } from '@/components/onboarding/onboarding-tour'
-import { GovukInit } from '@/components/layout/govuk-init'
 import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { TanstackQueryProvider } from '@/providers/TanstackQueryProvider'
 import PosthogProvider from '@/providers/posthog'
@@ -14,6 +13,7 @@ import { Header } from '@/components/layout/header'
 import ServiceNavigation from '@/components/layout/service-navigation'
 import { Footer } from '@/components/layout/footer'
 import { connection } from 'next/server'
+import { DesignKitInit } from '@/components/layout/DesignKitInit'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -34,7 +34,6 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${inter.className} govuk-template sm:h-dvh`}>
       <body className="govuk-template__body govuk-frontend-supported sm:h-full sm:overflow-hidden">
-        <GovukInit />
         <TanstackQueryProvider>
           <PosthogProvider>
             <LockNavigationProvider>
@@ -70,6 +69,7 @@ export default async function RootLayout({
             </LockNavigationProvider>
           </PosthogProvider>
         </TanstackQueryProvider>
+        <DesignKitInit />
       </body>
     </html>
   )

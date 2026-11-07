@@ -5,7 +5,7 @@ export default function PrivacyPage() {
     <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
         <div
-          className="govuk-grid-column-two-thirds"
+          className="govuk-grid-column-two-thirds-from-desktop"
           dangerouslySetInnerHTML={{ __html: privacyContent }}
         />
       </div>

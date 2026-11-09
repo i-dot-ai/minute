@@ -289,7 +289,7 @@ export default function TranscriptionPage() {
                 </span>
                 <strong className="govuk-warning-text__text">
                   <span className="govuk-visually-hidden">Warning</span>
-                  {getTranscriptionErrorMessage(transcription.error)}
+                  {getTranscriptionErrorMessage(transcription.error_code)}
                   <Link href="/support" className="govuk-link">
                     contact support
                   </Link>

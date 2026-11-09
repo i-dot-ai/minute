@@ -4,7 +4,13 @@ from enum import StrEnum, auto
 
 from pydantic import BaseModel, Field
 
-from common.database.postgres_models import ContentSource, DialogueEntry, JobStatus, TemplateType
+from common.database.postgres_models import (
+    ContentSource,
+    DialogueEntry,
+    JobStatus,
+    TemplateType,
+    TranscriptionErrorCode,
+)
 
 
 class TranscriptionListFilter(StrEnum):
@@ -95,6 +101,7 @@ class TranscriptionGetResponse(BaseModel):
     status: JobStatus
     created_datetime: datetime
     error: str | None = None
+    error_code: TranscriptionErrorCode | None = None
 
 
 class SingleRecording(BaseModel):

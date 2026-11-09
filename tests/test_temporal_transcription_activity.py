@@ -5,6 +5,7 @@ Collaborators are patched; ActivityEnvironment runs each activity in-process (no
 
 import uuid
 from dataclasses import replace
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
@@ -14,8 +15,9 @@ from sqlalchemy.exc import OperationalError
 from temporalio.exceptions import ApplicationError
 from temporalio.testing import ActivityEnvironment
 
+from common.audio.speech_detection import SpeechCheck, SpeechCheckTier
 from common.database.postgres_models import JobStatus
-from common.services.exceptions import TranscriptionFailedError
+from common.services.exceptions import NoSpeechDetectedError, TranscriptionFailedError
 from common.services.minute_handler_service import (
     MinuteGenerationFailedError,
     MinuteGenerationTransientError,
@@ -42,6 +44,7 @@ MINUTE_ID = uuid.uuid4()
 TRANSCRIPTION_ID = uuid.uuid4()
 ENTRIES = [{"speaker": "A", "text": "hi", "start_time": 0.0, "end_time": 1.0}]
 TRANSCRIBE_INPUT = wf.TranscribeInput(minute_id=str(MINUTE_ID), stt_timeout_seconds=60)
+SPEECH = SpeechCheck(has_speech=True, tier=SpeechCheckTier.VAD, max_volume_db=-12.0, speech_seconds=1.0)
 
 
 def _row(status=JobStatus.IN_PROGRESS, entries=ENTRIES, title=None):
@@ -109,6 +112,7 @@ async def test_prepare_audio_measures_original_upload_even_on_retry(monkeypatch,
     monkeypatch.setattr(prepare_audio, "storage_service", storage)
     convert = AsyncMock(return_value=(processed, None, 7200.0))
     monkeypatch.setattr(prepare_audio.transcription_manager, "get_recording_to_process", convert)
+    monkeypatch.setattr(prepare_audio, "detect_speech", Mock(return_value=SPEECH))
     audio = await _run(prepare_audio.prepare_audio, str(MINUTE_ID))
     assert audio == wf.PreparedAudio(
         duration_seconds=7200.0,
@@ -119,6 +123,49 @@ async def test_prepare_audio_measures_original_upload_even_on_retry(monkeypatch,
         size.assert_awaited_once_with(original.s3_file_key)
     else:
         size.assert_not_awaited()
+
+
+async def _download_silent_recording(_key: str, path: Path) -> None:
+    """Writes placeholder audio for prepare-audio tests with mocked detection.
+
+    Args:
+        _key: Storage key accepted for compatibility with the download API.
+        path: Destination path whose size is measured by the activity.
+    """
+    path.write_bytes(b"mp3")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tier", list(SpeechCheckTier))
+async def test_prepare_audio_without_speech_fails_without_retry(monkeypatch, tier):
+    """Verifies that either no-speech tier produces a non-retryable outcome."""
+    recording = SimpleNamespace(id=uuid.uuid4(), s3_file_key="uploads/silent.mp3")
+    row = _row()
+    row.recordings = [recording]
+    _patch_load(monkeypatch, row)
+    monkeypatch.setattr(prepare_audio, "claim_job", Mock(return_value=True))
+
+    download = AsyncMock(side_effect=_download_silent_recording)
+    monkeypatch.setattr(prepare_audio, "storage_service", SimpleNamespace(download=download))
+    convert = AsyncMock(return_value=(recording, Path("silent.mp3"), 600.0))
+    monkeypatch.setattr(prepare_audio.transcription_manager, "get_recording_to_process", convert)
+    no_speech = SpeechCheck(has_speech=False, tier=tier, max_volume_db=-91.0)
+    monkeypatch.setattr(prepare_audio, "detect_speech", Mock(return_value=no_speech))
+    mark_failed = Mock(return_value="No speech detected in the recording")
+    monkeypatch.setattr(_shared, "mark_failed", mark_failed)
+
+    with pytest.raises(ApplicationError) as e:
+        await _run(prepare_audio.prepare_audio, str(MINUTE_ID))
+    assert e.value.non_retryable
+    mark_failed.assert_called_once()
+    assert isinstance(mark_failed.call_args.args[1], NoSpeechDetectedError)
+
+
+@pytest.mark.asyncio
+async def test_prepare_audio_continues_when_speech_detection_breaks(monkeypatch):
+    """Verifies that detector errors preserve the provider fallback path."""
+    monkeypatch.setattr(prepare_audio, "detect_speech", Mock(side_effect=RuntimeError))
+    assert await prepare_audio._check_speech(Path("audio.mp3"), 60.0) is None  # noqa: SLF001
 
 
 @pytest.mark.asyncio

@@ -6,8 +6,8 @@ from sqlalchemy import or_, update
 from sqlmodel import col
 
 from common.database.postgres_database import SessionLocal
-from common.database.postgres_models import JobStatus, Transcription
-from common.services.exceptions import TranscriptionFailedError
+from common.database.postgres_models import JobStatus, Transcription, TranscriptionErrorCode
+from common.services.exceptions import NoSpeechDetectedError, TranscriptionFailedError
 from common.services.posthog_client import capture_event
 from common.services.transcription_handler_service import TranscriptionHandlerService
 from common.settings import get_structured_logger
@@ -79,6 +79,8 @@ def in_progress(transcription_id: UUID) -> Transcription | None:
 def mark_failed(transcription: Transcription, error: Exception | str) -> str | None:
     """Finalise unfinished work, including a failure before the initial claim; preserve terminal rows."""
     msg = f"Transcription failed: {error!s}"
+    no_speech = isinstance(error, NoSpeechDetectedError)
+    error_code = TranscriptionErrorCode.NO_SPEECH_DETECTED if no_speech else None
     with SessionLocal() as session:
         result = session.exec(
             update(Transcription)
@@ -86,10 +88,12 @@ def mark_failed(transcription: Transcription, error: Exception | str) -> str | N
                 col(Transcription.id) == transcription.id,
                 col(Transcription.status).in_((JobStatus.AWAITING_START, JobStatus.IN_PROGRESS)),
             )
-            .values(status=JobStatus.FAILED, error=msg)
+            .values(status=JobStatus.FAILED, error=msg, error_code=error_code)
         )
         session.commit()
         if result.rowcount != 1:  # pyright: ignore[reportAttributeAccessIssue]
             return None
-    capture_event(transcription.user_id, "transcription_failed", {"transcriptionId": str(transcription.id)})
+    # No-speech outcomes are expected and must not increase provider failure metrics.
+    event = "transcription_no_speech" if no_speech else "transcription_failed"
+    capture_event(transcription.user_id, event, {"transcriptionId": str(transcription.id)})
     return msg

@@ -10,10 +10,23 @@ if [ "${1:-schema}" = namespace ]; then
   if [ "$exists" = false ]; then
     temporal operator namespace create -n default --address "$TEMPORAL_ADDRESS"
   fi
+  temporal operator namespace describe -n default --address "$TEMPORAL_ADDRESS"
+  # Preserve registered fields and reject incompatible types before creating missing ones.
+  attributes=$(temporal operator search-attribute list -n default --address "$TEMPORAL_ADDRESS" --output json)
+  missing_attributes=""
+  for name in UserId TranscriptionId MinuteId MinuteVersionId; do
+    attribute_type=$(printf '%s' "$attributes" | jq -r --arg name "$name" '.customAttributes[$name] // "missing"')
+    if [ "$attribute_type" = missing ]; then
+      missing_attributes="$missing_attributes $name"
+    elif [ "$attribute_type" != INDEXED_VALUE_TYPE_KEYWORD ]; then
+      echo "Search attribute $name must be Keyword, not $attribute_type" >&2
+      exit 1
+    fi
+  done
   # Search attributes the app attaches to every workflow start
   # (common/workflows/search_attributes.py); creating duplicates is a no-op.
   register_search_attributes() {
-    for attribute in UserId TranscriptionId MinuteId MinuteVersionId; do
+    for attribute in $missing_attributes; do
       temporal operator search-attribute create -n default --address "$TEMPORAL_ADDRESS" \
         --name "$attribute" --type Keyword || return 1
     done
@@ -28,7 +41,6 @@ if [ "${1:-schema}" = namespace ]; then
     fi
     sleep 1
   done
-  temporal operator namespace describe -n default --address "$TEMPORAL_ADDRESS"
   exit 0
 fi
 

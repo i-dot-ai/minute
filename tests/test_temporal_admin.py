@@ -41,6 +41,7 @@ exit "${PSQL_STATUS:-0}"
         "temporal-sql-tool": 'exit "${MIGRATION_STATUS:-0}"\n',
         "temporal": """case "$*" in
   *"namespace list"*) printf '%s' "${NAMESPACES:-[]}"; exit "${NAMESPACE_STATUS:-0}" ;;
+  *"search-attribute list"*) printf '%s' "$SEARCH_ATTRIBUTES"; exit "${SEARCH_ATTRIBUTE_STATUS:-0}" ;;
 esac
 """,
     }
@@ -56,6 +57,7 @@ esac
         "POSTGRES_USER": "admin",
         "POSTGRES_PWD": "test-password",
         "TEMPORAL_ADDRESS": "test-server:7233",
+        "SEARCH_ATTRIBUTES": "{}",
     }, log
 
 
@@ -125,8 +127,42 @@ def test_namespace_creation_only_after_successful_lookup(admin_commands, namespa
     assert (result.returncode == 0) is (status == "0" and namespaces != "invalid-json")
     assert ("namespace create" in log.read_text()) is creates
     assert "temporal-sql-tool" not in log.read_text()
-    for attribute in ("UserId", "TranscriptionId", "MinuteId", "MinuteVersionId"):
-        assert (f"--name {attribute} --type Keyword" in log.read_text()) is (result.returncode == 0)
+    if result.returncode == 0:
+        assert log.read_text().count("search-attribute create") == 4
+        for attribute in ("UserId", "TranscriptionId", "MinuteId", "MinuteVersionId"):
+            assert f"--name {attribute} --type Keyword" in log.read_text()
+    else:
+        assert "search-attribute" not in log.read_text()
+
+
+def test_namespace_setup_preserves_registered_search_attributes(admin_commands):
+    """Verifies that namespace setup leaves registered keyword fields unchanged."""
+    env, log = admin_commands
+    attributes = {
+        name: "INDEXED_VALUE_TYPE_KEYWORD" for name in ("UserId", "TranscriptionId", "MinuteId", "MinuteVersionId")
+    }
+    subprocess.run(
+        ["sh", "temporal-admin/entrypoint.sh", "namespace"],
+        cwd=ROOT,
+        env={**env, "SEARCH_ATTRIBUTES": json.dumps({"customAttributes": attributes})},
+        check=True,
+        capture_output=True,
+    )
+    assert "search-attribute create" not in log.read_text()
+
+
+@pytest.mark.parametrize("attributes", ["invalid-json", '{"customAttributes":{"UserId":"INDEXED_VALUE_TYPE_INT"}}'])
+def test_namespace_setup_rejects_invalid_search_attributes(admin_commands, attributes):
+    """Verifies that malformed metadata and incompatible field types fail setup."""
+    env, _log = admin_commands
+    result = subprocess.run(
+        ["sh", "temporal-admin/entrypoint.sh", "namespace"],
+        cwd=ROOT,
+        env={**env, "SEARCH_ATTRIBUTES": attributes},
+        check=False,
+        capture_output=True,
+    )
+    assert result.returncode != 0
 
 
 @pytest.mark.parametrize("exit_code", [0, 1, None])

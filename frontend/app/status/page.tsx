@@ -121,27 +121,17 @@ function Status(): React.JSX.Element {
           <div className="govuk-grid-row">
             <div className="govuk-grid-column-full govuk-grid-column-one-half-from-desktop">
               <Chart
-                title="Processing time per audio hour"
+                title="Processing time per hour of audio"
                 variant="line"
+                showNullValuesAsZero
                 format={(value) => formatProcessingTime(value as number)}
                 data={{
                   heading: 'Time',
                   labels: labels,
                   datasets: [
                     {
-                      label: 'Median',
-                      colour: 'blue-shade-50',
+                      label: 'Median processing time',
                       data: data.hours.map((h) => h.per_audio_hour_seconds.p50),
-                    },
-                    {
-                      label: 'Slowest 10%',
-                      colour: 'blue-tint-25',
-                      data: data.hours.map((h) => h.per_audio_hour_seconds.p90),
-                    },
-                    {
-                      label: 'Slowest 1%',
-                      colour: 'blue-tint-50',
-                      data: data.hours.map((h) => h.per_audio_hour_seconds.p99),
                     },
                   ],
                 }}
@@ -166,6 +156,7 @@ function Status(): React.JSX.Element {
               <Chart
                 title="Error rate per hour"
                 variant="line"
+                showNullValuesAsZero
                 format={(value) =>
                   `${value.toLocaleString('en-GB', { maximumFractionDigits: 2 })}%`
                 }

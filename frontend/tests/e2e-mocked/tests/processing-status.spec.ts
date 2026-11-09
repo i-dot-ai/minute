@@ -174,7 +174,7 @@ test('charts the last 24 hours with a data table for each', async ({
 }) => {
   await openStatus(page)
   for (const name of [
-    'Processing time per audio hour',
+    'Processing time per hour of audio',
     'Transcriptions completed per hour',
     'Error rate per hour',
   ]) {
@@ -182,14 +182,14 @@ test('charts the last 24 hours with a data table for each', async ({
     await expect(page.getByRole('img', { name, exact: true })).toBeVisible()
   }
 
-  const processing = await chartTable(page, 'Processing time per audio hour')
+  const processing = await chartTable(page, 'Processing time per hour of audio')
   await expect(processing.getByRole('row')).toHaveCount(25)
   await expect(
     processing.getByRole('row').filter({ hasText: '01:00' })
-  ).toHaveText(/01:00\s*1m 0s\s*2m 5s\s*1h 1m 1s/)
+  ).toHaveText(/01:00\s*1m 0s/)
   await expect(
     processing.getByRole('row').filter({ hasText: '00:00' })
-  ).toHaveText(/00:00\s*–\s*–\s*–/)
+  ).toHaveText(/00:00\s*–/)
 
   const completed = await chartTable(page, 'Transcriptions completed per hour')
   await expect(

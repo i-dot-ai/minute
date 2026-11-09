@@ -752,5 +752,5 @@ html body[data-scroll-locked] {
   border-color: #ca357c;
 }
 .analytics-card--blue {
-  border-color: #1d70bb;
+  border-color: var(--govuk-brand-colour);
 }

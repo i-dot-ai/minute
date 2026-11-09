@@ -7,7 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 
 from backend.api.routes import router as api_router
-from backend.cleanup_job import init_cleanup_scheduler
 from common.sentry import init_sentry
 from common.settings import get_settings
 
@@ -18,8 +17,6 @@ log = logging.getLogger("uvicorn")
 @asynccontextmanager
 async def lifespan(app_: FastAPI):  # noqa: ARG001
     log.info("Starting up...")
-
-    await init_cleanup_scheduler()
 
     yield
 

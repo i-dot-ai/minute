@@ -1,30 +1,31 @@
+"""Daily retention, orphaned-audio and stalled-record cleanup activities."""
+
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlmodel import and_, col, func, null, select, update
 from sqlmodel.ext.asyncio.session import AsyncSession
+from temporalio import activity
 
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import JobStatus, MinuteVersion, Recording, Transcription, User
 from common.services.storage_services import get_storage_service
 from common.settings import get_settings
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
 storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
-async def cleanup_failed_records():
-    """clear records based on each user's retention period setting."""
+@activity.defn
+async def cleanup_failed_records() -> None:
+    """Mark records still in progress after 24 hours as failed."""
     logger.info("Starting stalled object cleanup process")
     async with AsyncSession(async_engine) as session:
         for object_type in [MinuteVersion, Transcription]:
-            # delete after 24 hrs if not successful
             cutoff_date = datetime.now(tz=ZoneInfo("Europe/London")) - timedelta(days=1)
             update_stmt = (
                 update(object_type)
@@ -40,7 +41,8 @@ async def cleanup_failed_records():
     logger.info("Stalled record cleanup process completed")
 
 
-async def cleanup_old_records():
+@activity.defn
+async def cleanup_old_records() -> None:
     """Delete records based on each user's retention period setting."""
     logger.info("Starting data retention cleanup process")
     async with AsyncSession(async_engine) as session:
@@ -59,37 +61,27 @@ async def cleanup_old_records():
         await session.commit()
 
 
-async def delete_orphan_records():
+@activity.defn
+async def delete_orphan_records() -> None:
     logger.info("Starting recording clean up")
+    failure: Exception | None = None
+    activity.heartbeat()
     async with AsyncSession(async_engine) as session:
         orphan_recording_query = select(Recording).where(col(Recording.transcription_id).is_(None)).with_for_update()
         recordings = (await session.exec(orphan_recording_query)).all()
         logger.info("Found %d Recordings with no Transcription.", len(recordings))
         for recording in recordings:
+            activity.heartbeat()
             try:
-                exists = await storage_service.check_object_exists(recording.s3_file_key)
-                if exists:
-                    await storage_service.delete(recording.s3_file_key)
-            except Exception as e:  # noqa: BLE001
-                msg = f"Error deleting recording {recording.id}. Will keep record in database: {e}"
-                logger.error(msg)
+                # Both storage services allow repeated deletion, including an already-missing object.
+                await storage_service.delete(recording.s3_file_key)
+            except Exception as e:
+                logger.exception("Error deleting recording %s; keeping its database row", recording.id)
+                failure = e
             else:
                 await session.delete(recording)
         await session.commit()
 
+    if failure is not None:
+        raise failure  # Successful deletions are committed; Temporal retries the remaining rows.
     logger.info("Data retention cleanup process completed")
-
-
-async def cleanup_jobs():
-    await cleanup_old_records()
-    await delete_orphan_records()
-    await cleanup_failed_records()
-
-
-async def init_cleanup_scheduler():
-    """Initialize the scheduler to run cleanup daily."""
-    next_run_time = datetime.now(tz=UTC).replace(hour=23, minute=0, second=0, microsecond=0)
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(cleanup_jobs, "interval", days=1, next_run_time=next_run_time)
-    scheduler.start()
-    logger.info("cleanup scheduler initialized")

@@ -247,7 +247,7 @@ export default function RecordStatusPage({
                   </p>
 
                   <p className="govuk-body">
-                    {getTranscriptionErrorMessage(transcription.error)}
+                    {getTranscriptionErrorMessage(transcription.error_code)}
                     <Link href="/support" className="govuk-link">
                       contact support
                     </Link>

@@ -25,19 +25,21 @@ test('a failed transcription shows the internal error message and retry', async 
   await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
 })
 
-test('a no-audio failure shows the no usable audio message', async ({
-  page,
-}) => {
+test('a no-speech failure shows the no speech message', async ({ page }) => {
   await mockBackend(page)
   await routeFailedTranscription(page, {
     transcription: meeting1,
-    error: 'No transcription phrases found in the audio',
+    error: 'Transcription failed: No speech detected in the recording',
+    errorCode: 'no_speech_detected',
     recordings: meeting1Recordings,
   })
 
   await page.goto(`/transcriptions/${meeting1.id}`)
 
-  await expect(page.getByText('No usable audio detected.')).toBeVisible()
+  await expect(
+    page.getByText('No speech was detected in this recording.')
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
 })
 
 test('a legacy failed transcription with no recording shows the empty meeting page', async ({

@@ -7,7 +7,7 @@ from sqlalchemy import TIMESTAMP, Column, Index, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
-from sqlmodel import Field, Relationship, SQLModel, col, func
+from sqlmodel import AutoString, Field, Relationship, SQLModel, col, func
 
 
 class DialogueEntry(TypedDict):
@@ -42,6 +42,12 @@ class JobStatus(StrEnum):
     IN_PROGRESS = auto()
     COMPLETED = auto()
     FAILED = auto()
+
+
+class TranscriptionErrorCode(StrEnum):
+    """Identifies transcription outcomes that require a specific user message."""
+
+    NO_SPEECH_DETECTED = auto()
 
 
 class ContentSource(StrEnum):
@@ -131,6 +137,7 @@ class Transcription(BaseTableMixin, table=True):
         default=JobStatus.AWAITING_START, sa_column_kwargs={"server_default": JobStatus.AWAITING_START.name}
     )
     error: str | None = Field(default=None)
+    error_code: TranscriptionErrorCode | None = Field(default=None, sa_type=AutoString)
     user: User | None = Relationship(back_populates="transcriptions")
     user_id: UUID | None = Field(default=None, foreign_key="user.id")
     minutes: list[Minute] = Relationship(

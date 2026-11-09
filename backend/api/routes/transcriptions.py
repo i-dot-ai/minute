@@ -306,6 +306,7 @@ async def retry_transcription(
         raise HTTPException(400, detail="Only failed transcriptions can be retried")
     transcription.status = JobStatus.AWAITING_START
     transcription.error = None
+    transcription.error_code = None
     transcription.dialogue_entries = None
     transcription.created_datetime = datetime.now(UTC)
 
@@ -340,6 +341,7 @@ async def get_transcription(
         title=transcription.title,
         created_datetime=transcription.created_datetime,
         error=transcription.error,
+        error_code=transcription.error_code,
     )
 
 

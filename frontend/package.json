@@ -22,8 +22,8 @@
   "dependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@hey-api/client-next": "^0.5.1",
-    "@i-dot-ai-npm/component-library-frontend": "^0.0.20",
-    "@i-dot-ai-npm/component-library-react": "^0.0.14",
+    "@i-dot-ai-npm/component-library-frontend": "^0.0.21",
+    "@i-dot-ai-npm/component-library-react": "^0.0.15",
     "@i-dot-ai-npm/utilities-auth": "^1.0.0-EN-1538.1",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-dialog": "^1.1.2",

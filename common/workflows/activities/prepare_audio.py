@@ -44,9 +44,8 @@ async def _check_speech(file_path: Path, duration: float) -> SpeechCheck | None:
         "[TAG]",
         tag="speech_check",
         has_speech=speech.has_speech,
-        tier=speech.tier,
+        result=speech.result,
         max_volume_db=speech.max_volume_db,
-        speech_seconds=speech.speech_seconds,
         duration_seconds=duration,
     )
     return speech

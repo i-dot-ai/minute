@@ -1,6 +1,7 @@
 """Speech detection on real audio: ffmpeg generates the silent and non-speech inputs."""
 
 import subprocess
+from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import Mock
@@ -9,7 +10,7 @@ import numpy as np
 import pytest
 
 from common.audio import speech_detection
-from common.audio.speech_detection import SpeechCheckTier, detect_speech
+from common.audio.speech_detection import SpeechCheckResult, detect_speech
 
 SAMPLE_MEETING = Path(__file__).resolve().parents[1] / "frontend/tests/fixtures/sample-meeting.mp3"
 
@@ -39,7 +40,7 @@ def silence(tmp_path):
 
 @pytest.fixture
 def quiet_noise(tmp_path):
-    """Returns audible pink noise for testing the VAD tier."""
+    """Returns audible pink noise for testing the VAD check."""
     return _generate(tmp_path / "noise.mp3", "-f", "lavfi", "-i", "anoisesrc=d=120:c=pink:a=0.02")
 
 
@@ -63,7 +64,7 @@ def test_speech_is_detected():
     """Verifies that meeting audio passes the VAD check."""
     check = detect_speech(SAMPLE_MEETING)
     assert check.has_speech
-    assert check.tier == SpeechCheckTier.VAD
+    assert check.result == SpeechCheckResult.VAD
 
 
 def test_speech_after_a_long_silence_is_detected(late_speech):
@@ -73,12 +74,12 @@ def test_speech_after_a_long_silence_is_detected(late_speech):
 
 def test_silence_is_caught_by_the_volume_check_without_running_vad(silence, monkeypatch):
     """Verifies that digital silence bypasses model inference."""
-    count_speech = Mock(side_effect=AssertionError)
-    monkeypatch.setattr(speech_detection, "count_speech_seconds", count_speech)
+    contains_speech = Mock(side_effect=AssertionError)
+    monkeypatch.setattr(speech_detection, "contains_speech", contains_speech)
     check = detect_speech(silence)
     assert not check.has_speech
-    assert check.tier == SpeechCheckTier.VOLUME
-    count_speech.assert_not_called()
+    assert check.result == SpeechCheckResult.VOLUME
+    contains_speech.assert_not_called()
 
 
 @pytest.mark.parametrize("fixture", ["quiet_noise", "tone"])
@@ -86,13 +87,31 @@ def test_audible_non_speech_is_caught_by_vad(request, fixture):
     """Verifies that audible noise and tones are rejected by VAD."""
     check = detect_speech(request.getfixturevalue(fixture))
     assert not check.has_speech
-    assert check.tier == SpeechCheckTier.VAD
+    assert check.result == SpeechCheckResult.VAD
 
 
-def test_vad_stops_once_enough_speech_is_found():
-    """Verifies early stopping and optional full-recording processing."""
-    assert speech_detection.count_speech_seconds(SAMPLE_MEETING) < 2
-    assert speech_detection.count_speech_seconds(SAMPLE_MEETING, stop_after_seconds=float("inf")) > 60
+@pytest.mark.parametrize(
+    ("probabilities", "expected", "processed_windows"),
+    [
+        ([0.5, 0.0], True, 1),
+        ([0.4, 0.5, 0.0], True, 2),
+        ([0.0, 0.4, 0.49], False, 3),
+        ([], False, 0),
+    ],
+)
+def test_vad_detects_any_speech_without_a_minimum_duration(monkeypatch, probabilities, expected, processed_windows):
+    """Verifies threshold detection and immediate stopping, even for one window."""
+    detector = Mock()
+    detector.predict.side_effect = probabilities
+    monkeypatch.setattr(speech_detection, "SileroModel", Mock(return_value=detector))
+
+    @contextmanager
+    def decoded_windows(_path):
+        yield iter([np.zeros(speech_detection.WINDOW_SAMPLES, dtype=np.float32) for _ in probabilities])
+
+    monkeypatch.setattr(speech_detection, "decoded_audio_windows", decoded_windows)
+    assert speech_detection.contains_speech(Path("audio.mp3")) is expected
+    assert detector.predict.call_count == processed_windows
 
 
 def test_undecodable_audio_raises(tmp_path):
@@ -102,33 +121,7 @@ def test_undecodable_audio_raises(tmp_path):
     with pytest.raises(subprocess.CalledProcessError):
         detect_speech(bad)
     with pytest.raises(RuntimeError):
-        speech_detection.count_speech_seconds(bad)
-
-
-def test_counter_discards_short_runs_and_preserves_confirmed_speech():
-    """Verifies that only qualifying runs contribute to the speech duration."""
-    counter = speech_detection.SpeechCounter()
-    for _ in range(7):
-        counter.update(0.9)
-    assert counter.speech_seconds == 0
-    counter.update(0.0)
-    for _ in range(8):
-        counter.update(0.9)
-    assert counter.speech_seconds == pytest.approx(0.256)
-    counter.update(0.0)
-    assert counter.speech_seconds == pytest.approx(0.256)
-
-
-def test_counter_uses_lower_threshold_only_after_speech_starts():
-    """Verifies that borderline scores continue speech but cannot start it."""
-    counter = speech_detection.SpeechCounter()
-    for _ in range(8):
-        counter.update(0.4)
-    assert counter.speech_seconds == 0
-    counter.update(0.9)
-    for _ in range(7):
-        counter.update(0.4)
-    assert counter.speech_seconds == pytest.approx(0.256)
+        speech_detection.contains_speech(bad)
 
 
 def test_model_instances_keep_recording_state_separate(monkeypatch):

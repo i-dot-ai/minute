@@ -15,7 +15,7 @@ from sqlalchemy.exc import OperationalError
 from temporalio.exceptions import ApplicationError
 from temporalio.testing import ActivityEnvironment
 
-from common.audio.speech_detection import SpeechCheck, SpeechCheckTier
+from common.audio.speech_detection import SpeechCheck, SpeechCheckResult
 from common.database.postgres_models import JobStatus
 from common.services.exceptions import NoSpeechDetectedError, TranscriptionFailedError
 from common.services.minute_handler_service import (
@@ -44,7 +44,7 @@ MINUTE_ID = uuid.uuid4()
 TRANSCRIPTION_ID = uuid.uuid4()
 ENTRIES = [{"speaker": "A", "text": "hi", "start_time": 0.0, "end_time": 1.0}]
 TRANSCRIBE_INPUT = wf.TranscribeInput(minute_id=str(MINUTE_ID), stt_timeout_seconds=60)
-SPEECH = SpeechCheck(has_speech=True, tier=SpeechCheckTier.VAD, max_volume_db=-12.0, speech_seconds=1.0)
+SPEECH = SpeechCheck(has_speech=True, result=SpeechCheckResult.VAD, max_volume_db=-12.0)
 
 
 def _row(status=JobStatus.IN_PROGRESS, entries=ENTRIES, title=None):
@@ -136,9 +136,9 @@ async def _download_silent_recording(_key: str, path: Path) -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("tier", list(SpeechCheckTier))
-async def test_prepare_audio_without_speech_fails_without_retry(monkeypatch, tier):
-    """Verifies that either no-speech tier produces a non-retryable outcome."""
+@pytest.mark.parametrize("result", list(SpeechCheckResult))
+async def test_prepare_audio_without_speech_fails_without_retry(monkeypatch, result):
+    """Verifies that either no-speech check result produces a non-retryable outcome."""
     recording = SimpleNamespace(id=uuid.uuid4(), s3_file_key="uploads/silent.mp3")
     row = _row()
     row.recordings = [recording]
@@ -149,7 +149,7 @@ async def test_prepare_audio_without_speech_fails_without_retry(monkeypatch, tie
     monkeypatch.setattr(prepare_audio, "storage_service", SimpleNamespace(download=download))
     convert = AsyncMock(return_value=(recording, Path("silent.mp3"), 600.0))
     monkeypatch.setattr(prepare_audio.transcription_manager, "get_recording_to_process", convert)
-    no_speech = SpeechCheck(has_speech=False, tier=tier, max_volume_db=-91.0)
+    no_speech = SpeechCheck(has_speech=False, result=result, max_volume_db=-91.0)
     monkeypatch.setattr(prepare_audio, "detect_speech", Mock(return_value=no_speech))
     mark_failed = Mock(return_value="No speech detected in the recording")
     monkeypatch.setattr(_shared, "mark_failed", mark_failed)

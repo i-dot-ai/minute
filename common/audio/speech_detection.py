@@ -6,7 +6,6 @@ without any model inference. All remaining recordings are passed
 through Silero VAD v6 to detect voice.
 """
 
-import math
 import re
 import subprocess
 import tempfile
@@ -24,25 +23,20 @@ from numpy.typing import NDArray
 
 # The Silero VAD model https://github.com/snakers4/silero-vad
 MODEL_PATH = Path(__file__).parent / "models" / "silero_vad.onnx"
+# Silero expects 16KHz audio with 512 samples
 SAMPLE_RATE = 16000
-# At 16 kHz, the model expects 32 ms windows prefixed with 64 context samples.
 WINDOW_SAMPLES = 512
 CONTEXT_SAMPLES = 64
 
 # Only very low peak levels bypass VAD; quiet but audible audio still reaches it.
 SILENCE_MAX_VOLUME_DB = -60.0
-# Silero's recommended thresholds: enter speech at 0.5, leave it below 0.35.
+# Silero's recommended threshold for detecting speech.
 SPEECH_THRESHOLD = 0.5
-LEAVING_SPEECH_THRESHOLD = 0.35
-# Discard short detections to reduce false positives from clicks and noise bursts.
-MIN_SPEECH_RUN_SECONDS = 0.25
-# Total speech needed to send the recording on to transcription.
-MIN_SPEECH_SECONDS = 1.0
 
 _MAX_VOLUME = re.compile(r"max_volume:\s*(-?(?:inf|[\d.]+))\s*dB")
 
 
-class SpeechCheckTier(StrEnum):
+class SpeechCheckResult(StrEnum):
     """Identifies the check that determined whether speech was present."""
 
     VOLUME = auto()
@@ -54,17 +48,14 @@ class SpeechCheck:
     """Stores the outcome and measurements of a speech check.
 
     Attributes:
-        has_speech: Whether enough speech was detected to allow transcription.
-        tier: The check that produced the final outcome.
+        has_speech: Whether any speech was detected.
+        result: The check that produced the final outcome.
         max_volume_db: Peak audio level in dBFS, as reported by FFmpeg.
-        speech_seconds: Confirmed speech duration. Zero when VAD was skipped.
-            Early stopping means this is not necessarily the full duration.
     """
 
     has_speech: bool
-    tier: SpeechCheckTier
+    result: SpeechCheckResult
     max_volume_db: float
-    speech_seconds: float = 0.0
 
 
 def get_max_volume_db(file_path: Path) -> float:
@@ -98,7 +89,7 @@ def _get_model_session() -> onnxruntime.InferenceSession:
     """Returns a cached CPU inference session for the vendored Silero model.
 
     Inference uses one thread per session. Each recording keeps its recurrent
-    state separately so concurrent checks do not share audio history.
+    state separately so simultaneous checks do not share audio history.
 
     Returns:
         An ONNX Runtime session configured for CPU inference.
@@ -110,14 +101,12 @@ def _get_model_session() -> onnxruntime.InferenceSession:
 
 
 class SileroModel:
-    """Predicts speech probabilities while keeping one recording's audio history.
-
-    Model weights are shared through a cached session. Context and recurrent
-    state belong to each instance, so concurrent recordings remain independent.
+    """
+    Predicts speech probabilities while keeping the recording's audio history.
     """
 
     def __init__(self) -> None:
-        """Initializes the model with empty context and recurrent state."""
+        """Initialise the model with empty context and recurrent state."""
         self._session = _get_model_session()
         self._sample_rate = np.array(SAMPLE_RATE, dtype=np.int64)
         self._state = np.zeros((2, 1, 128), dtype=np.float32)
@@ -139,41 +128,6 @@ class SileroModel:
         )
         self._context = model_input[:, -CONTEXT_SAMPLES:]
         return float(output[0, 0])
-
-
-class SpeechCounter:
-    """Counts speech windows while rejecting short detection runs.
-
-    Attributes:
-        speech_seconds: Confirmed duration, including a qualifying current run.
-    """
-
-    def __init__(self) -> None:
-        """Initializes an empty counter using the configured speech thresholds."""
-        self._window_seconds = WINDOW_SAMPLES / SAMPLE_RATE
-        self._min_run_windows = math.ceil(MIN_SPEECH_RUN_SECONDS / self._window_seconds)
-        self._speech_windows = 0
-        self._run_windows = 0
-
-    def update(self, probability: float) -> None:
-        """Updates the counter with the next window's speech probability.
-
-        Args:
-            probability: Speech probability for the next consecutive window.
-        """
-        # The lower exit threshold prevents borderline scores from fragmenting speech.
-        if probability >= SPEECH_THRESHOLD or (self._run_windows and probability >= LEAVING_SPEECH_THRESHOLD):
-            self._run_windows += 1
-        else:
-            if self._run_windows >= self._min_run_windows:
-                self._speech_windows += self._run_windows
-            self._run_windows = 0
-
-    @property
-    def speech_seconds(self) -> float:
-        """Returns confirmed speech duration, excluding runs that are too short."""
-        current_windows = self._run_windows if self._run_windows >= self._min_run_windows else 0
-        return (self._speech_windows + current_windows) * self._window_seconds
 
 
 def _iter_audio_windows(stream: BinaryIO) -> Iterator[NDArray[np.float32]]:
@@ -247,33 +201,28 @@ def _iter_decoded_windows(process: subprocess.Popen, errors: BinaryIO) -> Iterat
         raise RuntimeError(msg)
 
 
-def count_speech_seconds(file_path: Path, stop_after_seconds: float = MIN_SPEECH_SECONDS) -> float:
-    """Counts confirmed speech in streamed audio using Silero VAD.
+def contains_speech(file_path: Path) -> bool:
+    """Detects any speech in streamed audio using Silero VAD.
 
     Args:
         file_path: Path to the local audio file.
-        stop_after_seconds: Speech duration at which inference stops early.
-            Use float("inf") to process the entire recording.
 
     Returns:
-        Confirmed speech duration in seconds, measured in 32 ms windows. The
-        result may exceed stop_after_seconds by part of one window.
+        Whether any window reaches the speech threshold. Stops at the first
+        detected speech window, without requiring a minimum speech duration.
 
     Raises:
         RuntimeError: FFmpeg fails to decode the recording.
     """
     detector = SileroModel()
-    counter = SpeechCounter()
-
+    # This is the main section which actually looks for speech.
+    # Essentially loop through the audio and predict speech break if True
     with decoded_audio_windows(file_path) as windows:
         for window in windows:
-            probability = detector.predict(window)
-            counter.update(probability)
+            if detector.predict(window) >= SPEECH_THRESHOLD:
+                return True
 
-            if counter.speech_seconds >= stop_after_seconds:
-                break
-
-    return counter.speech_seconds
+    return False
 
 
 def detect_speech(file_path: Path) -> SpeechCheck:
@@ -283,20 +232,23 @@ def detect_speech(file_path: Path) -> SpeechCheck:
         file_path: Path to the local audio file.
 
     Returns:
-        The speech verdict, deciding tier, and available audio measurements.
+        The speech verdict, deciding check, and available audio measurements.
 
     Raises:
         subprocess.CalledProcessError: FFmpeg fails during the volume check.
         ValueError: FFmpeg does not report a peak level.
         RuntimeError: FFmpeg fails to decode audio for VAD.
     """
+    # First get the max volume and if it's < -60DB exit because the audio is silent
     max_volume_db = get_max_volume_db(file_path)
     if max_volume_db <= SILENCE_MAX_VOLUME_DB:
-        return SpeechCheck(has_speech=False, tier=SpeechCheckTier.VOLUME, max_volume_db=max_volume_db)
-    speech_seconds = count_speech_seconds(file_path)
+        return SpeechCheck(has_speech=False, result=SpeechCheckResult.VOLUME, max_volume_db=max_volume_db)
+
+    # If the audio is loud enough try and detect speech on it
+    has_speech = contains_speech(file_path)
+
     return SpeechCheck(
-        has_speech=speech_seconds >= MIN_SPEECH_SECONDS,
-        tier=SpeechCheckTier.VAD,
+        has_speech=has_speech,
+        result=SpeechCheckResult.VAD,
         max_volume_db=max_volume_db,
-        speech_seconds=speech_seconds,
     )

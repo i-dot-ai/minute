@@ -11,6 +11,11 @@ declare module 'govuk-frontend' {
     scope?: HTMLElement | Document
   ): unknown[]
 
+  export class Accordion {
+    constructor(root: HTMLElement)
+    static moduleName: string
+  }
+
   export class Tabs {
     constructor(root: HTMLElement)
     teardown(): void

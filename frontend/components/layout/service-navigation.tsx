@@ -155,6 +155,16 @@ export const ServiceNavigation = () => {
                     Contact
                   </GuardedLink>
                 </li>
+                <li
+                  className={`govuk-service-navigation__item ${pathname.includes('/accessibility') ? 'govuk-service-navigation__item--active' : ''}`}
+                >
+                  <GuardedLink
+                    className="govuk-service-navigation__link"
+                    href="/accessibility"
+                  >
+                    Accessibility
+                  </GuardedLink>
+                </li>
               </ul>
               <img
                 src="/images/govuk-crest.svg"

@@ -9,7 +9,9 @@ const PUBLIC_PATHS = [
   '/health',
   '/generic-error',
   '/monitoring',
-  '/privacy',
+  '/legal/privacy',
+  '/legal/accessibility',
+  '/legal',
   '/support',
   '/sign-out',
 ]

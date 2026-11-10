@@ -22,9 +22,15 @@ const pages = [
     outputPath: 'index.html',
   },
   {
-    title: 'Privacy Notice',
+    title: 'Privacy notice',
     contentPath: join(contentRoot, 'privacy-page.html'),
     outputPath: 'privacy/index.html',
+    wrap: true,
+  },
+  {
+    title: 'Accessibility statement',
+    contentPath: join(contentRoot, 'accessibility-statement.html'),
+    outputPath: 'accessibility/index.html',
     wrap: true,
   },
   {

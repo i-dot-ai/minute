@@ -15,6 +15,8 @@ export const PAGES_TO_TEST = [
   `/templates/system/${templates[0].name}`,
   `/templates/${userTemplates[0].id}`,
   '/support',
-  '/privacy',
+  '/legal/privacy',
+  '/legal/accessibility',
+  '/legal',
   '/unauthorised',
 ]

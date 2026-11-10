@@ -136,16 +136,6 @@ export const ServiceNavigation = () => {
               )}
               <ul className="govuk-service-navigation__list govuk-service-navigation__list--footer">
                 <li
-                  className={`govuk-service-navigation__item ${pathname.includes('/privacy') ? 'govuk-service-navigation__item--active' : ''}`}
-                >
-                  <GuardedLink
-                    className="govuk-service-navigation__link"
-                    href="/privacy"
-                  >
-                    Privacy
-                  </GuardedLink>
-                </li>
-                <li
                   className={`govuk-service-navigation__item ${pathname.includes('/support') ? 'govuk-service-navigation__item--active' : ''}`}
                 >
                   <GuardedLink
@@ -156,13 +146,13 @@ export const ServiceNavigation = () => {
                   </GuardedLink>
                 </li>
                 <li
-                  className={`govuk-service-navigation__item ${pathname.includes('/accessibility') ? 'govuk-service-navigation__item--active' : ''}`}
+                  className={`govuk-service-navigation__item ${pathname.includes('/legal') ? 'govuk-service-navigation__item--active' : ''}`}
                 >
                   <GuardedLink
                     className="govuk-service-navigation__link"
-                    href="/accessibility"
+                    href="/legal"
                   >
-                    Accessibility
+                    Legal
                   </GuardedLink>
                 </li>
               </ul>

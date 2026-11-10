@@ -1,7 +1,9 @@
 import { PosthogBannerPayload } from '@/components/banner/banner-controller'
 
-export function StatusBanner({payload }: {payload?: PosthogBannerPayload}) {
-  const title = payload?.title || 'We are currently experiencing long processing times for recordings.'
+export function StatusBanner({ payload }: { payload?: PosthogBannerPayload }) {
+  const title =
+    payload?.title ||
+    'We are currently experiencing long processing times for recordings.'
 
   return (
     <div

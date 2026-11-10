@@ -212,6 +212,7 @@
     min-height: 0;
     overflow-y: auto;
     background-color: var(--govuk-surface-background-colour);
+    border-bottom: none;
   }
 
   .govuk-service-navigation--side-nav .govuk-width-container {
@@ -244,7 +245,8 @@
   .govuk-service-navigation--side-nav
     .govuk-service-navigation__list--footer
     .govuk-service-navigation__item {
-    padding: 10px 0;
+    padding: 6px 0 7px;
+    min-height: unset;
     height: auto;
   }
 
@@ -752,5 +754,5 @@ html body[data-scroll-locked] {
   border-color: #ca357c;
 }
 .analytics-card--blue {
-  border-color: #1d70bb;
+  border-color: var(--govuk-brand-colour);
 }

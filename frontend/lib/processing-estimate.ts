@@ -3,6 +3,8 @@
 // The two together come to 2 minutes per hour of audio.
 const TRANSCRIPTION_MINUTES_PER_AUDIO_MINUTE = 0.017
 const SUMMARY_MINUTES_PER_AUDIO_MINUTE = 0.017
+const TOTAL_MINUTES_PER_AUDIO_MINUTE =
+  TRANSCRIPTION_MINUTES_PER_AUDIO_MINUTE + SUMMARY_MINUTES_PER_AUDIO_MINUTE
 
 // Short recordings still carry fixed overheads, so never estimate below this.
 const MINIMUM_ESTIMATE_MINUTES = 1
@@ -31,10 +33,15 @@ const getEstimateMinutes = (
     : null
 
 /** Transcribing the audio and then generating the first summary from it. */
-export const getTotalEstimateMinutes = (durationSec: number | null) =>
+export const getTotalEstimateMinutes = (
+  durationSec: number | null,
+  actualSecondsPerAudioHour?: number | null
+) =>
   getEstimateMinutes(
     durationSec,
-    TRANSCRIPTION_MINUTES_PER_AUDIO_MINUTE + SUMMARY_MINUTES_PER_AUDIO_MINUTE
+    actualSecondsPerAudioHour
+      ? actualSecondsPerAudioHour / 3_600
+      : TOTAL_MINUTES_PER_AUDIO_MINUTE
   )
 
 /** Generating a summary from a transcript that already exists. */
@@ -43,12 +50,13 @@ export const getSummaryEstimateMinutes = (durationSec: number | null) =>
 
 const getStallLimitMs = (
   durationSec: number | null,
-  phase: ProcessingPhase
+  phase: ProcessingPhase,
+  actualSecondsPerAudioHour?: number | null
 ) => {
   const estimateMinutes =
     phase === 'summary'
       ? getSummaryEstimateMinutes(durationSec)
-      : getTotalEstimateMinutes(durationSec)
+      : getTotalEstimateMinutes(durationSec, actualSecondsPerAudioHour)
   if (!estimateMinutes) return STALL_FALLBACK_MINUTES * MS_PER_MINUTE
   const floorMinutes =
     phase === 'summary'
@@ -93,12 +101,15 @@ export const getIsStalled = ({
   startedAt,
   durationSec,
   phase,
+  actualSecondsPerAudioHour,
   now,
 }: {
   startedAt: string | null | undefined
   durationSec: number | null
   phase: ProcessingPhase
+  actualSecondsPerAudioHour?: number | null
   now: number | null
 }) =>
   !!startedAt &&
-  getElapsedMs(startedAt, now) > getStallLimitMs(durationSec, phase)
+  getElapsedMs(startedAt, now) >
+    getStallLimitMs(durationSec, phase, actualSecondsPerAudioHour)

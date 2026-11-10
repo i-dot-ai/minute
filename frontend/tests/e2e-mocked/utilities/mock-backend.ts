@@ -9,6 +9,7 @@ import type {
   TranscriptionGetResponse,
 } from '@/lib/client/types.gen'
 
+import type { HourlyProcessingStatus } from '@/lib/processing-status'
 import { meeting1 } from '../mocked-responses/mock-meeting-1'
 import { meeting1Minutes } from '../mocked-responses/mock-meeting-1.minutes'
 import { meeting1Recordings } from '../mocked-responses/mock-meeting-1.recordings'
@@ -26,6 +27,7 @@ import {
   type StaticMock,
   routeStorage,
   UPLOAD_URL,
+  json,
 } from './routes/general'
 import { routeTemplates } from './routes/templates'
 import { routeTranscription } from './routes/transcription'
@@ -54,6 +56,26 @@ const SCENARIOS = {
 } satisfies Record<string, Scenario>
 
 type ScenarioName = keyof typeof SCENARIOS
+
+const processingStatus: HourlyProcessingStatus = {
+  partial: false,
+  hours: [],
+  last_10_minutes: {
+    start: '2026-01-01T00:00:00Z',
+    completed: 0,
+    failed: 0,
+    failure_rate: null,
+    avg_processing_seconds: null,
+    audio_hours: 0,
+    processing_seconds_per_audio_hour: null,
+    per_audio_hour_seconds: {
+      sample_count: 0,
+      p50: null,
+      p90: null,
+      p99: null,
+    },
+  },
+}
 
 export async function mockBackend(
   page: Page,
@@ -131,4 +153,7 @@ export async function mockBackend(
   await routeTranscription(page, { transcription, minutes })
   await routeStatic(page, staticMocks)
   await routeUser(page)
+  await page.route('**/api/status', (route) =>
+    route.fulfill(json(200, processingStatus))
+  )
 }

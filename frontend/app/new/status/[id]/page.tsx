@@ -23,6 +23,7 @@ import {
   getTotalEstimateMinutes,
   ProcessingPhase,
 } from '@/lib/processing-estimate'
+import type { HourlyProcessingStatus } from '@/lib/processing-status'
 import { readRecordingDurationSec } from '@/lib/recording-duration'
 import { getTranscriptionErrorMessage } from '@/lib/transcription-error'
 
@@ -71,9 +72,8 @@ export default function RecordStatusPage({
   })
   const summaryStatus = minuteVersionsQuery.data?.[0]?.status
 
-  // Once transcription completes, the summary state is unknown until the
-  // minutes list and the (just-enabled) versions query have returned; keep
-  // showing the processing state to avoid a flash of "Ready".
+  // Summary state is unknown until the minutes/version queries return after
+  // transcription completes; keep showing processing to avoid a flash of "Ready".
   const summaryStatusPending =
     transcriptionDone &&
     (minutesQuery.isLoading || (!!minuteId && minuteVersionsQuery.isLoading))
@@ -89,7 +89,7 @@ export default function RecordStatusPage({
 
   const [audioDurationSec, setAudioDurationSec] = useState<number | null>(null)
   // The recorder stashes the measured length keyed by this id, so the estimate
-  // can show while transcribing — before the transcript or audio URL exists.
+  // can show before the transcript or audio URL exists.
   const [storedDurationSec, setStoredDurationSec] = useState<number | null>(
     null
   )
@@ -113,29 +113,49 @@ export default function RecordStatusPage({
 
   const now = useNow({ enabled: isProcessing })
 
-  // The summary phase re-anchors on when its version was last touched: the
-  // worker flips the version to in_progress as summary generation starts,
-  // bumping updated_datetime, so both the countdown and the stall check
-  // restart when transcription hands over rather than counting from the
-  // version row's creation (which happens back at transcription-creation time).
+  const { data: processingStatus } = useQuery<HourlyProcessingStatus>({
+    queryKey: ['processing-status-hourly'],
+    queryFn: async () => {
+      const response = await fetch('/api/status')
+      if (!response.ok) throw new Error('Processing status unavailable')
+      return response.json()
+    },
+    enabled: isProcessing,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: false,
+    retry: false,
+  })
+
+  // The worker flips the version to in_progress when summary generation starts,
+  // so updated_datetime re-anchors the countdown and stall check at handover;
+  // the row's creation time is back at transcription-creation time.
   const phase: ProcessingPhase = transcriptionDone ? 'summary' : 'transcription'
   const phaseStartedAt = transcriptionDone
     ? minuteVersionsQuery.data?.[0]?.updated_datetime
     : transcription?.created_datetime
 
+  const actualSecondsPerAudioHour =
+    processingStatus?.last_10_minutes.per_audio_hour_seconds.p50 ?? null
+
   const isStalled =
     isProcessing &&
-    getIsStalled({ startedAt: phaseStartedAt, durationSec, phase, now })
+    getIsStalled({
+      startedAt: phaseStartedAt,
+      durationSec,
+      phase,
+      actualSecondsPerAudioHour,
+      now,
+    })
 
-  // While transcribing, the countdown covers the whole job but is held back at
-  // the summary estimate, so it never reaches zero with the summary still to
-  // run. Once the summary starts it counts that estimate down on its own.
+  // While transcribing the countdown covers the whole job, held back so it
+  // never reaches zero with the summary still to run.
   const summaryEstimateMinutes = getSummaryEstimateMinutes(durationSec)
   const remainingMinutes = getRemainingMinutes({
     startedAt: phaseStartedAt,
     estimateMinutes: transcriptionDone
       ? summaryEstimateMinutes
-      : getTotalEstimateMinutes(durationSec),
+      : getTotalEstimateMinutes(durationSec, actualSecondsPerAudioHour),
     minimumMinutes: transcriptionDone ? 0 : summaryEstimateMinutes,
     now,
   })

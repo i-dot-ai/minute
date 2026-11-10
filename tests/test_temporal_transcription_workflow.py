@@ -163,6 +163,8 @@ async def test_audio_duration_is_recorded_in_memo():
             await handle.result()
             description = await handle.describe()
     assert await description.memo_value(wf.AUDIO_SECONDS_MEMO) == AUDIO_SECONDS
+    # The transcribe wall-clock is recorded for the status page's fixed-vs-per-audio split.
+    assert (await description.memo_value(wf.TRANSCRIBE_SECONDS_MEMO)) >= 0
 
 
 def test_stt_timeout_scales_with_audio_duration():

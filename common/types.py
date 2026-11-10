@@ -290,11 +290,11 @@ class StatusBucket(BaseModel):
     completed: int
     failed: int = Field(description="Failed or timed out runs")
     failure_rate: float | None = Field(description="failed / (completed + failed); 0-1, null without outcomes")
-    avg_processing_seconds: float | None = Field(description="Mean start-to-close time of listed completed runs")
-    audio_hours: float = Field(description="Audio in listed completed runs that recorded its duration")
-    processing_seconds_per_audio_hour: float | None = Field(description="Total processing / total audio hours")
-    per_audio_hour_seconds: StatusDistribution = Field(
-        description="Percentiles of each run's processing seconds per audio hour"
+    avg_processing_seconds: float | None = Field(description="Mean start-to-close time of sampled completed runs")
+    audio_hours: float = Field(description="Audio in sampled completed runs that recorded its duration")
+    projected_one_hour_seconds: float | None = Field(
+        description="Projected total processing for one hour of audio: audio-independent part of each run"
+        " plus the transcribe time one audio hour takes"
     )
 
 

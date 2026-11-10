@@ -17,5 +17,6 @@ export const PAGES_TO_TEST = [
   '/support',
   '/legal/privacy',
   '/legal/accessibility',
+  '/legal',
   '/unauthorised',
 ]

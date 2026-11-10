@@ -19,7 +19,7 @@ export type PosthogBannerPayload = JsonType & {
 
 export function Banner() {
   const isOldUrl = useIsOldUrl()
-  const showStatusBanner = true;
+  const showStatusBanner = true
   const statusPayload = useFeatureFlagPayload(FeatureFlags.ShowStatusBanner) as
     | PosthogBannerPayload
     | undefined

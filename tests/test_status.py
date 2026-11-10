@@ -12,7 +12,7 @@ from backend.api.dependencies.get_session import get_session
 from backend.api.routes.status import status_router
 from backend.utils import temporal_status
 from common.services.exceptions import MissingAuthTokenError
-from common.types import HourlyStatusResponse, StatusBucket, StatusDistribution, StatusResponse, StatusSummary
+from common.types import HourlyStatusResponse, StatusBucket, StatusResponse, StatusSummary
 
 
 @pytest.fixture
@@ -61,8 +61,7 @@ async def test_hourly_route_and_failure(status_app, monkeypatch):
         failure_rate=None,
         avg_processing_seconds=None,
         audio_hours=0,
-        processing_seconds_per_audio_hour=None,
-        per_audio_hour_seconds=StatusDistribution(),
+        projected_one_hour_seconds=None,
     )
     response = HourlyStatusResponse(
         workflow_type="TranscriptionWorkflow", collected_at=now, partial=False, hours=[], last_10_minutes=recent

@@ -80,10 +80,10 @@ function Status(): React.JSX.Element {
             <div className="govuk-grid-column-one-third-from-desktop">
               <div className="analytics-card analytics-card--blue">
                 <h3 className="govuk-heading-m govuk-!-font-weight-regular">
-                  Processing time per audio hour:
+                  Processing time for a 1-hour meeting:
                 </h3>
                 <p className="govuk-body govuk-!-font-size-48 govuk-!-font-weight-bold">
-                  {formatProcessingTime(recent.per_audio_hour_seconds.p50)}
+                  {formatProcessingTime(recent.projected_one_hour_seconds)}
                 </p>
               </div>
             </div>
@@ -121,7 +121,7 @@ function Status(): React.JSX.Element {
           <div className="govuk-grid-row">
             <div className="govuk-grid-column-full govuk-grid-column-one-half-from-desktop">
               <Chart
-                title="Processing time per hour of audio"
+                title="Processing time for a 1-hour meeting"
                 variant="line"
                 showNullValuesAsZero
                 format={(value) => formatProcessingTime(value as number)}
@@ -130,8 +130,8 @@ function Status(): React.JSX.Element {
                   labels: labels,
                   datasets: [
                     {
-                      label: 'Median processing time',
-                      data: data.hours.map((h) => h.per_audio_hour_seconds.p50),
+                      label: 'Processing time',
+                      data: data.hours.map((h) => h.projected_one_hour_seconds),
                     },
                   ],
                 }}

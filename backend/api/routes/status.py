@@ -40,8 +40,8 @@ async def get_status(
 @status_router.get("/status/hourly", response_model=HourlyStatusResponse)
 async def get_hourly_status(_current_user: UserDep) -> HourlyStatusResponse:
     """Transcriptions per hour for the last 24 hours, by close time: counts, failure rate, mean
-    processing time and processing seconds per audio hour, plus the same for the last 10 minutes.
-    Cached for 1 minute."""
+    processing time, and the projected processing time for a 1-hour meeting, plus the same for
+    the last 10 minutes. Cached for 1 minute."""
     try:
         return await temporal_status.get_hourly_status()
     except Exception as exc:

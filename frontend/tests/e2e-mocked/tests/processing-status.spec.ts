@@ -14,13 +14,7 @@ function bucket(start: string, values: Partial<StatusBucket> = {}) {
     failure_rate: null,
     avg_processing_seconds: null,
     audio_hours: 0,
-    processing_seconds_per_audio_hour: null,
-    per_audio_hour_seconds: {
-      sample_count: 0,
-      p50: null,
-      p90: null,
-      p99: null,
-    },
+    projected_one_hour_seconds: null,
     ...values,
   } satisfies StatusBucket
 }
@@ -32,7 +26,7 @@ hours[1] = bucket('2026-11-02T01:00:00Z', {
   completed: 7,
   failed: 1,
   failure_rate: 0.125,
-  per_audio_hour_seconds: { sample_count: 7, p50: 60, p90: 125, p99: 3661 },
+  projected_one_hour_seconds: 60,
 })
 
 const status: HourlyProcessingStatus = {
@@ -42,7 +36,7 @@ const status: HourlyProcessingStatus = {
     completed: 20,
     failed: 1,
     failure_rate: 0.02,
-    per_audio_hour_seconds: { sample_count: 20, p50: 45.4, p90: 90, p99: 120 },
+    projected_one_hour_seconds: 45.4,
   }),
 }
 
@@ -135,7 +129,9 @@ test('shows the last 10 minutes', async ({ page }) => {
   ).toBeVisible()
   const card = (name: string) =>
     page.locator('.analytics-card').filter({ hasText: name })
-  await expect(card('Processing time per audio hour:')).toContainText('45s')
+  await expect(card('Processing time for a 1-hour meeting:')).toContainText(
+    '45s'
+  )
   await expect(card('Error rate:')).toContainText('2.00%')
   await expect(card('Transcriptions completed:')).toContainText('20')
   await expect(page.getByRole('status')).toHaveCount(0)
@@ -174,7 +170,7 @@ test('charts the last 24 hours with a data table for each', async ({
 }) => {
   await openStatus(page)
   for (const name of [
-    'Processing time per hour of audio',
+    'Processing time for a 1-hour meeting',
     'Transcriptions completed per hour',
     'Error rate per hour',
   ]) {
@@ -182,7 +178,10 @@ test('charts the last 24 hours with a data table for each', async ({
     await expect(page.getByRole('img', { name, exact: true })).toBeVisible()
   }
 
-  const processing = await chartTable(page, 'Processing time per hour of audio')
+  const processing = await chartTable(
+    page,
+    'Processing time for a 1-hour meeting'
+  )
   await expect(processing.getByRole('row')).toHaveCount(25)
   await expect(
     processing.getByRole('row').filter({ hasText: '01:00' })

@@ -166,7 +166,9 @@ export default function Home() {
                   >
                     <Mic className="size-7" />
                     <h2 className="govuk-heading-m">In person</h2>
-                    <p className="govuk-body">Record audio from this device.</p>
+                    <p className="govuk-body">
+                      Record audio from this device&apos;s microphone.
+                    </p>
                   </label>
                 </div>
                 <div className="govuk-radios__item" id="virtual-meeting-card">

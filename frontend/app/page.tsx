@@ -1,8 +1,7 @@
 'use client'
 
 import { AudioUploadForm } from '@/components/audio/AudioUploadForm'
-import { PosthogBanner } from '@/components/posthog-banner'
-import { useIsOldUrl } from '@/hooks/use-is-old-url'
+import { Banner } from '@/components/banner/banner-controller'
 import { AudioDevice } from '@/components/audio/microphone-permission'
 import { useRecordingSession } from '@/providers/recording-session-provider'
 import { Mic, Video, Upload, Info, Settings2 } from 'lucide-react'
@@ -10,14 +9,12 @@ import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useState, useEffect, useRef } from 'react'
 import { useOfflineRecordings } from '@/components/recent-meetings/use-offline-recordings'
-import UrlMigrationBanner from '@/components/url-migration-banner'
 import { useGovukModule } from '@/hooks/use-govuk-module'
 import Link from 'next/link'
 
 type RecordingMode = 'in-person' | 'virtual-meeting' | 'upload-file'
 
 export default function Home() {
-  const isOldUrl = useIsOldUrl()
   const tabsRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const session = useRecordingSession()
@@ -130,7 +127,7 @@ export default function Home() {
           </div>
         </>
       ) : (
-        <>{isOldUrl ? <UrlMigrationBanner /> : <PosthogBanner />}</>
+        <Banner />
       )}
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
@@ -169,9 +166,7 @@ export default function Home() {
                   >
                     <Mic className="size-7" />
                     <h2 className="govuk-heading-m">In person</h2>
-                    <p className="govuk-body">
-                      Record audio from this device&apos;s microphone.
-                    </p>
+                    <p className="govuk-body">Record audio from this device.</p>
                   </label>
                 </div>
                 <div className="govuk-radios__item" id="virtual-meeting-card">

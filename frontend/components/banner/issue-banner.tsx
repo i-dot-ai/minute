@@ -1,31 +1,16 @@
 'use client'
 
-import { FeatureFlags } from '@/lib/feature-flags'
-import Link from 'next/link'
 import posthog from 'posthog-js'
-import { useFeatureFlagPayload } from 'posthog-js/react'
+import Link from 'next/link'
+import { type PosthogBannerPayload } from '@/components/banner/banner-controller'
 
-export function PosthogBanner() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const payload: any = useFeatureFlagPayload(FeatureFlags.ShowIssueBanner)
-
-  if (!payload) {
-    return null
-  }
-
-  const isDismissed =
-    localStorage.getItem('posthog-banner-dismissed') === payload.title
-
-  if (isDismissed) {
-    return null
-  }
-
-  const handleDismiss = () => {
-    posthog.capture('banner_dismissed')
-    localStorage.setItem('posthog-banner-dismissed', payload.title || '')
-    window.location.reload()
-  }
-
+export function IssueBanner({
+  payload,
+  onDismiss,
+}: {
+  payload: PosthogBannerPayload
+  onDismiss: () => void
+}) {
   return (
     <div
       className="govuk-!-padding-4 govuk-!-margin-bottom-4 bg-[#16548a] text-white"
@@ -39,7 +24,7 @@ export function PosthogBanner() {
         >
           {payload.title || 'Important'}
         </h2>
-        <button className="govuk-link !text-white" onClick={handleDismiss}>
+        <button className="govuk-link !text-white" onClick={onDismiss}>
           Dismiss
         </button>
       </div>

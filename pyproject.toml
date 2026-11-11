@@ -43,7 +43,6 @@ backend = [
     "pyjwt>=2.9.0,<3",
     "posthog>=6.6.1,<7",
     "uvicorn>=0.31.0,<0.32",
-    "apscheduler>=3.11.0,<4",
 ]
 worker = [
     "google-genai>=1.10.0,<2",

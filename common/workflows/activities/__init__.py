@@ -1,4 +1,4 @@
-"""Temporal activities for the transcription workflow: one module per activity.
+"""Temporal activities for processing and daily cleanup.
 
 Grouped by task queue (see common/workflows/transcription.py); each group is one Worker.
 The submodules are imported here (not the functions), so `activities.prepare_audio` is the
@@ -6,6 +6,7 @@ module.
 """
 
 from common.workflows.activities import (
+    cleanup,
     complete_transcription,
     edit_minute,
     fail_minute,
@@ -32,4 +33,7 @@ WORKFLOW_QUEUE_ACTIVITIES = [
     fail_transcription.fail_transcription,
     fail_minute.fail_minute_version,
     fail_minute.fail_summarise,
+    cleanup.cleanup_old_records,
+    cleanup.delete_orphan_records,
+    cleanup.cleanup_failed_records,
 ]

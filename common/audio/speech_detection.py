@@ -1,7 +1,7 @@
 """
-This Module helps us detect speech before any audio is sent to a transcription provider.
+This module diagnoses recordings after a transcription provider returns no transcript.
 
-FFmpeg first checks the recording's peak volume and rejects near-silent audio
+FFmpeg first checks the recording's peak volume and identifies near-silent audio
 without any model inference. All remaining recordings are passed
 through Silero VAD v6 to detect voice.
 """
@@ -239,12 +239,11 @@ def detect_speech(file_path: Path) -> SpeechCheck:
         ValueError: FFmpeg does not report a peak level.
         RuntimeError: FFmpeg fails to decode audio for VAD.
     """
-    # # First get the max volume and if it's < -60DB exit because the audio is silent
-    # max_volume_db = get_max_volume_db(file_path)
-    # if max_volume_db <= SILENCE_MAX_VOLUME_DB:
-    #     return SpeechCheck(has_speech=False, result=SpeechCheckResult.VOLUME, max_volume_db=max_volume_db)
+    # First get the max volume and if it's < -60DB exit because the audio is silent
+    max_volume_db = get_max_volume_db(file_path)
+    if max_volume_db <= SILENCE_MAX_VOLUME_DB:
+        return SpeechCheck(has_speech=False, result=SpeechCheckResult.VOLUME, max_volume_db=max_volume_db)
 
-    max_volume_db = float("nan") # TODO debug testing remove this
     # If the audio is loud enough try and detect speech on it
     has_speech = contains_speech(file_path)
 

@@ -14,6 +14,7 @@ from structlog.testing import capture_logs
 from temporalio.testing import WorkflowEnvironment
 
 from common.database.postgres_models import JobStatus
+from common.services.exceptions import TranscriptionFailedError
 from common.services.transcription_services import azure
 from common.services.transcription_services.azure import AzureSpeechAdapter, AzureSpeechRegion, _configured_regions
 from common.workflows import transcription as wf
@@ -114,6 +115,25 @@ async def test_transcribes(azure_responses, audio_file):
             assert result.transcript == EXPECTED_TRANSCRIPT
             assert transport.requests == [sent_to(regions[(attempt - 1) % len(regions)])]
             assert transport.audio_sizes == [1024]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("response", [{}, {"phrases": []}, {"phrases": None}])
+async def test_empty_response_returns_empty_transcript(azure_responses, audio_file: Path, response: dict) -> None:
+    """Successful responses without phrases are left for audio diagnostics."""
+    transport = azure_responses([httpx.Response(200, json=response)])
+    result = await AzureSpeechAdapter.start(audio_file)
+    assert result.transcript == []
+    assert result.transcription_service == AzureSpeechAdapter.name
+    assert transport.requests == [sent_to(PRIMARY)]
+
+
+@pytest.mark.asyncio
+async def test_api_error_is_not_an_empty_transcript(azure_responses, audio_file: Path) -> None:
+    """An API error in a successful HTTP response remains a provider failure."""
+    azure_responses([httpx.Response(200, json={"error": {"message": "Invalid audio"}})])
+    with pytest.raises(TranscriptionFailedError, match="Invalid audio"):
+        await AzureSpeechAdapter.start(audio_file)
 
 
 @pytest.mark.asyncio

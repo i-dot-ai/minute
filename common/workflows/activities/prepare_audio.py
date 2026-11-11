@@ -1,6 +1,5 @@
-"""Prepares transcription audio and checks for speech before provider submission."""
+"""Prepares transcription audio before provider submission."""
 
-import asyncio
 import tempfile
 from pathlib import Path
 from uuid import UUID
@@ -8,10 +7,9 @@ from uuid import UUID
 from temporalio import activity
 from temporalio.exceptions import ApplicationError
 
-from common.audio.speech_detection import SpeechCheck, detect_speech
 from common.database.postgres_models import JobStatus, Transcription
 from common.services.errors import is_transient
-from common.services.exceptions import NoSpeechDetectedError, TranscriptionFailedError
+from common.services.exceptions import TranscriptionFailedError
 from common.services.job_claim import claim_job
 from common.services.storage_services import get_storage_service
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
@@ -22,33 +20,6 @@ from common.workflows.activities import _shared
 slogger = get_structured_logger()
 storage_service = get_storage_service(get_settings().STORAGE_SERVICE_NAME)
 transcription_manager = TranscriptionServiceManager()
-
-
-async def _check_speech(file_path: Path, duration: float) -> SpeechCheck | None:
-    """Checks for speech without blocking transcription when detection fails.
-
-    Args:
-        file_path: Path to the prepared local audio file.
-        duration: Recording duration in seconds, included in diagnostic logs.
-
-    Returns:
-        The speech check result, or None if detection fails. A None result lets
-        the recording continue to the transcription provider.
-    """
-    try:
-        speech = await asyncio.to_thread(detect_speech, file_path)
-    except Exception:
-        slogger.exception("Speech detection failed; sending the recording to transcription anyway")
-        return None
-    slogger.info(
-        "[TAG]",
-        tag="speech_check",
-        has_speech=speech.has_speech,
-        result=speech.result,
-        max_volume_db=speech.max_volume_db,
-        duration_seconds=duration,
-    )
-    return speech
 
 
 async def _prepare_audio(minute_id: UUID) -> wf.PreparedAudio:
@@ -76,15 +47,11 @@ async def _prepare_audio(minute_id: UUID) -> wf.PreparedAudio:
             # ponytail: on retry the newest recording is the converted mp3, so conversion is skipped;
             # two overlapping attempts (activity timeout + retry) can still insert a duplicate copy.
             # Add a (transcription_id, kind) unique index if that shows up.
-            _, file_path, duration = await transcription_manager.get_recording_to_process(
+            _, _, duration = await transcription_manager.get_recording_to_process(
                 recording=recording,
                 temp_file_path=temp_file_path,
                 file_extension=Path(recording.s3_file_key).suffix.lower(),
             )
-            speech = await _check_speech(file_path, duration)
-            if speech is not None and not speech.has_speech:
-                msg = "No speech detected in the recording"
-                raise NoSpeechDetectedError(msg)
     except Exception as e:
         if is_transient(e):
             raise _shared.TranscriptionTransientError(str(e)) from e

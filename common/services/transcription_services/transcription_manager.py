@@ -7,24 +7,53 @@ from pathlib import Path
 import sentry_sdk
 
 from common.audio.ffmpeg import convert_to_mp3, get_duration, get_num_audio_channels
+from common.audio.speech_detection import SpeechCheck, detect_speech
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import Recording, Transcription
-from common.services.exceptions import TranscriptionFailedError
+from common.services.exceptions import NoSpeechDetectedError, TranscriptionFailedError
 from common.services.storage_services import get_storage_service
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.services.transcription_services.aws import AWSTranscribeAdapter
 from common.services.transcription_services.azure import AzureSpeechAdapter
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 from common.types import TranscriptionJobMessageData
 
 logger = logging.getLogger(__name__)
+slogger = get_structured_logger()
 
 settings = get_settings()
 SUPPORTED_FORMATS = {".mp3"}
 # add any new adapters here
 _adapters = {adapter.name: adapter for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter]}
 storage_service = get_storage_service(get_settings().STORAGE_SERVICE_NAME)
+
+
+async def _check_speech(file_path: Path, duration: float) -> SpeechCheck | None:
+    """Diagnoses an empty transcript without replacing it with a detector error.
+
+    Args:
+        file_path: Path to the prepared local audio file.
+        duration: Recording duration in seconds, included in diagnostic logs.
+
+    Returns:
+        The speech check result, or None if detection fails. Speech or an
+        inconclusive check leaves the empty transcript available for retry.
+    """
+    try:
+        speech = await asyncio.to_thread(detect_speech, file_path)
+    except Exception:
+        slogger.exception("Speech detection failed after an empty transcript; keeping the transcription retry path")
+        return None
+    slogger.info(
+        "[TAG]",
+        tag="speech_check",
+        has_speech=speech.has_speech,
+        result=speech.result,
+        max_volume_db=speech.max_volume_db,
+        duration_seconds=duration,
+    )
+    return speech
 
 
 class TranscriptionServiceManager:
@@ -99,6 +128,12 @@ class TranscriptionServiceManager:
                     transcription_job = await adapter.start(
                         audio_file_path_or_recording=file_path, timeout_seconds=timeout_seconds, attempt=attempt
                     )
+                    if not transcription_job.transcript:
+                        # Diagnose only empty responses, while the downloaded audio still exists.
+                        speech = await _check_speech(file_path, duration_seconds)
+                        if speech is not None and not speech.has_speech:
+                            msg = "No speech detected in the recording"
+                            raise NoSpeechDetectedError(msg)
                 case AdapterType.ASYNC:
                     transcription_job = await adapter.start(
                         audio_file_path_or_recording=recording, timeout_seconds=timeout_seconds, attempt=attempt

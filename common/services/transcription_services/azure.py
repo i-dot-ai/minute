@@ -130,8 +130,8 @@ class AzureSpeechAdapter(TranscriptionAdapter):
                 # If no error, proceed with phrases extraction
                 phrases = full_response.get("phrases")
                 if not phrases:
-                    error_msg = "No transcription phrases found in response"
-                    raise TranscriptionFailedError(error_msg)
+                    # Let the manager investigate the audio after a successful empty response.
+                    return TranscriptionJobMessageData(transcription_service=cls.name, transcript=[])
                 return TranscriptionJobMessageData(
                     transcription_service=cls.name, transcript=convert_to_dialogue_entries(phrases)
                 )

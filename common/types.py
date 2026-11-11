@@ -4,12 +4,7 @@ from enum import StrEnum, auto
 
 from pydantic import BaseModel, Field
 
-from common.database.postgres_models import (
-    ContentSource,
-    DialogueEntry,
-    JobStatus,
-    TemplateType,
-)
+from common.database.postgres_models import ContentSource, DialogueEntry, JobStatus, TemplateType
 
 
 class TranscriptionListFilter(StrEnum):

@@ -1,4 +1,4 @@
-"""Prepares transcription audio before provider submission."""
+"""Activity: start the transcription and prepare its audio (download, convert to a mono mp3)."""
 
 import tempfile
 from pathlib import Path

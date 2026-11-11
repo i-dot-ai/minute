@@ -302,7 +302,7 @@ export default function RecordStatusPage({
                   </>
                 ) : (
                   <Link href={`/transcriptions/${id}`} className="govuk-button">
-                      {noSpeech ? 'View recording' : 'View transcription'}
+                    {noSpeech ? 'View recording' : 'View transcription'}
                   </Link>
                 )}
               </div>

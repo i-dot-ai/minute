@@ -9,7 +9,6 @@ from common.database.postgres_models import (
     DialogueEntry,
     JobStatus,
     TemplateType,
-    TranscriptionErrorCode,
 )
 
 
@@ -101,7 +100,6 @@ class TranscriptionGetResponse(BaseModel):
     status: JobStatus
     created_datetime: datetime
     error: str | None = None
-    error_code: TranscriptionErrorCode | None = None
 
 
 class SingleRecording(BaseModel):

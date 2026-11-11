@@ -2,8 +2,8 @@ class TranscriptionFailedError(Exception):
     """Exception raised when a transcription fails."""
 
 
-class NoSpeechDetectedError(TranscriptionFailedError):
-    """Raised when no speech is detected before transcription provider submission."""
+class NoSpeechDetectedError(Exception):
+    """Signals an empty provider response with no speech detected in the audio."""
 
 
 class MissingAuthTokenError(Exception):

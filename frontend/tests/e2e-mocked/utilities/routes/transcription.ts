@@ -3,7 +3,6 @@ import type {
   MinuteListItem,
   PaginatedTranscriptionsResponse,
   SingleRecording,
-  TranscriptionErrorCode,
   TranscriptionGetResponse,
 } from '@/lib/client/types.gen'
 import { json } from './general'
@@ -97,12 +96,10 @@ export async function routeFailedTranscription(
   {
     transcription,
     error,
-    errorCode = null,
     recordings,
   }: {
     transcription: TranscriptionGetResponse
     error: string
-    errorCode?: TranscriptionErrorCode | null
     recordings: SingleRecording[]
   }
 ): Promise<void> {
@@ -111,7 +108,6 @@ export async function routeFailedTranscription(
     status: 'failed',
     dialogue_entries: null,
     error,
-    error_code: errorCode,
   }
   const id = transcription.id
 

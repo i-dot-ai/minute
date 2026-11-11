@@ -310,11 +310,13 @@ class TestTranscriptionServiceManager:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("result", list(SpeechCheckResult))
+@pytest.mark.parametrize("text", [None, "...", "…", "?! —", " \n\t", ""])
 async def test_empty_transcript_without_speech_runs_diagnostics_after_provider(
     monkeypatch: pytest.MonkeyPatch,
     manager: TranscriptionServiceManager,
     mock_transcription: Transcription,
     result: SpeechCheckResult,
+    text: str | None,
 ) -> None:
     """Both silence and VAD rejection are diagnosed after the provider call."""
     calls: list[str] = []
@@ -340,7 +342,10 @@ async def test_empty_transcript_without_speech_runs_diagnostics_after_provider(
         assert timeout_seconds == 123
         assert attempt == 2
         calls.append("provider")
-        return TranscriptionJobMessageData(transcription_service="MockAdapter1", transcript=[])
+        return TranscriptionJobMessageData(
+            transcription_service="MockAdapter1",
+            transcript=[{"text": text, "speaker": "1", "start_time": 0.0, "end_time": 1.0}] if text is not None else [],
+        )
 
     def detect(path: Path) -> SpeechCheck:
         """Check that diagnostics run before the temporary file is deleted."""
@@ -361,7 +366,7 @@ async def test_empty_transcript_without_speech_runs_diagnostics_after_provider(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("has_transcript", [False, True])
+@pytest.mark.parametrize("text", [None, "...", "…?!", "hello", "123", "你好"])
 @pytest.mark.parametrize("detector_fails", [False, True])
 async def test_transcript_or_inconclusive_diagnostics_preserve_provider_result(
     monkeypatch: pytest.MonkeyPatch,
@@ -369,7 +374,7 @@ async def test_transcript_or_inconclusive_diagnostics_preserve_provider_result(
     mock_recording: Recording,
     mock_transcription: Transcription,
     tmp_path: Path,
-    has_transcript: bool,
+    text: str | None,
     detector_fails: bool,
 ) -> None:
     """Valid transcripts skip detection; speech or detector errors permit retry."""
@@ -377,7 +382,7 @@ async def test_transcript_or_inconclusive_diagnostics_preserve_provider_result(
     path.write_bytes(b"audio")
     job = TranscriptionJobMessageData(
         transcription_service="MockAdapter1",
-        transcript=[{"text": "hello", "speaker": "A", "start_time": 0.0, "end_time": 1.0}] if has_transcript else [],
+        transcript=[{"text": text, "speaker": "A", "start_time": 0.0, "end_time": 1.0}] if text is not None else [],
     )
     monkeypatch.setattr(transcription_manager.storage_service, "download", AsyncMock())
     monkeypatch.setattr(manager, "get_recording_to_process", AsyncMock(return_value=(mock_recording, path, 60.0)))
@@ -388,10 +393,39 @@ async def test_transcript_or_inconclusive_diagnostics_preserve_provider_result(
     monkeypatch.setattr(transcription_manager, "detect_speech", detect)
 
     assert await manager.perform_transcription_steps(mock_transcription) is job
-    if has_transcript:
+    if text is not None and any(character.isalnum() for character in text):
         detect.assert_not_called()
     else:
         detect.assert_called_once_with(path)
+        assert job.transcript == []
+
+
+@pytest.mark.asyncio
+async def test_mixed_transcript_keeps_speech_and_skips_diagnostics(
+    monkeypatch: pytest.MonkeyPatch,
+    manager: TranscriptionServiceManager,
+    mock_recording: Recording,
+    mock_transcription: Transcription,
+    tmp_path: Path,
+) -> None:
+    """One text entry makes the transcript usable even if other entries are punctuation."""
+    path = tmp_path / "audio.mp3"
+    path.write_bytes(b"audio")
+    job = TranscriptionJobMessageData(
+        transcription_service="MockAdapter1",
+        transcript=[
+            {"text": text, "speaker": "1", "start_time": 0.0, "end_time": 1.0} for text in ("...", "hello", "?!")
+        ],
+    )
+    monkeypatch.setattr(transcription_manager.storage_service, "download", AsyncMock())
+    monkeypatch.setattr(manager, "get_recording_to_process", AsyncMock(return_value=(mock_recording, path, 60.0)))
+    monkeypatch.setattr(manager.select_adaptor(60), "start", AsyncMock(return_value=job))
+    detect = Mock()
+    monkeypatch.setattr(transcription_manager, "detect_speech", detect)
+
+    assert await manager.perform_transcription_steps(mock_transcription) is job
+    assert len(job.transcript) == 3
+    detect.assert_not_called()
 
 
 @pytest.mark.asyncio

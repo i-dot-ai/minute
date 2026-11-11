@@ -593,7 +593,6 @@ export type Transcription = {
    * Error
    */
   error?: string | null
-  error_code?: TranscriptionErrorCode | null
   /**
    * User Id
    */
@@ -661,15 +660,7 @@ export type TranscriptionGetResponse = {
    * Error
    */
   error?: string | null
-  error_code?: TranscriptionErrorCode | null
 }
-
-/**
- * TranscriptionErrorCode
- *
- * Why a FAILED transcription failed, when the frontend should explain it differently.
- */
-export type TranscriptionErrorCode = 'no_speech_detected'
 
 /**
  * TranscriptionListFilter

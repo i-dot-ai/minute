@@ -128,8 +128,12 @@ class TranscriptionServiceManager:
                     transcription_job = await adapter.start(
                         audio_file_path_or_recording=file_path, timeout_seconds=timeout_seconds, attempt=attempt
                     )
-                    if not transcription_job.transcript:
-                        # Diagnose only empty responses, while the downloaded audio still exists.
+                    transcript = transcription_job.transcript or []
+                    has_text = any(character.isalnum() for entry in transcript for character in entry["text"])
+                    if not has_text:
+                        # This can happen during noisy but non voice audio such as "Speaker 1: ..."
+                        transcription_job.transcript = []
+                        # Diagnose while the downloaded audio still exists.
                         speech = await _check_speech(file_path, duration_seconds)
                         if speech is not None and not speech.has_speech:
                             msg = "No speech detected in the recording"

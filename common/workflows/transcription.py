@@ -122,6 +122,9 @@ class TranscriptionWorkflow:
 
     async def _run(self, minute_id: str) -> dict[str, str]:
         transcription_id = await self._transcribe(minute_id)
+        if not transcription_id:
+            # No speech: the activity completed the row; there is nothing to enrich or summarise.
+            return {TRANSCRIBE: "no speech detected"}
 
         outcome: dict[str, str] = {}
         # Speaker naming before title and summary: both are generated from the named transcript.

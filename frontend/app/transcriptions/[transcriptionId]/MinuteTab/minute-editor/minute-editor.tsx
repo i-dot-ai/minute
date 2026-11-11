@@ -37,6 +37,15 @@ type MinuteEditorForm = {
   html: string
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
 export type MinuteExportState = {
   htmlContent: string
   contentToCopy: string
@@ -118,9 +127,15 @@ export function MinuteEditor({
     }
   }, [form, minuteVersion])
   const htmlContent = form.watch('html')
+  const titleHeadingHtml = transcription.title
+    ? `<h1>${escapeHtml(transcription.title)}</h1>`
+    : ''
   const contentToCopy = useMemo(() => {
-    return htmlContent?.replaceAll(citationRegexWithSpace, '') || ''
-  }, [htmlContent])
+    return (
+      titleHeadingHtml +
+      (htmlContent?.replaceAll(citationRegexWithSpace, '') || '')
+    )
+  }, [titleHeadingHtml, htmlContent])
   const hasCitations = useMemo(() => {
     return !!htmlContent?.match(citationRegex)
   }, [htmlContent])
@@ -235,12 +250,13 @@ export function MinuteEditor({
       return
     }
     onExportStateChange({
-      htmlContent: htmlContent || '',
+      htmlContent: titleHeadingHtml + (htmlContent || ''),
       contentToCopy,
       minuteVersionId: minuteVersion.id!,
     })
   }, [
     contentToCopy,
+    titleHeadingHtml,
     htmlContent,
     isError,
     isGenerating,

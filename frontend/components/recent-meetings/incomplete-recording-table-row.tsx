@@ -25,7 +25,7 @@ export const IncompleteRecordingTableRow = ({
 }) => {
   const { removeRecording } = useRecordingDb()
   const router = useRouter()
-  const { form, isPending, isError, onSubmit } = useStartTranscription(
+  const { form, isPending, onSubmit } = useStartTranscription(
     {
       file: recording.blob,
       recordingId: recording.recording_id,
@@ -149,11 +149,6 @@ export const IncompleteRecordingTableRow = ({
                 onOpenChange={setUploadOpen}
                 onConfirm={form.handleSubmit(onSubmit)}
                 disabled={isPending || (agendaRequired && !agendaValue)}
-                errorText={
-                  isError
-                    ? 'Something went wrong starting your summary. Your recording is still saved in this browser. Please try again.'
-                    : undefined
-                }
               />
             </form>
           </FormProvider>

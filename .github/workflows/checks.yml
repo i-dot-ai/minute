@@ -75,9 +75,6 @@ jobs:
         run: |
           cp .env.example .env
 
-      - name: Verify FFmpeg is available for audio tests
-        run: ffmpeg -version
-
       # backend.main builds a queue service and resolves the SQS queue URL at
       # import time, and the auth dependency hits postgres, so the suite cannot
       # be collected without these two running.

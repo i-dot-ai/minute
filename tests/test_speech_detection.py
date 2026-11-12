@@ -1,6 +1,10 @@
-"""Speech detection on real audio: ffmpeg generates the silent and non-speech inputs."""
+"""Real Silero inference on decoded samples, plus mocked FFmpeg boundary checks.
+
+These tests need no FFmpeg executable; MP3 decoding/resampling is not covered.
+"""
 
 import subprocess
+import wave
 from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
@@ -12,82 +16,67 @@ import pytest
 from common.audio import speech_detection
 from common.audio.speech_detection import SpeechCheckResult, detect_speech
 
-SAMPLE_MEETING = Path(__file__).resolve().parents[1] / "frontend/tests/fixtures/sample-meeting.mp3"
+SAMPLE_SPEECH = Path(__file__).resolve().parents[1] / "frontend/tests/fixtures/sample-speech.wav"
 
 
-def _generate(path: Path, *args: str) -> Path:
-    """Generates an audio fixture using FFmpeg.
+@pytest.fixture
+def speech_samples():
+    """Four seconds from sample-meeting.mp3, decoded once to mono 16 kHz PCM.
 
-    Args:
-        path: Destination path for the audio file.
-        *args: FFmpeg input and processing arguments.
-
-    Returns:
-        The path to the generated audio file.
-
-    Raises:
-        subprocess.CalledProcessError: FFmpeg fails to generate the fixture.
+    Regenerate locally with: ffmpeg -i frontend/tests/fixtures/sample-meeting.mp3
+    -t 4 -ac 1 -ar 16000 -c:a pcm_s16le frontend/tests/fixtures/sample-speech.wav
     """
-    subprocess.run(["ffmpeg", "-y", "-v", "error", *args, str(path)], check=True)  # noqa: S603, S607
-    return path
+    with wave.open(str(SAMPLE_SPEECH), "rb") as recording:
+        assert recording.getnchannels() == 1
+        assert recording.getframerate() == speech_detection.SAMPLE_RATE
+        assert recording.getsampwidth() == 2
+        return np.frombuffer(recording.readframes(recording.getnframes()), dtype="<i2").astype(np.float32) / 32768
 
 
-@pytest.fixture
-def silence(tmp_path):
-    """Returns a two-minute recording of digital silence."""
-    return _generate(tmp_path / "silence.mp3", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono", "-t", "120")
+def _contains_decoded_speech(monkeypatch, samples):
+    """Replace only decoding; exercise real windowing, Silero inference and thresholding."""
+
+    @contextmanager
+    def decoded_windows(_path):
+        yield speech_detection._iter_audio_windows(BytesIO(samples.astype(np.float32).tobytes()))  # noqa: SLF001
+
+    monkeypatch.setattr(speech_detection, "decoded_audio_windows", decoded_windows)
+    return speech_detection.contains_speech(Path("decoded-audio.wav"))
 
 
-@pytest.fixture
-def quiet_noise(tmp_path):
-    """Returns audible pink noise for testing the VAD check."""
-    return _generate(tmp_path / "noise.mp3", "-f", "lavfi", "-i", "anoisesrc=d=120:c=pink:a=0.02")
+def test_speech_is_detected(monkeypatch, speech_samples):
+    """Verifies that real speech passes the real VAD model."""
+    assert _contains_decoded_speech(monkeypatch, speech_samples)
 
 
-@pytest.fixture
-def tone(tmp_path):
-    """Returns a steady tone with no speech."""
-    return _generate(tmp_path / "tone.mp3", "-f", "lavfi", "-i", "sine=f=440:d=30")
-
-
-@pytest.fixture
-def late_speech(tmp_path):
-    """Returns a meeting recording preceded by two minutes of silence."""
-    return _generate(
-        tmp_path / "late.mp3",
-        *("-i", str(SAMPLE_MEETING), "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono"),
-        *("-filter_complex", "[1]atrim=0:120[s];[s][0]concat=n=2:v=0:a=1"),
-    )
-
-
-def test_speech_is_detected():
-    """Verifies that meeting audio passes the VAD check."""
-    check = detect_speech(SAMPLE_MEETING)
-    assert check.has_speech
-    assert check.result == SpeechCheckResult.VAD
-
-
-def test_speech_after_a_long_silence_is_detected(late_speech):
+def test_speech_after_a_long_silence_is_detected(monkeypatch, speech_samples):
     """Verifies that detection scans beyond a long silent introduction."""
-    assert detect_speech(late_speech).has_speech
+    silence = np.zeros(speech_detection.SAMPLE_RATE * 120, dtype=np.float32)
+    assert _contains_decoded_speech(monkeypatch, np.concatenate([silence, speech_samples]))
 
 
-def test_silence_is_caught_by_the_volume_check_without_running_vad(silence, monkeypatch):
-    """Verifies that digital silence bypasses model inference."""
+def test_silence_is_caught_by_the_volume_check_without_running_vad(monkeypatch):
+    """Verifies that a silent volume result bypasses model inference."""
+    monkeypatch.setattr(speech_detection, "get_max_volume_db", Mock(return_value=-91.0))
     contains_speech = Mock(side_effect=AssertionError)
     monkeypatch.setattr(speech_detection, "contains_speech", contains_speech)
-    check = detect_speech(silence)
+    check = detect_speech(Path("silent.mp3"))
     assert not check.has_speech
     assert check.result == SpeechCheckResult.VOLUME
     contains_speech.assert_not_called()
 
 
-@pytest.mark.parametrize("fixture", ["quiet_noise", "tone"])
-def test_audible_non_speech_is_caught_by_vad(request, fixture):
-    """Verifies that audible noise and tones are rejected by VAD."""
-    check = detect_speech(request.getfixturevalue(fixture))
-    assert not check.has_speech
-    assert check.result == SpeechCheckResult.VAD
+@pytest.mark.parametrize("audio", ["silence", "noise", "tone"])
+def test_non_speech_is_caught_by_real_vad(monkeypatch, audio):
+    """Verifies that deterministic non-speech samples are rejected by the real model."""
+    size = speech_detection.SAMPLE_RATE * 4
+    if audio == "noise":
+        samples = np.random.default_rng(0).normal(0, 0.02, size)
+    elif audio == "tone":
+        samples = 0.1 * np.sin(2 * np.pi * 440 * np.arange(size) / speech_detection.SAMPLE_RATE)
+    else:
+        samples = np.zeros(size, dtype=np.float32)
+    assert not _contains_decoded_speech(monkeypatch, samples)
 
 
 @pytest.mark.parametrize(
@@ -114,12 +103,19 @@ def test_vad_detects_any_speech_without_a_minimum_duration(monkeypatch, probabil
     assert detector.predict.call_count == processed_windows
 
 
-def test_undecodable_audio_raises(tmp_path):
-    """Verifies that invalid audio produces an error rather than a silent verdict."""
-    bad = tmp_path / "bad.mp3"
-    bad.write_bytes(b"not audio")
+def test_undecodable_audio_raises(monkeypatch):
+    """Verifies that decoder failures propagate rather than becoming silent verdicts."""
+    bad = Path("bad.mp3")
+    monkeypatch.setattr(
+        speech_detection.subprocess, "run", Mock(side_effect=subprocess.CalledProcessError(1, "ffmpeg"))
+    )
     with pytest.raises(subprocess.CalledProcessError):
         detect_speech(bad)
+    process = Mock()
+    process.stdout = BytesIO()
+    process.wait.return_value = 1
+    process.poll.return_value = 1
+    monkeypatch.setattr(speech_detection.subprocess, "Popen", Mock(return_value=process))
     with pytest.raises(RuntimeError):
         speech_detection.contains_speech(bad)
 

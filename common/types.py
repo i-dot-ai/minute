@@ -21,6 +21,7 @@ class TranscriptionMetadata(BaseModel):
     text: str
     status: JobStatus
     expiring: bool
+    no_speech_detected: bool = Field(default=False, description="Transcription completed without detected speech.")
 
 
 class PaginatedTranscriptionsResponse(BaseModel):
@@ -95,6 +96,7 @@ class TranscriptionGetResponse(BaseModel):
     status: JobStatus
     created_datetime: datetime
     error: str | None = None
+    no_speech_detected: bool = Field(default=False, description="Transcription completed without detected speech.")
 
 
 class SingleRecording(BaseModel):

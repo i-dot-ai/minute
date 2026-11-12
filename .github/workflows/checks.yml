@@ -59,7 +59,7 @@ jobs:
   run_tests:
     name: Run tests
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
@@ -75,10 +75,8 @@ jobs:
         run: |
           cp .env.example .env
 
-      - name: Install FFmpeg for audio tests
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
+      - name: Verify FFmpeg is available for audio tests
+        run: ffmpeg -version
 
       # backend.main builds a queue service and resolves the SQS queue URL at
       # import time, and the auth dependency hits postgres, so the suite cannot

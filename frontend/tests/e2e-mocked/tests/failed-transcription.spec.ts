@@ -26,7 +26,7 @@ test('a failed transcription shows the internal error message and retry', async 
 })
 
 for (const path of ['transcriptions', 'new/status']) {
-  test(`a completed no-speech recording shows a message on ${path}`, async ({
+  test(`a completed no-speech recording shows the "No speech detected" message on ${path}`, async ({
     page,
   }) => {
     await mockBackend(page)

@@ -143,6 +143,11 @@ class Transcription(BaseTableMixin, table=True):
         sa_relationship_kwargs={"order_by": col(Recording.created_datetime).desc()},
     )
 
+    @property
+    def no_speech_detected(self) -> bool:
+        """Whether transcription completed without any speech transcribed."""
+        return self.status == JobStatus.COMPLETED and not self.dialogue_entries
+
 
 class TemplateType(StrEnum):
     DOCUMENT = auto()

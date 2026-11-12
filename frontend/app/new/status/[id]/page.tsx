@@ -50,7 +50,7 @@ export default function RecordStatusPage({
 
   const transcriptionStatus = transcription?.status
   const transcriptionDone = transcriptionStatus === 'completed'
-  const noSpeech = transcriptionDone && !transcription?.dialogue_entries?.length
+  const noSpeech = transcription?.no_speech_detected ?? false
 
   const minutesQuery = useQuery({
     ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(

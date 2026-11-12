@@ -40,9 +40,7 @@ export default function TranscriptionPage() {
     status: transcription?.status ?? 'completed',
   })
 
-  const noSpeech =
-    transcription?.status === 'completed' &&
-    !transcription.dialogue_entries?.length
+  const noSpeech = transcription?.no_speech_detected ?? false
   const minutesEnabled =
     !noSpeech &&
     !!transcription?.status &&

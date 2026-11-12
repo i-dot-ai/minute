@@ -25,20 +25,45 @@ test('a failed transcription shows the internal error message and retry', async 
   await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
 })
 
-test('a no-audio failure shows the no usable audio message', async ({
-  page,
-}) => {
-  await mockBackend(page)
-  await routeFailedTranscription(page, {
-    transcription: meeting1,
-    error: 'No transcription phrases found in the audio',
-    recordings: meeting1Recordings,
+for (const path of ['transcriptions', 'new/status']) {
+  test(`a completed no-speech recording shows the "No speech detected" message on ${path}`, async ({
+    page,
+  }) => {
+    await mockBackend(page)
+    await routeFailedTranscription(page, {
+      transcription: meeting1,
+      error: '',
+      recordings: meeting1Recordings,
+    })
+
+    await page.route(`**/api/proxy/transcriptions/${meeting1.id}`, (route) =>
+      route.fulfill({
+        status: 200,
+        json: {
+          ...meeting1,
+          status: 'completed',
+          dialogue_entries: [],
+          no_speech_detected: true,
+          error: null,
+        },
+      })
+    )
+    await page.goto(`/${path}/${meeting1.id}`)
+
+    await expect(
+      page.getByText(
+        'No speech detected. Please check that the recording is not silent and contains speech.'
+      )
+    ).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Try again' })).toHaveCount(0)
+    await expect(
+      page.getByText('There was an internal server error.')
+    ).toHaveCount(0)
+    await expect(
+      page.getByRole('heading', { name: 'Generating summary' })
+    ).toHaveCount(0)
   })
-
-  await page.goto(`/transcriptions/${meeting1.id}`)
-
-  await expect(page.getByText('No usable audio detected.')).toBeVisible()
-})
+}
 
 test('a legacy failed transcription with no recording shows the empty meeting page', async ({
   page,

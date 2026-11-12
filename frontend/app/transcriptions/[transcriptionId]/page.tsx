@@ -7,7 +7,10 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { RetryTranscriptionDialog } from '@/components/audio/retry-transcription-dialog'
-import { getTranscriptionErrorMessage } from '@/lib/transcription-error'
+import {
+  getTranscriptionErrorMessage,
+  NO_SPEECH_MESSAGE,
+} from '@/lib/transcription-error'
 import { ProcessingCard } from '@/components/processing-card'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, Pencil, Save } from 'lucide-react'
@@ -37,7 +40,9 @@ export default function TranscriptionPage() {
     status: transcription?.status ?? 'completed',
   })
 
+  const noSpeech = transcription?.no_speech_detected ?? false
   const minutesEnabled =
+    !noSpeech &&
     !!transcription?.status &&
     !['awaiting_start', 'in_progress', 'failed'].includes(transcription.status)
 
@@ -56,7 +61,7 @@ export default function TranscriptionPage() {
         path: { transcription_id: transcriptionId },
       }
     ),
-    enabled: transcription?.status === 'failed',
+    enabled: transcription?.status === 'failed' || noSpeech,
   })
 
   useEffect(() => {
@@ -193,7 +198,7 @@ export default function TranscriptionPage() {
     )
   }
 
-  if (transcription.status == 'failed') {
+  if (transcription.status == 'failed' || noSpeech) {
     return (
       <div>
         <div className="govuk-!-padding-top-4 border-b border-(--govuk-border-colour)">
@@ -289,17 +294,23 @@ export default function TranscriptionPage() {
                 </span>
                 <strong className="govuk-warning-text__text">
                   <span className="govuk-visually-hidden">Warning</span>
-                  {getTranscriptionErrorMessage(transcription.error)}
-                  <Link href="/support" className="govuk-link">
-                    contact support
-                  </Link>
-                  .
+                  {noSpeech
+                    ? NO_SPEECH_MESSAGE
+                    : getTranscriptionErrorMessage()}
+                  {!noSpeech && (
+                    <>
+                      <Link href="/support" className="govuk-link">
+                        contact support
+                      </Link>
+                      .
+                    </>
+                  )}
                 </strong>
               </div>
               <h2 className="govuk-heading-m">Audio:</h2>
               <AudioPlayer transcriptionId={transcription.id} />
               <div className="govuk-button-group govuk-!-margin-top-4">
-                {recordings[0] && (
+                {!noSpeech && recordings[0] && (
                   <RetryTranscriptionDialog
                     transcriptionId={transcription.id}
                   />

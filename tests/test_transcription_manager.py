@@ -1,12 +1,14 @@
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
+from common.audio.speech_detection import SpeechCheck, SpeechCheckResult
 from common.database.postgres_models import Recording, Transcription
-from common.services.exceptions import TranscriptionFailedError
+from common.services.exceptions import NoSpeechDetectedError, TranscriptionFailedError
 from common.services.storage_services import StorageService
+from common.services.transcription_services import transcription_manager
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.services.transcription_services.aws import AWSTranscribeAdapter
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
@@ -304,3 +306,147 @@ class TestTranscriptionServiceManager:
 
             with pytest.raises(RuntimeError, match="adapter not recognised"):
                 await manager.perform_transcription_steps(mock_transcription)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("result", list(SpeechCheckResult))
+@pytest.mark.parametrize("text", [None, "...", "…", "?! —", " \n\t", ""])
+async def test_empty_transcript_without_speech_runs_diagnostics_after_provider(
+    monkeypatch: pytest.MonkeyPatch,
+    manager: TranscriptionServiceManager,
+    mock_transcription: Transcription,
+    result: SpeechCheckResult,
+    text: str | None,
+) -> None:
+    """Both silence and VAD rejection are diagnosed after the provider call."""
+    calls: list[str] = []
+    paths: list[Path] = []
+
+    async def download(key: str, path: Path) -> None:
+        """Write placeholder audio into the manager's temporary directory."""
+        assert key == "test_file.mp3"
+        path.write_bytes(b"audio")
+
+    async def prepare(recording: Recording, temp_file_path: Path, file_extension: str) -> tuple[Recording, Path, float]:
+        """Keep the downloaded file as the prepared audio."""
+        assert file_extension == ".mp3"
+        calls.append("prepare")
+        paths.append(temp_file_path)
+        return recording, temp_file_path, 60.0
+
+    async def start(
+        audio_file_path_or_recording: Path, timeout_seconds: float, attempt: int
+    ) -> TranscriptionJobMessageData:
+        """Return an empty transcript while checking that audio was prepared."""
+        assert audio_file_path_or_recording == paths[0]
+        assert timeout_seconds == 123
+        assert attempt == 2
+        calls.append("provider")
+        return TranscriptionJobMessageData(
+            transcription_service="MockAdapter1",
+            transcript=[{"text": text, "speaker": "1", "start_time": 0.0, "end_time": 1.0}] if text is not None else [],
+        )
+
+    def detect(path: Path) -> SpeechCheck:
+        """Check that diagnostics run before the temporary file is deleted."""
+        assert path == paths[0]
+        assert path.read_bytes() == b"audio"
+        calls.append("detect")
+        return SpeechCheck(has_speech=False, result=result, max_volume_db=-91.0)
+
+    monkeypatch.setattr(transcription_manager.storage_service, "download", download)
+    monkeypatch.setattr(manager, "get_recording_to_process", prepare)
+    monkeypatch.setattr(manager.select_adaptor(60), "start", start)
+    monkeypatch.setattr(transcription_manager, "detect_speech", detect)
+
+    with pytest.raises(NoSpeechDetectedError, match="No speech detected"):
+        await manager.perform_transcription_steps(mock_transcription, timeout_seconds=123, attempt=2)
+    assert calls == ["prepare", "provider", "detect"]
+    assert not paths[0].exists()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("text", [None, "...", "…?!", "hello", "123", "你好"])
+@pytest.mark.parametrize("detector_fails", [False, True])
+async def test_transcript_or_inconclusive_diagnostics_preserve_provider_result(
+    monkeypatch: pytest.MonkeyPatch,
+    manager: TranscriptionServiceManager,
+    mock_recording: Recording,
+    mock_transcription: Transcription,
+    tmp_path: Path,
+    text: str | None,
+    detector_fails: bool,
+) -> None:
+    """Valid transcripts skip detection; speech or detector errors permit retry."""
+    path = tmp_path / "audio.mp3"
+    path.write_bytes(b"audio")
+    job = TranscriptionJobMessageData(
+        transcription_service="MockAdapter1",
+        transcript=[{"text": text, "speaker": "A", "start_time": 0.0, "end_time": 1.0}] if text is not None else [],
+    )
+    monkeypatch.setattr(transcription_manager.storage_service, "download", AsyncMock())
+    monkeypatch.setattr(manager, "get_recording_to_process", AsyncMock(return_value=(mock_recording, path, 60.0)))
+    monkeypatch.setattr(manager.select_adaptor(60), "start", AsyncMock(return_value=job))
+    detect = Mock(return_value=SpeechCheck(has_speech=True, result=SpeechCheckResult.VAD, max_volume_db=-12.0))
+    if detector_fails:
+        detect.side_effect = RuntimeError("Detector unavailable")
+    monkeypatch.setattr(transcription_manager, "detect_speech", detect)
+
+    assert await manager.perform_transcription_steps(mock_transcription) is job
+    if text is not None and any(character.isalnum() for character in text):
+        detect.assert_not_called()
+    else:
+        detect.assert_called_once_with(path)
+        assert job.transcript == []
+
+
+@pytest.mark.asyncio
+async def test_mixed_transcript_keeps_speech_and_skips_diagnostics(
+    monkeypatch: pytest.MonkeyPatch,
+    manager: TranscriptionServiceManager,
+    mock_recording: Recording,
+    mock_transcription: Transcription,
+    tmp_path: Path,
+) -> None:
+    """One text entry makes the transcript usable even if other entries are punctuation."""
+    path = tmp_path / "audio.mp3"
+    path.write_bytes(b"audio")
+    job = TranscriptionJobMessageData(
+        transcription_service="MockAdapter1",
+        transcript=[
+            {"text": text, "speaker": "1", "start_time": 0.0, "end_time": 1.0} for text in ("...", "hello", "?!")
+        ],
+    )
+    monkeypatch.setattr(transcription_manager.storage_service, "download", AsyncMock())
+    monkeypatch.setattr(manager, "get_recording_to_process", AsyncMock(return_value=(mock_recording, path, 60.0)))
+    monkeypatch.setattr(manager.select_adaptor(60), "start", AsyncMock(return_value=job))
+    detect = Mock()
+    monkeypatch.setattr(transcription_manager, "detect_speech", detect)
+
+    assert await manager.perform_transcription_steps(mock_transcription) is job
+    assert len(job.transcript) == 3
+    detect.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_provider_error_skips_audio_diagnostics(
+    monkeypatch: pytest.MonkeyPatch,
+    manager: TranscriptionServiceManager,
+    mock_recording: Recording,
+    mock_transcription: Transcription,
+    tmp_path: Path,
+) -> None:
+    """Provider errors must not be reclassified as silent or speechless audio."""
+    path = tmp_path / "audio.mp3"
+    path.write_bytes(b"audio")
+    monkeypatch.setattr(transcription_manager.storage_service, "download", AsyncMock())
+    monkeypatch.setattr(manager, "get_recording_to_process", AsyncMock(return_value=(mock_recording, path, 60.0)))
+    monkeypatch.setattr(
+        manager.select_adaptor(60), "start", AsyncMock(side_effect=TranscriptionFailedError("API error"))
+    )
+    detect = Mock()
+    monkeypatch.setattr(transcription_manager, "detect_speech", detect)
+
+    with pytest.raises(TranscriptionFailedError, match="API error"):
+        await manager.perform_transcription_steps(mock_transcription)
+    detect.assert_not_called()

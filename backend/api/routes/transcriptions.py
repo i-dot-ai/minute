@@ -148,6 +148,7 @@ async def list_transcriptions(
             text=t.dialogue_entries[0]["text"][:100] if t.dialogue_entries else "",
             status=t.status,
             expiring=expiry_cutoff is not None and t.created_datetime < expiry_cutoff,
+            no_speech_detected=t.no_speech_detected,
         )
         for t in transcriptions
     ]
@@ -340,6 +341,7 @@ async def get_transcription(
         title=transcription.title,
         created_datetime=transcription.created_datetime,
         error=transcription.error,
+        no_speech_detected=transcription.no_speech_detected,
     )
 
 

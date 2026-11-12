@@ -756,3 +756,28 @@ html body[data-scroll-locked] {
 .analytics-card--blue {
   border-color: var(--govuk-brand-colour);
 }
+
+/* avatar add to design kit later */
+
+.iai-avatar {
+  border-radius: 100%;
+  border: 1px solid var(--govuk-border-colour);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 64px;
+  height: 64px;
+  font-weight: bold;
+  font-size: 1.75rem;
+}
+.iai-avatar--small {
+  width: 42px;
+  height: 42px;
+  font-size: 1.25rem;
+}
+
+.iai-avatar--large {
+  width: 80px;
+  height: 80px;
+  font-size: 2.25rem;
+}

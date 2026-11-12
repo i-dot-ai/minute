@@ -3,7 +3,7 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Column, Index, text
+from sqlalchemy import ARRAY, TIMESTAMP, Column, Index, String, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
@@ -48,6 +48,11 @@ class ContentSource(StrEnum):
     MANUAL_EDIT = auto()
     AI_EDIT = auto()
     INITIAL_GENERATION = auto()
+
+
+class Role(StrEnum):
+    ADMIN = auto()
+    AUDIT = auto()
 
 
 class MinuteVersion(BaseTableMixin, table=True):
@@ -100,6 +105,8 @@ class User(BaseTableMixin, table=True):
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     email: str = Field(index=True)
+    display_name: str | None = Field(default=None)
+    roles: list[Role] | None = Field(default=None, sa_column=Column(ARRAY(String())))
     data_retention_days: int | None = Field(default=30, sa_column_kwargs={"server_default": "30"})
     # The user's chosen default template. At most one is ever set: a custom template
     # (default_template_id) or a system template keyed by name (default_template_name).

@@ -4,7 +4,7 @@ from enum import StrEnum, auto
 
 from pydantic import BaseModel, Field
 
-from common.database.postgres_models import ContentSource, DialogueEntry, JobStatus, TemplateType
+from common.database.postgres_models import ContentSource, DialogueEntry, JobStatus, Role, TemplateType
 
 
 class TranscriptionListFilter(StrEnum):
@@ -74,9 +74,15 @@ class GetUserResponse(BaseModel):
     created_datetime: datetime
     updated_datetime: datetime
     email: str
+    display_name: str
+    roles: list[Role]
     data_retention_days: int | None
     default_template_id: uuid.UUID | None = None
     default_template_name: str | None = None
+
+
+class SetDisplayNameRequest(BaseModel):
+    display_name: str | None = Field(default=None, min_length=1, max_length=100)
 
 
 class DataRetentionUpdateResponse(BaseModel):

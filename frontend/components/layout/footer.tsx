@@ -80,17 +80,12 @@ export const Footer = () => (
               </Link>
             </li>
             <li>
-              <Link className="govuk-link" href="/legal">
-                Legal
-              </Link>
-            </li>
-            <li>
-              <Link className="govuk-link" href="/legal/privacy">
+              <Link className="govuk-link" href="/privacy">
                 Privacy
               </Link>
             </li>
             <li>
-              <Link className="govuk-link" href="/legal/accessibility">
+              <Link className="govuk-link" href="/accessibility">
                 Accessibility
               </Link>
             </li>

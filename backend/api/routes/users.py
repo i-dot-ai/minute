@@ -6,8 +6,9 @@ from sqlmodel import select
 from backend.api.dependencies import SQLSessionDep, UserDep
 from common.database.postgres_models import User, UserTemplate
 from common.services.template_manager import TemplateManager
+from common.services.user_details import display_name_from_email
 from common.settings import get_settings
-from common.types import DataRetentionUpdateResponse, GetUserResponse, SetDefaultTemplateRequest
+from common.types import DataRetentionUpdateResponse, GetUserResponse, SetDefaultTemplateRequest, SetDisplayNameRequest
 
 users_router = APIRouter(tags=["Users"])
 
@@ -20,6 +21,8 @@ def _user_response(user: User) -> GetUserResponse:
         created_datetime=user.created_datetime,
         updated_datetime=user.updated_datetime,
         email=user.email,
+        display_name=user.display_name or display_name_from_email(user.email),
+        roles=user.roles or [],
         data_retention_days=user.data_retention_days,
         default_template_id=user.default_template_id,
         default_template_name=user.default_template_name,
@@ -28,6 +31,38 @@ def _user_response(user: User) -> GetUserResponse:
 
 @users_router.get("/users/me")
 def get_user(user: UserDep) -> GetUserResponse:
+    return _user_response(user)
+
+
+@users_router.patch("/users/display-name", response_model=GetUserResponse)
+async def update_display_name(
+    data: SetDisplayNameRequest,
+    session: SQLSessionDep,
+    user: UserDep,
+) -> GetUserResponse:
+    """Set or clear the current user's display name.
+
+    Args:
+        data: Request body containing display_name; null clears it, omitting the field leaves it unchanged.
+        session: Database session
+        user: The current authenticated user
+    """
+    if "display_name" not in data.model_fields_set:
+        return _user_response(user)
+
+    stripped = data.display_name.strip() if data.display_name else ""
+    if data.display_name is not None and not stripped:
+        raise HTTPException(status_code=400, detail="Display name cannot be blank")
+
+    user.display_name = stripped or None
+    await session.commit()
+    await session.refresh(user)
+
+    logger.info(
+        "%s display name for user %s",
+        "Cleared" if data.display_name is None else "Updated",
+        user.id,
+    )
     return _user_response(user)
 
 

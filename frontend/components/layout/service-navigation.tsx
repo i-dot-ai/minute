@@ -134,28 +134,6 @@ export const ServiceNavigation = () => {
                   </button>
                 </div>
               )}
-              <ul className="govuk-service-navigation__list govuk-service-navigation__list--footer">
-                <li
-                  className={`govuk-service-navigation__item ${pathname.includes('/support') ? 'govuk-service-navigation__item--active' : ''}`}
-                >
-                  <GuardedLink
-                    className="govuk-service-navigation__link"
-                    href="/support"
-                  >
-                    Contact
-                  </GuardedLink>
-                </li>
-                <li
-                  className={`govuk-service-navigation__item ${pathname.includes('/legal') ? 'govuk-service-navigation__item--active' : ''}`}
-                >
-                  <GuardedLink
-                    className="govuk-service-navigation__link"
-                    href="/legal"
-                  >
-                    Legal
-                  </GuardedLink>
-                </li>
-              </ul>
             </div>
           </nav>
         </div>

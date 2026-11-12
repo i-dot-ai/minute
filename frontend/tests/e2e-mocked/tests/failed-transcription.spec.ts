@@ -43,6 +43,7 @@ for (const path of ['transcriptions', 'new/status']) {
           ...meeting1,
           status: 'completed',
           dialogue_entries: [],
+          no_speech_detected: true,
           error: null,
         },
       })

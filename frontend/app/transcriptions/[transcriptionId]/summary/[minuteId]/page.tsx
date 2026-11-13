@@ -62,6 +62,9 @@ export default function SummaryPage({
     ),
   })
 
+  const noSummaries =
+    !!transcription?.error || !!transcription?.no_speech_detected
+
   const [exportState, setExportState] = useState<MinuteExportState | null>(null)
   const [editState, setEditState] = useState<MinuteEditState | null>(null)
   const [draftTitle, setDraftTitle] = useState('')
@@ -72,6 +75,12 @@ export default function SummaryPage({
   const searchParams = useSearchParams()
   const versionParam = searchParams.get('version')
   const appliedVersionFromUrl = useRef(false)
+
+  useEffect(() => {
+    if (!isLoading && noSummaries) {
+      router.replace(`/transcriptions/${transcriptionId}`)
+    }
+  }, [isLoading, noSummaries, router, transcriptionId])
 
   // add minute version to query params
   useEffect(() => {

@@ -156,3 +156,59 @@ for (const [status, detail] of [
     await expect(page).toHaveURL(new RegExp(`/new/status/${meeting1.id}$`))
   })
 }
+
+test('a silent meeting cannot be viewed as a transcript or summary', async ({
+  page,
+}) => {
+  await mockBackend(page)
+  await routeFailedTranscription(page, {
+    transcription: meeting1,
+    error: '',
+    recordings: meeting1Recordings,
+  })
+  await page.route(`**/api/proxy/transcriptions/${meeting1.id}`, (route) =>
+    route.fulfill({
+      status: 200,
+      json: {
+        ...meeting1,
+        status: 'completed',
+        dialogue_entries: [],
+        no_speech_detected: true,
+        error: null,
+      },
+    })
+  )
+
+  await page.goto(`/transcriptions/${meeting1.id}`)
+  await expect(
+    page.getByRole('link', { name: 'Transcript', exact: true })
+  ).not.toBeAttached()
+  await expect(
+    page.getByRole('button', { name: 'Summaries' })
+  ).not.toBeAttached()
+
+  await page.goto(`/transcriptions/${meeting1.id}/transcript`)
+  await expect(page).toHaveURL(new RegExp(`/transcriptions/${meeting1.id}$`))
+})
+
+test('a failed meeting cannot be viewed as a transcript or summary', async ({
+  page,
+}) => {
+  await mockBackend(page)
+  await routeFailedTranscription(page, {
+    transcription: meeting1,
+    error: 'Something exploded',
+    recordings: meeting1Recordings,
+  })
+
+  await page.goto(`/transcriptions/${meeting1.id}`)
+  await expect(
+    page.getByRole('link', { name: 'Transcript', exact: true })
+  ).not.toBeAttached()
+  await expect(
+    page.getByRole('button', { name: 'Summaries' })
+  ).not.toBeAttached()
+
+  await page.goto(`/transcriptions/${meeting1.id}/transcript`)
+  await expect(page).toHaveURL(new RegExp(`/transcriptions/${meeting1.id}$`))
+})

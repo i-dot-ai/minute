@@ -297,14 +297,12 @@ export default function TranscriptionPage() {
                   {noSpeech
                     ? NO_SPEECH_MESSAGE
                     : getTranscriptionErrorMessage()}
-                  {!noSpeech && (
-                    <>
-                      <Link href="/support" className="govuk-link">
-                        contact support
-                      </Link>
-                      .
-                    </>
-                  )}
+                  <>
+                    <Link href="/support" className="govuk-link">
+                      contact support
+                    </Link>
+                    .
+                  </>
                 </strong>
               </div>
               <h2 className="govuk-heading-m">Audio:</h2>

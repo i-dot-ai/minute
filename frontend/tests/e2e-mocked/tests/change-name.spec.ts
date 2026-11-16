@@ -13,7 +13,7 @@ test('changing the display name updates the profile', async ({ page }) => {
     dialog.getByRole('heading', { name: 'Change name' })
   ).toBeVisible()
 
-  const nameInput = dialog.getByLabel('Display name')
+  const nameInput = dialog.getByLabel('Change name')
   await expect(nameInput).toHaveValue('Name Surname')
 
   await nameInput.fill('New Name')

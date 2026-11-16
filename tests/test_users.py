@@ -44,7 +44,6 @@ async def test_display_name_defaults_to_email_derived():
         me = (await ac.get("/users/me")).json()
         assert me["email"] == "name.surname@domain.gov.uk"  # the local-testing identity
         assert me["display_name"] == display_name_from_email(me["email"]) == "Name Surname"
-        assert me["roles"] == []  # SQLAlchemy returns VARCHAR[] as None when unset; the response coerces to []
 
 
 @pytest.mark.asyncio(loop_scope="session")

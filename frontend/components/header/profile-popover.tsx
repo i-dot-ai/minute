@@ -45,19 +45,6 @@ const ProfilePopover = () => {
           aria-labelledby="display-name-heading"
           className="govuk-service-navigation--side-nav w-90 rounded-none bg-(--govuk-surface-background-colour)"
         >
-          {user?.roles && user.roles.length > 0 && (
-            <ul className="govuk-list govuk-!-margin-bottom-0 flex justify-end gap-2">
-              {user.roles.map((role) => (
-                <li key={role}>
-                  <span
-                    className={`govuk-tag${role === 'admin' ? 'govuk-tag--grey' : ''}`}
-                  >
-                    {role}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
           <div className="flex items-center gap-4">
             <ProfileAvatar fullName={user?.display_name} />
             <div className="flex flex-col items-start">

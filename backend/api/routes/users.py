@@ -22,7 +22,6 @@ def _user_response(user: User) -> GetUserResponse:
         updated_datetime=user.updated_datetime,
         email=user.email,
         display_name=user.display_name or display_name_from_email(user.email),
-        roles=user.roles or [],
         data_retention_days=user.data_retention_days,
         default_template_id=user.default_template_id,
         default_template_name=user.default_template_name,

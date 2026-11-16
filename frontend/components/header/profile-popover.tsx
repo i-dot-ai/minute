@@ -29,10 +29,15 @@ const ProfilePopover = () => {
             className="govuk-button govuk-!-margin-0 w-auto! !shadow-none"
             id="profile-button"
           >
-            <ProfileAvatar size="small" fullName={user?.display_name} />
+            <ProfileAvatar
+              size="small"
+              fullName={user?.display_name}
+              aria-hidden
+            />
             <span className="govuk-!-font-size-16 sr-only sm:not-sr-only">
               {user?.display_name || 'Profile'}
             </span>
+            <span className="sr-only">open for profile and help links</span>
           </button>
         </PopoverTrigger>
         <PopoverContent

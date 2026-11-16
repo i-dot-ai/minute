@@ -12,7 +12,8 @@ import type {
 import type { Middleware } from './utils.gen'
 
 export interface Config<T extends ClientOptions = ClientOptions>
-  extends Omit<RequestInit, 'body' | 'headers' | 'method'>, CoreConfig {
+  extends Omit<RequestInit, 'body' | 'headers' | 'method'>,
+    CoreConfig {
   /**
    * Base URL for all requests made by this client.
    */
@@ -33,7 +34,13 @@ export interface Config<T extends ClientOptions = ClientOptions>
    * @default 'auto'
    */
   parseAs?:
-    'arrayBuffer' | 'auto' | 'blob' | 'formData' | 'json' | 'stream' | 'text'
+    | 'arrayBuffer'
+    | 'auto'
+    | 'blob'
+    | 'formData'
+    | 'json'
+    | 'stream'
+    | 'text'
   /**
    * Throw an error instead of returning it in the response?
    *
@@ -46,9 +53,7 @@ export interface RequestOptions<
   TData = unknown,
   ThrowOnError extends boolean = boolean,
   Url extends string = string,
->
-  extends
-    Config<{
+> extends Config<{
       throwOnError: ThrowOnError
     }>,
     Pick<

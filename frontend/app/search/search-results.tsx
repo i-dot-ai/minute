@@ -106,10 +106,7 @@ export function SearchResults() {
         }}
       >
         <div className="govuk-form-group govuk-!-margin-bottom-2">
-          <label
-            className="govuk-visually-hidden"
-            htmlFor="search-keywords"
-          >
+          <label className="govuk-visually-hidden" htmlFor="search-keywords">
             Search
           </label>
           <div className="govuk-hint" id="search-hint">

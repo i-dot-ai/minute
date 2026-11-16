@@ -170,7 +170,10 @@ export type HttpValidationError = {
  * JobStatus
  */
 export type JobStatus =
-  'awaiting_start' | 'in_progress' | 'completed' | 'failed'
+  | 'awaiting_start'
+  | 'in_progress'
+  | 'completed'
+  | 'failed'
 
 /**
  * Minute
@@ -879,7 +882,10 @@ export type TranscriptionSearchResult = {
  * TranscriptionSearchSource
  */
 export type TranscriptionSearchSource =
-  'title' | 'transcript' | 'summary' | 'speaker'
+  | 'title'
+  | 'transcript'
+  | 'summary'
+  | 'speaker'
 
 /**
  * ValidationError

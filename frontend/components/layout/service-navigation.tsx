@@ -61,7 +61,7 @@ export const ServiceNavigation = () => {
               Menu
             </button>
             {showTour && (
-              <div className="govuk-!-margin-top-2 govuk-!-margin-bottom-2">
+              <div className="govuk-!-margin-top-2 govuk-!-margin-bottom-2 sm:hidden">
                 <button
                   type="button"
                   className="govuk-service-navigation__link cursor-pointer text-(--govuk-link-colour) sm:mx-auto"

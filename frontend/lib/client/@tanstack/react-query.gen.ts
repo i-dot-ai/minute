@@ -38,6 +38,7 @@ import {
   type Options,
   retryTranscriptionTranscriptionsTranscriptionIdRetryPost,
   saveTranscriptionTranscriptionsTranscriptionIdPatch,
+  searchTranscriptionsTranscriptionsSearchGet,
   updateDataRetentionUsersDataRetentionPatch,
   updateDefaultTemplateUsersDefaultTemplatePatch,
 } from '../sdk.gen'
@@ -116,6 +117,9 @@ import type {
   SaveTranscriptionTranscriptionsTranscriptionIdPatchData,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchError,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchResponse,
+  SearchTranscriptionsTranscriptionsSearchGetData,
+  SearchTranscriptionsTranscriptionsSearchGetError,
+  SearchTranscriptionsTranscriptionsSearchGetResponse,
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchError,
   UpdateDataRetentionUsersDataRetentionPatchResponse,
@@ -336,6 +340,97 @@ export const createTranscriptionTranscriptionsPostMutation = (
   }
   return mutationOptions
 }
+
+export const searchTranscriptionsTranscriptionsSearchGetQueryKey = (
+  options: Options<SearchTranscriptionsTranscriptionsSearchGetData>
+) => createQueryKey('searchTranscriptionsTranscriptionsSearchGet', options)
+
+/**
+ * Search Transcriptions
+ *
+ * Search selected sources within the current user's transcriptions.
+ *
+ * Keywords are literal, case-insensitive substrings; they can span transcript entries,
+ * but cannot be combined across sources, speaker labels or summary versions.
+ * Speakers match stored labels, not mentions in speech. Results are newest first.
+ */
+export const searchTranscriptionsTranscriptionsSearchGetOptions = (
+  options: Options<SearchTranscriptionsTranscriptionsSearchGetData>
+) =>
+  queryOptions<
+    SearchTranscriptionsTranscriptionsSearchGetResponse,
+    SearchTranscriptionsTranscriptionsSearchGetError,
+    SearchTranscriptionsTranscriptionsSearchGetResponse,
+    ReturnType<typeof searchTranscriptionsTranscriptionsSearchGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchTranscriptionsTranscriptionsSearchGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: searchTranscriptionsTranscriptionsSearchGetQueryKey(options),
+  })
+
+export const searchTranscriptionsTranscriptionsSearchGetInfiniteQueryKey = (
+  options: Options<SearchTranscriptionsTranscriptionsSearchGetData>
+): QueryKey<Options<SearchTranscriptionsTranscriptionsSearchGetData>> =>
+  createQueryKey('searchTranscriptionsTranscriptionsSearchGet', options, true)
+
+/**
+ * Search Transcriptions
+ *
+ * Search selected sources within the current user's transcriptions.
+ *
+ * Keywords are literal, case-insensitive substrings; they can span transcript entries,
+ * but cannot be combined across sources, speaker labels or summary versions.
+ * Speakers match stored labels, not mentions in speech. Results are newest first.
+ */
+export const searchTranscriptionsTranscriptionsSearchGetInfiniteOptions = (
+  options: Options<SearchTranscriptionsTranscriptionsSearchGetData>
+) =>
+  infiniteQueryOptions<
+    SearchTranscriptionsTranscriptionsSearchGetResponse,
+    SearchTranscriptionsTranscriptionsSearchGetError,
+    InfiniteData<SearchTranscriptionsTranscriptionsSearchGetResponse>,
+    QueryKey<Options<SearchTranscriptionsTranscriptionsSearchGetData>>,
+    | number
+    | Pick<
+        QueryKey<Options<SearchTranscriptionsTranscriptionsSearchGetData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchTranscriptionsTranscriptionsSearchGetData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              }
+        const params = createInfiniteParams(queryKey, page)
+        const { data } = await searchTranscriptionsTranscriptionsSearchGet({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        })
+        return data
+      },
+      queryKey:
+        searchTranscriptionsTranscriptionsSearchGetInfiniteQueryKey(options),
+    }
+  )
 
 /**
  * Create Recording

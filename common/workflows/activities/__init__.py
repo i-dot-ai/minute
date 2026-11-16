@@ -9,6 +9,7 @@ from common.workflows.activities import (
     cleanup,
     complete_transcription,
     edit_minute,
+    emit_metrics,
     fail_minute,
     fail_transcription,
     generate_minute,
@@ -36,4 +37,5 @@ WORKFLOW_QUEUE_ACTIVITIES = [
     cleanup.cleanup_old_records,
     cleanup.delete_orphan_records,
     cleanup.cleanup_failed_records,
+    emit_metrics.emit_temporal_metrics,
 ]

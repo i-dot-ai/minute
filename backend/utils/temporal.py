@@ -2,18 +2,15 @@ import asyncio
 from typing import Any
 from uuid import UUID
 
-from temporalio.client import Client, WorkflowExecutionStatus
+from temporalio.client import WorkflowExecutionStatus
 from temporalio.common import SearchAttributePair, TypedSearchAttributes
 from temporalio.service import RPCError, RPCStatusCode
 
-from common.settings import get_settings
+from common.temporal_client import get_temporal_client
 from common.workflows import search_attributes as sa
 from common.workflows.minute_version import MinuteEditInput, MinuteEditWorkflow, MinuteGenerationWorkflow
 from common.workflows.minute_version import workflow_id as minute_version_workflow_id
 from common.workflows.transcription import TASK_QUEUE, TranscriptionWorkflow, workflow_id
-
-_client: Client | None = None
-_lock = asyncio.Lock()
 
 # On a cold start the Temporal server registers its namespace a moment after it starts serving; a
 # start inside that window fails with NamespaceNotFound. Retry briefly, which is safe because a
@@ -21,15 +18,6 @@ _lock = asyncio.Lock()
 # the workflow did start, and re-starting it would hit the id-conflict policy instead.
 _NAMESPACE_RETRY_ATTEMPTS = 10
 _NAMESPACE_RETRY_DELAY_SECONDS = 1.0
-
-
-async def get_temporal_client() -> Client:
-    global _client  # noqa: PLW0603
-    async with _lock:
-        if _client is None:
-            settings = get_settings()
-            _client = await Client.connect(settings.TEMPORAL_ADDRESS, namespace=settings.TEMPORAL_NAMESPACE)
-    return _client
 
 
 async def _start_workflow(

@@ -713,17 +713,18 @@ wheels = [
 
 [[package]]
 name = "i-dot-ai-utilities"
-version = "0.4.4"
+version = "0.7.2rc1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "certifi" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "structlog" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0e/75/c9607008b9172f1b211e8dcdb222f989ef089ccba9c35e58eced4e57eae4/i_dot_ai_utilities-0.4.4.tar.gz", hash = "sha256:03fb7cf8bcda5b61ce3224d9a10a4834b095f355ae78a172d43fea9a8147aaa0", size = 219005, upload-time = "2025-11-10T09:05:36.58Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/80/26/d91798d27e34a84dbf4e83a5dc9b26cd7383fe1b4489f6765cbbe5fdfdd3/i_dot_ai_utilities-0.7.2rc1.tar.gz", hash = "sha256:4257dafa1c1cb67a66ec8c7330c99de30c187ffc5aab24f8fe0ed211287e15a5", size = 257253, upload-time = "2026-11-19T14:50:45.508Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/30/f84a0fd857abcf1daa89841b9e6144f71ce456f92c979f0de605ae6fc994/i_dot_ai_utilities-0.4.4-py3-none-any.whl", hash = "sha256:2034c96673836399873b00b76c689dd19d663f8e610f167da39070b229076006", size = 51014, upload-time = "2025-11-10T09:05:35.07Z" },
+    { url = "https://files.pythonhosted.org/packages/35/88/bdd79b78c54a2d8aa3dbf4bf9297572e3f01c7b1c11b82fba2fb51910e27/i_dot_ai_utilities-0.7.2rc1-py3-none-any.whl", hash = "sha256:b83afc2fda6668fb3fb245e73bdff4320f53ae02b063c1c5171df8bda922394f", size = 92432, upload-time = "2026-11-19T14:50:44.146Z" },
 ]
 
 [[package]]
@@ -1047,7 +1048,7 @@ requires-dist = [
     { name = "cryptography", specifier = ">=44.0.2,<45" },
     { name = "fastapi", specifier = ">=0.112.0" },
     { name = "httpx", specifier = ">=0.28.1,<0.29" },
-    { name = "i-dot-ai-utilities", specifier = ">=0.4.4,<0.5" },
+    { name = "i-dot-ai-utilities", specifier = "==0.7.2rc1" },
     { name = "jinja2", specifier = ">=3.1,<4" },
     { name = "markdownify", specifier = ">=1.2.0,<2" },
     { name = "mistune", specifier = ">=3.1.3,<4" },

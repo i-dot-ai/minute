@@ -16,6 +16,7 @@ from temporalio.client import (
     ScheduleActionStartWorkflow,
     ScheduleAlreadyRunningError,
     ScheduleCalendarSpec,
+    ScheduleIntervalSpec,
     ScheduleOverlapPolicy,
     SchedulePolicy,
     ScheduleRange,
@@ -28,6 +29,7 @@ from common.sentry import init_sentry
 from common.settings import get_settings
 from common.workflows import activities
 from common.workflows.cleanup import CleanupWorkflow
+from common.workflows.metrics import MetricsWorkflow
 from common.workflows.minute_version import MinuteEditWorkflow, MinuteGenerationWorkflow
 from common.workflows.transcription import LLM_TASK_QUEUE, STT_TASK_QUEUE, TASK_QUEUE, TranscriptionWorkflow
 
@@ -75,11 +77,29 @@ async def _ensure_cleanup_schedule(client: Client) -> None:
     logger.info("Created active daily-cleanup schedule for 23:00 UTC")
 
 
+async def _ensure_metrics_schedule(client: Client) -> None:
+    try:
+        await client.create_schedule(
+            "temporal-metrics",
+            Schedule(
+                action=ScheduleActionStartWorkflow(MetricsWorkflow.run, id="temporal-metrics", task_queue=TASK_QUEUE),
+                spec=ScheduleSpec(intervals=[ScheduleIntervalSpec(every=timedelta(minutes=1))]),
+                # A metrics run is only useful if it is the current one; skip a backlog rather than
+                # replaying stale frames
+                policy=SchedulePolicy(overlap=ScheduleOverlapPolicy.SKIP, catchup_window=timedelta(minutes=1)),
+            ),
+        )
+    except ScheduleAlreadyRunningError:
+        return
+    logger.info("Created active temporal-metrics schedule (every 1 minute)")
+
+
 async def main() -> None:
     settings = get_settings()
     client = await Client.connect(settings.TEMPORAL_ADDRESS, namespace=settings.TEMPORAL_NAMESPACE)
     await _wait_for_namespace(client, settings.TEMPORAL_NAMESPACE)
     await _ensure_cleanup_schedule(client)
+    await _ensure_metrics_schedule(client)
 
     llm_cap = max(settings.MAX_LLM_PROCESSES, 1)
     # One Worker per task queue. Slots per queue = that resource's cap in this process;
@@ -88,7 +108,13 @@ async def main() -> None:
         Worker(
             client,
             task_queue=TASK_QUEUE,
-            workflows=[TranscriptionWorkflow, MinuteGenerationWorkflow, MinuteEditWorkflow, CleanupWorkflow],
+            workflows=[
+                TranscriptionWorkflow,
+                MinuteGenerationWorkflow,
+                MinuteEditWorkflow,
+                CleanupWorkflow,
+                MetricsWorkflow,
+            ],
             activities=activities.WORKFLOW_QUEUE_ACTIVITIES,
         ),
         Worker(

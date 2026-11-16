@@ -10,7 +10,7 @@ from httpx import ASGITransport, AsyncClient
 from backend.api.dependencies.get_current_user import get_current_user
 from backend.api.dependencies.get_session import get_session
 from backend.api.routes.status import status_router
-from backend.utils import temporal_status
+from common.observability import temporal_status
 from common.services.exceptions import MissingAuthTokenError
 from common.types import HourlyStatusResponse, StatusBucket, StatusResponse, StatusSummary
 

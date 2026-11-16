@@ -5,7 +5,7 @@ export const Header = async () => {
   return (
     <header>
       <div className="govuk-header">
-        <div className="govuk-header__container govuk-!-margin-left-6 govuk-!-margin-right-6 flex flex-col items-center justify-between sm:flex-row">
+        <div className="govuk-header__container govuk-!-margin-left-6 govuk-!-margin-right-6 flex items-center justify-between">
           <div className="govuk-header__logo">
             <GuardedLink href="/" className="govuk-header__homepage-link">
               <svg

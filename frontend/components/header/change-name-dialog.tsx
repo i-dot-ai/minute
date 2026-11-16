@@ -61,23 +61,22 @@ export const ChangeNameDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogTitle className="govuk-heading-m govuk-!-margin-bottom-0">
-          Change name
-        </DialogTitle>
-        <DialogDescription className="govuk-body-s">
-          Set the name shown for you in Minute.
-        </DialogDescription>
         <form onSubmit={submit}>
           <div
             className={`govuk-form-group ${error ? 'govuk-form-group--error' : ''}`}
           >
-            <div className="govuk-label-wrapper">
-              <label
-                className="govuk-label govuk-label--s"
-                htmlFor="display-name"
-              >
-                Display name
-              </label>
+            <DialogTitle className="govuk-heading-m govuk-!-margin-bottom-0">
+              <div className="govuk-label-wrapper">
+                <label
+                  className="govuk-label govuk-label--m"
+                  htmlFor="display-name"
+                >
+                  Display name
+                </label>
+              </div>
+            </DialogTitle>
+            <div id="display-name-hint" className="govuk-hint">
+              Change the display name for your profile
             </div>
             {error && (
               <p className="govuk-error-message" id="display-name-error">
@@ -92,7 +91,9 @@ export const ChangeNameDialog = ({
               maxLength={100}
               value={name}
               aria-invalid={error ? true : undefined}
-              aria-describedby={error ? 'display-name-error' : undefined}
+              aria-describedby={
+                error ? 'display-name-error' : 'display-name-hint'
+              }
               onChange={(e) => {
                 setName(e.target.value)
                 if (error) setError(null)

@@ -7,7 +7,7 @@ export async function GET() {
     console.error('OIDC_CLIENT_ID environment variable is not set')
   }
 
-  // Only clear cookies on an explicit sign-out not on a prefetch
+  // Only clear cookies on an explicit sign-out, not on a prefetch
   const isPrefetch = (await headers()).get('Next-Router-Prefetch') === '1'
 
   if (!isPrefetch) {

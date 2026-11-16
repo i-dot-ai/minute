@@ -26,12 +26,12 @@ const ProfilePopover = () => {
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <button
-            className="govuk-button govuk-!-margin-0 !shadow-none"
+            className="govuk-button govuk-!-margin-0 w-auto! !shadow-none"
             id="profile-button"
             role="button"
           >
             <ProfileAvatar size="small" fullName={user?.display_name} />
-            <span className="govuk-!-font-size-16">
+            <span className="govuk-!-font-size-16 hidden sm:inline">
               {user?.display_name || 'Profile'}
             </span>
           </button>
@@ -67,7 +67,7 @@ const ProfilePopover = () => {
 
               <button
                 type="button"
-                className="govuk-link govuk-link--no-visited-state text-(--govuk-link-colour)"
+                className="govuk-link govuk-link--no-visited-state govuk-link--no-underline cursor-pointer text-(--govuk-link-colour)"
                 onClick={() => {
                   setIsOpen(false)
                   setNameDialogOpen(true)
@@ -77,7 +77,10 @@ const ProfilePopover = () => {
               </button>
             </div>
           </div>
-          <nav aria-label="Profile menu" className="flex flex-col gap-2">
+          <nav
+            aria-label="Profile menu"
+            className="hidden flex-col gap-2 sm:flex"
+          >
             <ul>
               <li className="govuk-service-navigation__item w-full">
                 <GuardedLink

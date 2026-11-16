@@ -91,6 +91,7 @@ const ProfilePopover = () => {
               <li className="govuk-service-navigation__item w-full">
                 <GuardedLink
                   href="/sign-out"
+                  prefetch={false}
                   className="govuk-service-navigation__link"
                 >
                   <LogOut className="size-5" />

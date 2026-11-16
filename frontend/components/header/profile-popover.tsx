@@ -28,10 +28,9 @@ const ProfilePopover = () => {
           <button
             className="govuk-button govuk-!-margin-0 w-auto! !shadow-none"
             id="profile-button"
-            role="button"
           >
             <ProfileAvatar size="small" fullName={user?.display_name} />
-            <span className="govuk-!-font-size-16 hidden sm:inline">
+            <span className="govuk-!-font-size-16 sr-only sm:not-sr-only">
               {user?.display_name || 'Profile'}
             </span>
           </button>

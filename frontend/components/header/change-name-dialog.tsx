@@ -71,7 +71,7 @@ export const ChangeNameDialog = ({
                   className="govuk-label govuk-label--m"
                   htmlFor="display-name"
                 >
-                  Display name
+                  Change name
                 </label>
               </div>
             </DialogTitle>

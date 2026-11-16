@@ -80,13 +80,21 @@ export default function TranscriptPage({
     reset({ entries: transcription?.dialogue_entries || [] })
   }, [reset, transcription?.dialogue_entries])
 
-  // A failed transcription has no transcript to show; the index page owns the
+  // A failed or no-speech transcription has no transcript to show; the index page owns the
   // failure UI (retry / download), so send the user there.
   useEffect(() => {
-    if (transcription?.status === 'failed') {
+    if (
+      transcription?.status === 'failed' ||
+      transcription?.no_speech_detected
+    ) {
       router.replace(`/transcriptions/${transcriptionId}`)
     }
-  }, [transcription?.status, router, transcriptionId])
+  }, [
+    transcription?.status,
+    transcription?.no_speech_detected,
+    router,
+    transcriptionId,
+  ])
 
   const { saveTranscription } = useSaveTranscription(transcriptionId)
 

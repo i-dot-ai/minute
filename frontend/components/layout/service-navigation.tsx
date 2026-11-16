@@ -1,6 +1,6 @@
 'use client'
 import { GuardedLink } from '@/components/navigation/guarded-link'
-import { usePathname } from 'next/navigation'
+import { useParams, usePathname } from 'next/navigation'
 import {
   Bookmark,
   ChevronDown,
@@ -12,12 +12,23 @@ import {
 } from 'lucide-react'
 import { requestOnboardingTourRestart } from '@/hooks/use-onboarding-tour'
 import { TranscriptMenu } from '@/components/layout/transcript-menu'
+import { getTranscriptionTranscriptionsTranscriptionIdGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
 export const ServiceNavigation = () => {
   const pathname = usePathname()
   const [isTranscriptDetailsCollapsed, setIsTranscriptDetailsCollapsed] =
     useState(false)
+  const { transcriptionId } = useParams<{ transcriptionId?: string }>()
+  const { data: transcription } = useQuery({
+    ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
+      path: { transcription_id: transcriptionId ?? '' },
+    }),
+    enabled: !!transcriptionId,
+  })
+  const noSummaries =
+    !!transcription?.error || !!transcription?.no_speech_detected
   if (pathname === '/unauthorised') {
     return null
   }
@@ -94,7 +105,7 @@ export const ServiceNavigation = () => {
                     <Bookmark className="size-5" />
                     Transcriptions
                   </GuardedLink>
-                  {isTranscriptDetailsPage && (
+                  {isTranscriptDetailsPage && !noSummaries && (
                     <button
                       onClick={() =>
                         setIsTranscriptDetailsCollapsed((prev) => !prev)
@@ -119,9 +130,9 @@ export const ServiceNavigation = () => {
                     </button>
                   )}
                 </div>
-                {isTranscriptDetailsPage && !isTranscriptDetailsCollapsed && (
-                  <TranscriptMenu />
-                )}
+                {isTranscriptDetailsPage &&
+                  !isTranscriptDetailsCollapsed &&
+                  !noSummaries && <TranscriptMenu />}
               </li>
               <li
                 className={`govuk-service-navigation__item ${pathname.includes('/templates') ? 'govuk-service-navigation__item--active' : ''}`}
@@ -163,7 +174,7 @@ export const ServiceNavigation = () => {
               </li>
             </ul>
             <div className="mt-auto hidden w-full sm:block">
-              {showTour && (
+              {showTour && !noSummaries && (
                 <div className="govuk-!-padding-top-3 govuk-!-padding-bottom-3">
                   <button
                     type="button"

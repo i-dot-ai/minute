@@ -24,7 +24,10 @@ import {
   ProcessingPhase,
 } from '@/lib/processing-estimate'
 import { readRecordingDurationSec } from '@/lib/recording-duration'
-import { getTranscriptionErrorMessage } from '@/lib/transcription-error'
+import {
+  getTranscriptionErrorMessage,
+  NO_SPEECH_MESSAGE,
+} from '@/lib/transcription-error'
 
 const GENERATING_STATUSES = ['awaiting_start', 'in_progress']
 
@@ -47,6 +50,7 @@ export default function RecordStatusPage({
 
   const transcriptionStatus = transcription?.status
   const transcriptionDone = transcriptionStatus === 'completed'
+  const noSpeech = transcription?.no_speech_detected ?? false
 
   const minutesQuery = useQuery({
     ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(
@@ -62,7 +66,7 @@ export default function RecordStatusPage({
     ...listMinuteVersionsMinutesMinuteIdVersionsGetOptions({
       path: { minute_id: minuteId! },
     }),
-    enabled: !!minuteId && transcriptionDone,
+    enabled: !!minuteId && transcriptionDone && !noSpeech,
     refetchInterval: (query) =>
       query.state.data?.[0]?.status &&
       GENERATING_STATUSES.includes(query.state.data[0].status)
@@ -76,6 +80,7 @@ export default function RecordStatusPage({
   // showing the processing state to avoid a flash of "Ready".
   const summaryStatusPending =
     transcriptionDone &&
+    !noSpeech &&
     (minutesQuery.isLoading || (!!minuteId && minuteVersionsQuery.isLoading))
 
   const { data: recordings = [] } = useQuery({
@@ -105,11 +110,12 @@ export default function RecordStatusPage({
   const isProcessing =
     transcriptionStatus === 'in_progress' ||
     transcriptionStatus === 'awaiting_start' ||
-    summaryStatus === 'in_progress' ||
-    summaryStatus === 'awaiting_start' ||
+    (!noSpeech && summaryStatus === 'in_progress') ||
+    (!noSpeech && summaryStatus === 'awaiting_start') ||
     summaryStatusPending
   const isFailed =
-    transcriptionStatus === 'failed' || summaryStatus === 'failed'
+    transcriptionStatus === 'failed' ||
+    (!noSpeech && summaryStatus === 'failed')
 
   const now = useNow({ enabled: isProcessing })
 
@@ -247,7 +253,7 @@ export default function RecordStatusPage({
                   </p>
 
                   <p className="govuk-body">
-                    {getTranscriptionErrorMessage(transcription.error)}
+                    {getTranscriptionErrorMessage()}
                     <Link href="/support" className="govuk-link">
                       contact support
                     </Link>
@@ -259,11 +265,13 @@ export default function RecordStatusPage({
                   <div className="inline-flex items-center gap-2">
                     <Check className="size-4 text-[#0f7a52]" />
                     <h2 className="govuk-heading-m govuk-!-margin-bottom-0">
-                      Ready
+                      {noSpeech ? 'No speech detected' : 'Ready'}
                     </h2>
                   </div>
                   <p className="govuk-body govuk-!-margin-top-3">
-                    View and edit the transcription and summary at any time.
+                    {noSpeech
+                      ? NO_SPEECH_MESSAGE
+                      : 'View and edit the transcription and summary at any time.'}
                   </p>
                 </>
               )}
@@ -294,7 +302,7 @@ export default function RecordStatusPage({
                   </>
                 ) : (
                   <Link href={`/transcriptions/${id}`} className="govuk-button">
-                    View transcription
+                    {noSpeech ? 'View recording' : 'View transcription'}
                   </Link>
                 )}
               </div>

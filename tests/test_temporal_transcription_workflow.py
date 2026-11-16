@@ -30,6 +30,7 @@ def _activities(  # noqa: C901 # Each mock is one workflow step.
     completed: bool = True,
     seen: dict | None = None,
     audio: wf.PreparedAudio | None = None,
+    no_speech: bool = False,
 ):
     """Mock each activity; fail permanently or exhaust retries, and record its inputs/timeouts."""
     seen = {} if seen is None else seen
@@ -53,7 +54,7 @@ def _activities(  # noqa: C901 # Each mock is one workflow step.
         seen["transcribe_timeout"] = activity.info().start_to_close_timeout
         seen["transcribe_heartbeat_timeout"] = activity.info().heartbeat_timeout
         _maybe_fail(wf.TRANSCRIBE)
-        return TRANSCRIPTION_ID
+        return "" if no_speech else TRANSCRIPTION_ID
 
     @activity.defn(name=wf.FAIL_TRANSCRIPTION)
     async def fail_transcription(params: wf.FailTranscriptionInput) -> None:
@@ -150,6 +151,14 @@ async def test_happy_path_runs_every_step_with_expected_routing_and_timeouts():
     assert params.minute_id == MINUTE_ID
     # Azure's budget leaves room inside the activity timeout for the mp3 download
     assert params.stt_timeout_seconds == (expected - wf.STT_DOWNLOAD_MARGIN).total_seconds()
+
+
+@pytest.mark.asyncio
+async def test_no_speech_finishes_without_enrichment_or_failure() -> None:
+    """A no-speech activity result ends the workflow normally."""
+    calls, outcome, _ = await _run(no_speech=True)
+    assert calls == [wf.PREPARE_AUDIO, wf.TRANSCRIBE]
+    assert outcome == {wf.TRANSCRIBE: "no speech detected"}
 
 
 @pytest.mark.asyncio

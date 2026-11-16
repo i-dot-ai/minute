@@ -49,6 +49,8 @@ worker = [
     "openai>=1.42.0,<2",
     "ffmpeg-python>=0.2.0,<0.3",
     "posthog>=6.6.1,<7",
+    "onnxruntime>=1.20,<2",
+    "numpy>=2,<3",
 ]
 dev = [
     "bumpversion>=0.6.0,<0.7",

@@ -15,13 +15,14 @@ from temporalio.exceptions import ApplicationError
 from temporalio.testing import ActivityEnvironment
 
 from common.database.postgres_models import JobStatus
-from common.services.exceptions import TranscriptionFailedError
+from common.services.exceptions import NoSpeechDetectedError, TranscriptionFailedError
 from common.services.minute_handler_service import (
     MinuteGenerationFailedError,
     MinuteGenerationTransientError,
     MinuteHandlerService,
 )
 from common.services.transcription_handler_service import TranscriptionHandlerService
+from common.services.transcription_services import transcription_manager
 from common.workflows import minute_version as minute_wf
 from common.workflows import transcription as wf
 from common.workflows.activities import (
@@ -109,12 +110,15 @@ async def test_prepare_audio_measures_original_upload_even_on_retry(monkeypatch,
     monkeypatch.setattr(prepare_audio, "storage_service", storage)
     convert = AsyncMock(return_value=(processed, None, 7200.0))
     monkeypatch.setattr(prepare_audio.transcription_manager, "get_recording_to_process", convert)
+    detect = Mock()
+    monkeypatch.setattr(transcription_manager, "detect_speech", detect)
     audio = await _run(prepare_audio.prepare_audio, str(MINUTE_ID))
     assert audio == wf.PreparedAudio(
         duration_seconds=7200.0,
         upload_size_bytes=len(b"original"),
     )
     assert convert.call_args.kwargs["recording"] == (processed if converted else original)
+    detect.assert_not_called()
     if converted:
         size.assert_awaited_once_with(original.s3_file_key)
     else:
@@ -216,6 +220,65 @@ async def test_transcribe_passes_temporal_attempt_to_provider(monkeypatch, write
     assert await env.run(transcribe.transcribe, TRANSCRIBE_INPUT) == str(TRANSCRIPTION_ID)
     provider.assert_awaited_once_with(transcription=row, timeout_seconds=60, attempt=3)
     assert writes == [(TRANSCRIPTION_ID, {"dialogue_entries": ENTRIES})]
+
+
+@pytest.mark.asyncio
+async def test_transcribe_empty_transcript_is_retryable(monkeypatch: pytest.MonkeyPatch, writes: list) -> None:
+    """An empty result with no confirmed no-speech diagnosis uses provider retries."""
+    _patch_load(monkeypatch, _row(entries=None))
+    monkeypatch.setattr(transcribe, "claim_job", Mock(return_value=True))
+    provider = AsyncMock(return_value=SimpleNamespace(transcript=[]))
+    monkeypatch.setattr(transcribe.transcription_manager, "perform_transcription_steps", provider)
+
+    with pytest.raises(ApplicationError, match="did not return a transcript") as error:
+        await _run(transcribe.transcribe, TRANSCRIBE_INPUT)
+    assert not error.value.non_retryable
+    assert writes == []
+
+
+@pytest.mark.asyncio
+async def test_transcribe_without_speech_completes(monkeypatch: pytest.MonkeyPatch, writes: list) -> None:
+    """A confirmed no-speech result completes without a failure or success event."""
+    _patch_load(monkeypatch, _row(entries=None))
+    monkeypatch.setattr(transcribe, "claim_job", Mock(return_value=True))
+    provider = AsyncMock(side_effect=NoSpeechDetectedError("No speech detected in the recording"))
+    monkeypatch.setattr(transcribe.transcription_manager, "perform_transcription_steps", provider)
+    mark_failed = Mock(return_value="No speech detected in the recording")
+    monkeypatch.setattr(_shared, "mark_failed", mark_failed)
+
+    assert await _run(transcribe.transcribe, TRANSCRIBE_INPUT) == ""
+    assert writes == [(TRANSCRIPTION_ID, {"status": JobStatus.COMPLETED, "dialogue_entries": [], "error": None})]
+    mark_failed.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_transcribe_no_speech_write_conflict_is_retryable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """No-speech completion must not overwrite a row that has already moved on."""
+    _patch_load(monkeypatch, _row(entries=None))
+    monkeypatch.setattr(transcribe, "claim_job", Mock(return_value=True))
+    monkeypatch.setattr(
+        transcribe.transcription_manager,
+        "perform_transcription_steps",
+        AsyncMock(side_effect=NoSpeechDetectedError("No speech detected")),
+    )
+    monkeypatch.setattr(_shared, "update_in_progress", Mock(return_value=False))
+    mark_failed = Mock()
+    monkeypatch.setattr(_shared, "mark_failed", mark_failed)
+    with pytest.raises(ApplicationError, match="Transcription changed") as error:
+        await _run(transcribe.transcribe, TRANSCRIBE_INPUT)
+    assert not error.value.non_retryable
+    mark_failed.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_transcribe_completed_without_speech_is_idempotent(monkeypatch: pytest.MonkeyPatch, writes: list) -> None:
+    """A retry preserves the no-speech outcome without another provider call."""
+    _patch_load(monkeypatch, _row(status=JobStatus.COMPLETED, entries=[]))
+    provider = AsyncMock()
+    monkeypatch.setattr(transcribe.transcription_manager, "perform_transcription_steps", provider)
+    assert await _run(transcribe.transcribe, TRANSCRIBE_INPUT) == ""
+    provider.assert_not_awaited()
+    assert writes == []
 
 
 # --- identify_speakers / generate_title ---

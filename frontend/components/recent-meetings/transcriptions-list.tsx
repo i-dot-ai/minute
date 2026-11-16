@@ -207,6 +207,11 @@ const StatusTagList = ({
           Failed
         </strong>
       )}
+      {transcription.no_speech_detected && (
+        <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
+          No audio
+        </strong>
+      )}
       {transcription.status === 'awaiting_start' && (
         <strong className="govuk-tag govuk-tag--grey govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
           Awaiting start

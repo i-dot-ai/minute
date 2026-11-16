@@ -939,6 +939,12 @@ export type TranscriptionGetResponse = {
    * Error
    */
   error?: string | null
+  /**
+   * No Speech Detected
+   *
+   * Transcription completed without detected speech.
+   */
+  no_speech_detected?: boolean
 }
 
 /**
@@ -973,6 +979,12 @@ export type TranscriptionMetadata = {
    * Expiring
    */
   expiring: boolean
+  /**
+   * No Speech Detected
+   *
+   * Transcription completed without detected speech.
+   */
+  no_speech_detected?: boolean
 }
 
 /**

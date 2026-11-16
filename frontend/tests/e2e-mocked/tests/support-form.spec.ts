@@ -5,7 +5,8 @@ const TICKETS_URL = '**/api/proxy/support/tickets'
 
 async function goToSupportPage(page: Page) {
   await page.goto('/')
-  await page.getByRole('link', { name: 'Contact' }).click()
+  await page.getByRole('button', { name: 'Name Surname' }).click()
+  await page.getByRole('link', { name: 'Contact us' }).click()
   await expect(page).toHaveURL(/\/support$/)
 }
 

@@ -82,7 +82,9 @@ class GetUserResponse(BaseModel):
 
 
 class SetDisplayNameRequest(BaseModel):
-    display_name: str | None = Field(default=None, min_length=1, max_length=100)
+    # Blankness is semantic (route raises 400 with detail); keep only the
+    # structural length constraint at the schema boundary.
+    display_name: str | None = Field(default=None, max_length=100)
 
 
 class DataRetentionUpdateResponse(BaseModel):

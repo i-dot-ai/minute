@@ -15,6 +15,11 @@ from tests.utils import get_test_client
     [
         ("jane.smith@example.gov.uk", "Jane Smith"),
         ("jane.o.smith@example.com", "Jane Smith"),
+        ("jane.smith-jones@example.com", "Jane Smith-Jones"),
+        ("j.o.smith-jones@example.com", "J Smith-Jones"),
+        ("jane.smith-jones-2@example.com", "Jane Smith-Jones"),
+        ("jane.smith-jones2@example.com", "Jane Smith-Jones"),
+        ("jane.smith3@example.com", "Jane Smith"),
         ("j.o.smith@example.com", "J Smith"),
         ("jsmith@example.com", "Jsmith"),
         ("jane.smith+news@example.com", "Jane Smith"),
@@ -64,6 +69,11 @@ async def test_display_name_patch_set_clear_and_validation():
 
             blank = await ac.patch("/users/display-name", json={"display_name": "   "})
             assert blank.status_code == 400
+
+            # An exact empty string skips the model's length check entirely and
+            # must hit the same route-level blank rejection.
+            empty = await ac.patch("/users/display-name", json={"display_name": ""})
+            assert empty.status_code == 400
 
             too_long = await ac.patch("/users/display-name", json={"display_name": "x" * 101})
             assert too_long.status_code == 422

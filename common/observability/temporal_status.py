@@ -7,7 +7,7 @@ from time import monotonic
 
 from temporalio.client import Client, WorkflowExecutionCount
 
-from backend.utils.temporal import get_temporal_client
+from common.temporal_client import get_temporal_client
 from common.types import (
     HourlyStatusResponse,
     StatusBucket,

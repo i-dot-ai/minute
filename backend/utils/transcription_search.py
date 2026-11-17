@@ -29,8 +29,8 @@ _BLOCK_TAGS = {
 }
 _IGNORED_TAGS = {"script", "style", "head", "template"}
 _PREVIEW_LIMITS = {"title": 1, "transcript": 3, "summary": 3, "speaker": 3}
-_SNIPPET_LENGTH = 240
-_CONTEXT_BEFORE = 80
+_SNIPPET_LENGTH = 100
+_CONTEXT_BEFORE = 30
 
 
 class _SummaryTextParser(HTMLParser):

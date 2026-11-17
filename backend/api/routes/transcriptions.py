@@ -1,4 +1,3 @@
-import logging
 import math
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -25,7 +24,7 @@ from common.database.postgres_models import (
     UserTemplate,
 )
 from common.services.storage_services import get_storage_service
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 from common.types import (
     PaginatedTranscriptionSearchResponse,
     PaginatedTranscriptionsResponse,
@@ -50,7 +49,7 @@ storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 transcriptions_router = APIRouter(tags=["Transcriptions"])
 
-logger = logging.getLogger(__name__)
+logger = get_structured_logger()
 SEARCH_BATCH_SIZE = 50
 
 
@@ -480,7 +479,7 @@ async def save_transcription(
     current_user: UserDep,
 ):
     """Save or update a transcription."""
-    logger.info("saving transcription for user %s", current_user.id)
+    logger.info("Saving transcription")
     # Use the transcription service to handle the save operation
     transcription = await session.get(Transcription, transcription_id)
     if not transcription or transcription.user_id != current_user.id:

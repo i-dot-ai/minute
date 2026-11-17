@@ -36,7 +36,7 @@ function searchHref(
   return params.size ? `/search?${params}` : '/search'
 }
 
-function MatchSnippet({ match }: { match: TranscriptionSearchMatch }) {
+export function MatchSnippet({ match }: { match: TranscriptionSearchMatch }) {
   let offset = 0
   return (
     <>

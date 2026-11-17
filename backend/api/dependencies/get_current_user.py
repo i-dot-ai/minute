@@ -55,7 +55,11 @@ async def get_current_user(
         result = await session.execute(stmt)
         await session.commit()
 
-        return result.scalar_one()
+        user = result.scalar_one()
+        # Bind for the rest of the request so structured logs carry a searchable user_id.
+        logger.set_context_field("user_id", str(user.id))
+
+        return user
     except MissingAuthTokenError as e:
         logger.warning("No authorization header provided")
         raise HTTPException(

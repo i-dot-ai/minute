@@ -82,8 +82,8 @@ class GetUserResponse(BaseModel):
 
 
 class SetDisplayNameRequest(BaseModel):
-    # Blankness is semantic (route raises 400 with detail); keep only the
-    # structural length constraint at the schema boundary.
+    # "None" clears the stored name so it derives the name from the email again
+    # Distinct from blank strings which are rejected by the route
     display_name: str | None = Field(default=None, max_length=100)
 
 

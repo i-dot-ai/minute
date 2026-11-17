@@ -7,7 +7,6 @@ import {
   ChevronUp,
   LayoutPanelTop,
   Mic,
-  Search,
 } from 'lucide-react'
 import { requestOnboardingTourRestart } from '@/hooks/use-onboarding-tour'
 import { TranscriptMenu } from '@/components/layout/transcript-menu'
@@ -118,18 +117,6 @@ export const ServiceNavigation = () => {
                 {isTranscriptDetailsPage &&
                   !isTranscriptDetailsCollapsed &&
                   !noSummaries && <TranscriptMenu />}
-              </li>
-              <li
-                className={`govuk-service-navigation__item ${pathname === '/search' ? 'govuk-service-navigation__item--active' : ''}`}
-              >
-                <GuardedLink
-                  className="govuk-service-navigation__link"
-                  href="/search"
-                  aria-current={pathname === '/search' ? 'page' : undefined}
-                >
-                  <Search className="size-5" />
-                  Search
-                </GuardedLink>
               </li>
               <li
                 className={`govuk-service-navigation__item ${pathname.includes('/templates') ? 'govuk-service-navigation__item--active' : ''}`}

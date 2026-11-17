@@ -9,17 +9,21 @@ import {
   useRenameTranscription,
 } from '@/components/recent-meetings/rename-transcription'
 import { IncompleteRecordingTableRow } from '@/components/recent-meetings/incomplete-recording-table-row'
-import { TranscriptionMetadata } from '@/lib/client'
+import { TranscriptionMetadata, TranscriptionSearchResult } from '@/lib/client'
 import { RecordingDbItem } from '@/providers/transcription-db-provider'
 import Link from 'next/link'
 import { useCallback, useState } from 'react'
+import { MatchSnippet } from '@/app/search/search-results'
+import { searchResultHref } from '@/lib/search-match'
+import { formatTime } from '@/components/audio/audio-player'
 
 function TranscriptionTableRow({
   transcription,
   selectedIds,
   onToggle,
 }: {
-  transcription: TranscriptionMetadata
+  transcription: TranscriptionMetadata &
+    Partial<Pick<TranscriptionSearchResult, 'matches' | 'matches_truncated'>>
   selectedIds?: Set<string>
   onToggle?: (id: string, checked: boolean) => void
 }) {
@@ -38,6 +42,21 @@ function TranscriptionTableRow({
     minute: '2-digit',
     year: isEarlierYear ? '2-digit' : undefined,
   })
+  const searchMatch = transcription.matches?.filter(
+    ({ source }) => source !== 'title'
+  )
+  const titleMatch = transcription.matches?.find(
+    ({ source }) => source === 'title'
+  )
+  const speakerMatches = transcription.matches?.filter(
+    ({ source }) => source === 'speaker'
+  )
+  const summaryMatches = transcription.matches?.filter(
+    ({ source }) => source === 'summary'
+  )
+  const transcriptMatches = transcription.matches?.filter(
+    ({ source }) => source === 'transcript'
+  )
 
   const handleSubmit = useCallback(
     (title: string) => {
@@ -49,7 +68,7 @@ function TranscriptionTableRow({
 
   return (
     <tr className="govuk-table__row hover:bg-[#f4f8fb] has-[:checked]:bg-[#f4f8fb]">
-      <td className="govuk-table__cell hidden sm:table-cell">
+      <td className="govuk-table__cell govuk-!-padding-top-1 govuk-!-padding-bottom-1 hidden sm:table-cell">
         <div className="govuk-!-padding-left-1 flex items-center gap-2">
           <div
             className="govuk-checkboxes govuk-checkboxes--small govuk-checkboxes--subtle relative flex"
@@ -75,7 +94,7 @@ function TranscriptionTableRow({
           </div>
         </div>
       </td>
-      <td className="govuk-table__cell w-full">
+      <td className="govuk-table__cell govuk-!-padding-right-1 govuk-!-padding-top-3 govuk-!-padding-bottom-3 w-full">
         {editing ? (
           <RenameTitleInput
             transcription={transcription}
@@ -84,29 +103,138 @@ function TranscriptionTableRow({
             onCancel={() => setEditing(false)}
           />
         ) : (
-          <Link
-            href={`/transcriptions/${transcription.id}`}
-            className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative flex flex-1 flex-col gap-2 pl-1 !text-(--govuk-link-colour) sm:flex-row sm:items-center sm:pl-0"
-          >
-            <span className="flex items-center gap-2 md:block">
-              {displayTitle}
-              <div className="govuk-!-margin-top-1 md:hidden">
+          <>
+            <Link
+              href={`/transcriptions/${transcription.id}`}
+              className="govuk-link govuk-link--no-visited-state govuk-link--no-underline relative my-2 flex-1 !text-(--govuk-link-colour)"
+            >
+              {titleMatch ? (
+                <MatchSnippet
+                  match={{
+                    ...titleMatch,
+                    snippet: displayTitle,
+                    snippet_start: 0,
+                    highlights: titleMatch.highlights.map(({ start, end }) => ({
+                      start: start + titleMatch.snippet_start,
+                      end: end + titleMatch.snippet_start,
+                    })),
+                  }}
+                />
+              ) : (
+                displayTitle
+              )}
+              <div className="govuk-!-margin-top-2 govuk-!-margin-bottom-2 lg:hidden">
                 <StatusTagList transcription={transcription} />
               </div>
-            </span>
-            <span className="govuk-body-s govuk-!-margin-0 sm:hidden">
+            </Link>
+            <p className="govuk-body-s govuk-!-margin-bottom-2 govuk-!-margin-top-1 md:hidden">
               {date}
-            </span>
-          </Link>
+            </p>
+            {searchMatch?.length ? (
+              <>
+                <p className="govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-top-1">
+                  <MatchSnippet match={searchMatch[0]} />
+                  ...
+                </p>
+                <details className="govuk-details govuk-!-margin-top-1 govuk-!-margin-bottom-0">
+                  <summary className="govuk-details__summary govuk-!-padding-left-4 before:border-[5px 0 5px 10px]">
+                    <span className="govuk-details__summary-text govuk-!-font-size-16">
+                      View {searchMatch.length}{' '}
+                      {searchMatch.length > 1 ? 'matches' : 'match'}
+                    </span>
+                  </summary>
+                  <div className="govuk-details__text">
+                    {speakerMatches?.length ? (
+                      <div className="flex gap-2">
+                        <h3 className="govuk-caption-s govuk-!-margin-bottom-3">
+                          Matching speakers:
+                        </h3>
+
+                        {speakerMatches?.map((match) => (
+                          <a
+                            key={match.speaker}
+                            href={searchResultHref(transcription.id, match)}
+                            className="govuk-link govuk-link--no-visited-state"
+                          >
+                            {match.snippet}
+                            <span className="govuk-visually-hidden">
+                              View in the transcript
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <></>
+                    )}
+                    {summaryMatches?.length ? (
+                      <>
+                        <h3 className="govuk-caption-m govuk-!-margin-bottom-3">
+                          Matches in the summary
+                        </h3>
+                        {summaryMatches.map((match) => (
+                          <div key={match.snippet_start}>
+                            <p className="govuk-body-s govuk-!-margin-bottom-1">
+                              <MatchSnippet match={match} />
+                              ...
+                            </p>
+                            <p className="govuk-body-s">
+                              <a
+                                href={searchResultHref(transcription.id, match)}
+                                className="govuk-link govuk-link--no-visited-state"
+                              >
+                                View in summary
+                                <span className="govuk-visually-hidden">
+                                  {transcription.title} - {match.entry_index}
+                                </span>
+                              </a>
+                            </p>
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <></>
+                    )}
+                    {transcriptMatches?.length ? (
+                      <>
+                        <h3 className="govuk-caption-m govuk-!-margin-bottom-3">
+                          Matches in the transcript
+                        </h3>
+                        {transcriptMatches.map((match) => (
+                          <div key={`${match.snippet}`}>
+                            <p className="govuk-body-s govuk-!-margin-bottom-1">
+                              {match.speaker}: <MatchSnippet match={match} />
+                              ...
+                            </p>
+                            <p className="govuk-body-s">
+                              <a
+                                href={searchResultHref(transcription.id, match)}
+                                className="govuk-link govuk-link--no-visited-state"
+                              >
+                                Go to {formatTime(match.start_time ?? 0)}
+                              </a>
+                            </p>
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <></>
+                    )}
+                  </div>
+                </details>
+              </>
+            ) : (
+              <></>
+            )}
+          </>
         )}
       </td>
-      <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
+      <td className="govuk-table__cell govuk-!-padding-top-3 govuk-!-padding-bottom-3 hidden align-text-top whitespace-nowrap md:table-cell">
         <span className="govuk-body-s govuk-!-margin-0">{date}</span>
       </td>
-      <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 hidden whitespace-nowrap md:table-cell">
+      <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 govuk-!-padding-top-3 govuk-!-padding-bottom-3 hidden whitespace-nowrap lg:table-cell">
         <StatusTagList transcription={transcription} />
       </td>
-      <td className="govuk-table__cell govuk-!-padding-right-1 whitespace-nowrap">
+      <td className="govuk-table__cell govuk-!-padding-right-1 govuk-!-padding-top-3 govuk-!-padding-bottom-3 align-text-top whitespace-nowrap">
         <div className="flex items-center justify-end gap-2">
           {!isTranscriptionProcessing(transcription.status) && (
             <RenameButton
@@ -152,15 +280,15 @@ export function TranscriptionsList({
           </th>
           <th scope="col" className="govuk-table__header">
             <span className="hidden sm:inline">
-              Title
+              Transcription
               {offlineRecordings.length > 0 && <> and audio</>}
             </span>
             <span className="sm:hidden">Transcription</span>
           </th>
-          <th scope="col" className="govuk-table__header hidden sm:table-cell">
+          <th scope="col" className="govuk-table__header hidden md:table-cell">
             Date
           </th>
-          <th scope="col" className="govuk-table__header hidden md:table-cell">
+          <th scope="col" className="govuk-table__header hidden lg:table-cell">
             Status
           </th>
           <th scope="col" className="govuk-table__header">

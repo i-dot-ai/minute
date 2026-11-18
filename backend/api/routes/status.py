@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Query
 
 from backend.api.dependencies import UserDep
-from backend.utils import temporal_status
+from common.observability import temporal_status
 from common.types import HourlyStatusResponse, StatusResponse
 
 status_router = APIRouter(tags=["Status"])

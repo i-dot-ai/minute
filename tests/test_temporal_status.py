@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from temporalio.client import WorkflowExecutionCount, WorkflowExecutionCountAggregationGroup, WorkflowExecutionStatus
 
-from backend.utils import temporal_status
+from common.observability import temporal_status
 
 
 @pytest.mark.parametrize(

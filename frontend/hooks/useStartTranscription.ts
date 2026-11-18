@@ -59,7 +59,13 @@ export const useStartTranscription = (
   })
 
   const onSubmit = useCallback(
-    async ({ file, template, agenda, recordingId }: TranscriptionForm) => {
+    async ({
+      file,
+      template,
+      agenda,
+      meeting_date,
+      recordingId,
+    }: TranscriptionForm) => {
       if (!file) {
         return
       }
@@ -93,6 +99,7 @@ export const useStartTranscription = (
             template_id: template.id,
             template_name: template.name,
             agenda,
+            meeting_date: meeting_date || undefined,
           },
         })
         // Store before navigating so the status page can read the estimate on

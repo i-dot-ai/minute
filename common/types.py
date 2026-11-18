@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum, auto
 
 from pydantic import BaseModel, Field
@@ -40,6 +40,7 @@ class TranscriptionCreateRequest(BaseModel):
     template_id: uuid.UUID | None = None
     agenda: str | None = None
     title: str | None = None
+    meeting_date: date | None = None
 
 
 class TranscriptionRetryRequest(BaseModel):
@@ -68,6 +69,7 @@ class TranscriptionConfirmResponse(BaseModel):
 class TranscriptionPatchRequest(BaseModel):
     title: str | None = None
     dialogue_entries: list[DialogueEntry] | None = None
+    meeting_date: date | None = Field(default=None, description="Send null to clear the meeting date.")
 
 
 class GetUserResponse(BaseModel):
@@ -92,6 +94,7 @@ class SetDefaultTemplateRequest(BaseModel):
 class TranscriptionGetResponse(BaseModel):
     id: uuid.UUID
     title: str | None
+    meeting_date: date | None = None
     dialogue_entries: list[DialogueEntry] | None
     status: JobStatus
     created_datetime: datetime

@@ -585,6 +585,10 @@ export type Transcription = {
    */
   title?: string | null
   /**
+   * Meeting Date
+   */
+  meeting_date?: string | null
+  /**
    * Dialogue Entries
    */
   dialogue_entries?: Array<DialogueEntry> | null
@@ -623,6 +627,10 @@ export type TranscriptionCreateRequest = {
    * Title
    */
   title?: string | null
+  /**
+   * Meeting Date
+   */
+  meeting_date?: string | null
 }
 
 /**
@@ -647,6 +655,10 @@ export type TranscriptionGetResponse = {
    * Title
    */
   title: string | null
+  /**
+   * Meeting Date
+   */
+  meeting_date?: string | null
   /**
    * Dialogue Entries
    */
@@ -720,6 +732,12 @@ export type TranscriptionPatchRequest = {
    * Dialogue Entries
    */
   dialogue_entries?: Array<DialogueEntry> | null
+  /**
+   * Meeting Date
+   *
+   * Send null to clear the meeting date.
+   */
+  meeting_date?: string | null
 }
 
 /**

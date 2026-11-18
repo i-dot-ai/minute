@@ -149,6 +149,7 @@ export const IncompleteRecordingTableRow = ({
                 onOpenChange={setUploadOpen}
                 onConfirm={form.handleSubmit(onSubmit)}
                 disabled={isPending || (agendaRequired && !agendaValue)}
+                showMeetingDate
               />
             </form>
           </FormProvider>

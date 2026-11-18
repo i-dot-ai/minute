@@ -399,7 +399,6 @@ async def save_transcription(
         transcription.title = transcription_data.title
     if transcription_data.dialogue_entries is not None:
         transcription.dialogue_entries = transcription_data.dialogue_entries
-    # Unlike title, an explicit null clears the date, so check the field was sent.
     if "meeting_date" in transcription_data.model_fields_set:
         transcription.meeting_date = transcription_data.meeting_date
     await session.commit()

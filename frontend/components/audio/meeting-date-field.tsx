@@ -3,12 +3,11 @@
 import { TranscriptionForm } from '@/components/audio/types'
 import { useFormContext } from 'react-hook-form'
 
-// Local (not UTC) date, so the max is today wherever the user is.
-const todayIsoDate = () => {
-  const now = new Date()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${now.getFullYear()}-${month}-${day}`
+// YYYY-MM-DD in local time (not UTC), as used by <input type="date">.
+export const toLocalIsoDate = (date: Date = new Date()) => {
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
 }
 
 export const MeetingDateField = () => {
@@ -26,7 +25,7 @@ export const MeetingDateField = () => {
         className="govuk-input govuk-input--width-10"
         id="meeting_date"
         type="date"
-        max={todayIsoDate()}
+        max={toLocalIsoDate()}
         aria-describedby="meeting-date-hint"
         {...form.register('meeting_date')}
       />

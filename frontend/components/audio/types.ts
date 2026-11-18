@@ -4,7 +4,8 @@ export type TranscriptionForm = {
   file: Blob | File | null
   template: Template
   agenda?: string
-  // YYYY-MM-DD, only ever entered by the user: never default it.
+  // YYYY-MM-DD. Never guessed: blank for uploads, the recording's own date for
+  // live and incomplete recordings.
   meeting_date?: string
   recordingId?: string
 }

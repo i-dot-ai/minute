@@ -49,7 +49,7 @@ export const pageTours: PageTour[] = [
         title: 'Check your microphone',
       },
       {
-        target: '.govuk-button',
+        target: '.govuk-button--start',
         content: 'When you’re ready, start here.',
         title: 'Start recording',
         before: async () => {
@@ -105,11 +105,18 @@ export const pageTours: PageTour[] = [
         },
       },
       {
+        target: '#profile-button',
+        placement: 'bottom',
+        content:
+          'Click here to view your profile details and get to help links such as contact us.',
+        title: 'View your profile',
+      },
+      {
         target: '.govuk-service-navigation',
         placement: 'right',
         content:
           'Your transcriptions, templates are here. You can always restart a tour by clicking the "Tour this page" button in the left-hand navigation.',
-        title: 'Everything else lives here',
+        title: 'Rest of the app lives here',
       },
     ],
   },

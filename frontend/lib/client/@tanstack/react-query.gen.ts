@@ -22,9 +22,11 @@ import {
   deleteUserTemplateUserTemplatesTemplateIdDelete,
   duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost,
   editUserTemplateUserTemplatesTemplateIdPatch,
+  getHourlyStatusStatusHourlyGet,
   getMinuteMinutesMinutesIdGet,
   getMinuteVersionMinuteVersionsMinuteVersionIdGet,
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGet,
+  getStatusStatusGet,
   getSupportTicketsConfigurationSupportTicketsConfigurationGet,
   getTemplatesTemplatesGet,
   getTranscriptionTranscriptionsTranscriptionIdGet,
@@ -40,6 +42,7 @@ import {
   saveTranscriptionTranscriptionsTranscriptionIdPatch,
   updateDataRetentionUsersDataRetentionPatch,
   updateDefaultTemplateUsersDefaultTemplatePatch,
+  updateDisplayNameUsersDisplayNamePatch,
 } from '../sdk.gen'
 import type {
   CreateMinuteTranscriptionTranscriptionIdMinutesPostData,
@@ -74,6 +77,9 @@ import type {
   DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
   EditUserTemplateUserTemplatesTemplateIdPatchData,
   EditUserTemplateUserTemplatesTemplateIdPatchError,
+  GetHourlyStatusStatusHourlyGetData,
+  GetHourlyStatusStatusHourlyGetError,
+  GetHourlyStatusStatusHourlyGetResponse,
   GetMinuteMinutesMinutesIdGetData,
   GetMinuteMinutesMinutesIdGetError,
   GetMinuteMinutesMinutesIdGetResponse,
@@ -83,6 +89,9 @@ import type {
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetData,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetError,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponse,
+  GetStatusStatusGetData,
+  GetStatusStatusGetError,
+  GetStatusStatusGetResponse,
   GetSupportTicketsConfigurationSupportTicketsConfigurationGetData,
   GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponse,
   GetTemplatesTemplatesGetData,
@@ -122,6 +131,9 @@ import type {
   UpdateDefaultTemplateUsersDefaultTemplatePatchData,
   UpdateDefaultTemplateUsersDefaultTemplatePatchError,
   UpdateDefaultTemplateUsersDefaultTemplatePatchResponse,
+  UpdateDisplayNameUsersDisplayNamePatchData,
+  UpdateDisplayNameUsersDisplayNamePatchError,
+  UpdateDisplayNameUsersDisplayNamePatchResponse,
 } from '../types.gen'
 
 export type QueryKey<TOptions extends Options> = [
@@ -190,6 +202,74 @@ export const healthcheckHealthcheckGetOptions = (
       return data
     },
     queryKey: healthcheckHealthcheckGetQueryKey(options),
+  })
+
+export const getStatusStatusGetQueryKey = (
+  options?: Options<GetStatusStatusGetData>
+) => createQueryKey('getStatusStatusGet', options)
+
+/**
+ * Get Status
+ *
+ * Aggregate workflow-run counts and nearest-rank timing percentiles in seconds.
+ *
+ * Starts and closures use the horizon; in-progress counts/ages include older runs.
+ * Processing time covers successful whole pipelines, including waiting/retries,
+ * not upload time or time until the transcript is ready. Completed transcription
+ * workflows can still have optional enrichment/summary failures. Visibility is
+ * eventually consistent; successful responses are cached for 30 seconds.
+ */
+export const getStatusStatusGetOptions = (
+  options?: Options<GetStatusStatusGetData>
+) =>
+  queryOptions<
+    GetStatusStatusGetResponse,
+    GetStatusStatusGetError,
+    GetStatusStatusGetResponse,
+    ReturnType<typeof getStatusStatusGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStatusStatusGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: getStatusStatusGetQueryKey(options),
+  })
+
+export const getHourlyStatusStatusHourlyGetQueryKey = (
+  options?: Options<GetHourlyStatusStatusHourlyGetData>
+) => createQueryKey('getHourlyStatusStatusHourlyGet', options)
+
+/**
+ * Get Hourly Status
+ *
+ * Transcriptions per hour for the last 24 hours, by close time: counts, failure rate, mean
+ * processing time, and the projected processing time for a 1-hour meeting, plus the same for
+ * the last 10 minutes. Cached for 1 minute.
+ */
+export const getHourlyStatusStatusHourlyGetOptions = (
+  options?: Options<GetHourlyStatusStatusHourlyGetData>
+) =>
+  queryOptions<
+    GetHourlyStatusStatusHourlyGetResponse,
+    GetHourlyStatusStatusHourlyGetError,
+    GetHourlyStatusStatusHourlyGetResponse,
+    ReturnType<typeof getHourlyStatusStatusHourlyGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getHourlyStatusStatusHourlyGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: getHourlyStatusStatusHourlyGetQueryKey(options),
   })
 
 export const listTranscriptionsTranscriptionsGetQueryKey = (
@@ -560,6 +640,40 @@ export const getUserUsersMeGetOptions = (
     },
     queryKey: getUserUsersMeGetQueryKey(options),
   })
+
+/**
+ * Update Display Name
+ *
+ * Set or clear the current user's display name.
+ *
+ * Args:
+ * data: Request body containing display_name; null clears it, omitting the field leaves it unchanged.
+ * session: Database session
+ * user: The current authenticated user
+ */
+export const updateDisplayNameUsersDisplayNamePatchMutation = (
+  options?: Partial<Options<UpdateDisplayNameUsersDisplayNamePatchData>>
+): UseMutationOptions<
+  UpdateDisplayNameUsersDisplayNamePatchResponse,
+  UpdateDisplayNameUsersDisplayNamePatchError,
+  Options<UpdateDisplayNameUsersDisplayNamePatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateDisplayNameUsersDisplayNamePatchResponse,
+    UpdateDisplayNameUsersDisplayNamePatchError,
+    Options<UpdateDisplayNameUsersDisplayNamePatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateDisplayNameUsersDisplayNamePatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
 
 /**
  * Update Data Retention

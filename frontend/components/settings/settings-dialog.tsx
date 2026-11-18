@@ -76,9 +76,9 @@ export function SettingsDialog({ user }: { user: GetUserResponse }) {
       <DialogTrigger asChild>
         <button
           type="button"
-          className="govuk-link govuk-link--no-visited-state text-(--govuk-link-colour)"
+          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline text-(--govuk-link-colour)"
         >
-          Change data retention period
+          Change data retention
         </button>
       </DialogTrigger>
       <DialogContent>

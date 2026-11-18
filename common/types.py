@@ -75,9 +75,16 @@ class GetUserResponse(BaseModel):
     created_datetime: datetime
     updated_datetime: datetime
     email: str
+    display_name: str
     data_retention_days: int | None
     default_template_id: uuid.UUID | None = None
     default_template_name: str | None = None
+
+
+class SetDisplayNameRequest(BaseModel):
+    # "None" clears the stored name so it derives the name from the email again
+    # Distinct from blank strings which are rejected by the route
+    display_name: str | None = Field(default=None, max_length=100)
 
 
 class DataRetentionUpdateResponse(BaseModel):

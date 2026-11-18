@@ -1,3 +1,4 @@
+import { toApiMeetingDate } from '@/components/audio/meeting-date-field'
 import { TranscriptionForm } from '@/components/audio/types'
 import {
   createRecordingRecordingsPostMutation,
@@ -99,7 +100,7 @@ export const useStartTranscription = (
             template_id: template.id,
             template_name: template.name,
             agenda,
-            meeting_date: meeting_date || undefined,
+            meeting_date: toApiMeetingDate(meeting_date) ?? undefined,
           },
         })
         // Store before navigating so the status page can read the estimate on

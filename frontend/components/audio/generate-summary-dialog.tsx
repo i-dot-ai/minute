@@ -1,6 +1,8 @@
 'use client'
 
 import { StartTranscriptionSection } from './start-transcription-section-2'
+import { TranscriptionForm } from './types'
+import { useFormContext } from 'react-hook-form'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Dialog,
@@ -28,9 +30,20 @@ export const GenerateSummaryDialog = ({
   errorText?: string
   showMeetingDate?: boolean
 }) => {
+  const form = useFormContext<TranscriptionForm>()
+  // Check the date before confirming, so a half-typed date can't stop a live
+  // recording or start a summary without it.
+  const handleConfirm = async () => {
+    if (showMeetingDate && !(await form.trigger('meeting_date'))) return
+    onConfirm()
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="overflow-y-auto">
+      <DialogContent
+        showCloseButton={false}
+        className="max-h-[calc(100dvh-2rem)] overflow-y-auto"
+      >
         <DialogHeader>
           <DialogTitle className="govuk-heading-l">
             {warningText ? 'Transcribe meeting' : 'Generate summary'}
@@ -70,7 +83,7 @@ export const GenerateSummaryDialog = ({
             type="button"
             className="govuk-button"
             disabled={disabled}
-            onClick={onConfirm}
+            onClick={handleConfirm}
           >
             {warningText ? 'Stop recording and save' : 'Generate summary'}
           </button>

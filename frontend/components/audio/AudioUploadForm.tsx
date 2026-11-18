@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { GenerateSummaryDialog } from './generate-summary-dialog'
+import { toLocalIsoDate } from './meeting-date-field'
 
 const GENERAL_TEMPLATE: Template = {
   name: 'General',
@@ -36,6 +37,7 @@ export const AudioUploadForm = () => {
     defaultValues: {
       file: null,
       template: GENERAL_TEMPLATE,
+      meeting_date: toLocalIsoDate(),
     },
   })
   const file = form.watch('file')

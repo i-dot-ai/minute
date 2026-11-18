@@ -10,7 +10,7 @@ import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorState, Plugin, PluginKey } from 'prosemirror-state'
 import { Decoration, DecorationSet } from 'prosemirror-view'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 import {
   EditorToolbar,
@@ -22,7 +22,6 @@ import { useCitationPopover } from '@/hooks/use-citation-popover'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import { Transcription } from '@/lib/client'
 import { cn } from '@/lib/utils'
-import { readSearchMatch, scrollToSummaryMatch } from '@/lib/search-match'
 import posthog from 'posthog-js'
 
 const MINUTE_TOOLBAR_ITEMS: ToolbarItem[] = [
@@ -43,18 +42,13 @@ function SimpleEditor({
   isEditing,
   currentTranscription,
   hideCitations,
-  searchMatch,
-  searchVersionReady,
 }: {
   initialContent: string
   onContentChange: (newContent: string) => void
   isEditing: boolean
   currentTranscription: Transcription
   hideCitations: boolean
-  searchMatch?: ReturnType<typeof readSearchMatch>
-  searchVersionReady?: boolean
 }) {
-  const [missingSearchMatch, setMissingSearchMatch] = useState(false)
   const {
     citationPopover,
     isPopoverOpen,
@@ -163,28 +157,12 @@ function SimpleEditor({
     }
   }, [editorObject, initialContent])
 
-  useEffect(() => {
-    if (!editorObject || !searchMatch || !searchVersionReady || isEditing)
-      return
-    const frame = requestAnimationFrame(() => {
-      setMissingSearchMatch(
-        !scrollToSummaryMatch(editorObject.view.dom, searchMatch)
-      )
-    })
-    return () => cancelAnimationFrame(frame)
-  }, [editorObject, initialContent, searchMatch, searchVersionReady, isEditing])
-
   if (!editorObject) {
     return null
   }
 
   return (
     <div>
-      {missingSearchMatch && (
-        <p className="govuk-body" role="status">
-          The search passage could not be found. The summary may have changed.
-        </p>
-      )}
       {isEditing && (
         <EditorToolbar
           editor={editorObject}

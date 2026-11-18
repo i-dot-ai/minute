@@ -3,8 +3,6 @@
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
 import { ProcessingCard } from '@/components/processing-card'
 import { useNow } from '@/hooks/use-now'
-import { useSearchMatch } from '@/hooks/use-search-match'
-import { useSearchParams } from 'next/navigation'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import {
   getIsStalled,
@@ -31,7 +29,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react'
 import { Controller, useForm } from 'react-hook-form'
@@ -84,8 +81,6 @@ export function MinuteEditor({
   onExportStateChange?: (state: MinuteExportState | null) => void
   onEditStateChange?: (state: MinuteEditState | null) => void
 }) {
-  const searchMatch = useSearchMatch()
-  const requestedVersionId = useSearchParams().get('version')
   const [version, setVersion] = useState(0)
   const [hideCitations, setHideCitations] = useState(false)
   const [editorResetKey, setEditorResetKey] = useState(0)
@@ -108,21 +103,6 @@ export function MinuteEditor({
         : false
     },
   })
-  const appliedSearchVersion = useRef(false)
-  useEffect(() => {
-    if (
-      !searchMatch ||
-      !requestedVersionId ||
-      !minuteVersions.length ||
-      appliedSearchVersion.current
-    )
-      return
-    appliedSearchVersion.current = true
-    const index = minuteVersions.findIndex(
-      (item) => item.id === requestedVersionId
-    )
-    if (index !== -1) setVersion(index)
-  }, [searchMatch, requestedVersionId, minuteVersions])
   const minuteVersion = useMemo(
     () => (minuteVersions.length > 0 ? minuteVersions[version] : undefined),
     [minuteVersions, version]
@@ -353,17 +333,6 @@ export function MinuteEditor({
     )
   }
 
-  if (
-    searchMatch &&
-    requestedVersionId &&
-    !minuteVersions.some((item) => item.id === requestedVersionId)
-  ) {
-    return (
-      <p className="govuk-body" role="status">
-        This summary version is no longer available.
-      </p>
-    )
-  }
   if (!minuteVersion) {
     return (
       <>
@@ -430,8 +399,6 @@ export function MinuteEditor({
               isEditing={isEditable}
               onContentChange={onChange}
               hideCitations={hideCitations && !isEditable}
-              searchMatch={searchMatch}
-              searchVersionReady={minuteVersion.id === requestedVersionId}
             />
           )}
         />

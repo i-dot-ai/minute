@@ -9,13 +9,34 @@ import {
   useRenameTranscription,
 } from '@/components/recent-meetings/rename-transcription'
 import { IncompleteRecordingTableRow } from '@/components/recent-meetings/incomplete-recording-table-row'
-import { TranscriptionMetadata, TranscriptionSearchResult } from '@/lib/client'
+import {
+  TranscriptionMetadata,
+  TranscriptionSearchMatch,
+  TranscriptionSearchResult,
+} from '@/lib/client'
 import { RecordingDbItem } from '@/providers/transcription-db-provider'
 import Link from 'next/link'
-import { useCallback, useState } from 'react'
-import { MatchSnippet } from '@/app/search/search-results'
-import { searchResultHref } from '@/lib/search-match'
-import { formatTime } from '@/components/audio/audio-player'
+import { Fragment, useCallback, useState } from 'react'
+
+function MatchSnippet({ match }: { match: TranscriptionSearchMatch }) {
+  let offset = 0
+  return (
+    <>
+      {match.snippet_start > 0 && '…'}
+      {match.highlights.map(({ start, end }) => {
+        const before = match.snippet.slice(offset, start)
+        offset = end
+        return (
+          <Fragment key={start}>
+            {before}
+            <strong>{match.snippet.slice(start, end)}</strong>
+          </Fragment>
+        )
+      })}
+      {match.snippet.slice(offset)}
+    </>
+  )
+}
 
 function TranscriptionTableRow({
   transcription,

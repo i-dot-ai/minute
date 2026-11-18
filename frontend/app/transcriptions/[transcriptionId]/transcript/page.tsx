@@ -29,8 +29,6 @@ import posthog from 'posthog-js'
 import { use, useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
-import { useSearchMatch } from '@/hooks/use-search-match'
-import { findSearchPassage } from '@/lib/search-match'
 
 export default function TranscriptPage({
   params,
@@ -122,31 +120,6 @@ export default function TranscriptPage({
   }
 
   const { fields, update } = useFieldArray({ control, name: 'entries' })
-  const searchMatch = useSearchMatch()
-  const [missingSearchMatch, setMissingSearchMatch] = useState(false)
-  useEffect(() => {
-    if (
-      !searchMatch ||
-      searchMatch.entry === null ||
-      !fields.length ||
-      isEditing
-    )
-      return
-    const entry = fields[searchMatch.entry]
-    const target = document.getElementById(
-      searchMatch.speaker
-        ? `search-speaker-${searchMatch.entry}`
-        : 'search-passage'
-    )
-    const text = searchMatch.speaker ? entry?.speaker : entry?.text
-    if (!target || !text?.includes(searchMatch.text)) {
-      setMissingSearchMatch(true)
-      return
-    }
-    setMissingSearchMatch(false)
-    target.focus({ preventScroll: true })
-    target.scrollIntoView({ block: 'center' })
-  }, [fields, searchMatch, isEditing])
 
   const { data: recordings } = useQuery({
     ...getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions(
@@ -432,12 +405,6 @@ export default function TranscriptPage({
           className={`min-h-0 flex-1 overflow-y-auto ${isEditing ? 'bg-(--govuk-surface-background-colour)' : ''}`}
         >
           <div className="govuk-width-container govuk-width-container--with-secondary-nav">
-            {missingSearchMatch && (
-              <p className="govuk-body govuk-!-margin-top-4" role="status">
-                The search passage could not be found. The transcript may have
-                changed.
-              </p>
-            )}
             {isEditing ? (
               <div className="govuk-form-group govuk-!-padding-top-4">
                 <h1 className="govuk-label-wrapper">
@@ -469,24 +436,16 @@ export default function TranscriptPage({
                     time &&
                     time >= entry.start_time &&
                     (!array[index + 1] || time < array[index + 1].start_time)
-                  const passageStart =
-                    searchMatch?.entry === index && !searchMatch.speaker
-                      ? findSearchPassage(entry.text, searchMatch)
-                      : -1
                   return (
                     <div
                       className={`govuk-!-margin-bottom-4 govuk-!-padding-4 ${isPlaying ? 'bg-[#d2e2f1]' : ''}`}
                       key={index}
-                      id={`search-entry-${index}`}
-                      tabIndex={-1}
                       ref={isPlaying ? playingRef : null}
                     >
                       <div className="flex justify-between">
                         <div className="govuk-!-margin-bottom-3 govuk-!-padding-top-1 flex items-center gap-2">
                           <CircleUserRound />
                           <h2
-                            id={`search-speaker-${index}`}
-                            tabIndex={-1}
                             className={`govuk-heading-s govuk-!-margin-bottom-0 ${isPlaying ? '' : 'govuk-!-font-weight-regular'}`}
                           >
                             {entry.speaker}
@@ -542,22 +501,7 @@ export default function TranscriptPage({
                         />
                       ) : (
                         <p className="govuk-body govuk-!-margin-bottom-0">
-                          {searchMatch && passageStart !== -1 ? (
-                            <>
-                              {entry.text.slice(0, passageStart)}
-                              <span id="search-passage" tabIndex={-1}>
-                                {entry.text.slice(
-                                  passageStart,
-                                  passageStart + searchMatch.text.length
-                                )}
-                              </span>
-                              {entry.text.slice(
-                                passageStart + searchMatch.text.length
-                              )}
-                            </>
-                          ) : (
-                            entry.text
-                          )}
+                          {entry.text}
                         </p>
                       )}
                     </div>

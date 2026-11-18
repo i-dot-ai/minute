@@ -189,10 +189,6 @@ export const PaginatedTranscriptions = () => {
 
   const selectedCount = selectedIds.size
 
-  console.log({
-    transcriptions,
-  })
-
   return (
     <div>
       <div className="flex items-center justify-between">

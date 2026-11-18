@@ -1,6 +1,7 @@
 'use client'
 
 import { GenerateSummaryDialog } from '@/components/audio/generate-summary-dialog'
+import { toApiMeetingDate } from '@/components/audio/meeting-date-field'
 import { TranscriptionForm } from '@/components/audio/types'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
@@ -94,11 +95,12 @@ export function NewMinuteDialog({
     setErrorText(undefined)
     // The date lives on the transcription, so save it before generating the
     // summary that reads it.
-    if ((meeting_date ?? '') !== savedMeetingDate) {
+    const meetingDate = toApiMeetingDate(meeting_date)
+    if ((meetingDate ?? '') !== savedMeetingDate) {
       try {
         await saveTranscription({
           path: { transcription_id: transcriptionId },
-          body: { meeting_date: meeting_date || null },
+          body: { meeting_date: meetingDate },
         })
       } catch {
         setErrorText('Could not save the meeting date. Please try again.')

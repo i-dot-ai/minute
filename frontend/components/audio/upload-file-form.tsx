@@ -9,29 +9,31 @@ export function UploadFileForm({
   file,
   template,
   agenda,
+  meetingDate,
   onDiscard,
   onStarted,
 }: {
   file: File
   template: Template
   agenda?: string
+  meetingDate?: string
   onDiscard?: () => void
   onStarted?: (transcriptionId: string) => void
 }) {
   const { isError, onSubmit } = useStartTranscription(
-    { file, template, agenda },
+    { file, template, agenda, meeting_date: meetingDate },
     onStarted
   )
 
-  // File, template and agenda were all chosen on the home page, so submit
+  // File, template, agenda and meeting date were all chosen on the home page, so submit
   // straight away. One-shot guard so Strict Mode's double-mount (dev) can't
   // create two transcriptions.
   const hasSubmitted = useRef(false)
   useEffect(() => {
     if (hasSubmitted.current) return
     hasSubmitted.current = true
-    onSubmit({ file, template, agenda })
-  }, [onSubmit, file, template, agenda])
+    onSubmit({ file, template, agenda, meeting_date: meetingDate })
+  }, [onSubmit, file, template, agenda, meetingDate])
 
   if (isError) {
     return (

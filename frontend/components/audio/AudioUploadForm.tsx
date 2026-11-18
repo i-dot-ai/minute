@@ -20,8 +20,13 @@ const GENERAL_TEMPLATE: Template = {
 
 export const AudioUploadForm = () => {
   const router = useRouter()
-  const { setMode, setUploadFile, setUploadTemplate, setUploadAgenda } =
-    useRecordingSession()
+  const {
+    setMode,
+    setUploadFile,
+    setUploadTemplate,
+    setUploadAgenda,
+    setUploadMeetingDate,
+  } = useRecordingSession()
   const [fileError, setFileError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -77,6 +82,7 @@ export const AudioUploadForm = () => {
     setUploadFile(values.file)
     setUploadTemplate(values.template)
     setUploadAgenda(values.agenda)
+    setUploadMeetingDate(values.meeting_date || undefined)
     setMode('upload-file')
     router.push('/new')
   }
@@ -136,6 +142,7 @@ export const AudioUploadForm = () => {
             handleGenerate()
           }}
           disabled={agendaRequired && !agendaValue}
+          showMeetingDate
         />
       </div>
     </FormProvider>

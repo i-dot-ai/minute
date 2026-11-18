@@ -301,7 +301,7 @@ async def create_transcription(
     # re-link the audio (orphaning the first transcription and re-queueing work).
     if recording.transcription_id is not None:
         raise HTTPException(status_code=409, detail="Recording has already been transcribed")
-    transcription = Transcription(user_id=current_user.id, title=request.title)
+    transcription = Transcription(user_id=current_user.id, title=request.title, meeting_date=request.meeting_date)
 
     if not await storage_service.check_object_exists(recording.s3_file_key):
         raise HTTPException(
@@ -442,6 +442,7 @@ async def get_transcription(
         status=transcription.status,
         dialogue_entries=transcription.dialogue_entries,
         title=transcription.title,
+        meeting_date=transcription.meeting_date,
         created_datetime=transcription.created_datetime,
         error=transcription.error,
         no_speech_detected=transcription.no_speech_detected,
@@ -501,6 +502,9 @@ async def save_transcription(
         transcription.title = transcription_data.title
     if transcription_data.dialogue_entries is not None:
         transcription.dialogue_entries = transcription_data.dialogue_entries
+    # Unlike title, an explicit null clears the date, so check the field was sent.
+    if "meeting_date" in transcription_data.model_fields_set:
+        transcription.meeting_date = transcription_data.meeting_date
     await session.commit()
     await session.refresh(transcription)
 

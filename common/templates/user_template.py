@@ -3,7 +3,7 @@ import markdownify
 from common.database.postgres_models import TemplateType, Transcription, UserTemplate
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
-from common.prompts import get_transcript_messages
+from common.prompts import MEETING_DATE_INSTRUCTION, format_meeting_date, get_transcript_messages
 
 document_prompt = """<task>
 You are an expert meeting minutes writer with extensive experience across various sectors. \
@@ -14,10 +14,11 @@ Transform the provided meeting content into structured minutes following the tem
 </task>
 
 <general_information>
-  <recording-datetime>{date}</recording-datetime>
+  <meeting-date>{meeting_date}</meeting-date>
 </general_information>
 
 <requirements>
+- {meeting_date_instruction}
 - Follow the structure outlined in the <template> section below exactly. \
 Do not add additonal sections if they are not specified.
 - Include as much detail as possible.
@@ -38,6 +39,10 @@ Do not add additonal sections if they are not specified.
 form_prompt = """
 You are helping to fill out a form based on the provided transcript of a meeting. \
 Answer the current question based only on information found in the document.
+
+<meeting_date>
+{meeting_date}
+</meeting_date>
 
 <transcript>
 {transcript}
@@ -62,6 +67,8 @@ form_system_prompt = """Instructions:
 - Answer based solely on information in the transcript
 - Follow any specific instructions provided in the question description and style guide
 - If the document doesn't contain relevant information, respond with "Information not found in transcript"
+- For the meeting date, use only the date in <meeting_date>; if it says "Not provided", answer "Not provided" \
+and never work out or guess the date from the transcript
 - Ensure your answer is consistent with previously answered questions
 - Do not repeat information already provided in previous answers unless directly relevant to this question
 - You provide only the direct answer to the question. \
@@ -78,7 +85,8 @@ async def generate_user_template(template: UserTemplate, transcription: Transcri
                 "role": "system",
                 "content": document_prompt.format(
                     template=markdown_template,
-                    date=transcription.created_datetime.strftime("%A %d %B %Y %H:%M:%S"),
+                    meeting_date=format_meeting_date(transcription.meeting_date),
+                    meeting_date_instruction=MEETING_DATE_INSTRUCTION,
                 ),
             },
             get_transcript_messages(transcription.dialogue_entries or []),
@@ -107,6 +115,7 @@ async def generate_user_template(template: UserTemplate, transcription: Transcri
                 {
                     "role": "user",
                     "content": form_prompt.format(
+                        meeting_date=format_meeting_date(transcription.meeting_date),
                         transcript=transcript_as_speaker_and_utterance(transcription.dialogue_entries or []),
                         style_guide=template.content,
                         previous_questions=previous_questions,

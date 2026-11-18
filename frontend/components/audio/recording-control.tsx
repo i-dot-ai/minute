@@ -179,6 +179,7 @@ export default function RecordingControl({
       <GenerateSummaryDialog
         open={showStopDialog}
         warningText="You won't be able to resume recording after stopping."
+        showMeetingDate
         onOpenChange={setShowStopDialog}
         onConfirm={confirmStop}
       />

@@ -18,6 +18,7 @@ export const GenerateSummaryDialog = ({
   onConfirm,
   disabled = false,
   errorText,
+  showMeetingDate = false,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -25,6 +26,7 @@ export const GenerateSummaryDialog = ({
   onConfirm: () => void
   disabled?: boolean
   errorText?: string
+  showMeetingDate?: boolean
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -50,7 +52,7 @@ export const GenerateSummaryDialog = ({
             You can select a new template later if needed
           </p>
         )}
-        <StartTranscriptionSection />
+        <StartTranscriptionSection showMeetingDate={showMeetingDate} />
         {errorText && (
           <Alert variant="destructive">
             <AlertDescription>{errorText}</AlertDescription>

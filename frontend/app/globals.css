@@ -103,19 +103,6 @@
   text-decoration: none;
 }
 
-/* Link-styled buttons (e.g. Change name in the profile popover): no underline
-   at rest (govuk-link--no-underline), GOV-style thick underline on hover.
-   Plain CSS instead of Tailwind hover: variants — those are disabled on touch
-   devices by the hover:hover media gate. */
-.govuk-service-navigation--side-nav button.govuk-link {
-  text-decoration: none;
-}
-
-.govuk-service-navigation--side-nav button.govuk-link:hover {
-  text-decoration: underline;
-  text-decoration-thickness: max(3px, 0.1875rem);
-}
-
 .govuk-radios__item {
   align-content: flex-start;
 }

@@ -34,7 +34,7 @@ const ProfileAvatar = ({
 
   return (
     <div
-      className={`iai-avatar iai-avatar--${size}${inverse ? 'iai-avatar--inverse' : ''}`}
+      className={`iai-avatar iai-avatar--${size} ${inverse ? 'iai-avatar--inverse' : ''}`}
     >
       {children || initials || <User className={sizeClass} />}
     </div>

@@ -3,6 +3,7 @@
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
 import { GenerateSummaryDialog } from '@/components/audio/generate-summary-dialog'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
+import { toLocalIsoDate } from '@/components/audio/meeting-date-field'
 import { getFileExtensionFromBlob } from '@/lib/getFileExtension'
 import {
   RecordingDbItem,
@@ -29,6 +30,8 @@ export const IncompleteRecordingTableRow = ({
     {
       file: recording.blob,
       recordingId: recording.recording_id,
+      // Last saved while recording, so it's the day the meeting was recorded.
+      meeting_date: toLocalIsoDate(recording.updated_at),
     },
     (id) => router.push(`/new/status/${id}`)
   )

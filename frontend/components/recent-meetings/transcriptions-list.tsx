@@ -48,15 +48,6 @@ function TranscriptionTableRow({
   const titleMatch = transcription.matches?.find(
     ({ source }) => source === 'title'
   )
-  const speakerMatches = transcription.matches?.filter(
-    ({ source }) => source === 'speaker'
-  )
-  const summaryMatches = transcription.matches?.filter(
-    ({ source }) => source === 'summary'
-  )
-  const transcriptMatches = transcription.matches?.filter(
-    ({ source }) => source === 'transcript'
-  )
 
   const handleSubmit = useCallback(
     (title: string) => {
@@ -131,110 +122,23 @@ function TranscriptionTableRow({
               {date}
             </p>
             {searchMatch?.length ? (
-              <>
-                <p className="govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-top-1">
-                  <MatchSnippet match={searchMatch[0]} />
-                  ...
-                </p>
-                <details className="govuk-details govuk-!-margin-top-1 govuk-!-margin-bottom-0">
-                  <summary className="govuk-details__summary govuk-!-padding-left-4 before:border-[5px 0 5px 10px]">
-                    <span className="govuk-details__summary-text govuk-!-font-size-16">
-                      View {searchMatch.length}{' '}
-                      {searchMatch.length > 1 ? 'matches' : 'match'}
-                    </span>
-                  </summary>
-                  <div className="govuk-details__text">
-                    {speakerMatches?.length ? (
-                      <div className="flex gap-2">
-                        <h3 className="govuk-caption-s govuk-!-margin-bottom-3">
-                          Matching speakers:
-                        </h3>
-
-                        {speakerMatches?.map((match) => (
-                          <a
-                            key={match.speaker}
-                            href={searchResultHref(transcription.id, match)}
-                            className="govuk-link govuk-link--no-visited-state"
-                          >
-                            {match.snippet}
-                            <span className="govuk-visually-hidden">
-                              View in the transcript
-                            </span>
-                          </a>
-                        ))}
-                      </div>
-                    ) : (
-                      <></>
-                    )}
-                    {summaryMatches?.length ? (
-                      <>
-                        <h3 className="govuk-caption-m govuk-!-margin-bottom-3">
-                          Matches in the summary
-                        </h3>
-                        {summaryMatches.map((match) => (
-                          <div key={match.snippet_start}>
-                            <p className="govuk-body-s govuk-!-margin-bottom-1">
-                              <MatchSnippet match={match} />
-                              ...
-                            </p>
-                            <p className="govuk-body-s">
-                              <a
-                                href={searchResultHref(transcription.id, match)}
-                                className="govuk-link govuk-link--no-visited-state"
-                              >
-                                View in summary
-                                <span className="govuk-visually-hidden">
-                                  {transcription.title} - {match.entry_index}
-                                </span>
-                              </a>
-                            </p>
-                          </div>
-                        ))}
-                      </>
-                    ) : (
-                      <></>
-                    )}
-                    {transcriptMatches?.length ? (
-                      <>
-                        <h3 className="govuk-caption-m govuk-!-margin-bottom-3">
-                          Matches in the transcript
-                        </h3>
-                        {transcriptMatches.map((match) => (
-                          <div key={`${match.snippet}`}>
-                            <p className="govuk-body-s govuk-!-margin-bottom-1">
-                              {match.speaker}: <MatchSnippet match={match} />
-                              ...
-                            </p>
-                            <p className="govuk-body-s">
-                              <a
-                                href={searchResultHref(transcription.id, match)}
-                                className="govuk-link govuk-link--no-visited-state"
-                              >
-                                Go to {formatTime(match.start_time ?? 0)}
-                              </a>
-                            </p>
-                          </div>
-                        ))}
-                      </>
-                    ) : (
-                      <></>
-                    )}
-                  </div>
-                </details>
-              </>
+              <p className="govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-top-1">
+                <MatchSnippet match={searchMatch[0]} />
+                ...
+              </p>
             ) : (
               <></>
             )}
           </>
         )}
       </td>
-      <td className="govuk-table__cell govuk-!-padding-top-3 govuk-!-padding-bottom-3 hidden align-text-top whitespace-nowrap md:table-cell">
+      <td className="govuk-table__cell govuk-!-padding-top-3 govuk-!-padding-bottom-3 hidden whitespace-nowrap md:table-cell">
         <span className="govuk-body-s govuk-!-margin-0">{date}</span>
       </td>
       <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 govuk-!-padding-top-3 govuk-!-padding-bottom-3 hidden whitespace-nowrap lg:table-cell">
         <StatusTagList transcription={transcription} />
       </td>
-      <td className="govuk-table__cell govuk-!-padding-right-1 govuk-!-padding-top-3 govuk-!-padding-bottom-3 align-text-top whitespace-nowrap">
+      <td className="govuk-table__cell govuk-!-padding-right-1 govuk-!-padding-top-3 govuk-!-padding-bottom-3 whitespace-nowrap">
         <div className="flex items-center justify-end gap-2">
           {!isTranscriptionProcessing(transcription.status) && (
             <RenameButton

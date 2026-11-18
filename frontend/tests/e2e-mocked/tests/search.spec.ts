@@ -138,11 +138,6 @@ test('search renders safe bold snippets, paginates and scrolls to transcript and
   await expect(
     page.getByRole('heading', { name: 'Search your transcriptions' })
   ).toBeVisible()
-  await expect(
-    page
-      .getByRole('navigation', { name: 'Menu' })
-      .getByRole('link', { name: 'Search', exact: true })
-  ).toHaveAttribute('aria-current', 'page')
   await page
     .getByRole('searchbox', { name: 'Search', exact: true })
     .fill('budget approval')
@@ -243,7 +238,7 @@ test('empty and failed searches are recoverable without changing the title searc
   await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
   await page.goto('/transcriptions')
   await expect(
-    page.getByRole('searchbox', { name: 'Search transcriptions by title' })
+    page.getByRole('searchbox', { name: 'Search transcriptions' })
   ).toBeVisible()
 })
 

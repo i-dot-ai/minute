@@ -132,6 +132,7 @@
 @media screen and (min-width: 768px) {
   .govuk-table--subtle .govuk-table__cell {
     padding: 0;
+    vertical-align: middle;
   }
 }
 

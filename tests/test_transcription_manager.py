@@ -5,12 +5,13 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from common.audio.speech_detection import SpeechCheck, SpeechCheckResult
-from common.database.postgres_models import Recording, Transcription
+from common.database.postgres_models import Recording, Transcription, User
 from common.services.exceptions import NoSpeechDetectedError, TranscriptionFailedError
 from common.services.storage_services import StorageService
 from common.services.transcription_services import transcription_manager
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.services.transcription_services.aws import AWSTranscribeAdapter
+from common.services.transcription_services.azure import AzureSpeechAdapter
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.types import TranscriptionJobMessageData
 
@@ -248,6 +249,45 @@ class TestTranscriptionServiceManager:
                 mock_start.assert_called_once_with(
                     audio_file_path_or_recording=Path(temp_file.name), timeout_seconds=123, attempt=2
                 )
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("email", "allow_fallbacks"),
+        [
+            ("person@dwp.gov.uk", False),
+            ("person@DWP.GOV.UK", False),
+            ("person@example.com", True),
+            ("person@team.dwp.gov.uk", True),
+            ("person@dwp.gov.uk.example.com", True),
+            ("", True),
+            (None, True),
+        ],
+    )
+    async def test_azure_fallbacks_follow_owner_email(
+        self,
+        monkeypatch,
+        manager,
+        mock_recording,
+        mock_transcription,
+        sample_message_data,
+        tmp_path,
+        email,
+        allow_fallbacks,
+    ):
+        path = tmp_path / "audio.mp3"
+        path.write_bytes(b"audio")
+        mock_transcription.user = User(email=email) if email is not None else None
+        monkeypatch.setattr(transcription_manager.storage_service, "download", AsyncMock())
+        monkeypatch.setattr(manager, "get_recording_to_process", AsyncMock(return_value=(mock_recording, path, 60.0)))
+        monkeypatch.setattr(manager, "select_adaptor", lambda _duration: AzureSpeechAdapter)
+        start = AsyncMock(return_value=sample_message_data)
+        monkeypatch.setattr(AzureSpeechAdapter, "start", start)
+
+        await manager.perform_transcription_steps(mock_transcription, timeout_seconds=123, attempt=3)
+
+        start.assert_awaited_once_with(
+            audio_file_path_or_recording=path, timeout_seconds=123, attempt=3, allow_fallbacks=allow_fallbacks
+        )
 
     @pytest.mark.asyncio
     async def test_perform_transcription_steps_asynchronous(

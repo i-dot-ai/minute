@@ -96,6 +96,7 @@ def azure_responses(monkeypatch):
             return _REAL_ASYNC_CLIENT(transport=transport, **kwargs)
 
         monkeypatch.setattr(azure, "regions", regions)
+        monkeypatch.setattr(azure, "settings", region_settings())
         monkeypatch.setattr(azure.httpx, "AsyncClient", async_client)
         return transport
 
@@ -109,12 +110,25 @@ def sent_to(region: AzureSpeechRegion) -> tuple[str, str]:
 @pytest.mark.asyncio
 async def test_transcribes(azure_responses, audio_file):
     for regions in (ALL_REGIONS, [PRIMARY, FALLBACK_2], [PRIMARY]):
+        transport = azure_responses([ok() for _ in range(8)], regions)
         for attempt in range(1, 5):
-            transport = azure_responses([ok()], regions)
-            result = await AzureSpeechAdapter.start(audio_file, attempt=attempt)
-            assert result.transcript == EXPECTED_TRANSCRIPT
-            assert transport.requests == [sent_to(regions[(attempt - 1) % len(regions)])]
-            assert transport.audio_sizes == [1024]
+            for allow_fallbacks in (False, True):
+                result = await AzureSpeechAdapter.start(audio_file, attempt=attempt, allow_fallbacks=allow_fallbacks)
+                assert result.transcript == EXPECTED_TRANSCRIPT
+                expected_region = regions[(attempt - 1) % len(regions)] if allow_fallbacks else PRIMARY
+                assert transport.requests[-1] == sent_to(expected_region)
+        assert transport.audio_sizes == [1024] * 8
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("missing", ["AZURE_SPEECH_REGION", "AZURE_SPEECH_KEY"])
+async def test_primary_only_requires_primary_configuration(monkeypatch, azure_responses, audio_file, missing):
+    transport = azure_responses([ok()], [FALLBACK_1, FALLBACK_2])
+    monkeypatch.setattr(azure, "settings", region_settings(**{missing: ""}))
+
+    with pytest.raises(TranscriptionFailedError, match="primary Azure speech region"):
+        await AzureSpeechAdapter.start(audio_file, attempt=2, allow_fallbacks=False)
+    assert transport.requests == []
 
 
 @pytest.mark.asyncio

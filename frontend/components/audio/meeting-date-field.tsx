@@ -89,55 +89,53 @@ export const MeetingDateField = () => {
       <fieldset
         className="govuk-fieldset"
         role="group"
-        aria-describedby={`meeting-date-hint${error ? ' meeting-date-error' : ''}`}
+        aria-describedby={error ? 'meeting-date-error' : undefined}
       >
         <legend className="govuk-fieldset__legend">
           Meeting date (optional)
         </legend>
-        <div id="meeting-date-hint" className="govuk-hint">
-          For example, 27 3 2026. If you leave this blank, the summary will say
-          the date was not provided.
-        </div>
         {error && (
           <p id="meeting-date-error" className="govuk-error-message">
             <span className="govuk-visually-hidden">Error:</span> {error}
           </p>
         )}
-        <div className="govuk-date-input">
-          {DATE_FIELDS.map(({ part, label, width }) => (
-            <div className="govuk-date-input__item" key={part}>
-              <div className="govuk-form-group">
-                <label
-                  className="govuk-label govuk-date-input__label"
-                  htmlFor={`meeting-date-${part}`}
-                >
-                  {label}
-                </label>
-                <input
-                  className={`govuk-input govuk-date-input__input govuk-input--width-${width} ${error ? 'govuk-input--error' : ''}`}
-                  id={`meeting-date-${part}`}
-                  type="text"
-                  inputMode="numeric"
-                  value={parts[part]}
-                  onChange={(e) => setPart(part, e.target.value)}
-                  onBlur={field.onBlur}
-                />
+        <div className="flex flex-wrap items-end">
+          <div className="govuk-date-input">
+            {DATE_FIELDS.map(({ part, label, width }) => (
+              <div className="govuk-date-input__item" key={part}>
+                <div className="govuk-form-group">
+                  <label
+                    className="govuk-label govuk-date-input__label"
+                    htmlFor={`meeting-date-${part}`}
+                  >
+                    {label}
+                  </label>
+                  <input
+                    className={`govuk-input govuk-input--subtle govuk-date-input__input govuk-input--width-${width} ${error ? 'govuk-input--error' : ''}`}
+                    id={`meeting-date-${part}`}
+                    type="text"
+                    inputMode="numeric"
+                    value={parts[part]}
+                    onChange={(e) => setPart(part, e.target.value)}
+                    onBlur={field.onBlur}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          {hasDate && (
+            <button
+              type="button"
+              className="govuk-link govuk-!-font-size-16 leading-10 text-(--govuk-link-colour) hover:cursor-pointer"
+              onClick={() => {
+                clearErrors('meeting_date')
+                field.onChange('')
+              }}
+            >
+              Provide no date
+            </button>
+          )}
         </div>
-        {hasDate && (
-          <button
-            type="button"
-            className="govuk-link govuk-!-font-size-16 govuk-!-margin-top-2 block text-(--govuk-link-colour) hover:cursor-pointer"
-            onClick={() => {
-              clearErrors('meeting_date')
-              field.onChange('')
-            }}
-          >
-            Clear date
-          </button>
-        )}
       </fieldset>
     </div>
   )

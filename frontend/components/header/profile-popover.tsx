@@ -1,6 +1,6 @@
 'use client'
 
-import { LogOut, Phone } from 'lucide-react'
+import { LogOut, User } from 'lucide-react'
 import {
   Popover,
   PopoverContent,
@@ -9,14 +9,12 @@ import {
 import { useEffect, useState } from 'react'
 import { GuardedLink } from '@/components/navigation/guarded-link'
 import ProfileAvatar from '@/components/profile-avatar'
-import { ChangeNameDialog } from '@/components/header/change-name-dialog'
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
 import { usePathname } from 'next/navigation'
 
 const ProfilePopover = () => {
   const [isOpen, setIsOpen] = useState(false)
-  const [nameDialogOpen, setNameDialogOpen] = useState(false)
   const pathname = usePathname()
   const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
   useEffect(() => setIsOpen(false), [pathname])
@@ -31,13 +29,14 @@ const ProfilePopover = () => {
           >
             <ProfileAvatar
               size="small"
+              inverse
               fullName={user?.display_name}
               aria-hidden
             />
             <span className="govuk-!-font-size-16 sr-only sm:not-sr-only">
               {user?.display_name || 'Profile'}
             </span>
-            <span className="sr-only">open for profile and help links</span>
+            <span className="sr-only">open for profile links</span>
           </button>
         </PopoverTrigger>
         <PopoverContent
@@ -45,7 +44,7 @@ const ProfilePopover = () => {
           aria-labelledby="display-name-heading"
           className="govuk-service-navigation--side-nav w-90 rounded-none bg-(--govuk-surface-background-colour)"
         >
-          <div className="flex items-center gap-4">
+          <div className="govuk-!-margin-bottom-2 flex items-center gap-4">
             <ProfileAvatar fullName={user?.display_name} />
             <div className="flex flex-col items-start">
               <h2
@@ -55,31 +54,17 @@ const ProfilePopover = () => {
                 {user?.display_name}
               </h2>
               <p className="govuk-body-s govuk-!-margin-0">{user?.email}</p>
-
-              <button
-                type="button"
-                className="govuk-link govuk-link--no-visited-state govuk-link--no-underline cursor-pointer text-(--govuk-link-colour)"
-                onClick={() => {
-                  setIsOpen(false)
-                  setNameDialogOpen(true)
-                }}
-              >
-                Change name
-              </button>
             </div>
           </div>
-          <nav
-            aria-label="Profile menu"
-            className="hidden flex-col gap-2 sm:flex"
-          >
+          <nav aria-label="Profile menu" className="flex flex-col gap-2">
             <ul>
               <li className="govuk-service-navigation__item w-full">
                 <GuardedLink
-                  href="/support"
+                  href="/profile"
                   className="govuk-service-navigation__link"
                 >
-                  <Phone className="size-5" />
-                  Contact us
+                  <User className="size-5" />
+                  Your account
                 </GuardedLink>
               </li>
               <li className="govuk-service-navigation__item w-full">
@@ -93,32 +78,9 @@ const ProfilePopover = () => {
                 </GuardedLink>
               </li>
             </ul>
-            <ul className="flex justify-center gap-4">
-              <li>
-                <GuardedLink
-                  href="/privacy"
-                  className="govuk-link govuk-link--no-visited-state govuk-link--no-underline !text-[#484949]"
-                >
-                  Privacy
-                </GuardedLink>
-              </li>
-              <li>
-                <GuardedLink
-                  href="/accessibility"
-                  className="govuk-link govuk-link--no-visited-state govuk-link--no-underline !text-[#484949]"
-                >
-                  Accessibility
-                </GuardedLink>
-              </li>
-            </ul>
           </nav>
         </PopoverContent>
       </Popover>
-      <ChangeNameDialog
-        open={nameDialogOpen}
-        onOpenChange={setNameDialogOpen}
-        displayName={user?.display_name}
-      />
     </>
   )
 }

@@ -7,8 +7,6 @@ import {
   ChevronUp,
   LayoutPanelTop,
   Mic,
-  Phone,
-  LogOut,
 } from 'lucide-react'
 import { requestOnboardingTourRestart } from '@/hooks/use-onboarding-tour'
 import { TranscriptMenu } from '@/components/layout/transcript-menu'
@@ -148,43 +146,43 @@ export const ServiceNavigation = () => {
                   Templates
                 </GuardedLink>
               </li>
-              <li
-                className={`govuk-service-navigation__item govuk-!-margin-top-8 sm:hidden! ${pathname.includes('/support') ? 'govuk-service-navigation__item--active' : ''}`}
-              >
-                <GuardedLink
-                  className="govuk-service-navigation__link"
-                  href="/support"
-                  aria-current={
-                    pathname.includes('/support') ? 'page' : undefined
-                  }
-                >
-                  <Phone className="size-5" />
-                  Contact us
-                </GuardedLink>
-              </li>
-              <li className="govuk-service-navigation__item sm:hidden!">
-                <GuardedLink
-                  className="govuk-service-navigation__link"
-                  href="/sign-out"
-                  prefetch={false}
-                >
-                  <LogOut className="size-5" />
-                  Sign out
-                </GuardedLink>
-              </li>
             </ul>
-            <div className="mt-auto hidden w-full sm:block">
-              {showTour && !noSummaries && (
-                <div className="govuk-!-padding-top-3 govuk-!-padding-bottom-3">
-                  <button
-                    type="button"
-                    className="govuk-service-navigation__link cursor-pointer text-(--govuk-link-colour) sm:mx-auto"
-                    onClick={requestOnboardingTourRestart}
+            <div className="hidden sm:block">
+              <ul className="govuk-service-navigation__list">
+                {showTour && !noSummaries && (
+                  <li className="govuk-service-navigation__item govuk-service-navigation__item--small">
+                    <button
+                      type="button"
+                      className="govuk-service-navigation__link cursor-pointer text-(--govuk-link-colour)"
+                      onClick={requestOnboardingTourRestart}
+                    >
+                      Tour this page
+                    </button>
+                  </li>
+                )}
+                <li
+                  className={`govuk-service-navigation__item govuk-service-navigation__item--small ${pathname.includes('/support') ? 'govuk-service-navigation__item--active' : ''}`}
+                >
+                  <GuardedLink
+                    className="govuk-service-navigation__link"
+                    href="/support"
                   >
-                    Tour this page
-                  </button>
-                </div>
-              )}
+                    Contact
+                  </GuardedLink>
+                </li>
+              </ul>
+              <ul className="govuk-service-navigation__list govuk-service-navigation__list--footer">
+                <li
+                  className={`govuk-service-navigation__item govuk-service-navigation__item--small ${pathname.includes('/legal') ? 'govuk-service-navigation__item--active' : ''}`}
+                >
+                  <GuardedLink
+                    className="govuk-service-navigation__link"
+                    href="/legal"
+                  >
+                    Legal
+                  </GuardedLink>
+                </li>
+              </ul>
             </div>
           </nav>
         </div>

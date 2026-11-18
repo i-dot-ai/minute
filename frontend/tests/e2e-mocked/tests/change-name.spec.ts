@@ -5,7 +5,14 @@ test('changing the display name updates the profile', async ({ page }) => {
   await mockBackend(page)
 
   await page.goto('/')
-  await page.getByRole('button', { name: 'Name Surname' }).click()
+  await page
+    .getByRole('button', { name: 'Name Surname open for profile links' })
+    .click()
+  await page.getByRole('link', { name: 'Your account' }).click()
+
+  await expect(page).toHaveURL('/profile')
+  await expect(page.getByRole('cell', { name: 'Name Surname' })).toBeVisible()
+
   await page.getByRole('button', { name: 'Change name' }).click()
 
   const dialog = page.getByRole('dialog')
@@ -20,8 +27,10 @@ test('changing the display name updates the profile', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Save' }).click()
 
   await expect(dialog).toBeHidden()
-  await expect(page.getByRole('button', { name: 'New Name' })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'New Name' })).toBeVisible()
 
-  await page.locator('#profile-button').click()
+  await page
+    .getByRole('button', { name: 'New Name open for profile links' })
+    .click()
   await expect(page.getByRole('heading', { name: 'New Name' })).toBeVisible()
 })

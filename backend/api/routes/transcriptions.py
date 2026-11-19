@@ -170,7 +170,7 @@ async def list_transcriptions(
 
 
 @transcriptions_router.get("/transcriptions/search", response_model=PaginatedTranscriptionSearchResponse)
-async def search_transcriptions(
+async def search_transcriptions(  # noqa: C901 # Keep matching and page validation together.
     session: SQLSessionDep,
     current_user: UserDep,
     response: Response,
@@ -244,6 +244,8 @@ async def search_transcriptions(
     items = []
     for transcription in sorted(page_transcriptions, key=lambda transcription: page_order[transcription.id]):
         matches, truncated = search_previews(matching_sources(transcription, patterns, selected), patterns)
+        if not matches:
+            continue
         items.append(
             TranscriptionSearchResult(
                 id=transcription.id,

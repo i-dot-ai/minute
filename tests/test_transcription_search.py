@@ -161,6 +161,31 @@ async def test_search_ranks_sources_before_date_and_paginates(
                 ]
 
 
+@pytest.mark.asyncio
+async def test_search_omits_rows_edited_after_matching(monkeypatch):
+    monkeypatch.setattr("backend.api.routes.transcriptions.SEARCH_BATCH_SIZE", 1)
+    now = datetime.now(UTC)
+    rows = [Transcription(title="Budget", created_datetime=now - timedelta(minutes=index)) for index in range(2)]
+    # The page fetch sees a rename committed after the matching pass.
+    page_rows = [rows[0].model_copy(update={"title": "Changed"}), rows[1]]
+    results = [[rows[0]], [rows[1]], [], page_rows]
+    session = SimpleNamespace(exec=AsyncMock(side_effect=[SimpleNamespace(all=lambda b=b: b) for b in results]))
+
+    response = await search_transcriptions(
+        session,
+        User(data_retention_days=None),
+        Response(),
+        search="budget",
+        page_size=2,
+        sources=(TranscriptionSearchSource.TITLE,),
+    )
+
+    assert response.total_count == 2
+    assert response.total_pages == 1
+    assert [item.id for item in response.items] == [rows[1].id]
+    assert response.items[0].matches[0].snippet == "Budget"
+
+
 @pytest_asyncio.fixture
 async def searchable():
     token = f"searchtest{uuid.uuid4().hex}"

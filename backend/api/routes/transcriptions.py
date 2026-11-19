@@ -148,6 +148,7 @@ async def list_transcriptions(
         TranscriptionMetadata(
             id=t.id,
             created_datetime=t.created_datetime,
+            meeting_datetime=t.meeting_datetime,
             title=t.title,
             text=t.dialogue_entries[0]["text"][:100] if t.dialogue_entries else "",
             status=t.status,

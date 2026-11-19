@@ -13,6 +13,10 @@ import {
   SpeakerEditorDialog,
   SpeakerRenames,
 } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerEditor'
+import {
+  MeetingOptionsMenu,
+  MeetingTimeLine,
+} from '@/components/recent-meetings/meeting-options-menu'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
 import { useGenerateSummaryFromMinute } from '@/hooks/use-generate-summary-from-minute'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
@@ -406,9 +410,15 @@ export default function SummaryPage({
               />
             </form>
           ) : (
-            <h1 className="govuk-heading-l govuk-!-margin-top-4">
-              {transcription.title}
-            </h1>
+            <>
+              <div className="govuk-!-margin-top-4 flex items-start justify-between gap-4">
+                <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
+                  {transcription.title}
+                </h1>
+                <MeetingOptionsMenu transcription={transcription} />
+              </div>
+              <MeetingTimeLine transcription={transcription} />
+            </>
           )}
           {!minute ? (
             <p className="govuk-body">Summary not found.</p>

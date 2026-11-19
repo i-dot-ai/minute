@@ -6,6 +6,10 @@ import { DialogueEntryForm } from '@/types/transcriptions'
 import { ExportTranscriptDialog } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/ExportTranscriptDialog'
 import { formatTime } from '@/components/audio/audio-player'
 import { ProcessingCard } from '@/components/processing-card'
+import {
+  MeetingOptionsMenu,
+  MeetingTimeLine,
+} from '@/components/recent-meetings/meeting-options-menu'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import {
@@ -425,9 +429,15 @@ export default function TranscriptPage({
                 />
               </div>
             ) : (
-              <h1 className="govuk-heading-m govuk-!-margin-top-4">
-                {transcription.title}
-              </h1>
+              <>
+                <div className="govuk-!-margin-top-4 flex items-start justify-between gap-4">
+                  <h1 className="govuk-heading-m govuk-!-margin-bottom-2">
+                    {transcription.title}
+                  </h1>
+                  <MeetingOptionsMenu transcription={transcription} />
+                </div>
+                <MeetingTimeLine transcription={transcription} />
+              </>
             )}
             <form onSubmit={handleSave}>
               <div className="flex flex-col gap-6">

@@ -1,6 +1,4 @@
 # flake8: noqa: E501, RUF001
-from datetime import datetime
-
 from common.database.postgres_models import DialogueEntry
 from common.prompts import get_transcript_messages
 from common.templates.types import SimpleTemplate
@@ -15,12 +13,7 @@ class ExecutiveSummary(SimpleTemplate):
     agenda_usage = AgendaUsage.NOT_USED
 
     @classmethod
-    def prompt(
-        cls,
-        transcript: list[DialogueEntry],
-        agenda: str | None = None,  # noqa: ARG003
-        meeting_datetime: datetime | None = None,  # noqa: ARG003
-    ) -> list[dict[str, str]]:
+    def prompt(cls, transcript: list[DialogueEntry], agenda: str | None = None) -> list[dict[str, str]]:  # noqa: ARG003
         prompt = """You are an expert meeting summary writer. You are given a transcript of a meeting and you need to generate a concise summary of the meeting. The user has been told that this is a 'short and sweet' summary, so ensure that the summary is relatively short.
 
 Your summary should:

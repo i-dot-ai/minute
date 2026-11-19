@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Protocol
 
 from common.database.postgres_models import DialogueEntry, Minute
@@ -67,9 +66,7 @@ class SimpleTemplate(Template, Protocol):
     citations_required: bool
 
     @classmethod
-    def prompt(
-        cls, transcript: list[DialogueEntry], agenda: str | None = None, meeting_datetime: datetime | None = None
-    ) -> list[dict[str, str]]:
+    def prompt(cls, transcript: list[DialogueEntry], agenda: str | None = None) -> list[dict[str, str]]:
         """
         Generates a formatted prompt based on a transcript of dialogue entries and an agenda.
 
@@ -82,8 +79,6 @@ class SimpleTemplate(Template, Protocol):
                 dialogue data to be included in the prompt.
             agenda: An optional agenda or topic that will influence the
                 content or context of the prompt.
-            meeting_datetime: When the meeting started. Templates must use this
-                rather than infer a date from the transcript.
 
         Returns:
             list[dict[str, str]]: A list of dictionaries, where each dictionary contains
@@ -97,9 +92,7 @@ class SimpleTemplate(Template, Protocol):
         minute: Minute,
     ) -> str:
         chatbot = create_default_chatbot(FastOrBestLLM.BEST)
-        minutes = await chatbot.chat(
-            cls.prompt(minute.transcription.dialogue_entries, minute.agenda, minute.transcription.meeting_datetime)
-        )
+        minutes = await chatbot.chat(cls.prompt(minute.transcription.dialogue_entries, minute.agenda))
         if cls.citations_required:
             minutes = await add_citations_to_minute(
                 transcript=minute.transcription.dialogue_entries, initial_draft=minutes

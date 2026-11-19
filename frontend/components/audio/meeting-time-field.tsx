@@ -102,7 +102,7 @@ export const toApiMeetingDatetime = (value?: MeetingTime) =>
     ? toDate(value)?.toISOString()
     : undefined
 
-const formatMeetingTime = (date: Date) =>
+export const formatMeetingTime = (date: Date) =>
   `${date.toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'long',
@@ -115,7 +115,11 @@ const DATE_FIELDS = [
   { part: 'year', label: 'Year', width: 4 },
 ] as const
 
-export const MeetingTimeField = () => {
+export const MeetingTimeField = ({
+  startEditing = false,
+}: {
+  startEditing?: boolean
+}) => {
   const { clearErrors } = useFormContext<TranscriptionForm>()
   const { field, fieldState } = useController<
     TranscriptionForm,
@@ -126,7 +130,7 @@ export const MeetingTimeField = () => {
   })
   // Most people only need to check the pre-filled time, so show it as one line
   // and open the boxes on "Change", or straight away if there's nothing to show.
-  const [editing, setEditing] = useState(false)
+  const [editing, setEditing] = useState(startEditing)
   const value = field.value ?? { day: '', month: '', year: '', time: '' }
   const error = fieldState.error?.message
 

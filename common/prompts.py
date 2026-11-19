@@ -1,26 +1,19 @@
 # flake8: noqa: E501
-from datetime import date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from common.database.postgres_models import DialogueEntry
 from common.format_transcript import transcript_as_index_speaker_and_utterance, transcript_as_speaker_and_utterance
 
-MEETING_DATE_NOT_PROVIDED = "Not provided"
-
 MEETING_DATE_INSTRUCTION = (
-    "Only use the meeting date given above. If it is "
-    f'"{MEETING_DATE_NOT_PROVIDED}", write "{MEETING_DATE_NOT_PROVIDED}" wherever the meeting date is needed, '
-    "and never work out or guess the meeting date from the transcript."
+    "Only use the meeting date given above, and never work out or guess the meeting date from the transcript."
 )
 
 
-def format_meeting_date(meeting_date: date | None) -> str:
-    """Format the user-provided meeting date for a prompt, e.g. "3 November 2026".
-
-    The date only ever comes from the user, so when it is missing we say so rather than infer one.
-    """
-    if meeting_date is None:
-        return MEETING_DATE_NOT_PROVIDED
-    return f"{meeting_date.day} {meeting_date:%B %Y}"
+def format_meeting_date(meeting_datetime: datetime) -> str:
+    """Format the meeting start date for a prompt in UK time, e.g. "3 November 2026"."""
+    local = meeting_datetime.astimezone(ZoneInfo("Europe/London"))
+    return f"{local.day} {local:%B %Y}"
 
 
 def get_transcript_messages(transcript: list[DialogueEntry]) -> dict[str, str]:

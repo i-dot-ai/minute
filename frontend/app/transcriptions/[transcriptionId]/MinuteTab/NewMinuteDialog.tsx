@@ -1,18 +1,14 @@
 'use client'
 
 import { GenerateSummaryDialog } from '@/components/audio/generate-summary-dialog'
-import { toApiMeetingDate } from '@/components/audio/meeting-date-field'
 import { TranscriptionForm } from '@/components/audio/types'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
-  getTranscriptionTranscriptionsTranscriptionIdGetOptions,
-  getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
-  saveTranscriptionTranscriptionsTranscriptionIdPatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useDefaultTemplate } from '@/hooks/useDefaultTemplate'
 import { Template } from '@/types/templates'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import posthog from 'posthog-js'
 import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
@@ -44,21 +40,12 @@ export function NewMinuteDialog({
   icon?: boolean
 }) {
   const [open, setOpen] = useState(false)
-  const [errorText, setErrorText] = useState<string>()
   const defaultTemplate = useDefaultTemplate()
-  // Already cached by every page that renders this dialog.
-  const { data: transcription } = useQuery(
-    getTranscriptionTranscriptionsTranscriptionIdGetOptions({
-      path: { transcription_id: transcriptionId },
-    })
-  )
-  const savedMeetingDate = transcription?.meeting_date ?? ''
   const form = useForm<TranscriptionForm>({
     defaultValues: {
       file: null,
       template: GENERAL_TEMPLATE,
       agenda,
-      meeting_date: savedMeetingDate,
     },
   })
   useEffect(() => {
@@ -67,10 +54,9 @@ export function NewMinuteDialog({
         file: null,
         template: defaultTemplate ?? GENERAL_TEMPLATE,
         agenda,
-        meeting_date: savedMeetingDate,
       })
     }
-  }, [agenda, form, open, defaultTemplate, savedMeetingDate])
+  }, [agenda, form, open, defaultTemplate])
   const queryClient = useQueryClient()
 
   const selectedTemplate = form.watch('template')
@@ -82,36 +68,8 @@ export function NewMinuteDialog({
   const { mutate: createMinute, isPending } = useMutation({
     ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
   })
-  const { mutateAsync: saveTranscription, isPending: isSavingDate } =
-    useMutation({
-      ...saveTranscriptionTranscriptionsTranscriptionIdPatchMutation(),
-    })
 
-  const onSubmit = async ({
-    template,
-    agenda,
-    meeting_date,
-  }: TranscriptionForm) => {
-    setErrorText(undefined)
-    // The date lives on the transcription, so save it before generating the
-    // summary that reads it.
-    const meetingDate = toApiMeetingDate(meeting_date)
-    if ((meetingDate ?? '') !== savedMeetingDate) {
-      try {
-        await saveTranscription({
-          path: { transcription_id: transcriptionId },
-          body: { meeting_date: meetingDate },
-        })
-      } catch {
-        setErrorText('Could not save the meeting date. Please try again.')
-        return
-      }
-      await queryClient.invalidateQueries({
-        queryKey: getTranscriptionTranscriptionsTranscriptionIdGetQueryKey({
-          path: { transcription_id: transcriptionId },
-        }),
-      })
-    }
+  const onSubmit = ({ template, agenda }: TranscriptionForm) => {
     createMinute(
       {
         path: { transcription_id: transcriptionId },
@@ -157,11 +115,7 @@ export function NewMinuteDialog({
           open={open}
           onOpenChange={setOpen}
           onConfirm={form.handleSubmit(onSubmit)}
-          disabled={
-            isPending || isSavingDate || (agendaRequired && !agendaValue)
-          }
-          errorText={errorText}
-          showMeetingDate
+          disabled={isPending || (agendaRequired && !agendaValue)}
         />
       </FormProvider>
     </>

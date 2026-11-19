@@ -15,7 +15,7 @@ export default function RecordPage() {
     uploadFile,
     uploadTemplate,
     uploadAgenda,
-    uploadMeetingDate,
+    uploadMeetingTime,
     devices,
     selectedDeviceId,
     reset,
@@ -73,7 +73,7 @@ export default function RecordPage() {
               file={uploadFile}
               template={uploadTemplate}
               agenda={uploadAgenda}
-              meetingDate={uploadMeetingDate}
+              meetingTime={uploadMeetingTime}
               onDiscard={handleDiscard}
               onStarted={handleStarted}
             />

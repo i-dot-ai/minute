@@ -1,5 +1,5 @@
 # flake8: noqa: E501, RUF001
-from datetime import date
+from datetime import datetime
 
 from common.database.postgres_models import DialogueEntry
 from common.format_transcript import transcript_as_speaker_and_utterance
@@ -34,7 +34,7 @@ class CareAssessmentV2(SimpleTemplate):
         cls,
         transcript: list[DialogueEntry],
         agenda: str | None = None,  # noqa: ARG003
-        meeting_date: date | None = None,  # noqa: ARG003
+        meeting_datetime: datetime | None = None,  # noqa: ARG003
     ) -> list[dict[str, str]]:
         return [
             {

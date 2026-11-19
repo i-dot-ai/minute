@@ -12,6 +12,8 @@ import {
 // Define the type for recording items
 export type RecordingDbItem = {
   recording_id: string
+  // When recording started. Missing on recordings saved before it was added.
+  created_at?: Date
   updated_at: Date
   blob: Blob
 }
@@ -62,10 +64,12 @@ export function RecordingDbProvider({ children }: RecordingDbProviderProps) {
         const transaction = db.transaction('recordings', 'readwrite')
         const objectStore = transaction.objectStore('recordings')
         const recording_id = crypto.randomUUID()
+        const now = new Date()
         objectStore.add({
           recording_id,
           blob,
-          updated_at: new Date(),
+          created_at: now,
+          updated_at: now,
         })
         transaction.oncomplete = () => {
           resolve(recording_id)
@@ -121,11 +125,16 @@ export function RecordingDbProvider({ children }: RecordingDbProviderProps) {
         if (!db) return reject(new Error('Database not found'))
         const transaction = db.transaction('recordings', 'readwrite')
         const objectStore = transaction.objectStore('recordings')
-        objectStore.put({
-          recording_id: id,
-          blob: blob,
-          updated_at: new Date(),
-        })
+        // Read first so the put keeps created_at.
+        const existing = objectStore.get(id)
+        existing.onsuccess = () => {
+          objectStore.put({
+            ...existing.result,
+            recording_id: id,
+            blob: blob,
+            updated_at: new Date(),
+          })
+        }
         transaction.oncomplete = () => {
           resolve()
         }

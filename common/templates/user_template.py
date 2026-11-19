@@ -67,8 +67,7 @@ form_system_prompt = """Instructions:
 - Answer based solely on information in the transcript
 - Follow any specific instructions provided in the question description and style guide
 - If the document doesn't contain relevant information, respond with "Information not found in transcript"
-- For the meeting date, use only the date in <meeting_date>; if it says "Not provided", answer "Not provided" \
-and never work out or guess the date from the transcript
+- For the meeting date, use only the date in <meeting_date> and never work out or guess the date from the transcript
 - Ensure your answer is consistent with previously answered questions
 - Do not repeat information already provided in previous answers unless directly relevant to this question
 - You provide only the direct answer to the question. \
@@ -85,7 +84,7 @@ async def generate_user_template(template: UserTemplate, transcription: Transcri
                 "role": "system",
                 "content": document_prompt.format(
                     template=markdown_template,
-                    meeting_date=format_meeting_date(transcription.meeting_date),
+                    meeting_date=format_meeting_date(transcription.meeting_datetime),
                     meeting_date_instruction=MEETING_DATE_INSTRUCTION,
                 ),
             },
@@ -115,7 +114,7 @@ async def generate_user_template(template: UserTemplate, transcription: Transcri
                 {
                     "role": "user",
                     "content": form_prompt.format(
-                        meeting_date=format_meeting_date(transcription.meeting_date),
+                        meeting_date=format_meeting_date(transcription.meeting_datetime),
                         transcript=transcript_as_speaker_and_utterance(transcription.dialogue_entries or []),
                         style_guide=template.content,
                         previous_questions=previous_questions,

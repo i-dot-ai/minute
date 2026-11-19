@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 import pytest_asyncio
 from fastapi import Response
+from sqlalchemy import update
 from sqlmodel import col, delete
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -161,29 +162,40 @@ async def test_search_ranks_sources_before_date_and_paginates(
                 ]
 
 
-@pytest.mark.asyncio
-async def test_search_omits_rows_edited_after_matching(monkeypatch):
-    monkeypatch.setattr("backend.api.routes.transcriptions.SEARCH_BATCH_SIZE", 1)
-    now = datetime.now(UTC)
-    rows = [Transcription(title="Budget", created_datetime=now - timedelta(minutes=index)) for index in range(2)]
-    # The page fetch sees a rename committed after the matching pass.
-    page_rows = [rows[0].model_copy(update={"title": "Changed"}), rows[1]]
-    results = [[rows[0]], [rows[1]], [], page_rows]
-    session = SimpleNamespace(exec=AsyncMock(side_effect=[SimpleNamespace(all=lambda b=b: b) for b in results]))
+@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.parametrize(
+    ("source", "key"),
+    [(TranscriptionSearchSource.TITLE, "title"), (TranscriptionSearchSource.SUMMARY, "history")],
+)
+async def test_search_omits_rows_edited_after_matching(searchable, monkeypatch, source, key):
+    token, rows, versions = searchable
+    async with AsyncSession(async_engine, expire_on_commit=False) as session:
+        # Keep the scanned object alive so the page query must refresh it.
+        transcription = await session.get(Transcription, rows[key].id)
+        user = await session.get(User, transcription.user_id)
+        exec_query = session.exec
 
-    response = await search_transcriptions(
-        session,
-        User(data_retention_days=None),
-        Response(),
-        search="budget",
-        page_size=2,
-        sources=(TranscriptionSearchSource.TITLE,),
-    )
+        async def exec_with_edit(statement):
+            if "id_1" in statement.compile().params:
+                # Commit the edit from another session just before fetching the page.
+                async with AsyncSession(async_engine) as writer:
+                    if source == TranscriptionSearchSource.TITLE:
+                        await writer.exec(
+                            update(Transcription).where(Transcription.id == transcription.id).values(title="Changed")
+                        )
+                    else:
+                        await writer.exec(
+                            delete(MinuteVersion).where(MinuteVersion.minute_id == versions[key][0].minute_id)
+                        )
+                    await writer.commit()
+            return await exec_query(statement)
 
-    assert response.total_count == 2
+        monkeypatch.setattr(session, "exec", exec_with_edit)
+        response = await search_transcriptions(session, user, Response(), search=f"{token} approval", sources=(source,))
+
+    assert response.total_count == 1
     assert response.total_pages == 1
-    assert [item.id for item in response.items] == [rows[1].id]
-    assert response.items[0].matches[0].snippet == "Budget"
+    assert response.items == []
 
 
 @pytest_asyncio.fixture

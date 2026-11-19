@@ -238,9 +238,8 @@ async def search_transcriptions(  # noqa: C901 # Keep matching and page validati
     ranked_ids = [transcription_id for source_ids in ids_by_source.values() for transcription_id in source_ids]
     page_ids = ranked_ids[result_offset : result_offset + page_size]
     page_order = {transcription_id: index for index, transcription_id in enumerate(page_ids)}
-    page_transcriptions = (
-        (await session.exec(statement.where(col(Transcription.id).in_(page_ids)))).all() if page_ids else []
-    )
+    page_statement = statement.where(col(Transcription.id).in_(page_ids)).execution_options(populate_existing=True)
+    page_transcriptions = (await session.exec(page_statement)).all() if page_ids else []
     items = []
     for transcription in sorted(page_transcriptions, key=lambda transcription: page_order[transcription.id]):
         matches, truncated = search_previews(matching_sources(transcription, patterns, selected), patterns)

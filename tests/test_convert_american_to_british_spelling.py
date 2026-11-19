@@ -1,6 +1,8 @@
 # ruff: noqa: S101
 import time
 
+import pytest
+
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 
 # Same code path, different strings: one table beats one test per sentence.
@@ -45,6 +47,36 @@ def test_converts_expected_cases():
 def test_markdown_syntax():
     for input_text, expected in MARKDOWN_CASES:
         assert convert_american_to_british_spelling(input_text) == expected, input_text
+
+
+@pytest.mark.parametrize("strict", [False, True])
+@pytest.mark.parametrize("case", [str.lower, str.title, str.upper, str.swapcase])
+@pytest.mark.parametrize("word", ["draft", "practice", "license", "licensed", "meter", "disk", "tire", "program"])
+def test_preserves_ambiguous_british_words(word, case, strict):
+    text = case(word)
+    assert convert_american_to_british_spelling(text, strict=strict) == text
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Tom agreed to draft the response.",
+        "This is best practice.",
+        "We license software; the software is licensed.",
+        "Check the smart meter and disk storage.",
+        "Delegates tire of the computer program.",
+        "The first draft follows good practice, with a licensed computer program.",
+    ],
+)
+def test_preserves_british_words_in_minutes(text):
+    assert convert_american_to_british_spelling(text) == text
+
+
+@pytest.mark.parametrize("strict", [False, True])
+def test_converts_other_words_alongside_exclusions(strict):
+    text = "Draft the program to analyze color and organize the theater."
+    expected = "Draft the program to analyse colour and organise the theatre."
+    assert convert_american_to_british_spelling(text, strict=strict) == expected
 
 
 def test_large_trailing_non_letter_run_is_fast():

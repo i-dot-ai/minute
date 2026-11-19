@@ -88,6 +88,9 @@ import type {
   SaveTranscriptionTranscriptionsTranscriptionIdPatchData,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchErrors,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchResponses,
+  SearchTranscriptionsTranscriptionsSearchGetData,
+  SearchTranscriptionsTranscriptionsSearchGetErrors,
+  SearchTranscriptionsTranscriptionsSearchGetResponses,
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchErrors,
   UpdateDataRetentionUsersDataRetentionPatchResponses,
@@ -205,6 +208,30 @@ export const createTranscriptionTranscriptionsPost = <
       ...options.headers,
     },
   })
+
+/**
+ * Search Transcriptions
+ *
+ * Search selected sources within the current user's transcriptions.
+ *
+ * Keywords are literal, case-insensitive substrings; they can span transcript entries,
+ * but cannot be combined across sources, speaker labels or summary versions.
+ * Speakers match stored labels, not mentions in speech. Results rank title, speaker,
+ * summary, then transcript, newest first within each rank.
+ */
+export const searchTranscriptionsTranscriptionsSearchGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    SearchTranscriptionsTranscriptionsSearchGetData,
+    ThrowOnError
+  >
+) =>
+  (options.client ?? client).get<
+    SearchTranscriptionsTranscriptionsSearchGetResponses,
+    SearchTranscriptionsTranscriptionsSearchGetErrors,
+    ThrowOnError
+  >({ url: '/transcriptions/search', ...options })
 
 /**
  * Create Recording

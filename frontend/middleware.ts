@@ -9,9 +9,9 @@ const PUBLIC_PATHS = [
   '/health',
   '/generic-error',
   '/monitoring',
+  '/legal',
   '/legal/privacy',
   '/legal/accessibility',
-  '/legal',
   '/support',
   '/sign-out',
 ]
@@ -78,7 +78,7 @@ export async function middleware(req: NextRequest) {
       authResult = await parseAuthToken(token)
     } else {
       authResult = {
-        email: 'test@test.co.uk',
+        email: 'name.surname@domain.gov.uk',
         isAuthorised: true,
         authReason: 'LOCAL_TESTING',
       }

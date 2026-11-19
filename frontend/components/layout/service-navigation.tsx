@@ -47,7 +47,7 @@ export const ServiceNavigation = () => {
         <div className="govuk-service-navigation__container">
           <nav
             aria-label="Menu"
-            className="govuk-service-navigation__wrapper sm:flex sm:items-center sm:justify-between md:block"
+            className="govuk-service-navigation__wrapper flex w-full flex-wrap justify-between sm:items-center sm:justify-between md:block"
           >
             <button
               type="button"
@@ -58,7 +58,21 @@ export const ServiceNavigation = () => {
             >
               Menu
             </button>
-            <ul className="govuk-service-navigation__list" id="navigation">
+            {showTour && (
+              <div className="govuk-!-margin-top-2 govuk-!-margin-bottom-2 sm:hidden">
+                <button
+                  type="button"
+                  className="govuk-service-navigation__link cursor-pointer text-(--govuk-link-colour) sm:mx-auto"
+                  onClick={requestOnboardingTourRestart}
+                >
+                  Tour this page
+                </button>
+              </div>
+            )}
+            <ul
+              className="govuk-service-navigation__list w-full"
+              id="navigation"
+            >
               <li
                 className={`govuk-service-navigation__item ${pathname === '/' || pathname.includes('/new') ? 'govuk-service-navigation__item--active' : ''}`}
               >
@@ -133,21 +147,21 @@ export const ServiceNavigation = () => {
                 </GuardedLink>
               </li>
             </ul>
-            <div className="w-full sm:mt-auto">
-              {showTour && !noSummaries && (
-                <div className="govuk-!-padding-top-3 govuk-!-padding-bottom-3">
-                  <button
-                    type="button"
-                    className="govuk-service-navigation__link cursor-pointer text-(--govuk-link-colour) sm:mx-auto"
-                    onClick={requestOnboardingTourRestart}
-                  >
-                    Tour this page
-                  </button>
-                </div>
-              )}
-              <ul className="govuk-service-navigation__list govuk-service-navigation__list--footer">
+            <div className="hidden sm:block">
+              <ul className="govuk-service-navigation__list">
+                {showTour && !noSummaries && (
+                  <li className="govuk-service-navigation__item govuk-service-navigation__item--small">
+                    <button
+                      type="button"
+                      className="govuk-service-navigation__link cursor-pointer text-(--govuk-link-colour)"
+                      onClick={requestOnboardingTourRestart}
+                    >
+                      Tour this page
+                    </button>
+                  </li>
+                )}
                 <li
-                  className={`govuk-service-navigation__item ${pathname.includes('/support') ? 'govuk-service-navigation__item--active' : ''}`}
+                  className={`govuk-service-navigation__item govuk-service-navigation__item--small ${pathname.includes('/support') ? 'govuk-service-navigation__item--active' : ''}`}
                 >
                   <GuardedLink
                     className="govuk-service-navigation__link"
@@ -156,8 +170,10 @@ export const ServiceNavigation = () => {
                     Contact
                   </GuardedLink>
                 </li>
+              </ul>
+              <ul className="govuk-service-navigation__list govuk-service-navigation__list--footer">
                 <li
-                  className={`govuk-service-navigation__item ${pathname.includes('/legal') ? 'govuk-service-navigation__item--active' : ''}`}
+                  className={`govuk-service-navigation__item govuk-service-navigation__item--small ${pathname.includes('/legal') ? 'govuk-service-navigation__item--active' : ''}`}
                 >
                   <GuardedLink
                     className="govuk-service-navigation__link"

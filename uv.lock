@@ -489,16 +489,15 @@ wheels = [
 
 [[package]]
 name = "diagrams"
-version = "0.23.4"
+version = "0.24.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "graphviz" },
     { name = "jinja2" },
-    { name = "typed-ast" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/42/61/44cc86725be481d87c7f35de39cdc21e57ad38dca90d81a2dd14a166ecd2/diagrams-0.23.4.tar.gz", hash = "sha256:b7ada0b119b5189dd021b1dc1467fad3704737452bb18b1e06d05e4d1fa48ed7", size = 23853676, upload-time = "2023-10-30T14:10:29.686Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/05/1f/a72c52faf3d96a22289b887f6373f3feac07e7df0b6871962f7216dd6704/diagrams-0.24.1.tar.gz", hash = "sha256:47b77a0e4dac926a095ff2ae4dd4ec1a192be781799befc660a8f5ce6ea1052f", size = 24362844, upload-time = "2024-11-07T02:21:06.321Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a9/e0/ec876b8bb5b2201e8d5e990bd2f7f8b2f3e654316522dfd520c59291d3c0/diagrams-0.23.4-py3-none-any.whl", hash = "sha256:1ba69d98fcf8d768dbddf07d2c77aba6cc95c2e6f90f37146c04c96bc6765450", size = 24573100, upload-time = "2023-10-30T14:10:21.897Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/15/7e7f886b49701156f6686d38881413b64b01d1ee9bde72faf71fdc84c113/diagrams-0.24.1-py3-none-any.whl", hash = "sha256:c1e3267b018bdb66886a09214c7a7884796a0c28456f8aefdf38916a232c2362", size = 25090168, upload-time = "2024-11-07T02:20:55.375Z" },
 ]
 
 [[package]]
@@ -1072,7 +1071,7 @@ dev = [
     { name = "beautifulsoup4", specifier = ">=4.13.3,<5" },
     { name = "bumpversion", specifier = ">=0.6.0,<0.7" },
     { name = "detect-secrets", specifier = ">=1.5.0,<2" },
-    { name = "diagrams", specifier = ">=0.23.4,<0.24" },
+    { name = "diagrams", specifier = ">=0.24.1,<0.26" },
     { name = "ipykernel", specifier = ">=6.29.5,<7" },
     { name = "playwright", specifier = ">=1.45,<2" },
     { name = "pre-commit", specifier = ">=3.8.0,<4" },
@@ -2044,12 +2043,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/eb/79/72064e6a701c21830
 wheels = [
     { url = "https://files.pythonhosted.org/packages/00/c0/8f5d070730d7836adc9c9b6408dec68c6ced86b304a9b26a14df072a6e8c/traitlets-5.14.3-py3-none-any.whl", hash = "sha256:b74e89e397b1ed28cc831db7aea759ba6640cb3de13090ca145426688ff1ac4f", size = 85359, upload-time = "2024-04-19T11:11:46.763Z" },
 ]
-
-[[package]]
-name = "typed-ast"
-version = "1.5.5"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f9/7e/a424029f350aa8078b75fd0d360a787a273ca753a678d1104c5fa4f3072a/typed_ast-1.5.5.tar.gz", hash = "sha256:94282f7a354f36ef5dbce0ef3467ebf6a258e370ab33d5b40c249fa996e590dd", size = 252841, upload-time = "2023-07-04T18:38:08.524Z" }
 
 [[package]]
 name = "types-protobuf"

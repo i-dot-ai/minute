@@ -143,6 +143,14 @@ export type GetUserResponse = {
    */
   email: string
   /**
+   * Display Name
+   */
+  display_name: string
+  /**
+   * Roles
+   */
+  roles: Array<Role>
+  /**
    * Data Retention Days
    */
   data_retention_days: number | null
@@ -164,6 +172,36 @@ export type HttpValidationError = {
    * Detail
    */
   detail?: Array<ValidationError>
+}
+
+/**
+ * HourlyStatusResponse
+ */
+export type HourlyStatusResponse = {
+  /**
+   * Workflow Type
+   */
+  workflow_type: string
+  /**
+   * Collected At
+   */
+  collected_at: string
+  /**
+   * Partial
+   *
+   * Timing read limit reached; counts and failure rates are not capped
+   */
+  partial: boolean
+  /**
+   * Hours
+   *
+   * Oldest first, bucketed by close time; last hour is partial
+   */
+  hours: Array<StatusBucket>
+  /**
+   * Runs that closed in the 10 minutes before collected_at
+   */
+  last_10_minutes: StatusBucket
 }
 
 /**
@@ -455,6 +493,11 @@ export type RecordingCreateResponse = {
 }
 
 /**
+ * Role
+ */
+export type Role = 'admin' | 'audit'
+
+/**
  * SetDefaultTemplateRequest
  */
 export type SetDefaultTemplateRequest = {
@@ -466,6 +509,16 @@ export type SetDefaultTemplateRequest = {
    * Template Name
    */
   template_name?: string | null
+}
+
+/**
+ * SetDisplayNameRequest
+ */
+export type SetDisplayNameRequest = {
+  /**
+   * Display Name
+   */
+  display_name?: string | null
 }
 
 /**
@@ -484,6 +537,232 @@ export type SingleRecording = {
    * Extension
    */
   extension: string
+}
+
+/**
+ * StatusBucket
+ */
+export type StatusBucket = {
+  /**
+   * Start
+   */
+  start: string
+  /**
+   * Completed
+   */
+  completed: number
+  /**
+   * Failed
+   *
+   * Failed or timed out runs
+   */
+  failed: number
+  /**
+   * Failure Rate
+   *
+   * failed / (completed + failed); 0-1, null without outcomes
+   */
+  failure_rate: number | null
+  /**
+   * Avg Processing Seconds
+   *
+   * Mean start-to-close time of sampled completed runs
+   */
+  avg_processing_seconds: number | null
+  /**
+   * Audio Hours
+   *
+   * Audio in sampled completed runs that recorded its duration
+   */
+  audio_hours: number
+  /**
+   * Projected One Hour Seconds
+   *
+   * Projected total processing for one hour of audio: audio-independent part of each run plus the transcribe time one audio hour takes
+   */
+  projected_one_hour_seconds: number | null
+}
+
+/**
+ * StatusComponent
+ */
+export type StatusComponent = {
+  /**
+   * Workflow Type
+   */
+  workflow_type: string
+  counts: StatusCounts
+  /**
+   * Failure Rate
+   */
+  failure_rate: number | null
+  /**
+   * Completed Per Minute
+   */
+  completed_per_minute: number
+  processing_time_seconds: StatusDistribution
+  in_progress_age_seconds: StatusDistribution
+}
+
+/**
+ * StatusCounts
+ */
+export type StatusCounts = {
+  /**
+   * Started
+   */
+  started?: number
+  /**
+   * Completed
+   */
+  completed?: number
+  /**
+   * Failed
+   */
+  failed?: number
+  /**
+   * Timed Out
+   */
+  timed_out?: number
+  /**
+   * Canceled
+   */
+  canceled?: number
+  /**
+   * Terminated
+   */
+  terminated?: number
+  /**
+   * Continued As New
+   */
+  continued_as_new?: number
+  /**
+   * In Progress
+   */
+  in_progress?: number
+}
+
+/**
+ * StatusDistribution
+ */
+export type StatusDistribution = {
+  /**
+   * Sample Count
+   *
+   * Number of durations read, not an approximate Count API total
+   */
+  sample_count?: number
+  /**
+   * P50
+   */
+  p50?: number | null
+  /**
+   * P90
+   */
+  p90?: number | null
+  /**
+   * P99
+   */
+  p99?: number | null
+  /**
+   * Max
+   */
+  max?: number | null
+  /**
+   * Truncated
+   *
+   * Percentiles are omitted when more than 1,000 runs match
+   */
+  truncated?: boolean
+}
+
+/**
+ * StatusResponse
+ */
+export type StatusResponse = {
+  /**
+   * Horizon Seconds
+   */
+  horizon_seconds: number
+  /**
+   * Window Start
+   */
+  window_start: string
+  /**
+   * Window End
+   */
+  window_end: string
+  /**
+   * Collected At
+   */
+  collected_at: string
+  /**
+   * Source
+   */
+  source?: string
+  /**
+   * Counts Are Approximate
+   */
+  counts_are_approximate?: boolean
+  /**
+   * Partial
+   */
+  partial: boolean
+  summary: StatusSummary
+  /**
+   * Components
+   */
+  components: {
+    [key: string]: StatusComponent
+  }
+}
+
+/**
+ * StatusSummary
+ */
+export type StatusSummary = {
+  /**
+   * Started
+   */
+  started?: number
+  /**
+   * Completed
+   */
+  completed?: number
+  /**
+   * Failed
+   */
+  failed?: number
+  /**
+   * Timed Out
+   */
+  timed_out?: number
+  /**
+   * Canceled
+   */
+  canceled?: number
+  /**
+   * Terminated
+   */
+  terminated?: number
+  /**
+   * Continued As New
+   */
+  continued_as_new?: number
+  /**
+   * In Progress
+   */
+  in_progress?: number
+  /**
+   * Failure Rate
+   *
+   * (failed + timed_out) / (completed + failed + timed_out); 0-1
+   */
+  failure_rate: number | null
+  /**
+   * Completed Per Minute
+   */
+  completed_per_minute: number
 }
 
 /**
@@ -799,6 +1078,79 @@ export type HealthcheckHealthcheckGetResponses = {
    */
   200: unknown
 }
+
+export type GetStatusStatusGetData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query?: {
+    /**
+     * Horizon
+     *
+     * Last 1 minute to 24 hours, e.g. 10m, 1h, 24h
+     */
+    horizon?: string
+  }
+  url: '/status'
+}
+
+export type GetStatusStatusGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type GetStatusStatusGetError =
+  GetStatusStatusGetErrors[keyof GetStatusStatusGetErrors]
+
+export type GetStatusStatusGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: StatusResponse
+}
+
+export type GetStatusStatusGetResponse =
+  GetStatusStatusGetResponses[keyof GetStatusStatusGetResponses]
+
+export type GetHourlyStatusStatusHourlyGetData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query?: never
+  url: '/status/hourly'
+}
+
+export type GetHourlyStatusStatusHourlyGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type GetHourlyStatusStatusHourlyGetError =
+  GetHourlyStatusStatusHourlyGetErrors[keyof GetHourlyStatusStatusHourlyGetErrors]
+
+export type GetHourlyStatusStatusHourlyGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: HourlyStatusResponse
+}
+
+export type GetHourlyStatusStatusHourlyGetResponse =
+  GetHourlyStatusStatusHourlyGetResponses[keyof GetHourlyStatusStatusHourlyGetResponses]
 
 export type ListTranscriptionsTranscriptionsGetData = {
   body?: never
@@ -1150,6 +1502,39 @@ export type GetUserUsersMeGetResponses = {
 
 export type GetUserUsersMeGetResponse =
   GetUserUsersMeGetResponses[keyof GetUserUsersMeGetResponses]
+
+export type UpdateDisplayNameUsersDisplayNamePatchData = {
+  body: SetDisplayNameRequest
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query?: never
+  url: '/users/display-name'
+}
+
+export type UpdateDisplayNameUsersDisplayNamePatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type UpdateDisplayNameUsersDisplayNamePatchError =
+  UpdateDisplayNameUsersDisplayNamePatchErrors[keyof UpdateDisplayNameUsersDisplayNamePatchErrors]
+
+export type UpdateDisplayNameUsersDisplayNamePatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: GetUserResponse
+}
+
+export type UpdateDisplayNameUsersDisplayNamePatchResponse =
+  UpdateDisplayNameUsersDisplayNamePatchResponses[keyof UpdateDisplayNameUsersDisplayNamePatchResponses]
 
 export type UpdateDataRetentionUsersDataRetentionPatchData = {
   body: DataRetentionUpdateResponse

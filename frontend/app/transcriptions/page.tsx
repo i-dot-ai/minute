@@ -1,9 +1,9 @@
 'use client'
 
 import { PaginatedTranscriptions } from '@/components/recent-meetings/paginated-transcriptions'
-import { SettingsDialog } from '@/components/settings/settings-dialog'
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
+import Link from 'next/link'
 import { Suspense } from 'react'
 
 export default function TranscriptionsPage() {
@@ -34,7 +34,14 @@ export default function TranscriptionsPage() {
                 ) : (
                   <>kept indefinitely</>
                 )}
-                . <SettingsDialog user={user} />.
+                . Go to{' '}
+                <Link
+                  className="govuk-link govuk-link--no-visited-state"
+                  href="/profile#settings"
+                >
+                  your account settings
+                </Link>{' '}
+                to udpate.
               </p>
             )}
           </div>

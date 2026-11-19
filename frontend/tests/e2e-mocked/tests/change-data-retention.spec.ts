@@ -14,27 +14,29 @@ test('changing the data retention period updates the transcriptions page', async
     page.getByText('Transcriptions will be kept indefinitely')
   ).toBeVisible()
 
-  await page
-    .getByRole('button', { name: 'Change data retention period' })
-    .click()
+  await page.getByRole('link', { name: 'your account settings' }).click()
+
+  await expect(page).toHaveURL('/profile#settings')
+  await expect(
+    page.getByRole('cell', { name: 'Transcriptions will be kept indefinitely' })
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Change data retention' }).click()
 
   const dialog = page.getByRole('dialog')
   await expect(
     dialog.getByRole('heading', { name: 'Data retention period' })
   ).toBeVisible()
 
-  const patchRequest = page.waitForRequest(
-    (req) =>
-      req.method() === 'PATCH' && /\/users\/data-retention$/.test(req.url())
-  )
-
   await dialog.getByRole('radio', { name: '7 days' }).check()
   await dialog.getByRole('button', { name: 'Save' }).click()
 
-  const patch = await patchRequest
-  expect(patch.postDataJSON()).toEqual({ data_retention_days: 7 })
-
   await expect(dialog).toBeHidden()
+  await expect(
+    page.getByRole('cell', {
+      name: 'Transcriptions will be deleted after 7 days',
+    })
+  ).toBeVisible()
+  await page.getByRole('link', { name: 'transcriptions' }).click()
   await expect(
     page.getByText('Transcriptions will be deleted after 7 days')
   ).toBeVisible()

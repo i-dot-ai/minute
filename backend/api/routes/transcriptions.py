@@ -2,7 +2,6 @@ import logging
 import math
 import uuid
 from datetime import UTC, datetime, timedelta
-from itertools import chain
 from pathlib import Path
 from typing import Annotated
 
@@ -220,42 +219,47 @@ async def search_transcriptions(
                 Minute.minute_versions.and_(MinuteVersion.status == JobStatus.COMPLETED)
             )
         )
-    items_by_source = {source: [] for source in ("title", "speaker", "summary", "transcript")}
-    total_count = 0
+    ids_by_source = {source: [] for source in ("title", "speaker", "summary", "transcript")}
+    selected = set(sources)
     result_offset = (page - 1) * page_size
     batch_statement = statement.limit(SEARCH_BATCH_SIZE)
     # shortcut: pilot scans the user's content for exact counts; add indexed search text when latency warrants it.
     while batch := (await session.exec(batch_statement)).all():
         for transcription in batch:
-            matching = matching_sources(transcription, patterns, set(sources))
-            first = next(matching, None)
+            first = next(matching_sources(transcription, patterns, selected), None)
             if first is None:
                 continue
-            total_count += 1
-            # Batches arrive newest first; keep only enough results per source to fill this page.
-            if len(items_by_source[first[0]]) < result_offset + page_size:
-                matches, truncated = search_previews(chain((first,), matching), patterns)
-                items_by_source[first[0]].append(
-                    TranscriptionSearchResult(
-                        id=transcription.id,
-                        title=transcription.title,
-                        created_datetime=transcription.created_datetime,
-                        status=transcription.status,
-                        text=transcription.dialogue_entries[0]["text"][:100] if transcription.dialogue_entries else "",
-                        expiring=expiry_cutoff is not None and transcription.created_datetime < expiry_cutoff,
-                        no_speech_detected=transcription.no_speech_detected,
-                        matches=matches,
-                        matches_truncated=truncated,
-                    )
-                )
+            ids_by_source[first[0]].append(transcription.id)
         last = batch[-1]
         batch_statement = statement.where(
             tuple_(Transcription.created_datetime, Transcription.id) < (last.created_datetime, last.id)
         ).limit(SEARCH_BATCH_SIZE)
 
-    items = [item for source_items in items_by_source.values() for item in source_items]
+    ranked_ids = [transcription_id for source_ids in ids_by_source.values() for transcription_id in source_ids]
+    page_ids = ranked_ids[result_offset : result_offset + page_size]
+    page_order = {transcription_id: index for index, transcription_id in enumerate(page_ids)}
+    page_transcriptions = (
+        (await session.exec(statement.where(col(Transcription.id).in_(page_ids)))).all() if page_ids else []
+    )
+    items = []
+    for transcription in sorted(page_transcriptions, key=lambda transcription: page_order[transcription.id]):
+        matches, truncated = search_previews(matching_sources(transcription, patterns, selected), patterns)
+        items.append(
+            TranscriptionSearchResult(
+                id=transcription.id,
+                title=transcription.title,
+                created_datetime=transcription.created_datetime,
+                status=transcription.status,
+                text=transcription.dialogue_entries[0]["text"][:100] if transcription.dialogue_entries else "",
+                expiring=expiry_cutoff is not None and transcription.created_datetime < expiry_cutoff,
+                no_speech_detected=transcription.no_speech_detected,
+                matches=matches,
+                matches_truncated=truncated,
+            )
+        )
+    total_count = len(ranked_ids)
     return PaginatedTranscriptionSearchResponse(
-        items=items[result_offset : result_offset + page_size],
+        items=items,
         total_count=total_count,
         page=page,
         page_size=page_size,

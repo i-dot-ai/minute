@@ -4,7 +4,7 @@ import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 import pytest_asyncio
@@ -19,6 +19,7 @@ from common.database.postgres_database import async_engine
 from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription, User
 from common.sentry import _redact_search_query
 from common.services.exceptions import MissingAuthTokenError
+from common.types import TranscriptionSearchSource
 from tests.utils import get_or_create_user, get_test_client
 
 
@@ -81,8 +82,22 @@ def test_excerpts_are_bounded_and_locate_later_hits():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("page_size", [1, 2, 3])
-async def test_search_ranks_sources_before_date_and_paginates(monkeypatch, page_size):
+@pytest.mark.parametrize(
+    ("sources", "search", "expected_indices", "deleted_index"),
+    [
+        (tuple(TranscriptionSearchSource), "budget", (3, 7, 2, 6, 1, 5, 0, 4), None),
+        ((TranscriptionSearchSource.TRANSCRIPT,), "budget", (0, 4, 7), None),
+        ((TranscriptionSearchSource.TRANSCRIPT, TranscriptionSearchSource.SUMMARY), "budget", (1, 5, 7, 0, 4), None),
+        (tuple(TranscriptionSearchSource), "absent", (), None),
+        (tuple(TranscriptionSearchSource), "budget", (3, 7, 2, 6, 1, 5, 0, 4), 7),
+    ],
+)
+async def test_search_ranks_sources_before_date_and_paginates(
+    monkeypatch, page_size, sources, search, expected_indices, deleted_index
+):
     monkeypatch.setattr("backend.api.routes.transcriptions.SEARCH_BATCH_SIZE", 2)
+    previews = Mock(wraps=search_previews)
+    monkeypatch.setattr("backend.api.routes.transcriptions.search_previews", previews)
     now = datetime.now(UTC)
     rows = []
     # Newer transcript matches must rank below older title, speaker and summary matches.
@@ -116,19 +131,34 @@ async def test_search_ranks_sources_before_date_and_paginates(monkeypatch, page_
         rows.append(row)
 
     batches = [rows[index : index + 2] for index in range(0, len(rows), 2)] + [[]]
-    expected = [rows[index].id for index in (3, 7, 2, 6, 1, 5, 0, 4)]
-    total_pages = (len(rows) + page_size - 1) // page_size
+    expected = [rows[index].id for index in expected_indices]
+    deleted_id = rows[deleted_index].id if deleted_index is not None else None
+    total_pages = (len(expected) + page_size - 1) // page_size or 1
     for page in range(1, total_pages + 2):
-        session = SimpleNamespace(exec=AsyncMock(side_effect=[SimpleNamespace(all=lambda b=b: b) for b in batches]))
+        previews.reset_mock()
+        expected_page = expected[(page - 1) * page_size : page * page_size]
+        # The page fetch returns date order, which can differ from source rank order.
+        page_rows = [row for row in rows if row.id in expected_page and row.id != deleted_id]
+        results = batches + ([page_rows] if expected_page else [])
+        session = SimpleNamespace(exec=AsyncMock(side_effect=[SimpleNamespace(all=lambda b=b: b) for b in results]))
+        user = User(data_retention_days=None)
         response = await search_transcriptions(
-            session, User(data_retention_days=None), Response(), search="budget", page=page, page_size=page_size
+            session, user, Response(), search=search, page=page, page_size=page_size, sources=sources
         )
-        assert response.total_count == 8
+        assert response.total_count == len(expected)
         assert response.total_pages == total_pages
-        assert [item.id for item in response.items] == expected[(page - 1) * page_size : page * page_size]
+        assert [item.id for item in response.items] == [item_id for item_id in expected_page if item_id != deleted_id]
+        assert previews.call_count == len(page_rows)
+        assert session.exec.await_count == len(results)
+        if expected_page:
+            parameters = session.exec.call_args.args[0].compile().params
+            assert parameters["id_1"] == expected_page
+            assert parameters["user_id_1"] == user.id
         for item in response.items:
             if item.id == rows[7].id:
-                assert [match.source for match in item.matches] == ["title", "speaker", "summary", "transcript"]
+                assert [match.source for match in item.matches] == [
+                    source for source in ("title", "speaker", "summary", "transcript") if source in sources
+                ]
 
 
 @pytest_asyncio.fixture

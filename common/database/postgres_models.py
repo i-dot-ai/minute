@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime
 from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
@@ -127,7 +127,8 @@ class Transcription(BaseTableMixin, table=True):
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     title: str | None = Field(default=None)
-    meeting_date: date | None = Field(default=None)
+    # When the meeting started. Defaults to upload time if the client doesn't send one.
+    meeting_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     dialogue_entries: list[DialogueEntry] | None = Field(default=None, sa_column=Column(JSONB))
     status: JobStatus = Field(
         default=JobStatus.AWAITING_START, sa_column_kwargs={"server_default": JobStatus.AWAITING_START.name}

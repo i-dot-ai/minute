@@ -1,5 +1,6 @@
 'use client'
 
+import { MeetingTime } from '@/components/audio/meeting-time-field'
 import { AudioDevice } from '@/components/audio/microphone-permission'
 import { Template } from '@/types/templates'
 import { ReactNode, createContext, useContext, useState } from 'react'
@@ -17,8 +18,8 @@ type RecordingSessionValue = {
   setUploadTemplate: (template: Template | null) => void
   uploadAgenda: string | undefined
   setUploadAgenda: (agenda: string | undefined) => void
-  uploadMeetingDate: string | undefined
-  setUploadMeetingDate: (meetingDate: string | undefined) => void
+  uploadMeetingTime: MeetingTime | undefined
+  setUploadMeetingTime: (meetingTime: MeetingTime | undefined) => void
   devices: AudioDevice[]
   setDevices: (devices: AudioDevice[]) => void
   selectedDeviceId: string
@@ -42,8 +43,8 @@ export function RecordingSessionProvider({
   const [uploadAgenda, setUploadAgenda] = useState<string | undefined>(
     undefined
   )
-  const [uploadMeetingDate, setUploadMeetingDate] = useState<
-    string | undefined
+  const [uploadMeetingTime, setUploadMeetingTime] = useState<
+    MeetingTime | undefined
   >(undefined)
   const [devices, setDevices] = useState<AudioDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState('')
@@ -54,7 +55,7 @@ export function RecordingSessionProvider({
     setUploadFile(null)
     setUploadTemplate(null)
     setUploadAgenda(undefined)
-    setUploadMeetingDate(undefined)
+    setUploadMeetingTime(undefined)
   }
 
   return (
@@ -70,8 +71,8 @@ export function RecordingSessionProvider({
         setUploadTemplate,
         uploadAgenda,
         setUploadAgenda,
-        uploadMeetingDate,
-        setUploadMeetingDate,
+        uploadMeetingTime,
+        setUploadMeetingTime,
         devices,
         setDevices,
         selectedDeviceId,

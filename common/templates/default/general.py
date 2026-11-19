@@ -1,5 +1,5 @@
 # flake8: noqa: E501, RUF001
-from datetime import date
+from datetime import UTC, datetime
 
 from common.database.postgres_models import DialogueEntry
 from common.prompts import MEETING_DATE_INSTRUCTION, format_meeting_date, get_transcript_messages
@@ -16,7 +16,7 @@ class General(SimpleTemplate):
 
     @classmethod
     def prompt(
-        cls, transcript: list[DialogueEntry], agenda: str | None = None, meeting_date: date | None = None
+        cls, transcript: list[DialogueEntry], agenda: str | None = None, meeting_datetime: datetime | None = None
     ) -> list[dict[str, str]]:
         if not agenda:
             meeting_agenda_str = """## 4. Discussion Points
@@ -66,7 +66,7 @@ Remember to:
 Use these section headings exactly as written below (omit any section that isn't relevant to the meeting):
 
 ## 1. Meeting Overview
-- Date: {format_meeting_date(meeting_date)}
+- Date: {format_meeting_date(meeting_datetime or datetime.now(UTC))}
   - {MEETING_DATE_INSTRUCTION}
 - Purpose/Objective of the meeting (if discernible from the discussion)
 

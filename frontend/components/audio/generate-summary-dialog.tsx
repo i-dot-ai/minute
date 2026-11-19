@@ -34,7 +34,7 @@ export const GenerateSummaryDialog = ({
   // Check the date before confirming, so a half-typed date can't stop a live
   // recording or start a summary without it.
   const handleConfirm = async () => {
-    if (showMeetingDate && !(await form.trigger('meeting_date'))) return
+    if (showMeetingDate && !(await form.trigger('meeting_datetime'))) return
     onConfirm()
   }
 

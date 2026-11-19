@@ -14,7 +14,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { toast } from 'sonner'
-import { MeetingDateField } from './meeting-date-field'
+import { MeetingTimeField } from './meeting-time-field'
 
 function toFormTemplate(
   template: TemplateResponse | TemplateMetadata,
@@ -186,6 +186,8 @@ export const StartTranscriptionSection = ({
 
   return (
     <div>
+      {/* About the meeting, so it comes before the template, which is about the summary. */}
+      {showMeetingDate && <MeetingTimeField />}
       <div className="govuk-form-group flex items-center gap-2">
         <div>
           <label className="govuk-label" htmlFor="template">
@@ -219,7 +221,6 @@ export const StartTranscriptionSection = ({
         </select>
       </div>
 
-      {showMeetingDate && <MeetingDateField />}
       {resolvedTemplate.agenda_usage != 'not_used' && (
         <div className="govuk-form-group">
           <label className="govuk-label" htmlFor="agenda">

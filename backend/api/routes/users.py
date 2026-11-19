@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
@@ -7,12 +5,12 @@ from backend.api.dependencies import SQLSessionDep, UserDep
 from common.database.postgres_models import User, UserTemplate
 from common.services.template_manager import TemplateManager
 from common.services.user_details import display_name_from_email
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 from common.types import DataRetentionUpdateResponse, GetUserResponse, SetDefaultTemplateRequest, SetDisplayNameRequest
 
 users_router = APIRouter(tags=["Users"])
 
-logger = logging.getLogger(__name__)
+logger = get_structured_logger()
 
 
 def _user_response(user: User) -> GetUserResponse:
@@ -58,9 +56,8 @@ async def update_display_name(
     await session.refresh(user)
 
     logger.info(
-        "%s display name for user %s",
-        "Cleared" if data.display_name is None else "Updated",
-        user.id,
+        "{action} display name",
+        action="Cleared" if data.display_name is None else "Updated",
     )
     return _user_response(user)
 
@@ -88,11 +85,7 @@ async def update_data_retention(
     await session.commit()
     await session.refresh(user)
 
-    logger.info(
-        "Updated data retention period to %s days for user %s",
-        data.data_retention_days,
-        user.id,
-    )
+    logger.info("Updated data retention period to {days} days", days=data.data_retention_days)
 
     return _user_response(user)
 
@@ -139,6 +132,6 @@ async def update_default_template(
     await session.commit()
     await session.refresh(user)
 
-    logger.info("Updated default template for user %s", user.id)
+    logger.info("Updated default template")
 
     return _user_response(user)

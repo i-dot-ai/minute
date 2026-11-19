@@ -397,6 +397,32 @@ export type MinutesCreateRequest = {
 }
 
 /**
+ * PaginatedTranscriptionSearchResponse
+ */
+export type PaginatedTranscriptionSearchResponse = {
+  /**
+   * Items
+   */
+  items: Array<TranscriptionSearchResult>
+  /**
+   * Total Count
+   */
+  total_count: number
+  /**
+   * Page
+   */
+  page: number
+  /**
+   * Page Size
+   */
+  page_size: number
+  /**
+   * Total Pages
+   */
+  total_pages: number
+}
+
+/**
  * PaginatedTranscriptionsResponse
  *
  * Paginated response for transcriptions.
@@ -496,6 +522,24 @@ export type RecordingCreateResponse = {
  * Role
  */
 export type Role = 'admin' | 'audit'
+
+/**
+ * SearchHighlight
+ */
+export type SearchHighlight = {
+  /**
+   * Start
+   *
+   * Inclusive UTF-16 offset within the snippet.
+   */
+  start: number
+  /**
+   * End
+   *
+   * Exclusive UTF-16 offset within the snippet.
+   */
+  end: number
+}
 
 /**
  * SetDefaultTemplateRequest
@@ -1020,6 +1064,109 @@ export type TranscriptionRetryRequest = {
 }
 
 /**
+ * TranscriptionSearchMatch
+ */
+export type TranscriptionSearchMatch = {
+  source: TranscriptionSearchSource
+  /**
+   * Snippet
+   */
+  snippet: string
+  /**
+   * Snippet Start
+   *
+   * UTF-16 offset in the title, entry text, summary plain text, or speaker label.
+   */
+  snippet_start: number
+  /**
+   * Highlights
+   */
+  highlights: Array<SearchHighlight>
+  /**
+   * Entry Index
+   */
+  entry_index?: number | null
+  /**
+   * Speaker
+   */
+  speaker?: string | null
+  /**
+   * Speech Excerpt
+   *
+   * Unhighlighted speech context for a speaker match.
+   */
+  speech_excerpt?: string | null
+  /**
+   * Start Time
+   */
+  start_time?: number | null
+  /**
+   * End Time
+   */
+  end_time?: number | null
+  /**
+   * Minute Id
+   */
+  minute_id?: string | null
+  /**
+   * Minute Version Id
+   */
+  minute_version_id?: string | null
+}
+
+/**
+ * TranscriptionSearchResult
+ */
+export type TranscriptionSearchResult = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Created Datetime
+   */
+  created_datetime: string
+  /**
+   * Title
+   */
+  title?: string | null
+  /**
+   * Text
+   */
+  text: string
+  status: JobStatus
+  /**
+   * Expiring
+   */
+  expiring: boolean
+  /**
+   * No Speech Detected
+   *
+   * Transcription completed without detected speech.
+   */
+  no_speech_detected?: boolean
+  /**
+   * Matches
+   */
+  matches: Array<TranscriptionSearchMatch>
+  /**
+   * Matches Truncated
+   *
+   * Additional matching excerpts or summary versions were omitted.
+   */
+  matches_truncated: boolean
+}
+
+/**
+ * TranscriptionSearchSource
+ */
+export type TranscriptionSearchSource =
+  | 'title'
+  | 'transcript'
+  | 'summary'
+  | 'speaker'
+
+/**
  * ValidationError
  */
 export type ValidationError = {
@@ -1222,6 +1369,64 @@ export type CreateTranscriptionTranscriptionsPostResponses = {
 
 export type CreateTranscriptionTranscriptionsPostResponse =
   CreateTranscriptionTranscriptionsPostResponses[keyof CreateTranscriptionTranscriptionsPostResponses]
+
+export type SearchTranscriptionsTranscriptionsSearchGetData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query: {
+    /**
+     * Search
+     *
+     * All keywords within one source document
+     */
+    search: string
+    /**
+     * Page
+     */
+    page?: number
+    /**
+     * Page Size
+     */
+    page_size?: number
+    /**
+     * Filter By
+     */
+    filter_by?: TranscriptionListFilter | null
+    /**
+     * Sources
+     *
+     * Repeat for multiple sources. Defaults to all four sources.
+     */
+    sources?: Array<TranscriptionSearchSource>
+  }
+  url: '/transcriptions/search'
+}
+
+export type SearchTranscriptionsTranscriptionsSearchGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type SearchTranscriptionsTranscriptionsSearchGetError =
+  SearchTranscriptionsTranscriptionsSearchGetErrors[keyof SearchTranscriptionsTranscriptionsSearchGetErrors]
+
+export type SearchTranscriptionsTranscriptionsSearchGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: PaginatedTranscriptionSearchResponse
+}
+
+export type SearchTranscriptionsTranscriptionsSearchGetResponse =
+  SearchTranscriptionsTranscriptionsSearchGetResponses[keyof SearchTranscriptionsTranscriptionsSearchGetResponses]
 
 export type CreateRecordingRecordingsPostData = {
   body: RecordingCreateRequest

@@ -237,6 +237,7 @@ export const TemplatesTable = () => {
               type="search"
               className="govuk-input govuk-input--subtle !pl-10"
               placeholder="Search templates"
+              aria-label="Search templates"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -319,9 +320,13 @@ export const TemplatesTable = () => {
         </div>
       </div>
       {isLoading ? (
-        <p className="govuk-body">Loading templates...</p>
+        <p className="govuk-body" role="status">
+          Loading templates...
+        </p>
       ) : isError ? (
-        <p className="govuk-body">Error loading templates</p>
+        <p className="govuk-body" role="status">
+          Error loading templates
+        </p>
       ) : filteredRows.length === 0 ? (
         <div className="govuk-!-margin-top-9 flex flex-col items-center justify-center gap-2">
           {search ? (

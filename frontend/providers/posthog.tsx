@@ -1,6 +1,7 @@
 'use client'
 
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+import { redactSearchUrl } from '@/lib/search-privacy'
 import { useQuery } from '@tanstack/react-query'
 import { usePathname, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
@@ -16,7 +17,7 @@ function PageviewTracker() {
       return
     }
     let url = window.origin + pathname
-    const search = searchParams.toString()
+    const search = pathname === '/search' ? '' : searchParams.toString()
     if (search) {
       url = `${url}?${search}`
     }
@@ -40,6 +41,15 @@ function PosthogProvider({ children }: PropsWithChildren) {
       autocapture: false,
       disable_session_recording: true,
       capture_pageview: false,
+      before_send: (event) => {
+        if (!event) return event
+        for (const key of ['$current_url', '$referrer', 'destination']) {
+          const value = event.properties[key]
+          if (typeof value !== 'string') continue
+          event.properties[key] = redactSearchUrl(value)
+        }
+        return event
+      },
     })
 
     if (user?.id) {

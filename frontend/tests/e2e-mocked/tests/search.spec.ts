@@ -3,6 +3,7 @@ import type {
   PaginatedTranscriptionSearchResponse,
   TranscriptionSearchMatch,
 } from '@/lib/client'
+import { redactSearchTelemetry, redactSearchUrl } from '@/lib/search-privacy'
 import { mockBackend } from '../utilities/mock-backend'
 import { json } from '../utilities/routes/general'
 import { transcriptions } from '../mocked-responses/transcriptions'
@@ -55,6 +56,49 @@ const MATCHES: Record<string, TranscriptionSearchMatch[]> = {
     },
   ],
 }
+
+test('search terms are redacted from frontend telemetry', () => {
+  for (const [url, expected] of [
+    [
+      'https://minute.test/transcriptions?q=private&page=2&filterBy=failed',
+      'https://minute.test/transcriptions?page=2&filterBy=failed',
+    ],
+    ['/transcriptions?q=private', '/transcriptions'],
+    ['/transcriptions?page=2', '/transcriptions?page=2'],
+    [
+      '/api/proxy/transcriptions/search?search=private',
+      '/api/proxy/transcriptions/search',
+    ],
+    ['/search?keywords=private', '/search'],
+    [
+      '/transcriptions/123/transcript#search-match?text=private',
+      '/transcriptions/123/transcript',
+    ],
+    ['http://', 'http://'],
+  ]) {
+    expect(redactSearchUrl(url)).toBe(expected)
+  }
+  const telemetry = redactSearchTelemetry({
+    request: {
+      url: 'https://minute.test/transcriptions?q=private',
+      query_string: 'q=private',
+      headers: { Referer: 'https://minute.test/transcriptions?q=private' },
+    },
+    breadcrumbs: [
+      { data: { to: '/transcriptions?q=private' } },
+      { data: { url: '/api/proxy/transcriptions/search?search=private' } },
+    ],
+    spans: [
+      {
+        span_id: '0123456789abcdef',
+        trace_id: '0123456789abcdef0123456789abcdef',
+        start_timestamp: 0,
+        data: { 'http.url': '/transcriptions?q=private' },
+      },
+    ],
+  })
+  expect(JSON.stringify(telemetry)).not.toContain('private')
+})
 
 test.beforeEach(async ({ page }) => {
   await mockBackend(page)

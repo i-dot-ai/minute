@@ -65,7 +65,7 @@ def test_excerpts_are_bounded_and_locate_later_hits():
     assert truncated
     encoded = text.encode("utf-16-le")
     for match in matches:
-        assert len(match.snippet) <= 240
+        assert len(match.snippet) <= 100
         snippet_bytes = match.snippet.encode("utf-16-le")
         assert encoded[match.snippet_start * 2 : match.snippet_start * 2 + len(snippet_bytes)] == snippet_bytes
         assert [snippet_bytes[h.start * 2 : h.end * 2].decode("utf-16-le") for h in match.highlights] == [
@@ -75,10 +75,10 @@ def test_excerpts_are_bounded_and_locate_later_hits():
     dense, truncated = search_previews(iter([("transcript", "budget" * 1_000, {})]), search_patterns("budget"))
     assert truncated
     assert len(dense) == 3
-    assert all(len(match.snippet) == 240 for match in dense)
+    assert all(len(match.snippet) == 102 for match in dense)
     overlapping, truncated = search_previews(iter([("transcript", "ab" * 1_000, {})]), search_patterns("aba bab"))
     assert truncated
-    assert all(len(match.snippet) <= 243 for match in overlapping)
+    assert all(len(match.snippet) <= 103 for match in overlapping)
 
 
 @pytest.mark.asyncio

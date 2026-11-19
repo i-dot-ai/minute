@@ -34,6 +34,47 @@ class PaginatedTranscriptionsResponse(BaseModel):
     total_pages: int
 
 
+class SearchHighlight(BaseModel):
+    start: int = Field(description="Inclusive UTF-16 offset within the snippet.")
+    end: int = Field(description="Exclusive UTF-16 offset within the snippet.")
+
+
+class TranscriptionSearchSource(StrEnum):
+    TITLE = "title"
+    TRANSCRIPT = "transcript"
+    SUMMARY = "summary"
+    SPEAKER = "speaker"
+
+
+class TranscriptionSearchMatch(BaseModel):
+    source: TranscriptionSearchSource
+    snippet: str
+    snippet_start: int = Field(
+        description="UTF-16 offset in the title, entry text, summary plain text, or speaker label."
+    )
+    highlights: list[SearchHighlight]
+    entry_index: int | None = None
+    speaker: str | None = None
+    speech_excerpt: str | None = Field(default=None, description="Unhighlighted speech context for a speaker match.")
+    start_time: float | None = None
+    end_time: float | None = None
+    minute_id: uuid.UUID | None = None
+    minute_version_id: uuid.UUID | None = None
+
+
+class TranscriptionSearchResult(TranscriptionMetadata):
+    matches: list[TranscriptionSearchMatch]
+    matches_truncated: bool = Field(description="Additional matching excerpts or summary versions were omitted.")
+
+
+class PaginatedTranscriptionSearchResponse(BaseModel):
+    items: list[TranscriptionSearchResult]
+    total_count: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
 class TranscriptionCreateRequest(BaseModel):
     recording_id: uuid.UUID
     template_name: str

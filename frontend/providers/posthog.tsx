@@ -17,11 +17,11 @@ function PageviewTracker() {
       return
     }
     let url = window.origin + pathname
-    const search = pathname === '/search' ? '' : searchParams.toString()
+    const search = searchParams.toString()
     if (search) {
       url = `${url}?${search}`
     }
-    posthog.capture('$pageview', { $current_url: url })
+    posthog.capture('$pageview', { $current_url: redactSearchUrl(url) })
   }, [pathname, searchParams])
 
   return null

@@ -12,9 +12,12 @@ export function redactSearchUrl(value: string): string {
     '/transcriptions/search',
     '/api/proxy/transcriptions/search',
   ].includes(url.pathname)
+  const listSearch =
+    url.pathname === '/transcriptions' && url.searchParams.has('q')
   const match = url.hash.startsWith('#search-match?')
-  if (!search && !match) return value
+  if (!search && !listSearch && !match) return value
   if (search) url.search = ''
+  if (listSearch) url.searchParams.delete('q')
   if (match) url.hash = ''
   return value.startsWith('/')
     ? `${url.pathname}${url.search}${url.hash}`

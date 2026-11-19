@@ -145,6 +145,22 @@ def matching_sources(
         yield "title", title, {}
 
     entries = (transcription.dialogue_entries or []) if transcription.status == JobStatus.COMPLETED else []
+    if "speaker" in selected:
+        yield from _speaker_sources(entries, patterns)
+
+    if "summary" in selected:
+        versions = sorted(
+            (version for minute in transcription.minutes for version in minute.minute_versions),
+            key=lambda version: (version.created_datetime, version.id),
+            reverse=True,
+        )
+        for version in versions:
+            if version.status != JobStatus.COMPLETED:
+                continue
+            text = summary_plain_text(version.html_content)
+            if _contains_all([text], patterns):
+                yield "summary", text, {"minute_id": version.minute_id, "minute_version_id": version.id}
+
     if "transcript" in selected and _contains_all([entry["text"] for entry in entries], patterns):
         for index, entry in enumerate(entries):
             if any(pattern.search(entry["text"]) for pattern in patterns):
@@ -158,23 +174,6 @@ def matching_sources(
                         "end_time": entry["end_time"],
                     },
                 )
-
-    if "speaker" in selected:
-        yield from _speaker_sources(entries, patterns)
-
-    if "summary" not in selected:
-        return
-    versions = sorted(
-        (version for minute in transcription.minutes for version in minute.minute_versions),
-        key=lambda version: (version.created_datetime, version.id),
-        reverse=True,
-    )
-    for version in versions:
-        if version.status != JobStatus.COMPLETED:
-            continue
-        text = summary_plain_text(version.html_content)
-        if _contains_all([text], patterns):
-            yield "summary", text, {"minute_id": version.minute_id, "minute_version_id": version.id}
 
 
 def search_previews(

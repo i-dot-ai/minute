@@ -3,12 +3,16 @@
 import logging
 import uuid
 from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
+from fastapi import Response
 from sqlmodel import col, delete
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from backend.api.routes.transcriptions import search_transcriptions
 from backend.utils.transcription_search import search_patterns, search_previews, summary_plain_text
 from common.auth import get_user_info
 from common.database.postgres_database import async_engine
@@ -73,6 +77,58 @@ def test_excerpts_are_bounded_and_locate_later_hits():
     overlapping, truncated = search_previews(iter([("transcript", "ab" * 1_000, {})]), search_patterns("aba bab"))
     assert truncated
     assert all(len(match.snippet) <= 243 for match in overlapping)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("page_size", [1, 2, 3])
+async def test_search_ranks_sources_before_date_and_paginates(monkeypatch, page_size):
+    monkeypatch.setattr("backend.api.routes.transcriptions.SEARCH_BATCH_SIZE", 2)
+    now = datetime.now(UTC)
+    rows = []
+    # Newer transcript matches must rank below older title, speaker and summary matches.
+    for index, source in enumerate(("transcript", "summary", "speaker", "title") * 2):
+        multiple_sources = index == 7
+        row = Transcription(
+            title="Budget" if source == "title" else "Unrelated",
+            status=JobStatus.COMPLETED,
+            created_datetime=now - timedelta(minutes=index),
+            dialogue_entries=[
+                {
+                    "speaker": "Budget" if source == "speaker" or multiple_sources else "Alex",
+                    "text": "Budget" if source == "transcript" or multiple_sources else "Unrelated",
+                    "start_time": 0,
+                    "end_time": 1,
+                }
+            ],
+        )
+        row.minutes = []
+        if source == "summary" or multiple_sources:
+            minute = Minute(transcription_id=row.id)
+            minute.minute_versions = [
+                MinuteVersion(
+                    minute_id=minute.id,
+                    html_content="<p>Budget</p>",
+                    status=JobStatus.COMPLETED,
+                    created_datetime=now,
+                )
+            ]
+            row.minutes = [minute]
+        rows.append(row)
+
+    batches = [rows[index : index + 2] for index in range(0, len(rows), 2)] + [[]]
+    expected = [rows[index].id for index in (3, 7, 2, 6, 1, 5, 0, 4)]
+    total_pages = (len(rows) + page_size - 1) // page_size
+    for page in range(1, total_pages + 2):
+        session = SimpleNamespace(exec=AsyncMock(side_effect=[SimpleNamespace(all=lambda b=b: b) for b in batches]))
+        response = await search_transcriptions(
+            session, User(data_retention_days=None), Response(), search="budget", page=page, page_size=page_size
+        )
+        assert response.total_count == 8
+        assert response.total_pages == total_pages
+        assert [item.id for item in response.items] == expected[(page - 1) * page_size : page * page_size]
+        for item in response.items:
+            if item.id == rows[7].id:
+                assert [match.source for match in item.matches] == ["title", "speaker", "summary", "transcript"]
 
 
 @pytest_asyncio.fixture
@@ -171,17 +227,18 @@ async def test_search_ownership_sources_history_and_pagination(searchable, monke
         body = response.json()
         assert body["total_count"] == 3
         assert body["total_pages"] == 2
-        assert [item["id"] for item in body["items"]] == [str(rows[key].id) for key in ("title", "transcript")]
+        assert [item["id"] for item in body["items"]] == [str(rows[key].id) for key in ("title", "history")]
         assert body["items"][0]["matches"][0]["source"] == "title"
-        transcript_matches = body["items"][1]["matches"]
+
+        second = (await client.get("/transcriptions/search", params={**params, "page": 2})).json()
+        assert second["total_count"] == 3
+        assert second["items"][0]["id"] == str(rows["transcript"].id)
+        transcript_matches = second["items"][0]["matches"]
         assert [match["entry_index"] for match in transcript_matches] == [0, 1]
         assert transcript_matches[0]["speaker"] == "Alex"
         assert transcript_matches[0]["start_time"] == 0.0
         assert transcript_matches[0]["highlights"] == [{"start": 3, "end": 3 + len(token)}]
-
-        second = (await client.get("/transcriptions/search", params={**params, "page": 2})).json()
-        assert second["total_count"] == 3
-        item = second["items"][0]
+        item = body["items"][1]
         assert item["id"] == str(rows["history"].id)
         assert item["matches_truncated"]
         assert [match["minute_version_id"] for match in item["matches"]] == [
@@ -201,6 +258,9 @@ async def test_search_ownership_sources_history_and_pagination(searchable, monke
             assert all(match["source"] == source for match in scoped.json()["items"][0]["matches"])
         combined = await client.get("/transcriptions/search", params={**params, "sources": ["transcript", "summary"]})
         assert combined.json()["total_count"] == 2
+        assert [item["id"] for item in combined.json()["items"]] == [
+            str(rows[key].id) for key in ("history", "transcript")
+        ]
 
         speaker_query = {"search": f"alex {token.upper()}", "sources": "speaker"}
         speakers = await client.get("/transcriptions/search", params=speaker_query)

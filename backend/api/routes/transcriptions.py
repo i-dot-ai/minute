@@ -188,7 +188,8 @@ async def search_transcriptions(
 
     Keywords are literal, case-insensitive substrings; they can span transcript entries,
     but cannot be combined across sources, speaker labels or summary versions.
-    Speakers match stored labels, not mentions in speech. Results are newest first.
+    Speakers match stored labels, not mentions in speech. Results rank title, speaker,
+    summary, then transcript, newest first within each rank.
     """
     response.headers["Cache-Control"] = "private, no-store"
     patterns = search_patterns(search)
@@ -219,7 +220,7 @@ async def search_transcriptions(
                 Minute.minute_versions.and_(MinuteVersion.status == JobStatus.COMPLETED)
             )
         )
-    items = []
+    items_by_source = {source: [] for source in ("title", "speaker", "summary", "transcript")}
     total_count = 0
     result_offset = (page - 1) * page_size
     batch_statement = statement.limit(SEARCH_BATCH_SIZE)
@@ -231,9 +232,10 @@ async def search_transcriptions(
             if first is None:
                 continue
             total_count += 1
-            if result_offset < total_count <= result_offset + page_size:
+            # Batches arrive newest first; keep only enough results per source to fill this page.
+            if len(items_by_source[first[0]]) < result_offset + page_size:
                 matches, truncated = search_previews(chain((first,), matching), patterns)
-                items.append(
+                items_by_source[first[0]].append(
                     TranscriptionSearchResult(
                         id=transcription.id,
                         title=transcription.title,
@@ -251,8 +253,9 @@ async def search_transcriptions(
             tuple_(Transcription.created_datetime, Transcription.id) < (last.created_datetime, last.id)
         ).limit(SEARCH_BATCH_SIZE)
 
+    items = [item for source_items in items_by_source.values() for item in source_items]
     return PaginatedTranscriptionSearchResponse(
-        items=items,
+        items=items[result_offset : result_offset + page_size],
         total_count=total_count,
         page=page,
         page_size=page_size,

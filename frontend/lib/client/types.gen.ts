@@ -981,6 +981,10 @@ export type TranscriptionMetadata = {
    */
   created_datetime: string
   /**
+   * Meeting Datetime
+   */
+  meeting_datetime: string
+  /**
    * Title
    */
   title?: string | null

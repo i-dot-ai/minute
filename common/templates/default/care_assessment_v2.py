@@ -1,6 +1,4 @@
 # flake8: noqa: E501, RUF001
-from datetime import datetime
-
 from common.database.postgres_models import DialogueEntry
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.settings import get_settings
@@ -30,12 +28,7 @@ class CareAssessmentV2(SimpleTemplate):
     temperature = 0.0
 
     @classmethod
-    def prompt(
-        cls,
-        transcript: list[DialogueEntry],
-        agenda: str | None = None,  # noqa: ARG003
-        meeting_datetime: datetime | None = None,  # noqa: ARG003
-    ) -> list[dict[str, str]]:
+    def prompt(cls, transcript: list[DialogueEntry], agenda: str | None = None) -> list[dict[str, str]]:  # noqa: ARG003
         return [
             {
                 "role": "system",

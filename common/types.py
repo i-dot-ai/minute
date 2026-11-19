@@ -17,6 +17,7 @@ class TranscriptionMetadata(BaseModel):
 
     id: uuid.UUID
     created_datetime: datetime
+    meeting_datetime: datetime
     title: str | None = None
     text: str
     status: JobStatus

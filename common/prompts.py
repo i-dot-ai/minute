@@ -1,19 +1,13 @@
 # flake8: noqa: E501
-from datetime import datetime
-from zoneinfo import ZoneInfo
 
 from common.database.postgres_models import DialogueEntry
 from common.format_transcript import transcript_as_index_speaker_and_utterance, transcript_as_speaker_and_utterance
 
-MEETING_DATE_INSTRUCTION = (
-    "Only use the meeting date given above, and never work out or guess the meeting date from the transcript."
+# The meeting date is shown above the summary instead, so it stays right if the user changes it.
+NO_MEETING_DATE_INSTRUCTION = (
+    "Do not write the date the meeting took place anywhere in the summary, "
+    "and never work it out from the transcript. Minute shows it above the summary."
 )
-
-
-def format_meeting_date(meeting_datetime: datetime) -> str:
-    """Format the meeting start date for a prompt in UK time, e.g. "3 November 2026"."""
-    local = meeting_datetime.astimezone(ZoneInfo("Europe/London"))
-    return f"{local.day} {local:%B %Y}"
 
 
 def get_transcript_messages(transcript: list[DialogueEntry]) -> dict[str, str]:

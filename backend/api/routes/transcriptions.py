@@ -5,8 +5,8 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import update
+from fastapi import APIRouter, HTTPException, Query, Response
+from sqlalchemy import tuple_, update
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, func, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -14,6 +14,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils import temporal
 from backend.utils.get_file_s3_key import get_file_s3_key
+from backend.utils.transcription_search import matching_sources, search_patterns, search_previews
 from common.database.postgres_models import (
     JobStatus,
     Minute,
@@ -25,6 +26,7 @@ from common.database.postgres_models import (
 from common.services.storage_services import get_storage_service
 from common.settings import get_settings
 from common.types import (
+    PaginatedTranscriptionSearchResponse,
     PaginatedTranscriptionsResponse,
     RecordingCreateRequest,
     RecordingCreateResponse,
@@ -36,6 +38,8 @@ from common.types import (
     TranscriptionMetadata,
     TranscriptionPatchRequest,
     TranscriptionRetryRequest,
+    TranscriptionSearchResult,
+    TranscriptionSearchSource,
 )
 
 settings = get_settings()
@@ -46,6 +50,7 @@ storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 transcriptions_router = APIRouter(tags=["Transcriptions"])
 
 logger = logging.getLogger(__name__)
+SEARCH_BATCH_SIZE = 50
 
 
 def _next_cleanup_cutoff(retention_days: int) -> datetime:
@@ -161,6 +166,105 @@ async def list_transcriptions(
         page=page,
         page_size=page_size,
         total_pages=total_pages,
+    )
+
+
+@transcriptions_router.get("/transcriptions/search", response_model=PaginatedTranscriptionSearchResponse)
+async def search_transcriptions(  # noqa: C901 # Keep matching and page validation together.
+    session: SQLSessionDep,
+    current_user: UserDep,
+    response: Response,
+    search: Annotated[str, Query(min_length=1, max_length=100, description="All keywords within one source document")],
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+    filter_by: Annotated[TranscriptionListFilter | None, Query()] = None,
+    sources: Annotated[
+        tuple[TranscriptionSearchSource, ...],
+        Query(min_length=1, description="Repeat for multiple sources. Defaults to all four sources."),
+    ] = tuple(TranscriptionSearchSource),
+) -> PaginatedTranscriptionSearchResponse:
+    """Search selected sources within the current user's transcriptions.
+
+    Keywords are literal, case-insensitive substrings; they can span transcript entries,
+    but cannot be combined across sources, speaker labels or summary versions.
+    Speakers match stored labels, not mentions in speech. Results rank title, speaker,
+    summary, then transcript, newest first within each rank.
+    """
+    response.headers["Cache-Control"] = "private, no-store"
+    patterns = search_patterns(search)
+    if not patterns:
+        raise HTTPException(422, detail="Search must contain at least one keyword")
+
+    expiry_cutoff = (
+        _next_cleanup_cutoff(current_user.data_retention_days) if current_user.data_retention_days is not None else None
+    )
+    filters = [Transcription.user_id == current_user.id]
+    if filter_by == TranscriptionListFilter.EXPIRING_SOON:
+        if expiry_cutoff is None:
+            return PaginatedTranscriptionSearchResponse(
+                items=[], total_count=0, page=page, page_size=page_size, total_pages=1
+            )
+        filters.append(Transcription.created_datetime < expiry_cutoff)
+    elif filter_by == TranscriptionListFilter.FAILED:
+        filters.append(Transcription.status == JobStatus.FAILED)
+
+    statement = (
+        select(Transcription)
+        .where(*filters)
+        .order_by(col(Transcription.created_datetime).desc(), col(Transcription.id).desc())
+    )
+    if TranscriptionSearchSource.SUMMARY in sources:
+        statement = statement.options(
+            selectinload(Transcription.minutes).selectinload(
+                Minute.minute_versions.and_(MinuteVersion.status == JobStatus.COMPLETED)
+            )
+        )
+    ids_by_source = {source: [] for source in ("title", "speaker", "summary", "transcript")}
+    selected = set(sources)
+    result_offset = (page - 1) * page_size
+    batch_statement = statement.limit(SEARCH_BATCH_SIZE)
+    # shortcut: pilot scans the user's content for exact counts; add indexed search text when latency warrants it.
+    while batch := (await session.exec(batch_statement)).all():
+        for transcription in batch:
+            first = next(matching_sources(transcription, patterns, selected), None)
+            if first is None:
+                continue
+            ids_by_source[first[0]].append(transcription.id)
+        last = batch[-1]
+        batch_statement = statement.where(
+            tuple_(Transcription.created_datetime, Transcription.id) < (last.created_datetime, last.id)
+        ).limit(SEARCH_BATCH_SIZE)
+
+    ranked_ids = [transcription_id for source_ids in ids_by_source.values() for transcription_id in source_ids]
+    page_ids = ranked_ids[result_offset : result_offset + page_size]
+    page_order = {transcription_id: index for index, transcription_id in enumerate(page_ids)}
+    page_statement = statement.where(col(Transcription.id).in_(page_ids)).execution_options(populate_existing=True)
+    page_transcriptions = (await session.exec(page_statement)).all() if page_ids else []
+    items = []
+    for transcription in sorted(page_transcriptions, key=lambda transcription: page_order[transcription.id]):
+        matches, truncated = search_previews(matching_sources(transcription, patterns, selected), patterns)
+        if not matches:
+            continue
+        items.append(
+            TranscriptionSearchResult(
+                id=transcription.id,
+                title=transcription.title,
+                created_datetime=transcription.created_datetime,
+                status=transcription.status,
+                text=transcription.dialogue_entries[0]["text"][:100] if transcription.dialogue_entries else "",
+                expiring=expiry_cutoff is not None and transcription.created_datetime < expiry_cutoff,
+                no_speech_detected=transcription.no_speech_detected,
+                matches=matches,
+                matches_truncated=truncated,
+            )
+        )
+    total_count = len(ranked_ids)
+    return PaginatedTranscriptionSearchResponse(
+        items=items,
+        total_count=total_count,
+        page=page,
+        page_size=page_size,
+        total_pages=math.ceil(total_count / page_size) or 1,
     )
 
 

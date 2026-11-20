@@ -864,6 +864,10 @@ export type Transcription = {
    */
   title?: string | null
   /**
+   * Meeting Datetime
+   */
+  meeting_datetime?: string
+  /**
    * Dialogue Entries
    */
   dialogue_entries?: Array<DialogueEntry> | null
@@ -902,6 +906,12 @@ export type TranscriptionCreateRequest = {
    * Title
    */
   title?: string | null
+  /**
+   * Meeting Datetime
+   *
+   * When the meeting started. Defaults to the upload time if omitted.
+   */
+  meeting_datetime?: string | null
 }
 
 /**
@@ -926,6 +936,10 @@ export type TranscriptionGetResponse = {
    * Title
    */
   title: string | null
+  /**
+   * Meeting Datetime
+   */
+  meeting_datetime: string
   /**
    * Dialogue Entries
    */
@@ -967,6 +981,10 @@ export type TranscriptionMetadata = {
    */
   created_datetime: string
   /**
+   * Meeting Datetime
+   */
+  meeting_datetime: string
+  /**
    * Title
    */
   title?: string | null
@@ -999,6 +1017,10 @@ export type TranscriptionPatchRequest = {
    * Dialogue Entries
    */
   dialogue_entries?: Array<DialogueEntry> | null
+  /**
+   * Meeting Datetime
+   */
+  meeting_datetime?: string | null
 }
 
 /**

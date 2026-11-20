@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { GenerateSummaryDialog } from './generate-summary-dialog'
+import { guessUploadMeetingTime } from './meeting-time-field'
 
 const GENERAL_TEMPLATE: Template = {
   name: 'General',
@@ -20,8 +21,13 @@ const GENERAL_TEMPLATE: Template = {
 
 export const AudioUploadForm = () => {
   const router = useRouter()
-  const { setMode, setUploadFile, setUploadTemplate, setUploadAgenda } =
-    useRecordingSession()
+  const {
+    setMode,
+    setUploadFile,
+    setUploadTemplate,
+    setUploadAgenda,
+    setUploadMeetingTime,
+  } = useRecordingSession()
   const [fileError, setFileError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -66,6 +72,18 @@ export const AudioUploadForm = () => {
       }
       setFileError(null)
       form.setValue('file', selected)
+      form.resetField('meeting_datetime')
+      guessUploadMeetingTime(selected).then((meetingTime) => {
+        // Ignore a late guess for a file that's since been swapped, and never
+        // overwrite a time the user has started typing.
+        if (
+          form.getValues('file') !== selected ||
+          form.getFieldState('meeting_datetime').isDirty
+        ) {
+          return
+        }
+        form.setValue('meeting_datetime', meetingTime)
+      })
     }
     input.addEventListener('change', handler)
     return () => input.removeEventListener('change', handler)
@@ -77,6 +95,7 @@ export const AudioUploadForm = () => {
     setUploadFile(values.file)
     setUploadTemplate(values.template)
     setUploadAgenda(values.agenda)
+    setUploadMeetingTime(values.meeting_datetime)
     setMode('upload-file')
     router.push('/new')
   }
@@ -136,6 +155,7 @@ export const AudioUploadForm = () => {
             handleGenerate()
           }}
           disabled={agendaRequired && !agendaValue}
+          showMeetingDate
         />
       </div>
     </FormProvider>

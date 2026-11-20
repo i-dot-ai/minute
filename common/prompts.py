@@ -3,6 +3,12 @@
 from common.database.postgres_models import DialogueEntry
 from common.format_transcript import transcript_as_index_speaker_and_utterance, transcript_as_speaker_and_utterance
 
+# The meeting date is shown above the summary instead, so it stays right if the user changes it.
+NO_MEETING_DATE_INSTRUCTION = (
+    "Do not write the date the meeting took place anywhere in the summary, "
+    "and never work it out from the transcript. Minute shows it above the summary."
+)
+
 
 def get_transcript_messages(transcript: list[DialogueEntry]) -> dict[str, str]:
     return {

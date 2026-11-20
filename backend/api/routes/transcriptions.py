@@ -144,6 +144,7 @@ async def list_transcriptions(
         TranscriptionMetadata(
             id=t.id,
             created_datetime=t.created_datetime,
+            meeting_datetime=t.meeting_datetime,
             title=t.title,
             text=t.dialogue_entries[0]["text"][:100] if t.dialogue_entries else "",
             status=t.status,
@@ -199,6 +200,9 @@ async def create_transcription(
     if recording.transcription_id is not None:
         raise HTTPException(status_code=409, detail="Recording has already been transcribed")
     transcription = Transcription(user_id=current_user.id, title=request.title)
+    # Left unset, the column defaults to now (the upload time). Setting None would insert NULL.
+    if request.meeting_datetime is not None:
+        transcription.meeting_datetime = request.meeting_datetime
 
     if not await storage_service.check_object_exists(recording.s3_file_key):
         raise HTTPException(
@@ -339,6 +343,7 @@ async def get_transcription(
         status=transcription.status,
         dialogue_entries=transcription.dialogue_entries,
         title=transcription.title,
+        meeting_datetime=transcription.meeting_datetime,
         created_datetime=transcription.created_datetime,
         error=transcription.error,
         no_speech_detected=transcription.no_speech_detected,
@@ -398,6 +403,8 @@ async def save_transcription(
         transcription.title = transcription_data.title
     if transcription_data.dialogue_entries is not None:
         transcription.dialogue_entries = transcription_data.dialogue_entries
+    if transcription_data.meeting_datetime is not None:
+        transcription.meeting_datetime = transcription_data.meeting_datetime
     await session.commit()
     await session.refresh(transcription)
 

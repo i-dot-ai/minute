@@ -3,7 +3,7 @@ import markdownify
 from common.database.postgres_models import TemplateType, Transcription, UserTemplate
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
-from common.prompts import get_transcript_messages
+from common.prompts import NO_MEETING_DATE_INSTRUCTION, get_transcript_messages
 
 document_prompt = """<task>
 You are an expert meeting minutes writer with extensive experience across various sectors. \
@@ -13,11 +13,8 @@ both the essence and important details of the discussion.
 Transform the provided meeting content into structured minutes following the template guidelines precisely.
 </task>
 
-<general_information>
-  <recording-datetime>{date}</recording-datetime>
-</general_information>
-
 <requirements>
+- {no_meeting_date_instruction} If the template asks for the date, write "Shown above".
 - Follow the structure outlined in the <template> section below exactly. \
 Do not add additonal sections if they are not specified.
 - Include as much detail as possible.
@@ -62,6 +59,8 @@ form_system_prompt = """Instructions:
 - Answer based solely on information in the transcript
 - Follow any specific instructions provided in the question description and style guide
 - If the document doesn't contain relevant information, respond with "Information not found in transcript"
+- If the question asks for the date of the meeting, answer "Shown above" and never work out the date \
+from the transcript. Minute shows the meeting date above the summary, so it stays right if the user changes it
 - Ensure your answer is consistent with previously answered questions
 - Do not repeat information already provided in previous answers unless directly relevant to this question
 - You provide only the direct answer to the question. \
@@ -78,7 +77,7 @@ async def generate_user_template(template: UserTemplate, transcription: Transcri
                 "role": "system",
                 "content": document_prompt.format(
                     template=markdown_template,
-                    date=transcription.created_datetime.strftime("%A %d %B %Y %H:%M:%S"),
+                    no_meeting_date_instruction=NO_MEETING_DATE_INSTRUCTION,
                 ),
             },
             get_transcript_messages(transcription.dialogue_entries or []),

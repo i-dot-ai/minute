@@ -24,6 +24,7 @@ export type DeleteTranscription = {
   title?: string | null
   status: JobStatus
   created_datetime: string
+  meeting_datetime: string
 }
 
 export const DeleteTranscriptionDialog = ({
@@ -35,7 +36,7 @@ export const DeleteTranscriptionDialog = ({
   setOpen: Dispatch<SetStateAction<boolean>>
   transcription: DeleteTranscription
 }) => {
-  const date = new Date(transcription.created_datetime)
+  const date = new Date(transcription.meeting_datetime)
   const queryClient = useQueryClient()
   const router = useRouter()
   const pathname = usePathname()

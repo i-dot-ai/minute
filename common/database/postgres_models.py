@@ -3,7 +3,7 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Column, Index, text
+from sqlalchemy import TIMESTAMP, Column, Index, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
@@ -48,6 +48,24 @@ class ContentSource(StrEnum):
     MANUAL_EDIT = auto()
     AI_EDIT = auto()
     INITIAL_GENERATION = auto()
+
+
+class Permission(StrEnum):
+    """The full set of granular capabilities in the system.
+
+    Own-scoped capabilities (``*.own``) are evaluated against the resource's
+    creator; ``*.any`` capabilities grant the action over any resource in the
+    context (an org) regardless of creator.
+    """
+
+    FILE_CREATE = "file.create"
+    FILE_READ_OWN = "file.read.own"
+    FILE_EDIT_OWN = "file.edit.own"
+    FILE_DELETE_OWN = "file.delete.own"
+    FILE_EXPORT_OWN = "file.export.own"
+    FILE_READ_ANY = "file.read.any"
+    FILE_OPEN_ANY = "file.open.any"
+    MEMBERSHIP_MANAGE = "membership.manage"
 
 
 class MinuteVersion(BaseTableMixin, table=True):
@@ -114,6 +132,7 @@ class Recording(BaseTableMixin, table=True):
     __tablename__ = "recording"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     user_id: UUID = Field(foreign_key="user.id", nullable=False)
+    org_id: UUID | None = Field(default=None, foreign_key="organisation.id", ondelete="SET NULL")
     s3_file_key: str
     transcription_id: UUID | None = Field(default=None, foreign_key="transcription.id", ondelete="SET NULL")
     transcription: "Transcription" = Relationship(back_populates="recordings")
@@ -134,6 +153,7 @@ class Transcription(BaseTableMixin, table=True):
     error: str | None = Field(default=None)
     user: User | None = Relationship(back_populates="transcriptions")
     user_id: UUID | None = Field(default=None, foreign_key="user.id")
+    org_id: UUID | None = Field(default=None, foreign_key="organisation.id", ondelete="SET NULL")
     minutes: list[Minute] = Relationship(
         back_populates="transcription",
         cascade_delete=True,
@@ -188,3 +208,69 @@ class UserTemplate(BaseTableMixin, table=True):
         passive_deletes="all",
         sa_relationship_kwargs={"order_by": TemplateQuestion.position},
     )
+
+
+# ---------------------------------------------------------------------------
+# Authorization: organisations, membership, roles and permissions
+# ---------------------------------------------------------------------------
+
+
+class Organisation(BaseTableMixin, table=True):
+    __tablename__ = "organisation"
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    name: str
+
+    memberships: list["Membership"] = Relationship(back_populates="organisation")
+
+
+class Membership(BaseTableMixin, table=True):
+    __tablename__ = "membership"
+    __table_args__ = (UniqueConstraint("user_id", "org_id", name="uq_membership_user_org"),)
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    user_id: UUID = Field(foreign_key="user.id", ondelete="CASCADE", index=True)
+    org_id: UUID = Field(foreign_key="organisation.id", ondelete="CASCADE", index=True)
+    is_active: bool = Field(default=True, sa_column_kwargs={"server_default": text("true")})
+
+    organisation: Organisation = Relationship(back_populates="memberships")
+    membership_roles: list["MembershipRole"] = Relationship(
+        back_populates="membership",
+        cascade_delete=True,
+    )
+
+
+class RolePermission(BaseTableMixin, table=True):
+    __tablename__ = "role_permission"
+    __table_args__ = (UniqueConstraint("role_id", "permission_id", name="uq_role_permission"),)
+    role_id: UUID = Field(foreign_key="role.id", ondelete="CASCADE", index=True)
+    permission_id: UUID = Field(foreign_key="permission.id", ondelete="CASCADE", index=True)
+
+
+class Role(BaseTableMixin, table=True):
+    __tablename__ = "role"
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    name: str = Field(index=True, unique=True)
+    is_system: bool = Field(default=True, sa_column_kwargs={"server_default": text("true")})
+
+    role_permissions: list[RolePermission] = Relationship(
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
+
+
+class PermissionRecord(BaseTableMixin, table=True):
+    __tablename__ = "permission"
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    name: str = Field(index=True, unique=True)
+
+
+class MembershipRole(BaseTableMixin, table=True):
+    __tablename__ = "membership_role"
+    __table_args__ = (UniqueConstraint("membership_id", "role_id", name="uq_membership_role"),)
+    membership_id: UUID = Field(foreign_key="membership.id", ondelete="CASCADE", index=True)
+    role_id: UUID = Field(foreign_key="role.id", ondelete="CASCADE", index=True)
+
+    membership: Membership = Relationship(back_populates="membership_roles")
+    role: Role = Relationship()

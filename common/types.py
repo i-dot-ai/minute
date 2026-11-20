@@ -354,3 +354,17 @@ class HourlyStatusResponse(BaseModel):
     partial: bool = Field(description="Timing read limit reached; counts and failure rates are not capped")
     hours: list[StatusBucket] = Field(description="Oldest first, bucketed by close time; last hour is partial")
     last_10_minutes: StatusBucket = Field(description="Runs that closed in the 10 minutes before collected_at")
+
+
+class OrgMember(BaseModel):
+    """A member of an organisation, as surfaced to permissions admins."""
+
+    user_id: uuid.UUID
+    email: str
+    is_active: bool
+    roles: list[str]
+
+
+class OrgMembersResponse(BaseModel):
+    org_id: uuid.UUID
+    members: list[OrgMember]

@@ -36,7 +36,10 @@ class TranscriptionHandlerService:
             minute = session.get(
                 Minute,
                 minute_id,
-                options=[selectinload(Minute.transcription).selectinload(Transcription.recordings)],
+                options=[
+                    selectinload(Minute.transcription).selectinload(Transcription.recordings),
+                    selectinload(Minute.transcription).selectinload(Transcription.user),
+                ],
             )
             if not minute:
                 msg = f"minute id {minute_id} not found"

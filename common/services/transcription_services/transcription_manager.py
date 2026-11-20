@@ -125,8 +125,15 @@ class TranscriptionServiceManager:
             adapter = self.select_adaptor(int(duration_seconds))
             match adapter.adapter_type:
                 case AdapterType.SYNCHRONOUS:
+                    azure_options = {}
+                    if adapter is AzureSpeechAdapter:
+                        email = transcription.user.email if transcription.user else ""
+                        azure_options["allow_fallbacks"] = not email.lower().endswith("@dwp.gov.uk")
                     transcription_job = await adapter.start(
-                        audio_file_path_or_recording=file_path, timeout_seconds=timeout_seconds, attempt=attempt
+                        audio_file_path_or_recording=file_path,
+                        timeout_seconds=timeout_seconds,
+                        attempt=attempt,
+                        **azure_options,
                     )
                     transcript = transcription_job.transcript or []
                     has_text = any(character.isalnum() for entry in transcript for character in entry["text"])

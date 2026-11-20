@@ -3,11 +3,13 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Column, Index, text
+from sqlalchemy import TIMESTAMP, Column, Index, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
 from sqlmodel import Field, Relationship, SQLModel, col, func
+
+from common.authz.catalogue import Permission
 
 
 class DialogueEntry(TypedDict):
@@ -48,6 +50,12 @@ class ContentSource(StrEnum):
     MANUAL_EDIT = auto()
     AI_EDIT = auto()
     INITIAL_GENERATION = auto()
+
+
+# The permission catalogue lives in code (common/authz/catalogue.py), not the
+# database. Re-exported here so existing ``from common.database.postgres_models
+# import Permission`` call sites keep working.
+__all__ = ["Permission"]
 
 
 class MinuteVersion(BaseTableMixin, table=True):
@@ -108,12 +116,19 @@ class User(BaseTableMixin, table=True):
     default_template_id: UUID | None = Field(default=None, foreign_key="user_template.id", ondelete="SET NULL")
     default_template_name: str | None = Field(default=None)
     transcriptions: list["Transcription"] = Relationship(back_populates="user")
+    # Service-wide (org-less) role grants, e.g. service_owner. These resolve in
+    # the personal context (org_id is None), distinct from per-org memberships.
+    user_roles: list["UserRole"] = Relationship(
+        back_populates="user",
+        cascade_delete=True,
+    )
 
 
 class Recording(BaseTableMixin, table=True):
     __tablename__ = "recording"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     user_id: UUID = Field(foreign_key="user.id", nullable=False)
+    org_id: UUID | None = Field(default=None, foreign_key="organisation.id", ondelete="SET NULL")
     s3_file_key: str
     transcription_id: UUID | None = Field(default=None, foreign_key="transcription.id", ondelete="SET NULL")
     transcription: "Transcription" = Relationship(back_populates="recordings")
@@ -134,6 +149,7 @@ class Transcription(BaseTableMixin, table=True):
     error: str | None = Field(default=None)
     user: User | None = Relationship(back_populates="transcriptions")
     user_id: UUID | None = Field(default=None, foreign_key="user.id")
+    org_id: UUID | None = Field(default=None, foreign_key="organisation.id", ondelete="SET NULL")
     minutes: list[Minute] = Relationship(
         back_populates="transcription",
         cascade_delete=True,
@@ -188,3 +204,79 @@ class UserTemplate(BaseTableMixin, table=True):
         passive_deletes="all",
         sa_relationship_kwargs={"order_by": TemplateQuestion.position},
     )
+
+
+# ---------------------------------------------------------------------------
+# Authorization: organisations, membership, roles and permissions
+# ---------------------------------------------------------------------------
+
+
+class Organisation(BaseTableMixin, table=True):
+    __tablename__ = "organisation"
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    name: str
+    # Soft-deletion flag: archiving an org sets this false rather than deleting
+    # the row, preserving history and content ownership. The resolver treats an
+    # archived org as granting no permissions, so access stops for all members.
+    is_active: bool = Field(default=True, sa_column_kwargs={"server_default": text("true")})
+
+    memberships: list["Membership"] = Relationship(back_populates="organisation")
+
+
+class Membership(BaseTableMixin, table=True):
+    __tablename__ = "membership"
+    __table_args__ = (UniqueConstraint("user_id", "org_id", name="uq_membership_user_org"),)
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    user_id: UUID = Field(foreign_key="user.id", ondelete="CASCADE", index=True)
+    org_id: UUID = Field(foreign_key="organisation.id", ondelete="CASCADE", index=True)
+    is_active: bool = Field(default=True, sa_column_kwargs={"server_default": text("true")})
+
+    organisation: Organisation = Relationship(back_populates="memberships")
+    membership_roles: list["MembershipRole"] = Relationship(
+        back_populates="membership",
+        cascade_delete=True,
+    )
+
+
+class Role(BaseTableMixin, table=True):
+    __tablename__ = "role"
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    name: str = Field(index=True, unique=True)
+    is_system: bool = Field(default=True, sa_column_kwargs={"server_default": text("true")})
+    # The permissions this role grants, as a list of ``Permission`` string
+    # values. Stored on the role itself (not a join table): the permission
+    # catalogue is code, roles and their grants are data. Resolved by coercing
+    # each string to ``Permission`` (unknown strings are logged and ignored).
+    permissions: list[str] = Field(default_factory=list, sa_column=Column(JSONB, nullable=False, server_default="[]"))
+
+
+class MembershipRole(BaseTableMixin, table=True):
+    __tablename__ = "membership_role"
+    __table_args__ = (UniqueConstraint("membership_id", "role_id", name="uq_membership_role"),)
+    membership_id: UUID = Field(foreign_key="membership.id", ondelete="CASCADE", index=True)
+    role_id: UUID = Field(foreign_key="role.id", ondelete="CASCADE", index=True)
+
+    membership: Membership = Relationship(back_populates="membership_roles")
+    role: Role = Relationship()
+
+
+class UserRole(BaseTableMixin, table=True):
+    """A service-wide (org-less) role grant bound directly to a user.
+
+    This is the global-context analogue of ``MembershipRole``: where that binds
+    roles to a user's membership in a specific org, ``UserRole`` binds roles to
+    the user independent of any org. It is how service-wide roles such as
+    ``service_owner`` are held, and is resolved in the personal context
+    (``org_id is None``) by ``context_permissions``.
+    """
+
+    __tablename__ = "user_role"
+    __table_args__ = (UniqueConstraint("user_id", "role_id", name="uq_user_role"),)
+    user_id: UUID = Field(foreign_key="user.id", ondelete="CASCADE", index=True)
+    role_id: UUID = Field(foreign_key="role.id", ondelete="CASCADE", index=True)
+
+    user: User = Relationship(back_populates="user_roles")
+    role: Role = Relationship()

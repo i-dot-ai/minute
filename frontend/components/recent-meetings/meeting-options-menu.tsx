@@ -2,6 +2,7 @@
 
 import {
   formatMeetingTime,
+  MeetingTime,
   MeetingTimeField,
   toApiMeetingDatetime,
   toMeetingTime,
@@ -28,7 +29,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Ellipsis } from 'lucide-react'
 import posthog from 'posthog-js'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 
 type MeetingWithTime = { id: string; meeting_datetime: string }
@@ -44,6 +45,40 @@ export const MeetingTimeLine = ({
     {formatMeetingTime(new Date(transcription.meeting_datetime))}
   </p>
 )
+
+export const useSaveMeetingTime = (
+  transcriptionId: string,
+  { onSuccess, onError }: { onSuccess?: () => void; onError?: () => void } = {}
+) => {
+  const queryClient = useQueryClient()
+  const { mutate, isPending } = useMutation({
+    ...saveTranscriptionTranscriptionsTranscriptionIdPatchMutation(),
+    onSuccess() {
+      queryClient.invalidateQueries({
+        queryKey: listTranscriptionsTranscriptionsGetQueryKey(),
+      })
+      queryClient.invalidateQueries({
+        queryKey: getTranscriptionTranscriptionsTranscriptionIdGetQueryKey({
+          path: { transcription_id: transcriptionId },
+        }),
+      })
+      posthog.capture('changed_meeting_date', { transcriptionId })
+      onSuccess?.()
+    },
+    onError,
+  })
+
+  const save = useCallback(
+    (meetingTime?: MeetingTime) =>
+      mutate({
+        path: { transcription_id: transcriptionId },
+        body: { meeting_datetime: toApiMeetingDatetime(meetingTime) },
+      }),
+    [mutate, transcriptionId]
+  )
+
+  return { save, isPending }
+}
 
 // The "⋯" menu next to a meeting's title.
 export const MeetingOptionsMenu = ({
@@ -101,7 +136,6 @@ const ChangeMeetingTimeDialog = ({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) => {
-  const queryClient = useQueryClient()
   const [errorText, setErrorText] = useState<string>()
   const form = useForm<TranscriptionForm>()
 
@@ -116,33 +150,15 @@ const ChangeMeetingTimeDialog = ({
     }
   }, [form, open, transcription.meeting_datetime])
 
-  const { mutate: save, isPending } = useMutation({
-    ...saveTranscriptionTranscriptionsTranscriptionIdPatchMutation(),
-    onSuccess() {
-      queryClient.invalidateQueries({
-        queryKey: listTranscriptionsTranscriptionsGetQueryKey(),
-      })
-      queryClient.invalidateQueries({
-        queryKey: getTranscriptionTranscriptionsTranscriptionIdGetQueryKey({
-          path: { transcription_id: transcription.id },
-        }),
-      })
-      posthog.capture('changed_meeting_date', {
-        transcriptionId: transcription.id,
-      })
-      onOpenChange(false)
-    },
-    onError() {
-      setErrorText('Could not change the meeting date. Please try again.')
-    },
+  const { save, isPending } = useSaveMeetingTime(transcription.id, {
+    onSuccess: () => onOpenChange(false),
+    onError: () =>
+      setErrorText('Could not change the meeting date. Please try again.'),
   })
 
   const onSubmit = ({ meeting_datetime }: TranscriptionForm) => {
     setErrorText(undefined)
-    save({
-      path: { transcription_id: transcription.id },
-      body: { meeting_datetime: toApiMeetingDatetime(meeting_datetime) },
-    })
+    save(meeting_datetime)
   }
 
   return (

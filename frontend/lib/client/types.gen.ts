@@ -423,9 +423,9 @@ export type PaginatedTranscriptionSearchResponse = {
 }
 
 /**
-* OrgMember
-* A member of an organisation, as surfaced to permissions admins.
-*/
+ * OrgMember
+ * A member of an organisation, as surfaced to permissions admins.
+ */
 export type OrgMember = {
   /**
    * User Id

@@ -20,7 +20,6 @@ from sqlmodel import delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import get_user_info
-from common.authz import reset_role_permission_cache
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import (
     Membership,
@@ -35,15 +34,6 @@ ROLELESS_EMAIL = "members-route-roleless@example.com"
 
 ROLE_MEMBER = "member"
 ROLE_PERMISSIONS_ADMIN = "permissions_admin"
-
-
-@pytest.fixture(autouse=True)
-def _clear_catalogue_cache():
-    """The role/permission catalogue is cached in-process with a TTL; clear it
-    around each test so fixture/DB state is always reflected deterministically."""
-    reset_role_permission_cache()
-    yield
-    reset_role_permission_cache()
 
 
 async def _role_id(session: AsyncSession, name: str) -> uuid.UUID:
@@ -103,12 +93,17 @@ async def org_fixture():
 
     yield data
 
+    org_ids = [data["org_a"], data["org_b"], data["org_c"]]
     async with AsyncSession(async_engine) as session:
-        await session.exec(delete(MembershipRole))
-        await session.exec(delete(Membership))
-        await session.exec(
-            delete(Organisation).where(Organisation.id.in_([data["org_a"], data["org_b"], data["org_c"]]))
-        )
+        membership_ids = (
+            await session.exec(select(Membership.id).where(Membership.org_id.in_(org_ids)))  # type: ignore[attr-defined]
+        ).all()
+        if membership_ids:
+            await session.exec(
+                delete(MembershipRole).where(MembershipRole.membership_id.in_(membership_ids))  # type: ignore[attr-defined]
+            )
+        await session.exec(delete(Membership).where(Membership.org_id.in_(org_ids)))  # type: ignore[attr-defined]
+        await session.exec(delete(Organisation).where(Organisation.id.in_(org_ids)))
         await session.commit()
 
 

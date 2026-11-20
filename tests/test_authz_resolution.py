@@ -139,10 +139,17 @@ async def resolution_orgs():
 
     yield data
 
+    org_ids = [data["org_a"], data["org_b"]]
     async with AsyncSession(async_engine) as session:
-        await session.exec(delete(MembershipRole))
-        await session.exec(delete(Membership))
-        await session.exec(delete(Organisation).where(Organisation.id.in_([data["org_a"], data["org_b"]])))
+        membership_ids = (
+            await session.exec(select(Membership.id).where(Membership.org_id.in_(org_ids)))  # type: ignore[attr-defined]
+        ).all()
+        if membership_ids:
+            await session.exec(
+                delete(MembershipRole).where(MembershipRole.membership_id.in_(membership_ids))  # type: ignore[attr-defined]
+            )
+        await session.exec(delete(Membership).where(Membership.org_id.in_(org_ids)))  # type: ignore[attr-defined]
+        await session.exec(delete(Organisation).where(Organisation.id.in_(org_ids)))
         await session.commit()
 
 

@@ -1,6 +1,7 @@
 """Resolve a user's permissions from roles"""
 
 import asyncio
+import logging
 from time import monotonic
 from uuid import UUID
 
@@ -16,6 +17,8 @@ from common.database.postgres_models import (
     Role,
     RolePermission,
 )
+
+logger = logging.getLogger(__name__)
 
 PERSONAL_DEFAULT_ROLE = "personal_default"
 
@@ -50,6 +53,12 @@ async def _role_permission_catalogue(session: AsyncSession) -> dict[str, frozens
             try:
                 grouped.setdefault(role_name, set()).add(Permission(permission_name))
             except ValueError:
+                logger.warning(
+                    "Ignoring unknown permission %r granted to role %r; "
+                    "DB catalogue has drifted from the Permission enum",
+                    permission_name,
+                    role_name,
+                )
                 continue
 
         catalogue = {name: frozenset(perms) for name, perms in grouped.items()}

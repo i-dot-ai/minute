@@ -1,4 +1,3 @@
-import logging
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated
@@ -8,11 +7,11 @@ from pydantic import BaseModel, StringConstraints
 
 from backend.api.dependencies import UserDep
 from common.services.linear_client import LinearNotConfiguredError, create_linear_issue
-from common.settings import get_settings
+from common.settings import get_settings, get_structured_logger
 
 support_router = APIRouter(tags=["Support"])
 
-logger = logging.getLogger(__name__)
+logger = get_structured_logger()
 
 TITLE_SUMMARY_LENGTH = 80
 

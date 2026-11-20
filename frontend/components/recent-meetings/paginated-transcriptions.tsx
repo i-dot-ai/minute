@@ -204,10 +204,10 @@ export const PaginatedTranscriptions = () => {
           <input
             id="search-transcriptions"
             name="search-transcriptions"
-            aria-label="Search transcriptions by title"
+            aria-label="Search transcriptions"
             type="search"
             className="govuk-input govuk-input--subtle !pl-10"
-            placeholder="Search transcriptions by title"
+            placeholder="Search transcriptions"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />

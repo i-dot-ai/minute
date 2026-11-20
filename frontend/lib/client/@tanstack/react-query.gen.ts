@@ -36,6 +36,7 @@ import {
   healthcheckHealthcheckGet,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGet,
   listMinuteVersionsMinutesMinuteIdVersionsGet,
+  listOrgMembersOrgsOrgIdMembersGet,
   listTranscriptionsTranscriptionsGet,
   type Options,
   retryTranscriptionTranscriptionsTranscriptionIdRetryPost,
@@ -117,6 +118,9 @@ import type {
   ListMinuteVersionsMinutesMinuteIdVersionsGetData,
   ListMinuteVersionsMinutesMinuteIdVersionsGetError,
   ListMinuteVersionsMinutesMinuteIdVersionsGetResponse,
+  ListOrgMembersOrgsOrgIdMembersGetData,
+  ListOrgMembersOrgsOrgIdMembersGetError,
+  ListOrgMembersOrgsOrgIdMembersGetResponse,
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetError,
   ListTranscriptionsTranscriptionsGetResponse,
@@ -1346,3 +1350,37 @@ export const createSupportTicketSupportTicketsPostMutation = (
   }
   return mutationOptions
 }
+
+export const listOrgMembersOrgsOrgIdMembersGetQueryKey = (
+  options: Options<ListOrgMembersOrgsOrgIdMembersGetData>
+) => createQueryKey('listOrgMembersOrgsOrgIdMembersGet', options)
+
+/**
+ * List Org Members
+ *
+ * List the members of an organisation.
+ *
+ * Requires ``membership.manage`` within ``org_id`` (the permissions-admin
+ * capability). Callers without an active membership or the permission get a 404
+ * from the ``require`` dependency, revealing nothing about the org.
+ */
+export const listOrgMembersOrgsOrgIdMembersGetOptions = (
+  options: Options<ListOrgMembersOrgsOrgIdMembersGetData>
+) =>
+  queryOptions<
+    ListOrgMembersOrgsOrgIdMembersGetResponse,
+    ListOrgMembersOrgsOrgIdMembersGetError,
+    ListOrgMembersOrgsOrgIdMembersGetResponse,
+    ReturnType<typeof listOrgMembersOrgsOrgIdMembersGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listOrgMembersOrgsOrgIdMembersGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: listOrgMembersOrgsOrgIdMembersGetQueryKey(options),
+  })

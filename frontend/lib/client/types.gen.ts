@@ -423,6 +423,43 @@ export type PaginatedTranscriptionSearchResponse = {
 }
 
 /**
+ * OrgMember
+ * A member of an organisation, as surfaced to permissions admins.
+ */
+export type OrgMember = {
+  /**
+   * User Id
+   */
+  user_id: string
+  /**
+   * Email
+   */
+  email: string
+  /**
+   * Is Active
+   */
+  is_active: boolean
+  /**
+   * Roles
+   */
+  roles: Array<string>
+}
+
+/**
+ * OrgMembersResponse
+ */
+export type OrgMembersResponse = {
+  /**
+   * Org Id
+   */
+  org_id: string
+  /**
+   * Members
+   */
+  members: Array<OrgMember>
+}
+
+/**
  * PaginatedTranscriptionsResponse
  *
  * Paginated response for transcriptions.
@@ -920,6 +957,10 @@ export type Transcription = {
    * User Id
    */
   user_id?: string | null
+  /**
+   * Org Id
+   */
+  org_id?: string | null
 }
 
 /**
@@ -2396,3 +2437,41 @@ export type CreateSupportTicketSupportTicketsPostResponses = {
 
 export type CreateSupportTicketSupportTicketsPostResponse =
   CreateSupportTicketSupportTicketsPostResponses[keyof CreateSupportTicketSupportTicketsPostResponses]
+
+export type ListOrgMembersOrgsOrgIdMembersGetData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path: {
+    /**
+     * Org Id
+     */
+    org_id: string
+  }
+  query?: never
+  url: '/orgs/{org_id}/members'
+}
+
+export type ListOrgMembersOrgsOrgIdMembersGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type ListOrgMembersOrgsOrgIdMembersGetError =
+  ListOrgMembersOrgsOrgIdMembersGetErrors[keyof ListOrgMembersOrgsOrgIdMembersGetErrors]
+
+export type ListOrgMembersOrgsOrgIdMembersGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: OrgMembersResponse
+}
+
+export type ListOrgMembersOrgsOrgIdMembersGetResponse =
+  ListOrgMembersOrgsOrgIdMembersGetResponses[keyof ListOrgMembersOrgsOrgIdMembersGetResponses]

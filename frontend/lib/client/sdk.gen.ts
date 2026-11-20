@@ -79,6 +79,9 @@ import type {
   ListMinuteVersionsMinutesMinuteIdVersionsGetData,
   ListMinuteVersionsMinutesMinuteIdVersionsGetErrors,
   ListMinuteVersionsMinutesMinuteIdVersionsGetResponses,
+  ListOrgMembersOrgsOrgIdMembersGetData,
+  ListOrgMembersOrgsOrgIdMembersGetErrors,
+  ListOrgMembersOrgsOrgIdMembersGetResponses,
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetErrors,
   ListTranscriptionsTranscriptionsGetResponses,
@@ -760,3 +763,22 @@ export const createSupportTicketSupportTicketsPost = <
       ...options.headers,
     },
   })
+
+/**
+ * List Org Members
+ *
+ * List the members of an organisation.
+ *
+ * Requires ``membership.manage`` within ``org_id`` (the permissions-admin
+ * capability). Callers without an active membership or the permission get a 404
+ */
+export const listOrgMembersOrgsOrgIdMembersGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ListOrgMembersOrgsOrgIdMembersGetData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    ListOrgMembersOrgsOrgIdMembersGetResponses,
+    ListOrgMembersOrgsOrgIdMembersGetErrors,
+    ThrowOnError
+  >({ url: '/orgs/{org_id}/members', ...options })

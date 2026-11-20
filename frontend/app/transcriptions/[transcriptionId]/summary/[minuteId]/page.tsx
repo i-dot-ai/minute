@@ -14,8 +14,14 @@ import {
   SpeakerRenames,
 } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerEditor'
 import {
-  MeetingOptionsMenu,
+  MeetingTimeField,
+  toApiMeetingDatetime,
+  toMeetingTime,
+} from '@/components/audio/meeting-time-field'
+import { TranscriptionForm } from '@/components/audio/types'
+import {
   MeetingTimeLine,
+  useSaveMeetingTime,
 } from '@/components/recent-meetings/meeting-options-menu'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
 import { useGenerateSummaryFromMinute } from '@/hooks/use-generate-summary-from-minute'
@@ -38,6 +44,7 @@ import {
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { use, useCallback, useEffect, useRef, useState } from 'react'
+import { FormProvider, useForm } from 'react-hook-form'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 
 export default function SummaryPage({
@@ -123,18 +130,46 @@ export default function SummaryPage({
     status: transcription?.status ?? 'completed',
   })
 
+  const { save: saveMeetingTime } = useSaveMeetingTime(transcriptionId)
+  const meetingTimeForm = useForm<TranscriptionForm>()
+
   const titleRef = useRef(transcription?.title)
   titleRef.current = transcription?.title
+  const meetingDatetimeRef = useRef(transcription?.meeting_datetime)
+  meetingDatetimeRef.current = transcription?.meeting_datetime
   useEffect(() => {
     if (editState?.isEditable) {
       setDraftTitle(titleRef.current ?? '')
+      meetingTimeForm.reset({
+        meeting_datetime: meetingDatetimeRef.current
+          ? toMeetingTime(new Date(meetingDatetimeRef.current))
+          : undefined,
+      })
     }
-  }, [editState?.isEditable])
+  }, [editState?.isEditable, meetingTimeForm])
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
+    if (!(await meetingTimeForm.trigger())) return
+    const meetingTime = meetingTimeForm.getValues('meeting_datetime')
+    // Compare at the minute, as that's all the field holds.
+    const savedMeetingTime =
+      transcription?.meeting_datetime &&
+      toApiMeetingDatetime(
+        toMeetingTime(new Date(transcription.meeting_datetime))
+      )
+    if (toApiMeetingDatetime(meetingTime) !== savedMeetingTime) {
+      saveMeetingTime(meetingTime)
+    }
     saveTitle(draftTitle)
     editState?.onSave()
-  }, [draftTitle, editState, saveTitle])
+  }, [
+    draftTitle,
+    editState,
+    meetingTimeForm,
+    saveMeetingTime,
+    saveTitle,
+    transcription?.meeting_datetime,
+  ])
 
   const handleDiscard = useCallback(() => {
     setDraftTitle(transcription?.title ?? '')
@@ -408,15 +443,19 @@ export default function SummaryPage({
                 value={draftTitle}
                 onChange={(e) => setDraftTitle(e.target.value)}
               />
+              <div className="govuk-!-margin-top-6">
+                <FormProvider {...meetingTimeForm}>
+                  <MeetingTimeField startEditing />
+                </FormProvider>
+              </div>
+              {/* Lets Enter in the date boxes submit the form too */}
+              <button type="submit" hidden />
             </form>
           ) : (
             <>
-              <div className="govuk-!-margin-top-4 flex items-start justify-between gap-4">
-                <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
-                  {transcription.title}
-                </h1>
-                <MeetingOptionsMenu transcription={transcription} />
-              </div>
+              <h1 className="govuk-heading-l govuk-!-margin-top-4 govuk-!-margin-bottom-2">
+                {transcription.title}
+              </h1>
               <MeetingTimeLine transcription={transcription} />
             </>
           )}

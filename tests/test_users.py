@@ -1,11 +1,18 @@
-"""Tests for user display names: the email-derived fallback and PATCH /users/display-name.
+"""Tests for user display names and fixed departmental data retention.
 
 Route tests need the docker-compose Postgres (`make run`); they run as the local-testing
-user (name.surname@domain.gov.uk) and restore its display name afterwards.
+user (name.surname@domain.gov.uk), or synthetic users deleted afterwards.
 """
 
-import pytest
+from types import SimpleNamespace
+from uuid import uuid4
 
+import pytest
+from sqlmodel import delete, select, update
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+from common.database.postgres_database import async_engine
+from common.database.postgres_models import User
 from common.services.user_details import display_name_from_email
 from tests.utils import get_test_client
 
@@ -74,3 +81,49 @@ async def test_display_name_patch_set_clear_and_validation():
             assert too_long.status_code == 422
         finally:
             await ac.patch("/users/display-name", json={"display_name": None})
+
+
+@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.parametrize(
+    ("domain", "original_retention", "fixed"),
+    [
+        ("BUSINESSANDTRADE.GOV.UK", None, True),
+        ("dsit.gov.uk", 90, False),
+        ("sub.businessandtrade.gov.uk", None, False),
+    ],
+)
+async def test_fixed_data_retention(monkeypatch, domain, original_retention, fixed):
+    email = f"retention-test-{uuid4().hex}@{domain}"
+    monkeypatch.setattr(
+        "backend.api.dependencies.get_current_user.get_user_info",
+        lambda _: SimpleNamespace(email=email, is_authorised=True),
+    )
+    try:
+        async with get_test_client() as ac:
+            created = await ac.get("/users/me")
+            assert created.status_code == 200
+            assert created.json()["data_retention_days"] == 30
+
+            async with AsyncSession(async_engine) as session:
+                await session.exec(
+                    update(User).where(User.email == email.lower()).values(data_retention_days=original_retention)
+                )
+                await session.commit()
+
+            existing = await ac.get("/users/me")
+            assert existing.status_code == 200
+            assert existing.json()["data_retention_days"] == (30 if fixed else original_retention)
+
+            for days in (7, None):
+                changed = await ac.patch("/users/data-retention", json={"data_retention_days": days})
+                assert changed.status_code == (403 if fixed else 200)
+                if not fixed:
+                    assert changed.json()["data_retention_days"] == days
+
+            async with AsyncSession(async_engine) as session:
+                stored = (await session.exec(select(User).where(User.email == email.lower()))).one()
+                assert stored.data_retention_days == (30 if fixed else None)
+    finally:
+        async with AsyncSession(async_engine) as session:
+            await session.exec(delete(User).where(User.email == email.lower()))
+            await session.commit()

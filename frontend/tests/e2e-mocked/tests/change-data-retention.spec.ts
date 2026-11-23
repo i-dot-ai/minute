@@ -1,4 +1,6 @@
+import { usersMe } from '@/tests/e2e-mocked/mocked-responses/users.me'
 import { mockBackend } from '@/tests/e2e-mocked/utilities/mock-backend'
+import { json } from '@/tests/e2e-mocked/utilities/routes/general'
 import { test, expect } from '@playwright/test'
 
 test('changing the data retention period updates the transcriptions page', async ({
@@ -41,3 +43,33 @@ test('changing the data retention period updates the transcriptions page', async
     page.getByText('Transcriptions will be deleted after 7 days')
   ).toBeVisible()
 })
+
+for (const [email, fixed] of [
+  ['Jane@BUSINESSANDTRADE.GOV.UK', true],
+  ['jane@sub.businessandtrade.gov.uk', false],
+]) {
+  test(`fixed retention applies only to the exact DBT domain: ${email}`, async ({
+    page,
+  }) => {
+    await mockBackend(page)
+    await page.route('**/api/proxy/users/me', (route) =>
+      route.fulfill(json(200, { ...usersMe, email, data_retention_days: 30 }))
+    )
+
+    await page.goto('/profile#settings')
+    await expect(
+      page.getByRole('cell', {
+        name: 'Transcriptions will be deleted after 30 days',
+      })
+    ).toBeVisible()
+
+    await expect(
+      page.getByRole('button', { name: 'Change data retention', exact: true })
+    ).toHaveCount(fixed ? 0 : 1)
+    await expect(
+      page.getByText(
+        'This has been set by your department and cannot be changed'
+      )
+    ).toHaveCount(fixed ? 1 : 0)
+  })
+}

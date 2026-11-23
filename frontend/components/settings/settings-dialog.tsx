@@ -71,6 +71,12 @@ export function SettingsDialog({ user }: { user: GetUserResponse }) {
     [mutateAsync, queryClient]
   )
 
+  if (user.email.toLowerCase().endsWith('@businessandtrade.gov.uk')) {
+    return (
+      <span>This has been set by your department and cannot be changed</span>
+    )
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>

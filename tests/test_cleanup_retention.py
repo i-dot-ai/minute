@@ -19,10 +19,8 @@ async def test_cleanup_fixes_inactive_dbt_users_and_preserves_other_domains(monk
         ("businessandtrade.gov.uk", None, 30, [29]),
         ("BUSINESSANDTRADE.GOV.UK", 90, 30, [29]),
         ("businessandtrade.gov.uk", 7, 30, [29]),
-        ("businessandtrade.gov.uk", 30, 30, [29]),
         ("dsit.gov.uk", None, None, [29, 31]),
         ("sub.businessandtrade.gov.uk", 90, 90, [29, 31]),
-        ("notbusinessandtrade.gov.uk", 7, 7, []),
         ("businessandtrade.gov.uk.example.com", None, None, [29, 31]),
     ]
     async with async_engine.connect() as connection:

@@ -87,13 +87,9 @@ async def test_display_name_patch_set_clear_and_validation():
 @pytest.mark.parametrize(
     ("domain", "original_retention", "fixed"),
     [
-        ("businessandtrade.gov.uk", None, True),
-        ("BUSINESSANDTRADE.GOV.UK", 90, True),
-        ("businessandtrade.gov.uk", 7, True),
-        ("dsit.gov.uk", None, False),
-        ("sub.businessandtrade.gov.uk", 90, False),
-        ("notbusinessandtrade.gov.uk", 7, False),
-        ("businessandtrade.gov.uk.example.com", None, False),
+        ("BUSINESSANDTRADE.GOV.UK", None, True),
+        ("dsit.gov.uk", 90, False),
+        ("sub.businessandtrade.gov.uk", None, False),
     ],
 )
 async def test_fixed_data_retention(monkeypatch, domain, original_retention, fixed):

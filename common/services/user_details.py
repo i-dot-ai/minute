@@ -1,6 +1,11 @@
 import re
 
 
+def has_fixed_data_retention(email: str) -> bool:
+    # shortcut: temporary DBT-only rule; revisit if retention requirements expand.
+    return email.lower().endswith("@businessandtrade.gov.uk")
+
+
 def display_name_from_email(email: str) -> str:
     """Derive a fallback display name from an email's local part ("jane.o.smith@…" -> "Jane O Smith").
 

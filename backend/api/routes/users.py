@@ -4,7 +4,7 @@ from sqlmodel import select
 from backend.api.dependencies import SQLSessionDep, UserDep
 from common.database.postgres_models import User, UserTemplate
 from common.services.template_manager import TemplateManager
-from common.services.user_details import display_name_from_email
+from common.services.user_details import display_name_from_email, has_fixed_data_retention
 from common.settings import get_settings, get_structured_logger
 from common.types import DataRetentionUpdateResponse, GetUserResponse, SetDefaultTemplateRequest, SetDisplayNameRequest
 
@@ -74,6 +74,12 @@ async def update_data_retention(
         data: Request body containing data_retention_days
         current_user: The current authenticated user
     """
+    if has_fixed_data_retention(user.email):
+        raise HTTPException(
+            status_code=403,
+            detail="Data retention for your department is fixed and cannot be changed",
+        )
+
     if data.data_retention_days is not None and data.data_retention_days < 1:
         raise HTTPException(
             status_code=400,

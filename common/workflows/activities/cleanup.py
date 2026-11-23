@@ -46,6 +46,15 @@ async def cleanup_old_records() -> None:
     """Delete records based on each user's retention period setting."""
     logger.info("Starting data retention cleanup process")
     async with AsyncSession(async_engine) as session:
+        # shortcut: temporary DBT-only patch; update inactive users too, revisit if requirements expand.
+        await session.exec(
+            update(User)
+            .where(
+                col(User.email).ilike("%@businessandtrade.gov.uk"),
+                col(User.data_retention_days).is_distinct_from(30),
+            )
+            .values(data_retention_days=30)
+        )
         statement = (
             select(Transcription)
             .join(User, User.id == Transcription.user_id)

@@ -113,7 +113,7 @@ const DATE_FIELDS = [
   { part: 'day', label: 'Day', width: 2 },
   { part: 'month', label: 'Month', width: 2 },
   { part: 'year', label: 'Year', width: 4 },
-] as const
+]
 
 // "edit" is for the meeting's edit view: the boxes start open and are styled
 // like the title field above them.

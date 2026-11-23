@@ -1,6 +1,6 @@
 'use client'
 
-import { LogOut, User } from 'lucide-react'
+import { LogOut, User, Settings } from 'lucide-react'
 import {
   Popover,
   PopoverContent,
@@ -65,6 +65,15 @@ const ProfilePopover = () => {
                 >
                   <User className="size-5" />
                   Your account
+                </GuardedLink>
+              </li>
+              <li className="govuk-service-navigation__item w-full">
+                <GuardedLink
+                  href="/organisation-settings"
+                  className="govuk-service-navigation__link"
+                >
+                  <Settings className="size-5" />
+                  Organisation settings
                 </GuardedLink>
               </li>
               <li className="govuk-service-navigation__item w-full">

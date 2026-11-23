@@ -1,11 +1,11 @@
 'use client'
 
 import { ChangeNameDialog } from '@/components/header/change-name-dialog'
-import ProfileAvatar from '@/components/profile-avatar'
-import { SettingsDialog } from '@/components/settings/settings-dialog'
+import { UserDataRetentionDialog } from '@/components/settings/user-data-retention-dialog'
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import { useState } from 'react'
 
 export default function ProfilePage() {
@@ -16,10 +16,15 @@ export default function ProfilePage() {
     <>
       <div className="govuk-width-container govuk-main-wrapper">
         <div className="govuk-grid-row">
-          <div className="govuk-grid-column-two-thirds-from-desktop">
+          <div className="govuk-grid-column-full">
             <h1 className="govuk-heading-l" id="your-account">
               Your account
             </h1>
+            <ul>
+              <li>
+                <span className="govuk-tag govuk-tag--grey">Admin</span>
+              </li>
+            </ul>
             {user ? (
               <>
                 <table
@@ -46,7 +51,6 @@ export default function ProfilePage() {
                       </th>
                       <td className="govuk-table__cell">{user.display_name}</td>
                       <td className="govuk-table__cell">
-                        {' '}
                         <button
                           type="button"
                           className="govuk-link govuk-link--no-visited-state govuk-link--no-underline cursor-pointer text-(--govuk-link-colour)"
@@ -66,6 +70,22 @@ export default function ProfilePage() {
                         {user.email}
                       </td>
                       <td className="govuk-table__cell">-</td>
+                    </tr>
+                    <tr className="govuk-table__row">
+                      <th scope="row" className="govuk-table__header">
+                        Organisation
+                      </th>
+                      <td className="govuk-table__cell break-all">
+                        Department for Business, Science, Innovation and Trade
+                      </td>
+                      <td className="govuk-table__cell">
+                        <Link
+                          href="/organisation-settings"
+                          className="govuk-link govuk-link--no-visited-state govuk-link--no-underline"
+                        >
+                          Go to org settings
+                        </Link>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -105,7 +125,7 @@ export default function ProfilePage() {
                         )}
                       </td>
                       <td className="govuk-table__cell">
-                        <SettingsDialog user={user} />
+                        <UserDataRetentionDialog user={user} />
                       </td>
                     </tr>
                   </tbody>

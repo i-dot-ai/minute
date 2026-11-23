@@ -20,7 +20,7 @@ def __load_dummy_user_info() -> UserAuthorisationResult:
     Used for local testing.
     """
     return UserAuthorisationResult(
-        email=settings.LOCAL_USER_EMAIL,
+        email="name.surname@domain.gov.uk",
         is_authorised=True,
         auth_reason="LOCAL_TESTING",
     )

@@ -78,7 +78,7 @@ export async function middleware(req: NextRequest) {
       authResult = await parseAuthToken(token)
     } else {
       authResult = {
-        email: process.env.LOCAL_USER_EMAIL || 'name.surname@domain.gov.uk',
+        email: 'name.surname@domain.gov.uk',
         isAuthorised: true,
         authReason: 'LOCAL_TESTING',
       }

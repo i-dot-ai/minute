@@ -40,10 +40,7 @@ export const GenerateSummaryDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className="max-h-[calc(100dvh-2rem)] overflow-y-auto"
-      >
+      <DialogContent showCloseButton={false}>
         <DialogHeader>
           <DialogTitle className="govuk-heading-l">
             {warningText ? 'Transcribe meeting' : 'Generate summary'}

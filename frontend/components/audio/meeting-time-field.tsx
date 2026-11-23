@@ -115,11 +115,14 @@ const DATE_FIELDS = [
   { part: 'year', label: 'Year', width: 4 },
 ] as const
 
+// "edit" is for the meeting's edit view: the boxes start open and are styled
+// like the title field above them.
 export const MeetingTimeField = ({
-  startEditing = false,
+  variant = 'start',
 }: {
-  startEditing?: boolean
+  variant?: 'start' | 'edit'
 }) => {
+  const isEditView = variant === 'edit'
   const { clearErrors } = useFormContext<TranscriptionForm>()
   const { field, fieldState } = useController<
     TranscriptionForm,
@@ -130,9 +133,10 @@ export const MeetingTimeField = ({
   })
   // Most people only need to check the pre-filled time, so show it as one line
   // and open the boxes on "Change", or straight away if there's nothing to show.
-  const [editing, setEditing] = useState(startEditing)
+  const [editing, setEditing] = useState(isEditView)
   const value = field.value ?? { day: '', month: '', year: '', time: '' }
   const error = fieldState.error?.message
+  const inputStyle = isEditView ? 'bg-white' : 'govuk-input--subtle'
 
   const setPart = (part: keyof MeetingTime, input: string) => {
     if (error) clearErrors('meeting_datetime')
@@ -172,7 +176,9 @@ export const MeetingTimeField = ({
         role="group"
         aria-describedby={error ? 'meeting-time-error' : undefined}
       >
-        <legend className="govuk-fieldset__legend">
+        <legend
+          className={`govuk-fieldset__legend ${isEditView ? 'govuk-fieldset__legend--m' : ''}`}
+        >
           When did the meeting start?
         </legend>
         {error && (
@@ -191,7 +197,7 @@ export const MeetingTimeField = ({
                   {label}
                 </label>
                 <input
-                  className={`govuk-input govuk-input--subtle govuk-date-input__input govuk-input--width-${width} ${error ? 'govuk-input--error' : ''}`}
+                  className={`govuk-input ${inputStyle} govuk-date-input__input govuk-input--width-${width} ${error ? 'govuk-input--error' : ''}`}
                   id={`meeting-date-${part}`}
                   type="text"
                   inputMode="numeric"
@@ -211,7 +217,7 @@ export const MeetingTimeField = ({
                 Time
               </label>
               <input
-                className={`govuk-input govuk-input--subtle govuk-date-input__input govuk-input--width-5 ${error ? 'govuk-input--error' : ''}`}
+                className={`govuk-input ${inputStyle} govuk-date-input__input govuk-input--width-5 ${error ? 'govuk-input--error' : ''}`}
                 id="meeting-time"
                 type="text"
                 autoComplete="off"

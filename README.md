@@ -38,6 +38,14 @@ This will build and run 5 containers:
 4. Postgres database hosted at http:localhost:5432
 5. MiniStack to simulate AWS SQS
 
+To check the temporary Business and Trade retention rule in the real UI, set
+`LOCAL_USER_EMAIL=jane.smith@businessandtrade.gov.uk` in `.env`, recreate the backend
+and frontend (`docker compose up -d --build backend frontend`), then open
+http://localhost:3000/profile#settings. Retention should show 30 days and the
+departmental-policy message instead of the change button. This identity override
+is only used with `ENVIRONMENT=local`; remove it to return to the usual local user.
+Changing identity does not move or delete the previous user's meetings.
+
 #### Set up your development environment:
 
 We use dev containers to emulate the cloud environment in which Minute is usually deployed.

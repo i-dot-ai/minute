@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     )
 
     ENVIRONMENT: str = "local"
+    LOCAL_USER_EMAIL: str = Field(
+        default="name.surname@domain.gov.uk", description="Dummy identity for local auth only"
+    )
     SENTRY_DSN: str | None = Field(description="Sentry DSN if using Sentry for telemetry", default=None)
 
     # Structured logger setup. These are derived from ENVIRONMENT at runtime (see the

@@ -19,7 +19,11 @@ import { useForm } from 'react-hook-form'
 
 type UserSettingsForm = { dataRetention: 'none' | `${number}` }
 
-export function SettingsDialog({ user }: { user: GetUserResponse }) {
+export function OrganistaionDataRetentionDialog({
+  user,
+}: {
+  user: GetUserResponse
+}) {
   const [open, setOpen] = useState(false)
   const radiosRef = useRef<HTMLDivElement>(null)
 
@@ -78,12 +82,12 @@ export function SettingsDialog({ user }: { user: GetUserResponse }) {
           type="button"
           className="govuk-link govuk-link--no-visited-state govuk-link--no-underline text-(--govuk-link-colour)"
         >
-          Change data retention
+          Change data retention for all members
         </button>
       </DialogTrigger>
       <DialogContent>
         <DialogTitle className="govuk-heading-l">
-          Data retention period
+          Organisation data retention period
         </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="govuk-form-group">
@@ -92,14 +96,28 @@ export function SettingsDialog({ user }: { user: GetUserResponse }) {
               aria-describedby="dataRetention-hint"
             >
               <div id="dataRetention-hint" className="govuk-hint">
-                After this period the transcriptions, minutes and audio
-                recording will be permanently deleted.
+                Set the data retention for your organisation
               </div>
               <div
                 ref={radiosRef}
                 className="govuk-radios govuk-radios--small"
                 data-module="govuk-radios"
               >
+                <div className="govuk-radios__item">
+                  <input
+                    className="govuk-radios__input"
+                    id="none"
+                    type="radio"
+                    value="none"
+                    {...form.register('dataRetention')}
+                  />
+                  <label
+                    className="govuk-label govuk-radios__label"
+                    htmlFor="none"
+                  >
+                    Do not set
+                  </label>
+                </div>
                 <div className="govuk-radios__item">
                   <input
                     className="govuk-radios__input"

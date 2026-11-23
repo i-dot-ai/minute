@@ -250,6 +250,7 @@ async def search_transcriptions(  # noqa: C901 # Keep matching and page validati
                 id=transcription.id,
                 title=transcription.title,
                 created_datetime=transcription.created_datetime,
+                meeting_datetime=transcription.meeting_datetime,
                 status=transcription.status,
                 text=transcription.dialogue_entries[0]["text"][:100] if transcription.dialogue_entries else "",
                 expiring=expiry_cutoff is not None and transcription.created_datetime < expiry_cutoff,

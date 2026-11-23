@@ -132,7 +132,7 @@ export function MinuteEditor({
   const titleAndDateHtml =
     (transcription.title ? `<h1>${escapeHtml(transcription.title)}</h1>` : '') +
     (transcription.meeting_datetime
-      ? `<p>${formatMeetingTime(new Date(transcription.meeting_datetime))}</p>`
+      ? `<p class="govuk-body">${formatMeetingTime(new Date(transcription.meeting_datetime))}</p>`
       : '')
   const contentToCopy = useMemo(() => {
     return (

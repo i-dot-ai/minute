@@ -7,10 +7,13 @@ import { ExportTranscriptDialog } from '@/app/transcriptions/[transcriptionId]/T
 import { formatTime } from '@/components/audio/audio-player'
 import { ProcessingCard } from '@/components/processing-card'
 import {
-  MeetingOptionsMenu,
-  MeetingTimeLine,
-} from '@/components/recent-meetings/meeting-options-menu'
+  formatMeetingTime,
+  MeetingTime,
+  MeetingTimeField,
+  toMeetingTime,
+} from '@/components/audio/meeting-time-field'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
+import { useSaveMeetingTime } from '@/hooks/use-save-meeting-time'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
@@ -60,7 +63,9 @@ export default function TranscriptPage({
     status: transcription?.status ?? 'completed',
   })
 
-  const methods = useForm<DialogueEntryForm>({
+  const methods = useForm<
+    DialogueEntryForm & { meeting_datetime?: MeetingTime }
+  >({
     defaultValues: { entries: transcription?.dialogue_entries || [] },
     mode: 'onBlur',
   })
@@ -70,6 +75,7 @@ export default function TranscriptPage({
     handleSubmit,
     formState: { dirtyFields },
     reset,
+    setValue,
   } = methods
 
   const transcriptionString = useMemo(
@@ -101,6 +107,18 @@ export default function TranscriptPage({
   ])
 
   const { saveTranscription } = useSaveTranscription(transcriptionId)
+  const { save: saveMeetingTime } = useSaveMeetingTime(transcriptionId)
+
+  const startEditing = () => {
+    setDraftTitle(transcription?.title ?? '')
+    if (transcription?.meeting_datetime) {
+      setValue(
+        'meeting_datetime',
+        toMeetingTime(new Date(transcription.meeting_datetime))
+      )
+    }
+    setIsEditing(true)
+  }
 
   const handleSave = handleSubmit(async (data) => {
     try {
@@ -111,6 +129,7 @@ export default function TranscriptPage({
       if (draftTitle !== (transcription?.title ?? '')) {
         saveTitle(draftTitle)
       }
+      saveMeetingTime(data.meeting_datetime, transcription?.meeting_datetime)
       reset(data)
       setIsEditing(false)
     } catch {
@@ -345,20 +364,14 @@ export default function TranscriptPage({
                   <button
                     type="button"
                     className="transcript-edit-button govuk-button govuk-!-margin-bottom-0 !hidden sm:!flex"
-                    onClick={() => {
-                      setDraftTitle(transcription.title ?? '')
-                      setIsEditing(true)
-                    }}
+                    onClick={startEditing}
                   >
                     <Pencil className="size-4" /> Edit
                   </button>
                   <button
                     type="button"
                     className="transcript-edit-button govuk-button govuk-button--secondary sm:!hidden"
-                    onClick={() => {
-                      setDraftTitle(transcription.title ?? '')
-                      setIsEditing(true)
-                    }}
+                    onClick={startEditing}
                   >
                     <Pencil className="size-4" /> Edit
                   </button>
@@ -427,16 +440,18 @@ export default function TranscriptPage({
                   value={draftTitle}
                   onChange={(e) => setDraftTitle(e.target.value)}
                 />
+                <div className="govuk-!-margin-top-6">
+                  <MeetingTimeField variant="edit" />
+                </div>
               </div>
             ) : (
               <>
-                <div className="govuk-!-margin-top-4 flex items-start justify-between gap-4">
-                  <h1 className="govuk-heading-m govuk-!-margin-bottom-2">
-                    {transcription.title}
-                  </h1>
-                  <MeetingOptionsMenu transcription={transcription} />
-                </div>
-                <MeetingTimeLine transcription={transcription} />
+                <h1 className="govuk-heading-m govuk-!-margin-top-4 govuk-!-margin-bottom-2">
+                  {transcription.title}
+                </h1>
+                <p className="govuk-body govuk-hint govuk-!-margin-bottom-4">
+                  {formatMeetingTime(new Date(transcription.meeting_datetime))}
+                </p>
               </>
             )}
             <form onSubmit={handleSave}>

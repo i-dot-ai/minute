@@ -186,7 +186,6 @@ export const StartTranscriptionSection = ({
 
   return (
     <div>
-      {/* About the meeting, so it comes before the template, which is about the summary. */}
       {showMeetingDate && <MeetingTimeField />}
       <div className="govuk-form-group flex items-center gap-2">
         <div>

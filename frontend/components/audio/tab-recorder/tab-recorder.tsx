@@ -269,7 +269,6 @@ function TabRecorder({
       mediaRecorderRef.current = mediaRecorder
 
       mediaRecorder.onstart = async () => {
-        // A live recording starts with the meeting, so no need to ask when.
         form.setValue('meeting_datetime', toMeetingTime(new Date()))
         const recordingId = await addRecording(new Blob())
         form.setValue('recordingId', recordingId)

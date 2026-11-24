@@ -4,6 +4,8 @@ import { IssueBanner } from '@/components/banner/issue-banner'
 import { StatusBanner } from '@/components/banner/status-banner'
 import UrlMigrationBanner from '@/components/banner/url-migration-banner'
 import { useIsOldUrl } from '@/hooks/use-is-old-url'
+import { useProcessingStatus } from '@/hooks/use-processing-status'
+import { processingAlert } from '@/lib/processing-status'
 import { FeatureFlags } from '@/lib/feature-flags'
 import posthog, { type JsonType } from 'posthog-js'
 import { useFeatureFlagPayload } from 'posthog-js/react'
@@ -19,7 +21,8 @@ export type PosthogBannerPayload = JsonType & {
 
 export function Banner() {
   const isOldUrl = useIsOldUrl()
-  const showStatusBanner = true
+  const { data } = useProcessingStatus()
+  const { failing, slow } = processingAlert(data?.last_10_minutes)
   const statusPayload = useFeatureFlagPayload(FeatureFlags.ShowStatusBanner) as
     | PosthogBannerPayload
     | undefined
@@ -36,6 +39,8 @@ export function Banner() {
     localStorage.setItem('posthog-banner-dismissed', issuePayload?.title || '')
     window.location.reload()
   }
+
+  const showStatusBanner = !!statusPayload || failing || slow
 
   if (showStatusBanner) {
     return <StatusBanner payload={statusPayload} />

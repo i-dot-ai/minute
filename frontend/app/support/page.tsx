@@ -8,6 +8,7 @@ import {
 import { CreateSupportTicketRequest } from '@/lib/client/types.gen'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
+import { Banner } from '@/components/banner/banner-controller'
 
 const CATEGORIES = [
   { value: 'issue', label: 'I am facing an issue with Minute' },
@@ -148,6 +149,7 @@ export default function SupportPage() {
 
   return (
     <div className="govuk-width-container govuk-main-wrapper">
+      <Banner />
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-full">
           <h1 className="govuk-heading-xl">Contact us</h1>

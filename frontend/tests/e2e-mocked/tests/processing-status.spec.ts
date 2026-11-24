@@ -4,6 +4,7 @@ import type {
   HourlyProcessingStatus,
   StatusBucket,
 } from '@/lib/processing-status'
+import { processingAlert } from '@/lib/processing-status'
 import { mockBackend } from '../utilities/mock-backend'
 
 function bucket(start: string, values: Partial<StatusBucket> = {}) {
@@ -30,6 +31,7 @@ hours[1] = bucket('2026-11-02T01:00:00Z', {
 })
 
 const status: HourlyProcessingStatus = {
+  collected_at: '2026-11-02T23:50:00Z',
   partial: false,
   hours,
   last_10_minutes: bucket('2026-11-02T23:50:00Z', {
@@ -39,6 +41,11 @@ const status: HourlyProcessingStatus = {
     projected_one_hour_seconds: 45.4,
   }),
 }
+
+const last10 = (values: Partial<StatusBucket>): HourlyProcessingStatus => ({
+  ...status,
+  last_10_minutes: bucket('2026-11-02T23:50:00Z', values),
+})
 
 async function openStatus(page: Page, body: HourlyProcessingStatus = status) {
   await page.route('**/api/status', (route) => route.fulfill({ json: body }))
@@ -69,7 +76,7 @@ test('renders the page and navigation before metrics finish loading', async ({
   try {
     await page.goto('/status')
     await expect(
-      page.getByRole('heading', { name: 'Status', exact: true })
+      page.getByRole('heading', { name: 'System status', exact: true })
     ).toBeVisible()
     await expect(page.getByText('Checking metrics…')).toBeVisible()
     await expect(
@@ -79,7 +86,7 @@ test('renders the page and navigation before metrics finish loading', async ({
   } finally {
     release()
   }
-  await expect(page.locator('.analytics-card')).toHaveCount(3)
+  await expect(page.locator('.analytics-card')).toHaveCount(2)
 })
 
 test('refreshes live metrics after one minute without hiding existing metrics', async ({
@@ -104,9 +111,7 @@ test('refreshes live metrics after one minute without hiding existing metrics', 
       },
     })
   })
-  const card = page
-    .locator('.analytics-card')
-    .filter({ hasText: 'Transcriptions completed:' })
+  const card = page.locator('.analytics-card').filter({ hasText: 'completed' })
   try {
     await page.goto('/status')
     await expect(card).toContainText('20')
@@ -125,44 +130,41 @@ test('refreshes live metrics after one minute without hiding existing metrics', 
 test('shows the last 10 minutes', async ({ page }) => {
   await openStatus(page)
   await expect(
-    page.getByRole('heading', { name: 'Last 10 mins', exact: true })
+    page.getByRole('heading', { name: 'Right now', exact: true })
   ).toBeVisible()
   const card = (name: string) =>
     page.locator('.analytics-card').filter({ hasText: name })
-  await expect(card('Processing time for a 1-hour meeting:')).toContainText(
-    '45s'
+  await expect(card('Time to transcribe a 1-hour meeting')).toContainText('45s')
+  await expect(card('Time to transcribe a 1-hour meeting')).toContainText(
+    'Usually about 1-3 mins'
   )
-  await expect(card('Error rate:')).toContainText('2.00%')
-  await expect(card('Transcriptions completed:')).toContainText('20')
-  await expect(page.getByRole('status')).toHaveCount(0)
+  await expect(card('Transcriptions')).toContainText('20 completed')
+  await expect(card('Transcriptions')).toContainText('1 failed')
+  await expect(page.getByText(/Updated \d{2}:\d{2}/)).toBeVisible()
+  await expect(page.getByText('Minute is working as expected')).toBeVisible()
 })
 
-test('warns about incomplete timings without hiding counts or error rates', async ({
+test('warns about incomplete timings without hiding counts', async ({
   page,
 }) => {
   await openStatus(page, { ...status, partial: true })
-  await expect(page.getByRole('status')).toContainText(
-    'Processing times are based on incomplete data'
-  )
-  await expect(page.getByRole('status')).toContainText(
-    'Transcription counts and error rates are not affected by this limit.'
-  )
   await expect(
-    page.locator('.analytics-card').filter({ hasText: 'Error rate:' })
-  ).toContainText('2.00%')
+    page.getByText('Processing times are based on incomplete data')
+  ).toBeVisible()
   await expect(
-    page
-      .locator('.analytics-card')
-      .filter({ hasText: 'Transcriptions completed:' })
-  ).toContainText('20')
+    page.locator('.analytics-card').filter({ hasText: 'Time to transcribe' })
+  ).toContainText('45s')
+  await expect(
+    page.locator('.analytics-card').filter({ hasText: 'Transcriptions' })
+  ).toContainText('20 completed')
   const completed = await chartTable(page, 'Transcriptions completed per hour')
   await expect(
     completed.getByRole('row').filter({ hasText: '01:00' })
   ).toHaveText(/01:00\s*7/)
-  const errors = await chartTable(page, 'Error rate per hour')
-  await expect(errors.getByRole('row').filter({ hasText: '01:00' })).toHaveText(
-    /01:00\s*12\.5%/
-  )
+  const failures = await chartTable(page, 'Failed transcriptions per hour')
+  await expect(
+    failures.getByRole('row').filter({ hasText: '01:00' })
+  ).toHaveText(/01:00\s*1/)
 })
 
 test('charts the last 24 hours with a data table for each', async ({
@@ -170,9 +172,9 @@ test('charts the last 24 hours with a data table for each', async ({
 }) => {
   await openStatus(page)
   for (const name of [
-    'Processing time for a 1-hour meeting',
+    'Time to transcribe a 1 hour meeting',
     'Transcriptions completed per hour',
-    'Error rate per hour',
+    'Failed transcriptions per hour',
   ]) {
     await expect(page.getByRole('heading', { name, exact: true })).toBeVisible()
     await expect(page.getByRole('img', { name, exact: true })).toBeVisible()
@@ -180,7 +182,7 @@ test('charts the last 24 hours with a data table for each', async ({
 
   const processing = await chartTable(
     page,
-    'Processing time for a 1-hour meeting'
+    'Time to transcribe a 1 hour meeting'
   )
   await expect(processing.getByRole('row')).toHaveCount(25)
   await expect(
@@ -195,26 +197,56 @@ test('charts the last 24 hours with a data table for each', async ({
     completed.getByRole('row').filter({ hasText: '01:00' })
   ).toHaveText(/01:00\s*7/)
 
-  const errors = await chartTable(page, 'Error rate per hour')
-  await expect(errors.getByRole('row').filter({ hasText: '01:00' })).toHaveText(
-    /01:00\s*12\.5%/
-  )
-  await expect(errors.getByRole('row').filter({ hasText: '00:00' })).toHaveText(
-    /00:00\s*–/
-  )
+  const failures = await chartTable(page, 'Failed transcriptions per hour')
+  await expect(
+    failures.getByRole('row').filter({ hasText: '01:00' })
+  ).toHaveText(/01:00\s*1/)
+  await expect(
+    failures.getByRole('row').filter({ hasText: '00:00' })
+  ).toHaveText(/00:00\s*0/)
 })
 
-test('shows N/A error rate and UK hour labels', async ({ page }) => {
+test('shows N/A processing time and UK hour labels', async ({ page }) => {
   await openStatus(page, {
     ...status,
     hours: [bucket('2026-07-01T09:00:00Z', { completed: 3 })],
     last_10_minutes: bucket('2026-07-01T09:50:00Z'),
   })
   await expect(
-    page.locator('.analytics-card').filter({ hasText: 'Error rate:' })
+    page.locator('.analytics-card').filter({ hasText: 'Time to transcribe' })
   ).toContainText('N/A')
   const completed = await chartTable(page, 'Transcriptions completed per hour')
   await expect(completed.getByRole('row').nth(1)).toHaveText(/^10:00\s*3$/)
+})
+
+test('the status line names the service problems', async ({ page }) => {
+  const failing = last10({ completed: 10, failed: 10, failure_rate: 0.6 })
+  await openStatus(page, failing)
+  await expect(
+    page.getByText(processingAlert(failing.last_10_minutes).message)
+  ).toBeVisible()
+
+  const slow = last10({
+    completed: 20,
+    failed: 0,
+    failure_rate: 0,
+    projected_one_hour_seconds: 700,
+  })
+  await openStatus(page, slow)
+  await expect(
+    page.getByText(processingAlert(slow.last_10_minutes).message)
+  ).toBeVisible()
+
+  const both = last10({
+    completed: 10,
+    failed: 10,
+    failure_rate: 0.6,
+    projected_one_hour_seconds: 700,
+  })
+  await openStatus(page, both)
+  await expect(
+    page.getByText(processingAlert(both.last_10_minutes).message)
+  ).toBeVisible()
 })
 
 test('unavailable status shows a message instead of metrics', async ({

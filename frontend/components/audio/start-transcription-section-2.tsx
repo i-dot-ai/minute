@@ -1,7 +1,10 @@
 'use client'
 
 import { TranscriptionForm } from '@/components/audio/types'
+import { OrgSelect } from '@/components/organisations/org-select'
+import { useAuthz } from '@/hooks/use-authz'
 import { TemplateMetadata, TemplateResponse } from '@/lib/client'
+import type { Permission } from '@/lib/client/types.gen'
 import {
   getTemplatesTemplatesGetOptions,
   getTemplatesTemplatesGetQueryKey,
@@ -98,6 +101,8 @@ export const StartTranscriptionSection = ({
   const form = useFormContext<TranscriptionForm>()
   const queryClient = useQueryClient()
   const selectedTemplate = form.watch('template')
+  const { orgs, isLoading: isLoadingAuthz } = useAuthz()
+  const selectedOrgId = form.watch('orgId') ?? ''
   const { data: defaultTemplates = [] } = useQuery(
     getTemplatesTemplatesGetOptions()
   )
@@ -219,6 +224,25 @@ export const StartTranscriptionSection = ({
           ))}
         </select>
       </div>
+
+      {!isLoadingAuthz && (orgs?.length ?? 0) > 0 && (
+        <div className="govuk-form-group flex items-center gap-2">
+          <div>
+            <label className="govuk-label" htmlFor="save-destination">
+              Save to:
+            </label>
+          </div>
+          <OrgSelect
+            id="save-destination"
+            value={selectedOrgId}
+            onChange={(orgId) =>
+              form.setValue('orgId', orgId === '' ? undefined : orgId)
+            }
+            requirePermission={'file.create' as Permission}
+            personalLabel="Personal space"
+          />
+        </div>
+      )}
 
       {resolvedTemplate.agenda_usage != 'not_used' && (
         <div className="govuk-form-group">

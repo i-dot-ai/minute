@@ -27,6 +27,7 @@ export const AudioUploadForm = () => {
     setUploadTemplate,
     setUploadAgenda,
     setUploadMeetingTime,
+    setUploadOrgId,
   } = useRecordingSession()
   const [fileError, setFileError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
@@ -96,6 +97,7 @@ export const AudioUploadForm = () => {
     setUploadTemplate(values.template)
     setUploadAgenda(values.agenda)
     setUploadMeetingTime(values.meeting_datetime)
+    setUploadOrgId(values.orgId)
     setMode('upload-file')
     router.push('/new')
   }

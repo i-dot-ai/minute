@@ -66,6 +66,7 @@ export const useStartTranscription = (
       agenda,
       meeting_datetime,
       recordingId,
+      orgId,
     }: TranscriptionForm) => {
       if (!file) {
         return
@@ -86,7 +87,7 @@ export const useStartTranscription = (
         })
 
         const recordingData = await createRecording({
-          body: { file_extension },
+          body: { file_extension, org_id: orgId || undefined },
         })
         // Measured for the status page's estimate, but best-effort: it must not
         // gate transcription. Start it alongside the upload and await only the

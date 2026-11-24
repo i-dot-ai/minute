@@ -3,11 +3,14 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Column, Index, text
+from sqlalchemy import TIMESTAMP, Column, Index, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
 from sqlmodel import Field, Relationship, SQLModel, col, func
+
+from common.authz.permissions import Permission
+from common.authz.roles import RoleName
 
 
 class DialogueEntry(TypedDict):
@@ -48,6 +51,9 @@ class ContentSource(StrEnum):
     MANUAL_EDIT = auto()
     AI_EDIT = auto()
     INITIAL_GENERATION = auto()
+
+
+__all__ = ["Permission", "RoleName"]
 
 
 class MinuteVersion(BaseTableMixin, table=True):
@@ -108,12 +114,17 @@ class User(BaseTableMixin, table=True):
     default_template_id: UUID | None = Field(default=None, foreign_key="user_template.id", ondelete="SET NULL")
     default_template_name: str | None = Field(default=None)
     transcriptions: list["Transcription"] = Relationship(back_populates="user")
+    # Service-wide role grants, e.g. service_owner.
+    roles: list[RoleName] = Field(
+        default_factory=list, sa_column=Column(JSONB, nullable=False, server_default="'[]'::jsonb")
+    )
 
 
 class Recording(BaseTableMixin, table=True):
     __tablename__ = "recording"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     user_id: UUID = Field(foreign_key="user.id", nullable=False)
+    org_id: UUID | None = Field(default=None, foreign_key="organisation.id", ondelete="SET NULL")
     s3_file_key: str
     transcription_id: UUID | None = Field(default=None, foreign_key="transcription.id", ondelete="SET NULL")
     transcription: "Transcription" = Relationship(back_populates="recordings")
@@ -136,6 +147,7 @@ class Transcription(BaseTableMixin, table=True):
     error: str | None = Field(default=None)
     user: User | None = Relationship(back_populates="transcriptions")
     user_id: UUID | None = Field(default=None, foreign_key="user.id")
+    org_id: UUID | None = Field(default=None, foreign_key="organisation.id", ondelete="SET NULL")
     minutes: list[Minute] = Relationship(
         back_populates="transcription",
         cascade_delete=True,
@@ -189,4 +201,28 @@ class UserTemplate(BaseTableMixin, table=True):
         back_populates="user_template",
         passive_deletes="all",
         sa_relationship_kwargs={"order_by": TemplateQuestion.position},
+    )
+
+
+class Organisation(BaseTableMixin, table=True):
+    __tablename__ = "organisation"
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    name: str
+    is_active: bool = Field(default=True, sa_column_kwargs={"server_default": text("true")})
+
+    memberships: list["Membership"] = Relationship(back_populates="organisation")
+
+
+class Membership(BaseTableMixin, table=True):
+    __tablename__ = "membership"
+    __table_args__ = (UniqueConstraint("user_id", "org_id", name="uq_membership_user_org"),)
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    user_id: UUID = Field(foreign_key="user.id", ondelete="CASCADE", index=True)
+    org_id: UUID = Field(foreign_key="organisation.id", ondelete="CASCADE", index=True)
+    is_active: bool = Field(default=True, sa_column_kwargs={"server_default": text("true")})
+    organisation: Organisation = Relationship(back_populates="memberships")
+    roles: list[RoleName] = Field(
+        default_factory=list, sa_column=Column(JSONB, nullable=False, server_default="'[]'::jsonb")
     )

@@ -79,6 +79,9 @@ import type {
   ListMinuteVersionsMinutesMinuteIdVersionsGetData,
   ListMinuteVersionsMinutesMinuteIdVersionsGetErrors,
   ListMinuteVersionsMinutesMinuteIdVersionsGetResponses,
+  ListOrgMembersOrganisationsOrgIdMembersGetData,
+  ListOrgMembersOrganisationsOrgIdMembersGetErrors,
+  ListOrgMembersOrganisationsOrgIdMembersGetResponses,
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetErrors,
   ListTranscriptionsTranscriptionsGetResponses,
@@ -760,3 +763,19 @@ export const createSupportTicketSupportTicketsPost = <
       ...options.headers,
     },
   })
+
+/**
+ * List Org Members
+ *
+ * List the members of an organisation.
+ */
+export const listOrgMembersOrganisationsOrgIdMembersGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ListOrgMembersOrganisationsOrgIdMembersGetData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    ListOrgMembersOrganisationsOrgIdMembersGetResponses,
+    ListOrgMembersOrganisationsOrgIdMembersGetErrors,
+    ThrowOnError
+  >({ url: '/organisations/{org_id}/members', ...options })

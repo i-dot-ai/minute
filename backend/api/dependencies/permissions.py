@@ -1,0 +1,56 @@
+"""Route-level authorization dependency.
+
+Basic route-level check to see if a user has permission to access a resource.
+"""
+
+from collections.abc import Callable
+from typing import Annotated
+from uuid import UUID
+
+from fastapi import HTTPException, Path
+
+from backend.api.dependencies.get_current_user import UserDep
+from backend.api.dependencies.get_session import SQLSessionDep
+from common.authz import user_has_permission
+from common.database.postgres_models import Permission, User
+
+
+def require_permission(permission: Permission) -> Callable[..., User]:
+    """Build a dependency requiring ``permission`` within the route's ``org_id``.
+
+    On failure it raises 404 rather than 403 so we don't reveal the existence
+    of resources the caller can't access.
+
+    Returns the current user so routes can depend on it directly.
+    """
+
+    async def _dependency(
+        session: SQLSessionDep,
+        user: UserDep,
+        org_id: Annotated[UUID, Path()],
+    ) -> User:
+        if not await user_has_permission(session, user.id, permission, org_id):
+            raise HTTPException(status_code=404, detail="Not found")
+        return user
+
+    return _dependency
+
+
+def require_global_permission(permission: Permission) -> Callable[..., User]:
+    """Build a dependency requiring a service-wide ``permission`` globally.
+
+    Raises 403 rather than a 404 on failure since a service-wide action has no
+    resource to conceal.
+
+    Returns the current user so routes can depend on it directly.
+    """
+
+    async def _dependency(
+        session: SQLSessionDep,
+        user: UserDep,
+    ) -> User:
+        if not await user_has_permission(session, user.id, permission, None):
+            raise HTTPException(status_code=403, detail="Forbidden")
+        return user
+
+    return _dependency

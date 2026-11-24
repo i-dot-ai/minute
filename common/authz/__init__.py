@@ -7,12 +7,13 @@ __all__ = [
     "ROLE_PERMISSIONS",
     "Permission",
     "RoleName",
+    "active_member_orgs",
     "context_permissions",
     "permissions_for_role",
     "user_has_permission",
 ]
 
-_RESOLVER_EXPORTS = {"context_permissions", "user_has_permission"}
+_RESOLVER_EXPORTS = {"active_member_orgs", "context_permissions", "user_has_permission"}
 
 
 def __getattr__(name: str):

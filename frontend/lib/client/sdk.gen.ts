@@ -3,12 +3,24 @@
 import type { Client, Options as Options2, TDataShape } from './client'
 import { client } from './client.gen'
 import type {
+  AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostData,
+  AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostErrors,
+  AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostResponses,
+  AddOrgMemberOrganisationsOrgIdMembersPostData,
+  AddOrgMemberOrganisationsOrgIdMembersPostErrors,
+  AddOrgMemberOrganisationsOrgIdMembersPostResponses,
+  ArchiveOrgOrganisationsOrgIdDeleteData,
+  ArchiveOrgOrganisationsOrgIdDeleteErrors,
+  ArchiveOrgOrganisationsOrgIdDeleteResponses,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostData,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostErrors,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostResponses,
   CreateMinuteVersionMinutesMinuteIdVersionsPostData,
   CreateMinuteVersionMinutesMinuteIdVersionsPostErrors,
   CreateMinuteVersionMinutesMinuteIdVersionsPostResponses,
+  CreateOrgOrganisationsPostData,
+  CreateOrgOrganisationsPostErrors,
+  CreateOrgOrganisationsPostResponses,
   CreateRecordingRecordingsPostData,
   CreateRecordingRecordingsPostErrors,
   CreateRecordingRecordingsPostResponses,
@@ -48,6 +60,15 @@ import type {
   GetMinuteVersionMinuteVersionsMinuteVersionIdGetData,
   GetMinuteVersionMinuteVersionsMinuteVersionIdGetErrors,
   GetMinuteVersionMinuteVersionsMinuteVersionIdGetResponses,
+  GetMyOrganisationsUsersMeOrganisationsGetData,
+  GetMyOrganisationsUsersMeOrganisationsGetErrors,
+  GetMyOrganisationsUsersMeOrganisationsGetResponses,
+  GetMyPermissionsUsersMePermissionsGetData,
+  GetMyPermissionsUsersMePermissionsGetErrors,
+  GetMyPermissionsUsersMePermissionsGetResponses,
+  GetOrgOrganisationsOrgIdGetData,
+  GetOrgOrganisationsOrgIdGetErrors,
+  GetOrgOrganisationsOrgIdGetResponses,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetData,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetErrors,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponses,
@@ -73,18 +94,30 @@ import type {
   GetUserUsersMeGetResponses,
   HealthcheckHealthcheckGetData,
   HealthcheckHealthcheckGetResponses,
+  ListAssignableRolesOrganisationsOrgIdAssignableRolesGetData,
+  ListAssignableRolesOrganisationsOrgIdAssignableRolesGetErrors,
+  ListAssignableRolesOrganisationsOrgIdAssignableRolesGetResponses,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetData,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetErrors,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetResponses,
   ListMinuteVersionsMinutesMinuteIdVersionsGetData,
   ListMinuteVersionsMinutesMinuteIdVersionsGetErrors,
   ListMinuteVersionsMinutesMinuteIdVersionsGetResponses,
+  ListOrganisationsOrganisationsGetData,
+  ListOrganisationsOrganisationsGetErrors,
+  ListOrganisationsOrganisationsGetResponses,
   ListOrgMembersOrganisationsOrgIdMembersGetData,
   ListOrgMembersOrganisationsOrgIdMembersGetErrors,
   ListOrgMembersOrganisationsOrgIdMembersGetResponses,
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetErrors,
   ListTranscriptionsTranscriptionsGetResponses,
+  RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteData,
+  RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteErrors,
+  RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteResponses,
+  RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteData,
+  RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteErrors,
+  RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteResponses,
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostData,
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostErrors,
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponses,
@@ -103,6 +136,9 @@ import type {
   UpdateDisplayNameUsersDisplayNamePatchData,
   UpdateDisplayNameUsersDisplayNamePatchErrors,
   UpdateDisplayNameUsersDisplayNamePatchResponses,
+  UpdateOrgOrganisationsOrgIdPatchData,
+  UpdateOrgOrganisationsOrgIdPatchErrors,
+  UpdateOrgOrganisationsOrgIdPatchResponses,
 } from './types.gen'
 
 export type Options<
@@ -374,6 +410,38 @@ export const getUserUsersMeGet = <ThrowOnError extends boolean = false>(
     GetUserUsersMeGetErrors,
     ThrowOnError
   >({ url: '/users/me', ...options })
+
+/**
+ * Get My Permissions
+ *
+ * The caller's global permissions.
+ */
+export const getMyPermissionsUsersMePermissionsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<GetMyPermissionsUsersMePermissionsGetData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<
+    GetMyPermissionsUsersMePermissionsGetResponses,
+    GetMyPermissionsUsersMePermissionsGetErrors,
+    ThrowOnError
+  >({ url: '/users/me/permissions', ...options })
+
+/**
+ * Get My Organisations
+ *
+ * The orgs the caller is an active member of, with their authz context.
+ */
+export const getMyOrganisationsUsersMeOrganisationsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<GetMyOrganisationsUsersMeOrganisationsGetData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<
+    GetMyOrganisationsUsersMeOrganisationsGetResponses,
+    GetMyOrganisationsUsersMeOrganisationsGetErrors,
+    ThrowOnError
+  >({ url: '/users/me/organisations', ...options })
 
 /**
  * Update Display Name
@@ -765,6 +833,104 @@ export const createSupportTicketSupportTicketsPost = <
   })
 
 /**
+ * List Organisations
+ *
+ * List active organisations the caller is an active member of.
+ */
+export const listOrganisationsOrganisationsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ListOrganisationsOrganisationsGetData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<
+    ListOrganisationsOrganisationsGetResponses,
+    ListOrganisationsOrganisationsGetErrors,
+    ThrowOnError
+  >({ url: '/organisations', ...options })
+
+/**
+ * Create Org
+ *
+ * Create an organisation (service-wide action).
+ *
+ * The creator is made an active member and granted ``member`` +
+ * ``permissions_admin`` in the same transaction, so the org is never left
+ * without an admin.
+ */
+export const createOrgOrganisationsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateOrgOrganisationsPostData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    CreateOrgOrganisationsPostResponses,
+    CreateOrgOrganisationsPostErrors,
+    ThrowOnError
+  >({
+    url: '/organisations',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+
+/**
+ * Archive Org
+ *
+ * Archive an organisation.
+ */
+export const archiveOrgOrganisationsOrgIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ArchiveOrgOrganisationsOrgIdDeleteData, ThrowOnError>
+) =>
+  (options.client ?? client).delete<
+    ArchiveOrgOrganisationsOrgIdDeleteResponses,
+    ArchiveOrgOrganisationsOrgIdDeleteErrors,
+    ThrowOnError
+  >({ url: '/organisations/{org_id}', ...options })
+
+/**
+ * Get Org
+ *
+ * Read an organisation the caller is an active member of.
+ */
+export const getOrgOrganisationsOrgIdGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetOrgOrganisationsOrgIdGetData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    GetOrgOrganisationsOrgIdGetResponses,
+    GetOrgOrganisationsOrgIdGetErrors,
+    ThrowOnError
+  >({ url: '/organisations/{org_id}', ...options })
+
+/**
+ * Update Org
+ *
+ * Update an organisation.
+ */
+export const updateOrgOrganisationsOrgIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpdateOrgOrganisationsOrgIdPatchData, ThrowOnError>
+) =>
+  (options.client ?? client).patch<
+    UpdateOrgOrganisationsOrgIdPatchResponses,
+    UpdateOrgOrganisationsOrgIdPatchErrors,
+    ThrowOnError
+  >({
+    url: '/organisations/{org_id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+
+/**
  * List Org Members
  *
  * List the members of an organisation.
@@ -779,3 +945,115 @@ export const listOrgMembersOrganisationsOrgIdMembersGet = <
     ListOrgMembersOrganisationsOrgIdMembersGetErrors,
     ThrowOnError
   >({ url: '/organisations/{org_id}/members', ...options })
+
+/**
+ * Add Org Member
+ *
+ * Add a user to an org by email, with optional initial roles.
+ */
+export const addOrgMemberOrganisationsOrgIdMembersPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<AddOrgMemberOrganisationsOrgIdMembersPostData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    AddOrgMemberOrganisationsOrgIdMembersPostResponses,
+    AddOrgMemberOrganisationsOrgIdMembersPostErrors,
+    ThrowOnError
+  >({
+    url: '/organisations/{org_id}/members',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+
+/**
+ * List Assignable Roles
+ *
+ * Role names a permissions admin may grant to members within an org.
+ */
+export const listAssignableRolesOrganisationsOrgIdAssignableRolesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    ListAssignableRolesOrganisationsOrgIdAssignableRolesGetData,
+    ThrowOnError
+  >
+) =>
+  (options.client ?? client).get<
+    ListAssignableRolesOrganisationsOrgIdAssignableRolesGetResponses,
+    ListAssignableRolesOrganisationsOrgIdAssignableRolesGetErrors,
+    ThrowOnError
+  >({ url: '/organisations/{org_id}/assignable-roles', ...options })
+
+/**
+ * Add Member Roles
+ *
+ * Grant one or more roles to an active member.
+ */
+export const addMemberRolesOrganisationsOrgIdMembersUserIdRolesPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostData,
+    ThrowOnError
+  >
+) =>
+  (options.client ?? client).post<
+    AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostResponses,
+    AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostErrors,
+    ThrowOnError
+  >({
+    url: '/organisations/{org_id}/members/{user_id}/roles',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+
+/**
+ * Remove Member Role
+ *
+ * Revoke a single role from an active member.
+ *
+ * Refuses (409) to remove the last active permissions_admin's admin role.
+ */
+export const removeMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDelete =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteData,
+      ThrowOnError
+    >
+  ) =>
+    (options.client ?? client).delete<
+      RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteResponses,
+      RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteErrors,
+      ThrowOnError
+    >({
+      url: '/organisations/{org_id}/members/{user_id}/roles/{role_name}',
+      ...options,
+    })
+
+/**
+ * Remove Org Member
+ *
+ * Remove a member from an org.
+ *
+ * Refuses (409) to remove the last active permissions_admin.
+ */
+export const removeOrgMemberOrganisationsOrgIdMembersUserIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteData,
+    ThrowOnError
+  >
+) =>
+  (options.client ?? client).delete<
+    RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteResponses,
+    RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteErrors,
+    ThrowOnError
+  >({ url: '/organisations/{org_id}/members/{user_id}', ...options })

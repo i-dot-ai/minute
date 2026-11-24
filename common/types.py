@@ -4,6 +4,7 @@ from enum import StrEnum, auto
 
 from pydantic import AwareDatetime, BaseModel, Field
 
+from common.authz.permissions import Permission
 from common.authz.roles import RoleName
 from common.database.postgres_models import ContentSource, DialogueEntry, JobStatus, TemplateType
 
@@ -126,6 +127,10 @@ class GetUserResponse(BaseModel):
     data_retention_days: int | None
     default_template_id: uuid.UUID | None = None
     default_template_name: str | None = None
+
+
+class MyPermissionsResponse(BaseModel):
+    permissions: list[Permission]
 
 
 class SetDisplayNameRequest(BaseModel):
@@ -375,3 +380,53 @@ class OrgMember(BaseModel):
 class OrgMembersResponse(BaseModel):
     org_id: uuid.UUID
     members: list[OrgMember]
+
+
+class OrgCreateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+
+
+class OrgUpdateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+
+
+class OrgSummary(BaseModel):
+    """An organisation entity, as returned by organisation CRUD actions."""
+
+    id: uuid.UUID
+    name: str
+    is_active: bool
+
+
+class OrgListResponse(BaseModel):
+    orgs: list[OrgSummary]
+
+
+class MyOrg(OrgSummary):
+    """An org the caller is an active member of, with their authz context."""
+
+    roles: list[RoleName]
+    my_permissions: list[Permission]
+
+
+class MyOrgsResponse(BaseModel):
+    orgs: list[MyOrg]
+
+
+class AddOrgMemberRequest(BaseModel):
+    """Add an existing user to an org by email, optionally with initial roles."""
+
+    email: str = Field(min_length=1, max_length=320)
+    roles: list[RoleName] = Field(default_factory=list)
+
+
+class AddRolesRequest(BaseModel):
+    """Grant one or more roles to an existing member."""
+
+    roles: list[RoleName] = Field(min_length=1)
+
+
+class AssignableRolesResponse(BaseModel):
+    """Role names a permissions admin may grant to members within an org."""
+
+    roles: list[RoleName]

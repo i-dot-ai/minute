@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from .health import health_router
 from .minutes import minutes_router
-from .orgs import orgs_router
+from .organisations import orgs_router
 from .status import status_router
 from .support import support_router
 from .templates import templates_router

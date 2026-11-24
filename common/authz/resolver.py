@@ -2,6 +2,7 @@
 
 from uuid import UUID
 
+from sqlalchemy.orm import selectinload
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -58,3 +59,30 @@ async def user_has_permission(
 ) -> bool:
     """Whether ``user_id`` holds ``permission`` in the given context."""
     return permission in await context_permissions(session, user_id, org_id)
+
+
+async def active_member_orgs(
+    session: AsyncSession, user_id: UUID
+) -> list[tuple[Organisation, list[RoleName], frozenset[Permission]]]:
+    """Every active org the user is an active member of, with their authz context."""
+    memberships = (
+        await session.exec(
+            select(Membership)
+            .join(Organisation, Organisation.id == Membership.org_id)
+            .where(
+                Membership.user_id == user_id,
+                Membership.is_active.is_(True),  # type: ignore[attr-defined]
+                Organisation.is_active.is_(True),  # type: ignore[attr-defined]
+            )
+            .options(selectinload(Membership.organisation))
+        )
+    ).all()
+
+    result: list[tuple[Organisation, list[RoleName], frozenset[Permission]]] = []
+    for membership in memberships:
+        roles = sorted(membership.roles)
+        perms: set[Permission] = set()
+        for role_name in membership.roles:
+            perms |= ROLE_PERMISSIONS[role_name]
+        result.append((membership.organisation, roles, frozenset(perms)))
+    return result

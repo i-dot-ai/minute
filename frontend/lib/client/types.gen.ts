@@ -5,6 +5,34 @@ export type ClientOptions = {
 }
 
 /**
+ * AddOrgMemberRequest
+ *
+ * Add an existing user to an org by email, optionally with initial roles.
+ */
+export type AddOrgMemberRequest = {
+  /**
+   * Email
+   */
+  email: string
+  /**
+   * Roles
+   */
+  roles?: Array<RoleName>
+}
+
+/**
+ * AddRolesRequest
+ *
+ * Grant one or more roles to an existing member.
+ */
+export type AddRolesRequest = {
+  /**
+   * Roles
+   */
+  roles: Array<RoleName>
+}
+
+/**
  * AgendaUsage
  */
 export type AgendaUsage = 'not_used' | 'optional' | 'required'
@@ -21,6 +49,18 @@ export type AiEdit = {
    * Source Id
    */
   source_id: string
+}
+
+/**
+ * AssignableRolesResponse
+ *
+ * Role names a permissions admin may grant to members within an org.
+ */
+export type AssignableRolesResponse = {
+  /**
+   * Roles
+   */
+  roles: Array<RoleName>
 }
 
 /**
@@ -393,6 +433,74 @@ export type MinutesCreateRequest = {
 }
 
 /**
+ * MyOrg
+ *
+ * An org the caller is an active member of, with their authz context.
+ */
+export type MyOrg = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Is Active
+   */
+  is_active: boolean
+  /**
+   * Roles
+   */
+  roles: Array<RoleName>
+  /**
+   * My Permissions
+   */
+  my_permissions: Array<Permission>
+}
+
+/**
+ * MyOrgsResponse
+ */
+export type MyOrgsResponse = {
+  /**
+   * Orgs
+   */
+  orgs: Array<MyOrg>
+}
+
+/**
+ * MyPermissionsResponse
+ */
+export type MyPermissionsResponse = {
+  /**
+   * Permissions
+   */
+  permissions: Array<Permission>
+}
+
+/**
+ * OrgCreateRequest
+ */
+export type OrgCreateRequest = {
+  /**
+   * Name
+   */
+  name: string
+}
+
+/**
+ * OrgListResponse
+ */
+export type OrgListResponse = {
+  /**
+   * Orgs
+   */
+  orgs: Array<OrgSummary>
+}
+
+/**
  * OrgMember
  *
  * A member of an organisation, as surfaced to permissions admins.
@@ -428,6 +536,36 @@ export type OrgMembersResponse = {
    * Members
    */
   members: Array<OrgMember>
+}
+
+/**
+ * OrgSummary
+ *
+ * An organisation entity, as returned by organisation CRUD actions.
+ */
+export type OrgSummary = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Is Active
+   */
+  is_active: boolean
+}
+
+/**
+ * OrgUpdateRequest
+ */
+export type OrgUpdateRequest = {
+  /**
+   * Name
+   */
+  name: string
 }
 
 /**
@@ -505,6 +643,28 @@ export type PatchUserTemplateRequest = {
    */
   questions?: Array<CreateQuestion | Question> | null
 }
+
+/**
+ * Permission
+ *
+ * The full set of granular capabilities in the system.
+ *
+ * Own-scoped capabilities (``*.own``) are evaluated against the resource's
+ * creator; ``*.any`` capabilities grant the action over any resource in the
+ * context (an org) regardless of creator.
+ */
+export type Permission =
+  | 'file.create'
+  | 'file.read.own'
+  | 'file.edit.own'
+  | 'file.delete.own'
+  | 'file.export.own'
+  | 'file.read.any'
+  | 'membership.manage'
+  | 'org.create'
+  | 'org.read'
+  | 'org.update'
+  | 'org.archive'
 
 /**
  * Question
@@ -1759,6 +1919,72 @@ export type GetUserUsersMeGetResponses = {
 export type GetUserUsersMeGetResponse =
   GetUserUsersMeGetResponses[keyof GetUserUsersMeGetResponses]
 
+export type GetMyPermissionsUsersMePermissionsGetData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query?: never
+  url: '/users/me/permissions'
+}
+
+export type GetMyPermissionsUsersMePermissionsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type GetMyPermissionsUsersMePermissionsGetError =
+  GetMyPermissionsUsersMePermissionsGetErrors[keyof GetMyPermissionsUsersMePermissionsGetErrors]
+
+export type GetMyPermissionsUsersMePermissionsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: MyPermissionsResponse
+}
+
+export type GetMyPermissionsUsersMePermissionsGetResponse =
+  GetMyPermissionsUsersMePermissionsGetResponses[keyof GetMyPermissionsUsersMePermissionsGetResponses]
+
+export type GetMyOrganisationsUsersMeOrganisationsGetData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query?: never
+  url: '/users/me/organisations'
+}
+
+export type GetMyOrganisationsUsersMeOrganisationsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type GetMyOrganisationsUsersMeOrganisationsGetError =
+  GetMyOrganisationsUsersMeOrganisationsGetErrors[keyof GetMyOrganisationsUsersMeOrganisationsGetErrors]
+
+export type GetMyOrganisationsUsersMeOrganisationsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: MyOrgsResponse
+}
+
+export type GetMyOrganisationsUsersMeOrganisationsGetResponse =
+  GetMyOrganisationsUsersMeOrganisationsGetResponses[keyof GetMyOrganisationsUsersMeOrganisationsGetResponses]
+
 export type UpdateDisplayNameUsersDisplayNamePatchData = {
   body: SetDisplayNameRequest
   headers?: {
@@ -2466,6 +2692,186 @@ export type CreateSupportTicketSupportTicketsPostResponses = {
 export type CreateSupportTicketSupportTicketsPostResponse =
   CreateSupportTicketSupportTicketsPostResponses[keyof CreateSupportTicketSupportTicketsPostResponses]
 
+export type ListOrganisationsOrganisationsGetData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query?: never
+  url: '/organisations'
+}
+
+export type ListOrganisationsOrganisationsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type ListOrganisationsOrganisationsGetError =
+  ListOrganisationsOrganisationsGetErrors[keyof ListOrganisationsOrganisationsGetErrors]
+
+export type ListOrganisationsOrganisationsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: OrgListResponse
+}
+
+export type ListOrganisationsOrganisationsGetResponse =
+  ListOrganisationsOrganisationsGetResponses[keyof ListOrganisationsOrganisationsGetResponses]
+
+export type CreateOrgOrganisationsPostData = {
+  body: OrgCreateRequest
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query?: never
+  url: '/organisations'
+}
+
+export type CreateOrgOrganisationsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type CreateOrgOrganisationsPostError =
+  CreateOrgOrganisationsPostErrors[keyof CreateOrgOrganisationsPostErrors]
+
+export type CreateOrgOrganisationsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: OrgSummary
+}
+
+export type CreateOrgOrganisationsPostResponse =
+  CreateOrgOrganisationsPostResponses[keyof CreateOrgOrganisationsPostResponses]
+
+export type ArchiveOrgOrganisationsOrgIdDeleteData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path: {
+    /**
+     * Org Id
+     */
+    org_id: string
+  }
+  query?: never
+  url: '/organisations/{org_id}'
+}
+
+export type ArchiveOrgOrganisationsOrgIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type ArchiveOrgOrganisationsOrgIdDeleteError =
+  ArchiveOrgOrganisationsOrgIdDeleteErrors[keyof ArchiveOrgOrganisationsOrgIdDeleteErrors]
+
+export type ArchiveOrgOrganisationsOrgIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type ArchiveOrgOrganisationsOrgIdDeleteResponse =
+  ArchiveOrgOrganisationsOrgIdDeleteResponses[keyof ArchiveOrgOrganisationsOrgIdDeleteResponses]
+
+export type GetOrgOrganisationsOrgIdGetData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path: {
+    /**
+     * Org Id
+     */
+    org_id: string
+  }
+  query?: never
+  url: '/organisations/{org_id}'
+}
+
+export type GetOrgOrganisationsOrgIdGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type GetOrgOrganisationsOrgIdGetError =
+  GetOrgOrganisationsOrgIdGetErrors[keyof GetOrgOrganisationsOrgIdGetErrors]
+
+export type GetOrgOrganisationsOrgIdGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: OrgSummary
+}
+
+export type GetOrgOrganisationsOrgIdGetResponse =
+  GetOrgOrganisationsOrgIdGetResponses[keyof GetOrgOrganisationsOrgIdGetResponses]
+
+export type UpdateOrgOrganisationsOrgIdPatchData = {
+  body: OrgUpdateRequest
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path: {
+    /**
+     * Org Id
+     */
+    org_id: string
+  }
+  query?: never
+  url: '/organisations/{org_id}'
+}
+
+export type UpdateOrgOrganisationsOrgIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type UpdateOrgOrganisationsOrgIdPatchError =
+  UpdateOrgOrganisationsOrgIdPatchErrors[keyof UpdateOrgOrganisationsOrgIdPatchErrors]
+
+export type UpdateOrgOrganisationsOrgIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: OrgSummary
+}
+
+export type UpdateOrgOrganisationsOrgIdPatchResponse =
+  UpdateOrgOrganisationsOrgIdPatchResponses[keyof UpdateOrgOrganisationsOrgIdPatchResponses]
+
 export type ListOrgMembersOrganisationsOrgIdMembersGetData = {
   body?: never
   headers?: {
@@ -2503,3 +2909,212 @@ export type ListOrgMembersOrganisationsOrgIdMembersGetResponses = {
 
 export type ListOrgMembersOrganisationsOrgIdMembersGetResponse =
   ListOrgMembersOrganisationsOrgIdMembersGetResponses[keyof ListOrgMembersOrganisationsOrgIdMembersGetResponses]
+
+export type AddOrgMemberOrganisationsOrgIdMembersPostData = {
+  body: AddOrgMemberRequest
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path: {
+    /**
+     * Org Id
+     */
+    org_id: string
+  }
+  query?: never
+  url: '/organisations/{org_id}/members'
+}
+
+export type AddOrgMemberOrganisationsOrgIdMembersPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type AddOrgMemberOrganisationsOrgIdMembersPostError =
+  AddOrgMemberOrganisationsOrgIdMembersPostErrors[keyof AddOrgMemberOrganisationsOrgIdMembersPostErrors]
+
+export type AddOrgMemberOrganisationsOrgIdMembersPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: OrgMembersResponse
+}
+
+export type AddOrgMemberOrganisationsOrgIdMembersPostResponse =
+  AddOrgMemberOrganisationsOrgIdMembersPostResponses[keyof AddOrgMemberOrganisationsOrgIdMembersPostResponses]
+
+export type ListAssignableRolesOrganisationsOrgIdAssignableRolesGetData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path: {
+    /**
+     * Org Id
+     */
+    org_id: string
+  }
+  query?: never
+  url: '/organisations/{org_id}/assignable-roles'
+}
+
+export type ListAssignableRolesOrganisationsOrgIdAssignableRolesGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type ListAssignableRolesOrganisationsOrgIdAssignableRolesGetError =
+  ListAssignableRolesOrganisationsOrgIdAssignableRolesGetErrors[keyof ListAssignableRolesOrganisationsOrgIdAssignableRolesGetErrors]
+
+export type ListAssignableRolesOrganisationsOrgIdAssignableRolesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: AssignableRolesResponse
+}
+
+export type ListAssignableRolesOrganisationsOrgIdAssignableRolesGetResponse =
+  ListAssignableRolesOrganisationsOrgIdAssignableRolesGetResponses[keyof ListAssignableRolesOrganisationsOrgIdAssignableRolesGetResponses]
+
+export type AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostData = {
+  body: AddRolesRequest
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path: {
+    /**
+     * Org Id
+     */
+    org_id: string
+    /**
+     * User Id
+     */
+    user_id: string
+  }
+  query?: never
+  url: '/organisations/{org_id}/members/{user_id}/roles'
+}
+
+export type AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostError =
+  AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostErrors[keyof AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostErrors]
+
+export type AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: OrgMembersResponse
+}
+
+export type AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostResponse =
+  AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostResponses[keyof AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostResponses]
+
+export type RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteData =
+  {
+    body?: never
+    headers?: {
+      /**
+       * X-Amzn-Oidc-Data
+       */
+      'x-amzn-oidc-data'?: string | null
+    }
+    path: {
+      /**
+       * Org Id
+       */
+      org_id: string
+      /**
+       * User Id
+       */
+      user_id: string
+      /**
+       * Role Name
+       */
+      role_name: string
+    }
+    query?: never
+    url: '/organisations/{org_id}/members/{user_id}/roles/{role_name}'
+  }
+
+export type RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError
+  }
+
+export type RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteError =
+  RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteErrors[keyof RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteErrors]
+
+export type RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: OrgMembersResponse
+  }
+
+export type RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteResponse =
+  RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteResponses[keyof RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteResponses]
+
+export type RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path: {
+    /**
+     * Org Id
+     */
+    org_id: string
+    /**
+     * User Id
+     */
+    user_id: string
+  }
+  query?: never
+  url: '/organisations/{org_id}/members/{user_id}'
+}
+
+export type RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteError =
+  RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteErrors[keyof RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteErrors]
+
+export type RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  200: OrgMembersResponse
+}
+
+export type RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteResponse =
+  RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteResponses[keyof RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteResponses]

@@ -10,8 +10,12 @@ import {
 
 import { client } from '../client.gen'
 import {
+  addMemberRolesOrganisationsOrgIdMembersUserIdRolesPost,
+  addOrgMemberOrganisationsOrgIdMembersPost,
+  archiveOrgOrganisationsOrgIdDelete,
   createMinuteTranscriptionTranscriptionIdMinutesPost,
   createMinuteVersionMinutesMinuteIdVersionsPost,
+  createOrgOrganisationsPost,
   createRecordingRecordingsPost,
   createSupportTicketSupportTicketsPost,
   createTranscriptionTranscriptionsPost,
@@ -25,6 +29,9 @@ import {
   getHourlyStatusStatusHourlyGet,
   getMinuteMinutesMinutesIdGet,
   getMinuteVersionMinuteVersionsMinuteVersionIdGet,
+  getMyOrganisationsUsersMeOrganisationsGet,
+  getMyPermissionsUsersMePermissionsGet,
+  getOrgOrganisationsOrgIdGet,
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGet,
   getStatusStatusGet,
   getSupportTicketsConfigurationSupportTicketsConfigurationGet,
@@ -34,25 +41,42 @@ import {
   getUserTemplateUserTemplatesTemplateIdGet,
   getUserUsersMeGet,
   healthcheckHealthcheckGet,
+  listAssignableRolesOrganisationsOrgIdAssignableRolesGet,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGet,
   listMinuteVersionsMinutesMinuteIdVersionsGet,
+  listOrganisationsOrganisationsGet,
   listOrgMembersOrganisationsOrgIdMembersGet,
   listTranscriptionsTranscriptionsGet,
   type Options,
+  removeMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDelete,
+  removeOrgMemberOrganisationsOrgIdMembersUserIdDelete,
   retryTranscriptionTranscriptionsTranscriptionIdRetryPost,
   saveTranscriptionTranscriptionsTranscriptionIdPatch,
   searchTranscriptionsTranscriptionsSearchGet,
   updateDataRetentionUsersDataRetentionPatch,
   updateDefaultTemplateUsersDefaultTemplatePatch,
   updateDisplayNameUsersDisplayNamePatch,
+  updateOrgOrganisationsOrgIdPatch,
 } from '../sdk.gen'
 import type {
+  AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostData,
+  AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostError,
+  AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostResponse,
+  AddOrgMemberOrganisationsOrgIdMembersPostData,
+  AddOrgMemberOrganisationsOrgIdMembersPostError,
+  AddOrgMemberOrganisationsOrgIdMembersPostResponse,
+  ArchiveOrgOrganisationsOrgIdDeleteData,
+  ArchiveOrgOrganisationsOrgIdDeleteError,
+  ArchiveOrgOrganisationsOrgIdDeleteResponse,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostData,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostError,
   CreateMinuteTranscriptionTranscriptionIdMinutesPostResponse,
   CreateMinuteVersionMinutesMinuteIdVersionsPostData,
   CreateMinuteVersionMinutesMinuteIdVersionsPostError,
   CreateMinuteVersionMinutesMinuteIdVersionsPostResponse,
+  CreateOrgOrganisationsPostData,
+  CreateOrgOrganisationsPostError,
+  CreateOrgOrganisationsPostResponse,
   CreateRecordingRecordingsPostData,
   CreateRecordingRecordingsPostError,
   CreateRecordingRecordingsPostResponse,
@@ -88,6 +112,15 @@ import type {
   GetMinuteVersionMinuteVersionsMinuteVersionIdGetData,
   GetMinuteVersionMinuteVersionsMinuteVersionIdGetError,
   GetMinuteVersionMinuteVersionsMinuteVersionIdGetResponse,
+  GetMyOrganisationsUsersMeOrganisationsGetData,
+  GetMyOrganisationsUsersMeOrganisationsGetError,
+  GetMyOrganisationsUsersMeOrganisationsGetResponse,
+  GetMyPermissionsUsersMePermissionsGetData,
+  GetMyPermissionsUsersMePermissionsGetError,
+  GetMyPermissionsUsersMePermissionsGetResponse,
+  GetOrgOrganisationsOrgIdGetData,
+  GetOrgOrganisationsOrgIdGetError,
+  GetOrgOrganisationsOrgIdGetResponse,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetData,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetError,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponse,
@@ -112,18 +145,30 @@ import type {
   GetUserUsersMeGetError,
   GetUserUsersMeGetResponse,
   HealthcheckHealthcheckGetData,
+  ListAssignableRolesOrganisationsOrgIdAssignableRolesGetData,
+  ListAssignableRolesOrganisationsOrgIdAssignableRolesGetError,
+  ListAssignableRolesOrganisationsOrgIdAssignableRolesGetResponse,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetData,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetError,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetResponse,
   ListMinuteVersionsMinutesMinuteIdVersionsGetData,
   ListMinuteVersionsMinutesMinuteIdVersionsGetError,
   ListMinuteVersionsMinutesMinuteIdVersionsGetResponse,
+  ListOrganisationsOrganisationsGetData,
+  ListOrganisationsOrganisationsGetError,
+  ListOrganisationsOrganisationsGetResponse,
   ListOrgMembersOrganisationsOrgIdMembersGetData,
   ListOrgMembersOrganisationsOrgIdMembersGetError,
   ListOrgMembersOrganisationsOrgIdMembersGetResponse,
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetError,
   ListTranscriptionsTranscriptionsGetResponse,
+  RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteData,
+  RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteError,
+  RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteResponse,
+  RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteData,
+  RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteError,
+  RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteResponse,
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostData,
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostError,
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponse,
@@ -142,6 +187,9 @@ import type {
   UpdateDisplayNameUsersDisplayNamePatchData,
   UpdateDisplayNameUsersDisplayNamePatchError,
   UpdateDisplayNameUsersDisplayNamePatchResponse,
+  UpdateOrgOrganisationsOrgIdPatchData,
+  UpdateOrgOrganisationsOrgIdPatchError,
+  UpdateOrgOrganisationsOrgIdPatchResponse,
 } from '../types.gen'
 
 export type QueryKey<TOptions extends Options> = [
@@ -740,6 +788,66 @@ export const getUserUsersMeGetOptions = (
       return data
     },
     queryKey: getUserUsersMeGetQueryKey(options),
+  })
+
+export const getMyPermissionsUsersMePermissionsGetQueryKey = (
+  options?: Options<GetMyPermissionsUsersMePermissionsGetData>
+) => createQueryKey('getMyPermissionsUsersMePermissionsGet', options)
+
+/**
+ * Get My Permissions
+ *
+ * The caller's global permissions.
+ */
+export const getMyPermissionsUsersMePermissionsGetOptions = (
+  options?: Options<GetMyPermissionsUsersMePermissionsGetData>
+) =>
+  queryOptions<
+    GetMyPermissionsUsersMePermissionsGetResponse,
+    GetMyPermissionsUsersMePermissionsGetError,
+    GetMyPermissionsUsersMePermissionsGetResponse,
+    ReturnType<typeof getMyPermissionsUsersMePermissionsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMyPermissionsUsersMePermissionsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: getMyPermissionsUsersMePermissionsGetQueryKey(options),
+  })
+
+export const getMyOrganisationsUsersMeOrganisationsGetQueryKey = (
+  options?: Options<GetMyOrganisationsUsersMeOrganisationsGetData>
+) => createQueryKey('getMyOrganisationsUsersMeOrganisationsGet', options)
+
+/**
+ * Get My Organisations
+ *
+ * The orgs the caller is an active member of, with their authz context.
+ */
+export const getMyOrganisationsUsersMeOrganisationsGetOptions = (
+  options?: Options<GetMyOrganisationsUsersMeOrganisationsGetData>
+) =>
+  queryOptions<
+    GetMyOrganisationsUsersMeOrganisationsGetResponse,
+    GetMyOrganisationsUsersMeOrganisationsGetError,
+    GetMyOrganisationsUsersMeOrganisationsGetResponse,
+    ReturnType<typeof getMyOrganisationsUsersMeOrganisationsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMyOrganisationsUsersMeOrganisationsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: getMyOrganisationsUsersMeOrganisationsGetQueryKey(options),
   })
 
 /**
@@ -1351,6 +1459,157 @@ export const createSupportTicketSupportTicketsPostMutation = (
   return mutationOptions
 }
 
+export const listOrganisationsOrganisationsGetQueryKey = (
+  options?: Options<ListOrganisationsOrganisationsGetData>
+) => createQueryKey('listOrganisationsOrganisationsGet', options)
+
+/**
+ * List Organisations
+ *
+ * List active organisations the caller is an active member of.
+ */
+export const listOrganisationsOrganisationsGetOptions = (
+  options?: Options<ListOrganisationsOrganisationsGetData>
+) =>
+  queryOptions<
+    ListOrganisationsOrganisationsGetResponse,
+    ListOrganisationsOrganisationsGetError,
+    ListOrganisationsOrganisationsGetResponse,
+    ReturnType<typeof listOrganisationsOrganisationsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listOrganisationsOrganisationsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: listOrganisationsOrganisationsGetQueryKey(options),
+  })
+
+/**
+ * Create Org
+ *
+ * Create an organisation (service-wide action).
+ *
+ * The creator is made an active member and granted ``member`` +
+ * ``permissions_admin`` in the same transaction, so the org is never left
+ * without an admin.
+ */
+export const createOrgOrganisationsPostMutation = (
+  options?: Partial<Options<CreateOrgOrganisationsPostData>>
+): UseMutationOptions<
+  CreateOrgOrganisationsPostResponse,
+  CreateOrgOrganisationsPostError,
+  Options<CreateOrgOrganisationsPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateOrgOrganisationsPostResponse,
+    CreateOrgOrganisationsPostError,
+    Options<CreateOrgOrganisationsPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createOrgOrganisationsPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
+
+/**
+ * Archive Org
+ *
+ * Archive an organisation.
+ */
+export const archiveOrgOrganisationsOrgIdDeleteMutation = (
+  options?: Partial<Options<ArchiveOrgOrganisationsOrgIdDeleteData>>
+): UseMutationOptions<
+  ArchiveOrgOrganisationsOrgIdDeleteResponse,
+  ArchiveOrgOrganisationsOrgIdDeleteError,
+  Options<ArchiveOrgOrganisationsOrgIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ArchiveOrgOrganisationsOrgIdDeleteResponse,
+    ArchiveOrgOrganisationsOrgIdDeleteError,
+    Options<ArchiveOrgOrganisationsOrgIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await archiveOrgOrganisationsOrgIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
+
+export const getOrgOrganisationsOrgIdGetQueryKey = (
+  options: Options<GetOrgOrganisationsOrgIdGetData>
+) => createQueryKey('getOrgOrganisationsOrgIdGet', options)
+
+/**
+ * Get Org
+ *
+ * Read an organisation the caller is an active member of.
+ */
+export const getOrgOrganisationsOrgIdGetOptions = (
+  options: Options<GetOrgOrganisationsOrgIdGetData>
+) =>
+  queryOptions<
+    GetOrgOrganisationsOrgIdGetResponse,
+    GetOrgOrganisationsOrgIdGetError,
+    GetOrgOrganisationsOrgIdGetResponse,
+    ReturnType<typeof getOrgOrganisationsOrgIdGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getOrgOrganisationsOrgIdGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: getOrgOrganisationsOrgIdGetQueryKey(options),
+  })
+
+/**
+ * Update Org
+ *
+ * Update an organisation.
+ */
+export const updateOrgOrganisationsOrgIdPatchMutation = (
+  options?: Partial<Options<UpdateOrgOrganisationsOrgIdPatchData>>
+): UseMutationOptions<
+  UpdateOrgOrganisationsOrgIdPatchResponse,
+  UpdateOrgOrganisationsOrgIdPatchError,
+  Options<UpdateOrgOrganisationsOrgIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateOrgOrganisationsOrgIdPatchResponse,
+    UpdateOrgOrganisationsOrgIdPatchError,
+    Options<UpdateOrgOrganisationsOrgIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateOrgOrganisationsOrgIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
+
 export const listOrgMembersOrganisationsOrgIdMembersGetQueryKey = (
   options: Options<ListOrgMembersOrganisationsOrgIdMembersGetData>
 ) => createQueryKey('listOrgMembersOrganisationsOrgIdMembersGet', options)
@@ -1380,3 +1639,173 @@ export const listOrgMembersOrganisationsOrgIdMembersGetOptions = (
     },
     queryKey: listOrgMembersOrganisationsOrgIdMembersGetQueryKey(options),
   })
+
+/**
+ * Add Org Member
+ *
+ * Add a user to an org by email, with optional initial roles.
+ */
+export const addOrgMemberOrganisationsOrgIdMembersPostMutation = (
+  options?: Partial<Options<AddOrgMemberOrganisationsOrgIdMembersPostData>>
+): UseMutationOptions<
+  AddOrgMemberOrganisationsOrgIdMembersPostResponse,
+  AddOrgMemberOrganisationsOrgIdMembersPostError,
+  Options<AddOrgMemberOrganisationsOrgIdMembersPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddOrgMemberOrganisationsOrgIdMembersPostResponse,
+    AddOrgMemberOrganisationsOrgIdMembersPostError,
+    Options<AddOrgMemberOrganisationsOrgIdMembersPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await addOrgMemberOrganisationsOrgIdMembersPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
+
+export const listAssignableRolesOrganisationsOrgIdAssignableRolesGetQueryKey = (
+  options: Options<ListAssignableRolesOrganisationsOrgIdAssignableRolesGetData>
+) =>
+  createQueryKey(
+    'listAssignableRolesOrganisationsOrgIdAssignableRolesGet',
+    options
+  )
+
+/**
+ * List Assignable Roles
+ *
+ * Role names a permissions admin may grant to members within an org.
+ */
+export const listAssignableRolesOrganisationsOrgIdAssignableRolesGetOptions = (
+  options: Options<ListAssignableRolesOrganisationsOrgIdAssignableRolesGetData>
+) =>
+  queryOptions<
+    ListAssignableRolesOrganisationsOrgIdAssignableRolesGetResponse,
+    ListAssignableRolesOrganisationsOrgIdAssignableRolesGetError,
+    ListAssignableRolesOrganisationsOrgIdAssignableRolesGetResponse,
+    ReturnType<
+      typeof listAssignableRolesOrganisationsOrgIdAssignableRolesGetQueryKey
+    >
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } =
+        await listAssignableRolesOrganisationsOrgIdAssignableRolesGet({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        })
+      return data
+    },
+    queryKey:
+      listAssignableRolesOrganisationsOrgIdAssignableRolesGetQueryKey(options),
+  })
+
+/**
+ * Add Member Roles
+ *
+ * Grant one or more roles to an active member.
+ */
+export const addMemberRolesOrganisationsOrgIdMembersUserIdRolesPostMutation = (
+  options?: Partial<
+    Options<AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostData>
+  >
+): UseMutationOptions<
+  AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostResponse,
+  AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostError,
+  Options<AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostResponse,
+    AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostError,
+    Options<AddMemberRolesOrganisationsOrgIdMembersUserIdRolesPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } =
+        await addMemberRolesOrganisationsOrgIdMembersUserIdRolesPost({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        })
+      return data
+    },
+  }
+  return mutationOptions
+}
+
+/**
+ * Remove Member Role
+ *
+ * Revoke a single role from an active member.
+ *
+ * Refuses (409) to remove the last active permissions_admin's admin role.
+ */
+export const removeMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteMutation =
+  (
+    options?: Partial<
+      Options<RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteData>
+    >
+  ): UseMutationOptions<
+    RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteResponse,
+    RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteError,
+    Options<RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteResponse,
+      RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteError,
+      Options<RemoveMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDeleteData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await removeMemberRoleOrganisationsOrgIdMembersUserIdRolesRoleNameDelete(
+            {
+              ...options,
+              ...fnOptions,
+              throwOnError: true,
+            }
+          )
+        return data
+      },
+    }
+    return mutationOptions
+  }
+
+/**
+ * Remove Org Member
+ *
+ * Remove a member from an org.
+ *
+ * Refuses (409) to remove the last active permissions_admin.
+ */
+export const removeOrgMemberOrganisationsOrgIdMembersUserIdDeleteMutation = (
+  options?: Partial<
+    Options<RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteData>
+  >
+): UseMutationOptions<
+  RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteResponse,
+  RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteError,
+  Options<RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteResponse,
+    RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteError,
+    Options<RemoveOrgMemberOrganisationsOrgIdMembersUserIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } =
+        await removeOrgMemberOrganisationsOrgIdMembersUserIdDelete({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        })
+      return data
+    },
+  }
+  return mutationOptions
+}

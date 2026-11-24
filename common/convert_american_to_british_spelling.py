@@ -11,6 +11,12 @@ logger = logging.getLogger(__name__)
 # making the scan quadratic and effectively hanging on large documents.
 WORD_PATTERN = re.compile(r"[a-zA-Z]+")
 
+# These spellings are also valid British English in common meeting contexts.
+# Without sense disambiguation, preserving them is safer than changing meaning.
+BRITISH_SPELLING_EXCLUSIONS = frozenset(
+    {"draft", "practice", "license", "licensed", "meter", "disk", "tire", "program"}
+)
+
 
 def _is_ascii_letter(char: str) -> bool:
     return "a" <= char <= "z" or "A" <= char <= "Z"
@@ -37,8 +43,9 @@ def convert_american_to_british_spelling(  # noqa: C901
 
         def replace_word(match: re.Match) -> str:
             word = match.group(0)
+            lower_word = word.lower()
 
-            if not american_spelling_exists(word.lower()):
+            if lower_word in BRITISH_SPELLING_EXCLUSIONS or not american_spelling_exists(lower_word):
                 return word
 
             # Skip if within code blocks
@@ -46,7 +53,7 @@ def convert_american_to_british_spelling(  # noqa: C901
                 return word
 
             try:
-                british = get_british_spelling(word.lower())
+                british = get_british_spelling(lower_word)
                 # Preserve capitalization
                 if word.isupper():
                     british = british.upper()

@@ -1,9 +1,13 @@
+'use client'
+
 import { PosthogBannerPayload } from '@/components/banner/banner-controller'
+import { useProcessingStatus } from '@/hooks/use-processing-status'
+import { processingAlert } from '@/lib/processing-status'
 
 export function StatusBanner({ payload }: { payload?: PosthogBannerPayload }) {
-  const title =
-    payload?.title ||
-    'We are currently experiencing long processing times for recordings.'
+  const { data } = useProcessingStatus()
+  const { message } = processingAlert(data?.last_10_minutes)
+  const title = payload?.title || message
 
   return (
     <div
@@ -22,9 +26,9 @@ export function StatusBanner({ payload }: { payload?: PosthogBannerPayload }) {
       <p className="govuk-body govuk-!-margin-bottom-0 !text-white">
         {payload?.message ||
           'We are working to resolve the issue as quickly as possible.'}{' '}
-        Go to the{' '}
+        View the{' '}
         <a href="/status" className="govuk-link !text-white">
-          status page
+          system status page
         </a>{' '}
         to see the latest updates.
       </p>

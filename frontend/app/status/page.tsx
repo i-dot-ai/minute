@@ -1,8 +1,8 @@
 'use client'
 
-import type { HourlyProcessingStatus } from '@/lib/processing-status'
-import { useQuery } from '@tanstack/react-query'
 import { Chart } from '@i-dot-ai-npm/component-library-react'
+import { useProcessingStatus } from '@/hooks/use-processing-status'
+import { processingAlert } from '@/lib/processing-status'
 
 function formatProcessingTime(seconds: number | null): string {
   if (seconds == null) return 'N/A'
@@ -15,37 +15,25 @@ function formatProcessingTime(seconds: number | null): string {
   return `${remainingSeconds}s`
 }
 
-function Status(): React.JSX.Element {
-  const { data, isPending, isError } = useQuery<HourlyProcessingStatus>({
-    queryKey: ['processing-status-hourly'],
-    queryFn: async () => {
-      const response = await fetch('/api/status')
-      if (!response.ok) throw new Error('Processing status unavailable')
-      return response.json()
-    },
-    staleTime: 60_000,
-    refetchInterval: 60_000,
-    refetchOnWindowFocus: false,
-    retry: false,
+function format24hrTime(time: string): string {
+  return new Date(time).toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/London',
   })
+}
+
+function Status(): React.JSX.Element {
+  const { data, isPending, isError } = useProcessingStatus()
   const recent = data?.last_10_minutes
-  const failureRate = recent?.failure_rate
-  const labels =
-    data?.hours.map((hour) =>
-      new Date(hour.start).toLocaleTimeString('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Europe/London',
-      })
-    ) ?? []
+  const { message, slow, failing } = processingAlert(recent)
+  const labels = data?.hours.map((hour) => format24hrTime(hour.start)) ?? []
 
   return (
     <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-two-thirds-from-desktop">
           <h1 className="govuk-heading-xl">System status</h1>
-          <h2 className="govuk-heading-m">Minute is working normally</h2>
-          <p className="govuk-body-s">Updated now</p>
         </div>
       </div>
       {isPending || isError || !recent ? (
@@ -60,20 +48,43 @@ function Status(): React.JSX.Element {
         </div>
       ) : (
         <>
-          {data.partial && (
-            <div className="govuk-warning-text" role="status">
-              <span className="govuk-warning-text__icon" aria-hidden="true">
-                !
-              </span>
-              <strong className="govuk-warning-text__text">
-                <span className="govuk-visually-hidden">Warning</span>
-                Processing times are based on incomplete data because the
-                reporting limit was reached. Transcription counts and error
-                rates are not affected by this limit.
-              </strong>
-            </div>
-          )}
           <div className="govuk-grid-row">
+            <div className="govuk-grid-column-two-thirds-from-desktop">
+              {data.partial && (
+                <div className="govuk-warning-text" role="status">
+                  <span className="govuk-warning-text__icon" aria-hidden="true">
+                    !
+                  </span>
+                  <strong className="govuk-warning-text__text">
+                    <span className="govuk-visually-hidden">Warning</span>
+                    Processing times are based on incomplete data because the
+                    reporting limit was reached. Transcription counts and error
+                    rates are not affected by this limit.
+                  </strong>
+                </div>
+              )}
+              {slow || failing ? (
+                <div className="govuk-warning-text">
+                  <span className="govuk-warning-text__icon" aria-hidden="true">
+                    !
+                  </span>
+                  <h2 className="govuk-warning-text__text" role="status">
+                    {message}
+                  </h2>
+                </div>
+              ) : (
+                <h2 className="govuk-heading-m" role="status">
+                  Minute is working as expected
+                </h2>
+              )}
+              {data.collected_at && (
+                <p className="govuk-body-s">
+                  Updated {format24hrTime(data.collected_at)}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="govuk-grid-row govuk-!-margin-top-9">
             <div className="govuk-grid-column-two-thirds-from-desktop">
               <h2 className="govuk-heading-l">Right now</h2>
               <p className="govuk-body">Last 10 mins</p>
@@ -104,8 +115,9 @@ function Status(): React.JSX.Element {
             </div>
           </div>
           <div className="govuk-grid-row govuk-!-margin-top-9">
-            <div className="govuk-grid-column-two-thirds-from-desktop">
+            <div className="govuk-grid-column-two-thirds-from-desktop govuk-!-margin-top-6">
               <h2 className="govuk-heading-l">Last 24 hours</h2>
+              <div className="govuk-!-padding-bottom-6"></div>
               <Chart
                 title="Time to transcribe a 1 hour meeting"
                 variant="line"
@@ -122,6 +134,7 @@ function Status(): React.JSX.Element {
                   ],
                 }}
               />
+              <div className="govuk-!-padding-bottom-6"></div>
               <Chart
                 title="Transcriptions completed per hour"
                 variant="bar"
@@ -137,6 +150,7 @@ function Status(): React.JSX.Element {
                   ],
                 }}
               />
+              <div className="govuk-!-padding-bottom-6"></div>
               <Chart
                 title="Failed transcriptions per hour"
                 variant="bar"

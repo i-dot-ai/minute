@@ -60,6 +60,10 @@ export async function mockBackend(
   scenario: ScenarioName = 'meeting-1',
   status?: JobStatus
 ): Promise<void> {
+  // The mocked suite must run offline: a live PostHog flag payload would
+  // override the metric-driven banner copy under test.
+  await page.route(/posthog/, (route) => route.abort())
+
   const scenarioData = SCENARIOS[scenario]
 
   const transcription: TranscriptionGetResponse = {

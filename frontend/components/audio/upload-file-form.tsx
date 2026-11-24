@@ -11,6 +11,7 @@ export function UploadFileForm({
   template,
   agenda,
   meetingTime,
+  orgId,
   onDiscard,
   onStarted,
 }: {
@@ -18,11 +19,12 @@ export function UploadFileForm({
   template: Template
   agenda?: string
   meetingTime?: MeetingTime
+  orgId?: string
   onDiscard?: () => void
   onStarted?: (transcriptionId: string) => void
 }) {
   const { isError, onSubmit } = useStartTranscription(
-    { file, template, agenda, meeting_datetime: meetingTime },
+    { file, template, agenda, meeting_datetime: meetingTime, orgId },
     onStarted
   )
 
@@ -33,8 +35,8 @@ export function UploadFileForm({
   useEffect(() => {
     if (hasSubmitted.current) return
     hasSubmitted.current = true
-    onSubmit({ file, template, agenda, meeting_datetime: meetingTime })
-  }, [onSubmit, file, template, agenda, meetingTime])
+    onSubmit({ file, template, agenda, meeting_datetime: meetingTime, orgId })
+  }, [onSubmit, file, template, agenda, meetingTime, orgId])
 
   if (isError) {
     return (

@@ -696,6 +696,12 @@ export type RecordingCreateRequest = {
    * File Extension
    */
   file_extension: string
+  /**
+   * Org Id
+   *
+   * Owning organisation. Omit or null to save to the user's personal space.
+   */
+  org_id?: string | null
 }
 
 /**
@@ -1206,6 +1212,12 @@ export type TranscriptionGetResponse = {
    * Transcription completed without detected speech.
    */
   no_speech_detected?: boolean
+  /**
+   * Org Id
+   *
+   * Owning organisation, or null if personal.
+   */
+  org_id?: string | null
 }
 
 /**

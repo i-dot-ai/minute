@@ -43,13 +43,14 @@ backend = [
     "pyjwt>=2.9.0,<3",
     "posthog>=6.6.1,<7",
     "uvicorn>=0.31.0,<0.32",
-    "apscheduler>=3.11.0,<4",
 ]
 worker = [
     "google-genai>=1.10.0,<2",
     "openai>=1.42.0,<2",
     "ffmpeg-python>=0.2.0,<0.3",
     "posthog>=6.6.1,<7",
+    "onnxruntime>=1.20,<2",
+    "numpy>=2,<3",
 ]
 dev = [
     "bumpversion>=0.6.0,<0.7",
@@ -65,7 +66,7 @@ dev = [
     "detect-secrets>=1.5.0,<2",
     "playwright>=1.45,<2",
     "pytest-playwright>=0.5,<0.6",
-    "diagrams>=0.23.4,<0.24",
+    "diagrams>=0.24.1,<0.26",
     "ipykernel>=6.29.5,<7",
     "beautifulsoup4>=4.13.3,<5",
 ]

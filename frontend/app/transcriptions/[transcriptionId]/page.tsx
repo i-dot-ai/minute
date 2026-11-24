@@ -7,7 +7,10 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { RetryTranscriptionDialog } from '@/components/audio/retry-transcription-dialog'
-import { getTranscriptionErrorMessage } from '@/lib/transcription-error'
+import {
+  getTranscriptionErrorMessage,
+  NO_SPEECH_MESSAGE,
+} from '@/lib/transcription-error'
 import { ProcessingCard } from '@/components/processing-card'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, Pencil, Save } from 'lucide-react'
@@ -37,7 +40,9 @@ export default function TranscriptionPage() {
     status: transcription?.status ?? 'completed',
   })
 
+  const noSpeech = transcription?.no_speech_detected ?? false
   const minutesEnabled =
+    !noSpeech &&
     !!transcription?.status &&
     !['awaiting_start', 'in_progress', 'failed'].includes(transcription.status)
 
@@ -56,7 +61,7 @@ export default function TranscriptionPage() {
         path: { transcription_id: transcriptionId },
       }
     ),
-    enabled: transcription?.status === 'failed',
+    enabled: transcription?.status === 'failed' || noSpeech,
   })
 
   useEffect(() => {
@@ -107,7 +112,7 @@ export default function TranscriptionPage() {
     )
   }
 
-  const date = new Date(transcription.created_datetime).toLocaleString(
+  const date = new Date(transcription.meeting_datetime).toLocaleString(
     'en-GB',
     {
       year: 'numeric',
@@ -154,7 +159,7 @@ export default function TranscriptionPage() {
     return (
       <div className="govuk-main-wrapper govuk-width-container govuk-width-container--with-secondary-nav">
         <div className="govuk-grid-row">
-          <div className="govuk-grid-column-two-thirds">
+          <div className="govuk-grid-column-two-thirds-from-desktop">
             <h1 className="govuk-heading-l">Empty meeting</h1>
             <p className="govuk-body">{date}</p>
             <p className="govuk-body">
@@ -193,7 +198,7 @@ export default function TranscriptionPage() {
     )
   }
 
-  if (transcription.status == 'failed') {
+  if (transcription.status == 'failed' || noSpeech) {
     return (
       <div>
         <div className="govuk-!-padding-top-4 border-b border-(--govuk-border-colour)">
@@ -229,20 +234,13 @@ export default function TranscriptionPage() {
         </div>
         <div className="govuk-width-container govuk-width-container--with-secondary-nav govuk-main-wrapper">
           <div className="govuk-grid-row govuk-!-margin-bottom-2">
-            <div className="govuk-grid-column-two-thirds">
+            <div className="govuk-grid-column-two-thirds-from-desktop">
               {!isRenaming && (
                 <h1 className="govuk-heading-l govuk-!-margin-bottom-2">
                   {transcription.title ?? 'No title'}
                 </h1>
               )}
             </div>
-            <div
-              className={
-                isRenaming
-                  ? 'govuk-grid-column-full'
-                  : 'govuk-grid-column-one-third'
-              }
-            ></div>
           </div>
           {isRenaming && (
             <form
@@ -288,7 +286,7 @@ export default function TranscriptionPage() {
             </form>
           )}
           <div className="govuk-grid-row govuk-!-margin-bottom-2">
-            <div className="govuk-grid-column-two-thirds">
+            <div className="govuk-grid-column-two-thirds-from-desktop">
               <p className="govuk-body">{date}</p>
               <div className="govuk-warning-text">
                 <span className="govuk-warning-text__icon" aria-hidden="true">
@@ -296,17 +294,21 @@ export default function TranscriptionPage() {
                 </span>
                 <strong className="govuk-warning-text__text">
                   <span className="govuk-visually-hidden">Warning</span>
-                  {getTranscriptionErrorMessage(transcription.error)}
-                  <Link href="/support" className="govuk-link">
-                    contact support
-                  </Link>
-                  .
+                  {noSpeech
+                    ? NO_SPEECH_MESSAGE
+                    : getTranscriptionErrorMessage()}
+                  <>
+                    <Link href="/support" className="govuk-link">
+                      contact support
+                    </Link>
+                    .
+                  </>
                 </strong>
               </div>
               <h2 className="govuk-heading-m">Audio:</h2>
               <AudioPlayer transcriptionId={transcription.id} />
               <div className="govuk-button-group govuk-!-margin-top-4">
-                {recordings[0] && (
+                {!noSpeech && recordings[0] && (
                   <RetryTranscriptionDialog
                     transcriptionId={transcription.id}
                   />

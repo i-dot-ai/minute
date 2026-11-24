@@ -74,18 +74,30 @@ async def test_workflows_are_searchable_by_ids_with_audio_metrics_in_memo(monkey
             assert description.typed_search_attributes[sa.TRANSCRIPTION_ID] == str(transcription_id)
             assert description.typed_search_attributes[sa.MINUTE_ID] == str(minute_id)
             assert description.typed_search_attributes[sa.MINUTE_VERSION_ID] == str(version_id)
-            assert {"UploadSizeMb", "AudioUploadSizeMb", "AudioDurationSeconds"}.isdisjoint(
-                key.name for key, _ in description.typed_search_attributes
-            )
+            assert {
+                "UploadSizeMb",
+                "AudioUploadSizeMb",
+                "AudioDurationSeconds",
+                "TranscribeSeconds",
+            }.isdisjoint(key.name for key, _ in description.typed_search_attributes)
             if handle != handles[0]:
                 assert await description.memo() == {}
         transcription = await handles[0].describe()
-        expected_memo = {"AudioDurationSeconds": audio.duration_seconds}
+        memo = await transcription.memo()
+        assert memo["AudioDurationSeconds"] == audio.duration_seconds
         if upload_size_bytes is not None:
-            expected_memo["AudioUploadSizeMb"] = pytest.approx(upload_size_bytes / 1_000_000)
-        assert await transcription.memo() == expected_memo
+            assert memo["AudioUploadSizeMb"] == pytest.approx(upload_size_bytes / 1_000_000)
+        else:
+            assert "AudioUploadSizeMb" not in memo
+        # The transcribe timing appears only when the STT step itself succeeded.
+        if stt_fails:
+            assert "TranscribeSeconds" not in memo
+        else:
+            assert memo["TranscribeSeconds"] >= 0
         history = await handles[0].fetch_history()
-        assert sum(event.HasField("workflow_properties_modified_event_attributes") for event in history.events) == 1
+        modified = sum(e.HasField("workflow_properties_modified_event_attributes") for e in history.events)
+        # Two memo upserts on success (audio duration, then transcribe time); one when STT fails.
+        assert modified == (2 if not stt_fails else 1)
         queries = [
             (f"UserId = '{user_id}'", {handle.id for handle in handles}),
             (f"TranscriptionId = '{transcription_id}'", {handle.id for handle in handles}),
@@ -146,7 +158,9 @@ async def test_status_page_audio_memo_history_replays(monkeypatch):
             legacy.setattr(
                 wf.workflow,
                 "patched",
-                lambda patch_id: False if patch_id == "transcription-audio-memo" else patched(patch_id),
+                lambda patch_id: False
+                if patch_id in {"transcription-audio-memo", "transcribe-seconds-memo"}
+                else patched(patch_id),
             )
             workers = [
                 Worker(

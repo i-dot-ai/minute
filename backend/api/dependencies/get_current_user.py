@@ -8,6 +8,7 @@ from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
 from common.database.postgres_models import User
 from common.services.exceptions import MissingAuthTokenError
+from common.services.user_details import has_fixed_data_retention
 from common.settings import get_settings, get_structured_logger
 
 settings = get_settings()
@@ -43,19 +44,27 @@ async def get_current_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        updates = {User.email: User.email}  # no-op, just so RETURNING fires
+        if has_fixed_data_retention(email):
+            updates[User.data_retention_days] = 30
+
         stmt = (
             insert(User)
             .values(email=email)
             .on_conflict_do_update(
                 index_elements=[func.lower(User.email)],
-                set_={User.email: User.email},  # no-op, just so RETURNING fires
+                set_=updates,
             )
             .returning(User)
         )
         result = await session.execute(stmt)
         await session.commit()
 
-        return result.scalar_one()
+        user = result.scalar_one()
+        # Bind for the rest of the request so structured logs carry a searchable user_id.
+        logger.set_context_field("user_id", str(user.id))
+
+        return user
     except MissingAuthTokenError as e:
         logger.warning("No authorization header provided")
         raise HTTPException(

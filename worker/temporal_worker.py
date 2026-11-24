@@ -1,21 +1,33 @@
 """Temporal worker: one Worker per task queue, each with its own cap.
 
-Queues: transcription (workflow tasks + DB writes), stt (ffmpeg + the STT provider),
+Queues: transcription (workflow tasks + DB writes + cleanup), stt (ffmpeg + the STT provider),
 llm (speakers, title, summary, minute generation and AI edits).
 """
 
 import asyncio
 import logging
 import signal
+from datetime import timedelta
 
 from temporalio.api.workflowservice.v1 import DescribeNamespaceRequest
-from temporalio.client import Client
+from temporalio.client import (
+    Client,
+    Schedule,
+    ScheduleActionStartWorkflow,
+    ScheduleAlreadyRunningError,
+    ScheduleCalendarSpec,
+    ScheduleOverlapPolicy,
+    SchedulePolicy,
+    ScheduleRange,
+    ScheduleSpec,
+)
 from temporalio.service import RPCError, RPCStatusCode
 from temporalio.worker import Worker
 
 from common.sentry import init_sentry
 from common.settings import get_settings
 from common.workflows import activities
+from common.workflows.cleanup import CleanupWorkflow
 from common.workflows.minute_version import MinuteEditWorkflow, MinuteGenerationWorkflow
 from common.workflows.transcription import LLM_TASK_QUEUE, STT_TASK_QUEUE, TASK_QUEUE, TranscriptionWorkflow
 
@@ -48,10 +60,26 @@ async def _wait_for_namespace(client: Client, namespace: str) -> None:
         waited += NAMESPACE_POLL_SECONDS
 
 
+async def _ensure_cleanup_schedule(client: Client) -> None:
+    try:
+        await client.create_schedule(
+            "daily-cleanup",
+            Schedule(
+                action=ScheduleActionStartWorkflow(CleanupWorkflow.run, id="daily-cleanup", task_queue=TASK_QUEUE),
+                spec=ScheduleSpec(calendars=[ScheduleCalendarSpec(hour=[ScheduleRange(23)])], time_zone_name="UTC"),
+                policy=SchedulePolicy(overlap=ScheduleOverlapPolicy.SKIP, catchup_window=timedelta(days=1)),
+            ),
+        )
+    except ScheduleAlreadyRunningError:
+        return  # Leave operator changes, including pauses, untouched on worker restarts.
+    logger.info("Created active daily-cleanup schedule for 23:00 UTC")
+
+
 async def main() -> None:
     settings = get_settings()
     client = await Client.connect(settings.TEMPORAL_ADDRESS, namespace=settings.TEMPORAL_NAMESPACE)
     await _wait_for_namespace(client, settings.TEMPORAL_NAMESPACE)
+    await _ensure_cleanup_schedule(client)
 
     llm_cap = max(settings.MAX_LLM_PROCESSES, 1)
     # One Worker per task queue. Slots per queue = that resource's cap in this process;
@@ -60,7 +88,7 @@ async def main() -> None:
         Worker(
             client,
             task_queue=TASK_QUEUE,
-            workflows=[TranscriptionWorkflow, MinuteGenerationWorkflow, MinuteEditWorkflow],
+            workflows=[TranscriptionWorkflow, MinuteGenerationWorkflow, MinuteEditWorkflow, CleanupWorkflow],
             activities=activities.WORKFLOW_QUEUE_ACTIVITIES,
         ),
         Worker(

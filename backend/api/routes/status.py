@@ -1,14 +1,14 @@
-import logging
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
 
 from backend.api.dependencies import UserDep
 from backend.utils import temporal_status
+from common.settings import get_structured_logger
 from common.types import HourlyStatusResponse, StatusResponse
 
 status_router = APIRouter(tags=["Status"])
-logger = logging.getLogger(__name__)
+logger = get_structured_logger()
 _MAX_HORIZON_SECONDS = 86_400
 
 
@@ -40,8 +40,8 @@ async def get_status(
 @status_router.get("/status/hourly", response_model=HourlyStatusResponse)
 async def get_hourly_status(_current_user: UserDep) -> HourlyStatusResponse:
     """Transcriptions per hour for the last 24 hours, by close time: counts, failure rate, mean
-    processing time and processing seconds per audio hour, plus the same for the last 10 minutes.
-    Cached for 1 minute."""
+    processing time, and the projected processing time for a 1-hour meeting, plus the same for
+    the last 10 minutes. Cached for 1 minute."""
     try:
         return await temporal_status.get_hourly_status()
     except Exception as exc:

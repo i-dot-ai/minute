@@ -178,29 +178,38 @@ async def test_hourly_cache_shares_refresh_expires_and_recovers_from_failure(mon
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("memo_key", [temporal_status.AUDIO_SECONDS_MEMO, "audio_seconds"])
-async def test_hourly_buckets_by_close_time_with_audio_rate(monkeypatch, memo_key):
+async def test_hourly_buckets_by_close_time_with_fixed_and_projection(monkeypatch, memo_key):
     this_hour = datetime(2026, 10, 30, 13, tzinfo=UTC)
     now = this_hour + timedelta(minutes=5)
     first = this_hour - timedelta(hours=23)
     recent_start = now - timedelta(minutes=10)
     monkeypatch.setattr(temporal_status, "datetime", Mock(now=Mock(return_value=now)))
 
-    def run(status, closed, seconds, audio=None):
-        memo = AsyncMock(side_effect=lambda key, default: audio if key == memo_key else default)
+    def run(status, closed, seconds, audio=None, stt=None):
+        def memo(key, default):
+            if key == memo_key:
+                return audio
+            if key == temporal_status.TRANSCRIBE_SECONDS_MEMO:
+                return stt
+            return default
+
         return SimpleNamespace(
-            status=status, start_time=closed - timedelta(seconds=seconds), close_time=closed, memo_value=memo
+            status=status,
+            start_time=closed - timedelta(seconds=seconds),
+            close_time=closed,
+            memo_value=AsyncMock(side_effect=memo),
         )
 
     runs = [
-        run(WorkflowExecutionStatus.COMPLETED, this_hour + timedelta(seconds=1), 120, audio=3_600),
-        run(WorkflowExecutionStatus.COMPLETED, this_hour + timedelta(seconds=2), 30, audio=1_800),
-        run(WorkflowExecutionStatus.COMPLETED, now - timedelta(minutes=1), 60),  # pre-deploy: no audio memo
+        run(WorkflowExecutionStatus.COMPLETED, this_hour + timedelta(seconds=1), 120, audio=3_600, stt=30),
+        run(WorkflowExecutionStatus.COMPLETED, this_hour + timedelta(seconds=2), 30, audio=1_800, stt=15),
+        run(WorkflowExecutionStatus.COMPLETED, now - timedelta(minutes=1), 60),  # pre-deploy: no memos
         run(WorkflowExecutionStatus.FAILED, now - timedelta(minutes=2), 30),
         run(WorkflowExecutionStatus.TIMED_OUT, first, 10),
-        run(WorkflowExecutionStatus.COMPLETED, recent_start, 30, audio=1_800),
+        run(WorkflowExecutionStatus.COMPLETED, recent_start, 30, audio=1_800, stt=15),
         run(WorkflowExecutionStatus.CANCELED, now - timedelta(minutes=1), 10),
-        run(WorkflowExecutionStatus.COMPLETED, now, 900, audio=3_600),
-        run(WorkflowExecutionStatus.COMPLETED, now + timedelta(seconds=1), 900, audio=3_600),
+        run(WorkflowExecutionStatus.COMPLETED, now, 900, audio=3_600, stt=60),
+        run(WorkflowExecutionStatus.COMPLETED, now + timedelta(seconds=1), 900, audio=3_600, stt=60),
     ]
 
     async def count(query, *, rpc_timeout):
@@ -259,22 +268,20 @@ async def test_hourly_buckets_by_close_time_with_audio_rate(monkeypatch, memo_ke
     latest, oldest = response.hours[-1], response.hours[0]
     assert (latest.completed, latest.failed) == (3, 1)
     assert latest.failure_rate == pytest.approx(1 / 4)
-    assert latest.avg_processing_seconds == 70
+    assert latest.avg_processing_seconds == 75  # pre-deploy runs (no memos) are excluded
     assert latest.audio_hours == 1.5
-    assert latest.processing_seconds_per_audio_hour == 100  # only runs with recorded audio
-    rates = latest.per_audio_hour_seconds  # per run: 120s for 1h, 30s for 0.5h -> 120, 60
-    assert (rates.sample_count, rates.p50, rates.p90, rates.p99, rates.max) == (2, 60, 120, 120, 120)
+    assert latest.projected_one_hour_seconds == 82.5  # 52.5s fixed + 45s of transcribe per 1.5 audio hours
     assert (oldest.failed, oldest.failure_rate, oldest.avg_processing_seconds) == (1, 1.0, None)
     assert response.hours[5].failure_rate is None
-    assert response.hours[5].processing_seconds_per_audio_hour is None
-    assert response.hours[5].per_audio_hour_seconds.p50 is None
+    assert response.hours[5].projected_one_hour_seconds is None
     recent = response.last_10_minutes
     assert recent.start == recent_start
     assert (recent.completed, recent.failed, recent.avg_processing_seconds) == (4, 1, 60)
     assert recent.failure_rate == 0.2
-    assert recent.processing_seconds_per_audio_hour == 90
-    assert recent.per_audio_hour_seconds.sample_count == 3
+    assert recent.audio_hours == 2
+    assert recent.projected_one_hour_seconds == 70
     assert response.hours[-2].completed == 1
+    assert response.hours[-2].projected_one_hour_seconds == 45
 
 
 @pytest.mark.asyncio
@@ -300,11 +307,15 @@ async def test_hourly_read_limit_keeps_counts_and_error_rates(monkeypatch):
 
     async def workflows(query, **_kwargs):
         assert 'ExecutionStatus = "Completed"' in query
-        for seconds in (10, 20, 900):
+        for seconds, stt in ((10, 5), (20, 10), (900, 60)):
             yield SimpleNamespace(
                 start_time=closed - timedelta(seconds=seconds),
                 close_time=closed,
-                memo_value=AsyncMock(return_value=3_600),
+                memo_value=AsyncMock(
+                    side_effect=lambda key, _default, _stt=stt: 3_600
+                    if key in (temporal_status.AUDIO_SECONDS_MEMO, "audio_seconds")
+                    else _stt
+                ),
             )
 
     client = Mock(count_workflows=AsyncMock(side_effect=count), list_workflows=Mock(side_effect=workflows))
@@ -319,7 +330,4 @@ async def test_hourly_read_limit_keeps_counts_and_error_rates(monkeypatch):
         assert bucket.failure_rate == pytest.approx(600 / 2_600)
         assert bucket.avg_processing_seconds == 15  # Divide by listed runs, not the uncapped count.
         assert bucket.audio_hours == 2
-        assert bucket.processing_seconds_per_audio_hour == 15
-        assert bucket.per_audio_hour_seconds.sample_count == 2
-        assert bucket.per_audio_hour_seconds.p50 == 10
-        assert bucket.per_audio_hour_seconds.p90 == 20
+        assert bucket.projected_one_hour_seconds == 15  # fixed + transcribe at 2 audio hours total

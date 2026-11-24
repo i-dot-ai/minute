@@ -1,9 +1,6 @@
 # flake8: noqa: E501, RUF001
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
 from common.database.postgres_models import DialogueEntry
-from common.prompts import get_transcript_messages
+from common.prompts import NO_MEETING_DATE_INSTRUCTION, get_transcript_messages
 from common.templates.types import SimpleTemplate
 from common.types import AgendaUsage
 
@@ -17,8 +14,6 @@ class General(SimpleTemplate):
 
     @classmethod
     def prompt(cls, transcript: list[DialogueEntry], agenda: str | None = None) -> list[dict[str, str]]:
-        date = datetime.now(tz=ZoneInfo("Europe/London")).strftime("%d %B %Y")
-
         if not agenda:
             meeting_agenda_str = """## 4. Discussion Points
 - Present in chronological order
@@ -53,10 +48,10 @@ Writing Guidelines:
     - Maintain appropriate level of detail based on topic importance
 
 Output format:
-    - Write the minutes in Markdown, and use only these constructs: "# " for the title, "## " for each section heading below, "### " for subheadings within a section, "- " for bullets, and "**bold**" for emphasis
+    - Write the minutes in Markdown, and use only these constructs: "## " for each section heading, "### " for subheadings within a section, "- " for bullets, and "**bold**" for emphasis
     - Do not use tables, code fences, backticks or HTML. Action Items and Next Steps must be bullets, never a table
     - Start every bullet with "- " on its own line. This applies especially to Action Items and Next Steps: put each item on a separate bullet, never combine multiple items onto one line
-    - Begin your response with the "# " title line. Do not add a preamble, a sign-off, or any commentary about the minutes themselves
+    - Do not add a preamble, a sign-off, or any commentary about the minutes themselves
 
 Remember to:
     - Emphasise outcomes and decisions over process
@@ -64,11 +59,10 @@ Remember to:
     - Maintain chronological flow while grouping related topics
     - Be precise with technical terms and proper nouns
 
-Open the minutes with a "# " title derived from the content discussed, then use these section headings exactly as written below (omit any section that isn't relevant to the meeting):
+Use these section headings exactly as written below (omit any section that isn't relevant to the meeting):
 
 ## 1. Meeting Overview
-- Date: {date}
-- Title (derive this from the content discussed)
+- {NO_MEETING_DATE_INSTRUCTION}
 - Purpose/Objective of the meeting (if discernible from the discussion)
 
 ## 2. Attendees

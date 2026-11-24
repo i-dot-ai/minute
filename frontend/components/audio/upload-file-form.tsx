@@ -3,35 +3,38 @@
 import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { Template } from '@/types/templates'
 import { useEffect, useRef } from 'react'
+import { MeetingTime } from './meeting-time-field'
 import { RecordingFinishedState } from './recording-finished-state'
 
 export function UploadFileForm({
   file,
   template,
   agenda,
+  meetingTime,
   onDiscard,
   onStarted,
 }: {
   file: File
   template: Template
   agenda?: string
+  meetingTime?: MeetingTime
   onDiscard?: () => void
   onStarted?: (transcriptionId: string) => void
 }) {
   const { isError, onSubmit } = useStartTranscription(
-    { file, template, agenda },
+    { file, template, agenda, meeting_datetime: meetingTime },
     onStarted
   )
 
-  // File, template and agenda were all chosen on the home page, so submit
+  // File, template, agenda and meeting time were all chosen on the home page, so submit
   // straight away. One-shot guard so Strict Mode's double-mount (dev) can't
   // create two transcriptions.
   const hasSubmitted = useRef(false)
   useEffect(() => {
     if (hasSubmitted.current) return
     hasSubmitted.current = true
-    onSubmit({ file, template, agenda })
-  }, [onSubmit, file, template, agenda])
+    onSubmit({ file, template, agenda, meeting_datetime: meetingTime })
+  }, [onSubmit, file, template, agenda, meetingTime])
 
   if (isError) {
     return (

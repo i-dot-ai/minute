@@ -22,9 +22,11 @@ import {
   deleteUserTemplateUserTemplatesTemplateIdDelete,
   duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost,
   editUserTemplateUserTemplatesTemplateIdPatch,
+  getHourlyStatusStatusHourlyGet,
   getMinuteMinutesMinutesIdGet,
   getMinuteVersionMinuteVersionsMinuteVersionIdGet,
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGet,
+  getStatusStatusGet,
   getSupportTicketsConfigurationSupportTicketsConfigurationGet,
   getTemplatesTemplatesGet,
   getTranscriptionTranscriptionsTranscriptionIdGet,
@@ -38,8 +40,10 @@ import {
   type Options,
   retryTranscriptionTranscriptionsTranscriptionIdRetryPost,
   saveTranscriptionTranscriptionsTranscriptionIdPatch,
+  searchTranscriptionsTranscriptionsSearchGet,
   updateDataRetentionUsersDataRetentionPatch,
   updateDefaultTemplateUsersDefaultTemplatePatch,
+  updateDisplayNameUsersDisplayNamePatch,
 } from '../sdk.gen'
 import type {
   CreateMinuteTranscriptionTranscriptionIdMinutesPostData,
@@ -74,6 +78,9 @@ import type {
   DuplicateUserTemplateUserTemplatesTemplateIdDuplicatePostResponse,
   EditUserTemplateUserTemplatesTemplateIdPatchData,
   EditUserTemplateUserTemplatesTemplateIdPatchError,
+  GetHourlyStatusStatusHourlyGetData,
+  GetHourlyStatusStatusHourlyGetError,
+  GetHourlyStatusStatusHourlyGetResponse,
   GetMinuteMinutesMinutesIdGetData,
   GetMinuteMinutesMinutesIdGetError,
   GetMinuteMinutesMinutesIdGetResponse,
@@ -83,6 +90,9 @@ import type {
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetData,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetError,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponse,
+  GetStatusStatusGetData,
+  GetStatusStatusGetError,
+  GetStatusStatusGetResponse,
   GetSupportTicketsConfigurationSupportTicketsConfigurationGetData,
   GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponse,
   GetTemplatesTemplatesGetData,
@@ -116,12 +126,18 @@ import type {
   SaveTranscriptionTranscriptionsTranscriptionIdPatchData,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchError,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchResponse,
+  SearchTranscriptionsTranscriptionsSearchGetData,
+  SearchTranscriptionsTranscriptionsSearchGetError,
+  SearchTranscriptionsTranscriptionsSearchGetResponse,
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchError,
   UpdateDataRetentionUsersDataRetentionPatchResponse,
   UpdateDefaultTemplateUsersDefaultTemplatePatchData,
   UpdateDefaultTemplateUsersDefaultTemplatePatchError,
   UpdateDefaultTemplateUsersDefaultTemplatePatchResponse,
+  UpdateDisplayNameUsersDisplayNamePatchData,
+  UpdateDisplayNameUsersDisplayNamePatchError,
+  UpdateDisplayNameUsersDisplayNamePatchResponse,
 } from '../types.gen'
 
 export type QueryKey<TOptions extends Options> = [
@@ -190,6 +206,74 @@ export const healthcheckHealthcheckGetOptions = (
       return data
     },
     queryKey: healthcheckHealthcheckGetQueryKey(options),
+  })
+
+export const getStatusStatusGetQueryKey = (
+  options?: Options<GetStatusStatusGetData>
+) => createQueryKey('getStatusStatusGet', options)
+
+/**
+ * Get Status
+ *
+ * Aggregate workflow-run counts and nearest-rank timing percentiles in seconds.
+ *
+ * Starts and closures use the horizon; in-progress counts/ages include older runs.
+ * Processing time covers successful whole pipelines, including waiting/retries,
+ * not upload time or time until the transcript is ready. Completed transcription
+ * workflows can still have optional enrichment/summary failures. Visibility is
+ * eventually consistent; successful responses are cached for 30 seconds.
+ */
+export const getStatusStatusGetOptions = (
+  options?: Options<GetStatusStatusGetData>
+) =>
+  queryOptions<
+    GetStatusStatusGetResponse,
+    GetStatusStatusGetError,
+    GetStatusStatusGetResponse,
+    ReturnType<typeof getStatusStatusGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStatusStatusGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: getStatusStatusGetQueryKey(options),
+  })
+
+export const getHourlyStatusStatusHourlyGetQueryKey = (
+  options?: Options<GetHourlyStatusStatusHourlyGetData>
+) => createQueryKey('getHourlyStatusStatusHourlyGet', options)
+
+/**
+ * Get Hourly Status
+ *
+ * Transcriptions per hour for the last 24 hours, by close time: counts, failure rate, mean
+ * processing time, and the projected processing time for a 1-hour meeting, plus the same for
+ * the last 10 minutes. Cached for 1 minute.
+ */
+export const getHourlyStatusStatusHourlyGetOptions = (
+  options?: Options<GetHourlyStatusStatusHourlyGetData>
+) =>
+  queryOptions<
+    GetHourlyStatusStatusHourlyGetResponse,
+    GetHourlyStatusStatusHourlyGetError,
+    GetHourlyStatusStatusHourlyGetResponse,
+    ReturnType<typeof getHourlyStatusStatusHourlyGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getHourlyStatusStatusHourlyGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: getHourlyStatusStatusHourlyGetQueryKey(options),
   })
 
 export const listTranscriptionsTranscriptionsGetQueryKey = (
@@ -336,6 +420,99 @@ export const createTranscriptionTranscriptionsPostMutation = (
   }
   return mutationOptions
 }
+
+export const searchTranscriptionsTranscriptionsSearchGetQueryKey = (
+  options: Options<SearchTranscriptionsTranscriptionsSearchGetData>
+) => createQueryKey('searchTranscriptionsTranscriptionsSearchGet', options)
+
+/**
+ * Search Transcriptions
+ *
+ * Search selected sources within the current user's transcriptions.
+ *
+ * Keywords are literal, case-insensitive substrings; they can span transcript entries,
+ * but cannot be combined across sources, speaker labels or summary versions.
+ * Speakers match stored labels, not mentions in speech. Results rank title, speaker,
+ * summary, then transcript, newest first within each rank.
+ */
+export const searchTranscriptionsTranscriptionsSearchGetOptions = (
+  options: Options<SearchTranscriptionsTranscriptionsSearchGetData>
+) =>
+  queryOptions<
+    SearchTranscriptionsTranscriptionsSearchGetResponse,
+    SearchTranscriptionsTranscriptionsSearchGetError,
+    SearchTranscriptionsTranscriptionsSearchGetResponse,
+    ReturnType<typeof searchTranscriptionsTranscriptionsSearchGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchTranscriptionsTranscriptionsSearchGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: searchTranscriptionsTranscriptionsSearchGetQueryKey(options),
+  })
+
+export const searchTranscriptionsTranscriptionsSearchGetInfiniteQueryKey = (
+  options: Options<SearchTranscriptionsTranscriptionsSearchGetData>
+): QueryKey<Options<SearchTranscriptionsTranscriptionsSearchGetData>> =>
+  createQueryKey('searchTranscriptionsTranscriptionsSearchGet', options, true)
+
+/**
+ * Search Transcriptions
+ *
+ * Search selected sources within the current user's transcriptions.
+ *
+ * Keywords are literal, case-insensitive substrings; they can span transcript entries,
+ * but cannot be combined across sources, speaker labels or summary versions.
+ * Speakers match stored labels, not mentions in speech. Results rank title, speaker,
+ * summary, then transcript, newest first within each rank.
+ */
+export const searchTranscriptionsTranscriptionsSearchGetInfiniteOptions = (
+  options: Options<SearchTranscriptionsTranscriptionsSearchGetData>
+) =>
+  infiniteQueryOptions<
+    SearchTranscriptionsTranscriptionsSearchGetResponse,
+    SearchTranscriptionsTranscriptionsSearchGetError,
+    InfiniteData<SearchTranscriptionsTranscriptionsSearchGetResponse>,
+    QueryKey<Options<SearchTranscriptionsTranscriptionsSearchGetData>>,
+    | number
+    | Pick<
+        QueryKey<Options<SearchTranscriptionsTranscriptionsSearchGetData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchTranscriptionsTranscriptionsSearchGetData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              }
+        const params = createInfiniteParams(queryKey, page)
+        const { data } = await searchTranscriptionsTranscriptionsSearchGet({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        })
+        return data
+      },
+      queryKey:
+        searchTranscriptionsTranscriptionsSearchGetInfiniteQueryKey(options),
+    }
+  )
 
 /**
  * Create Recording
@@ -560,6 +737,40 @@ export const getUserUsersMeGetOptions = (
     },
     queryKey: getUserUsersMeGetQueryKey(options),
   })
+
+/**
+ * Update Display Name
+ *
+ * Set or clear the current user's display name.
+ *
+ * Args:
+ * data: Request body containing display_name; null clears it, omitting the field leaves it unchanged.
+ * session: Database session
+ * user: The current authenticated user
+ */
+export const updateDisplayNameUsersDisplayNamePatchMutation = (
+  options?: Partial<Options<UpdateDisplayNameUsersDisplayNamePatchData>>
+): UseMutationOptions<
+  UpdateDisplayNameUsersDisplayNamePatchResponse,
+  UpdateDisplayNameUsersDisplayNamePatchError,
+  Options<UpdateDisplayNameUsersDisplayNamePatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateDisplayNameUsersDisplayNamePatchResponse,
+    UpdateDisplayNameUsersDisplayNamePatchError,
+    Options<UpdateDisplayNameUsersDisplayNamePatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateDisplayNameUsersDisplayNamePatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
 
 /**
  * Update Data Retention

@@ -61,5 +61,6 @@ export const meeting1 = {
   ],
   status: 'completed',
   created_datetime: '2026-09-30T12:37:18.692882Z',
+  meeting_datetime: '2026-09-30T12:00:00Z',
   error: null,
 } satisfies TranscriptionGetResponse

@@ -75,13 +75,28 @@ export const Footer = () => (
           </h2>
           <ul className="col-span-4 row-start-2 md:col-span-3">
             <li>
-              <Link className="govuk-link" href="/privacy">
-                Privacy
+              <Link className="govuk-link" href="/profile">
+                Your account
               </Link>
             </li>
             <li>
               <Link className="govuk-link" href="/support">
-                Support
+                Contact
+              </Link>
+            </li>
+            <li>
+              <Link className="govuk-link" href="/legal">
+                Legal
+              </Link>
+            </li>
+            <li>
+              <Link className="govuk-link" href="/legal/privacy">
+                Privacy
+              </Link>
+            </li>
+            <li>
+              <Link className="govuk-link" href="/legal/accessibility">
+                Accessibility
               </Link>
             </li>
           </ul>

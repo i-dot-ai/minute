@@ -3,6 +3,7 @@
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
 import { GenerateSummaryDialog } from '@/components/audio/generate-summary-dialog'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
+import { toMeetingTime } from '@/components/audio/meeting-time-field'
 import { getFileExtensionFromBlob } from '@/lib/getFileExtension'
 import {
   RecordingDbItem,
@@ -29,6 +30,10 @@ export const IncompleteRecordingTableRow = ({
     {
       file: recording.blob,
       recordingId: recording.recording_id,
+      // Older recordings have no start time, so fall back to when they were last saved.
+      meeting_datetime: toMeetingTime(
+        recording.created_at ?? recording.updated_at
+      ),
     },
     (id) => router.push(`/new/status/${id}`)
   )
@@ -86,25 +91,25 @@ export const IncompleteRecordingTableRow = ({
             </label>
           </div>
         </td>
-        <td className="govuk-table__cell govuk-!-padding-right-4 w-full">
-          <div className="pl-1 sm:flex sm:items-center sm:justify-between sm:gap-2 sm:pl-0">
-            <span className="hidden lg:block">Incomplete recording</span>
-            <span className="govuk-visually-hidden block lg:hidden">
+        <td className="govuk-table__cell govuk-!-padding-right-4 govuk-!-padding-top-3 govuk-!-padding-bottom-3 w-full">
+          <div className="pl-1 sm:pl-0 md:gap-2 lg:flex lg:items-center lg:justify-between">
+            <span className="hidden xl:block">Incomplete recording</span>
+            <span className="govuk-visually-hidden block xl:hidden">
               Incomplete recording
             </span>
             <audio src={url} controls className="max-h-8 w-40 lg:w-52" />
-            <div className="govuk-!-margin-top-1 govuk-!-margin-bottom-1 md:hidden">
+            <div className="govuk-!-margin-top-1 govuk-!-margin-bottom-1 lg:hidden">
               <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
                 Not uploaded
               </strong>
             </div>
-            <span className="govuk-body-s sm:hidden">{date}</span>
+            <span className="govuk-body-s md:hidden">{date}</span>
           </div>
         </td>
-        <td className="govuk-table__cell hidden whitespace-nowrap sm:table-cell">
+        <td className="govuk-table__cell hidden whitespace-nowrap md:table-cell">
           <span className="govuk-body-s govuk-!-margin-0">{date}</span>
         </td>
-        <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 hidden whitespace-nowrap md:table-cell">
+        <td className="govuk-table__cell govuk-!-padding-left-4 govuk-!-padding-right-4 hidden whitespace-nowrap lg:table-cell">
           <strong className="govuk-tag govuk-tag--yellow govuk-!-margin-right-1 govuk-!-padding-left-1 govuk-!-font-size-16">
             Not uploaded
           </strong>
@@ -133,7 +138,7 @@ export const IncompleteRecordingTableRow = ({
             </a>
             <button
               type="button"
-              className="govuk-link govuk-link--no-underline link--warning govuk-!-font-size-16 sm:block md:hidden lg:block"
+              className="govuk-link govuk-link--no-underline link--warning govuk-!-font-size-16"
               onClick={() => setDeleteOpen(true)}
             >
               Delete

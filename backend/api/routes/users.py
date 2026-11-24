@@ -1,17 +1,16 @@
-import logging
-
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from common.database.postgres_models import User, UserTemplate
 from common.services.template_manager import TemplateManager
-from common.settings import get_settings
-from common.types import DataRetentionUpdateResponse, GetUserResponse, SetDefaultTemplateRequest
+from common.services.user_details import display_name_from_email, has_fixed_data_retention
+from common.settings import get_settings, get_structured_logger
+from common.types import DataRetentionUpdateResponse, GetUserResponse, SetDefaultTemplateRequest, SetDisplayNameRequest
 
 users_router = APIRouter(tags=["Users"])
 
-logger = logging.getLogger(__name__)
+logger = get_structured_logger()
 
 
 def _user_response(user: User) -> GetUserResponse:
@@ -20,6 +19,7 @@ def _user_response(user: User) -> GetUserResponse:
         created_datetime=user.created_datetime,
         updated_datetime=user.updated_datetime,
         email=user.email,
+        display_name=user.display_name or display_name_from_email(user.email),
         data_retention_days=user.data_retention_days,
         default_template_id=user.default_template_id,
         default_template_name=user.default_template_name,
@@ -28,6 +28,37 @@ def _user_response(user: User) -> GetUserResponse:
 
 @users_router.get("/users/me")
 def get_user(user: UserDep) -> GetUserResponse:
+    return _user_response(user)
+
+
+@users_router.patch("/users/display-name", response_model=GetUserResponse)
+async def update_display_name(
+    data: SetDisplayNameRequest,
+    session: SQLSessionDep,
+    user: UserDep,
+) -> GetUserResponse:
+    """Set or clear the current user's display name.
+
+    Args:
+        data: Request body containing display_name; null clears it, omitting the field leaves it unchanged.
+        session: Database session
+        user: The current authenticated user
+    """
+    if "display_name" not in data.model_fields_set:
+        return _user_response(user)
+
+    stripped = data.display_name.strip() if data.display_name else ""
+    if data.display_name is not None and not stripped:
+        raise HTTPException(status_code=400, detail="Display name cannot be blank")
+
+    user.display_name = stripped or None
+    await session.commit()
+    await session.refresh(user)
+
+    logger.info(
+        "{action} display name",
+        action="Cleared" if data.display_name is None else "Updated",
+    )
     return _user_response(user)
 
 
@@ -43,6 +74,12 @@ async def update_data_retention(
         data: Request body containing data_retention_days
         current_user: The current authenticated user
     """
+    if has_fixed_data_retention(user.email):
+        raise HTTPException(
+            status_code=403,
+            detail="Data retention for your department is fixed and cannot be changed",
+        )
+
     if data.data_retention_days is not None and data.data_retention_days < 1:
         raise HTTPException(
             status_code=400,
@@ -54,11 +91,7 @@ async def update_data_retention(
     await session.commit()
     await session.refresh(user)
 
-    logger.info(
-        "Updated data retention period to %s days for user %s",
-        data.data_retention_days,
-        user.id,
-    )
+    logger.info("Updated data retention period to {days} days", days=data.data_retention_days)
 
     return _user_response(user)
 
@@ -105,6 +138,6 @@ async def update_default_template(
     await session.commit()
     await session.refresh(user)
 
-    logger.info("Updated default template for user %s", user.id)
+    logger.info("Updated default template")
 
     return _user_response(user)

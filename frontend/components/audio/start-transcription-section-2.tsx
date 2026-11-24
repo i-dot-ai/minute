@@ -14,6 +14,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { toast } from 'sonner'
+import { MeetingTimeField } from './meeting-time-field'
 
 function toFormTemplate(
   template: TemplateResponse | TemplateMetadata,
@@ -89,7 +90,11 @@ function getSelectedOptionValue(
   return `default:${template.name}`
 }
 
-export const StartTranscriptionSection = () => {
+export const StartTranscriptionSection = ({
+  showMeetingDate = false,
+}: {
+  showMeetingDate?: boolean
+}) => {
   const form = useFormContext<TranscriptionForm>()
   const queryClient = useQueryClient()
   const selectedTemplate = form.watch('template')
@@ -181,6 +186,7 @@ export const StartTranscriptionSection = () => {
 
   return (
     <div>
+      {showMeetingDate && <MeetingTimeField />}
       <div className="govuk-form-group flex items-center gap-2">
         <div>
           <label className="govuk-label" htmlFor="template">

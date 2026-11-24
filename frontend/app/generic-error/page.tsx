@@ -4,7 +4,7 @@ function genericError(): React.JSX.Element {
   return (
     <div className="govuk-main-wrapper govuk-width-container">
       <div className="govuk-grid-row">
-        <div className="govuk-grid-column-two-thirds">
+        <div className="govuk-grid-column-full">
           <h1 className="govuk-heading-l">An error occurred</h1>
           <div
             role="alert"

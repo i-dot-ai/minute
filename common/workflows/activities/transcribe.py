@@ -9,7 +9,7 @@ from temporalio.exceptions import ApplicationError
 
 from common.database.postgres_models import JobStatus, Transcription
 from common.services.errors import is_transient
-from common.services.exceptions import TranscriptionFailedError
+from common.services.exceptions import NoSpeechDetectedError, TranscriptionFailedError
 from common.services.job_claim import claim_job
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.settings import get_structured_logger
@@ -33,7 +33,8 @@ async def _keep_alive() -> None:
 async def _transcribe(params: wf.TranscribeInput) -> str:
     transcription = _shared.load(UUID(params.minute_id))
     if transcription.dialogue_entries or transcription.status == JobStatus.COMPLETED:
-        return str(transcription.id)  # a previous attempt already transcribed: idempotent retry
+        # Preserve a previous attempt's result, including completion without speech.
+        return str(transcription.id) if transcription.dialogue_entries else ""
     if transcription.status == JobStatus.FAILED:
         msg = f"Transcription is FAILED: {transcription.error}"
         raise TranscriptionFailedError(msg)
@@ -49,6 +50,14 @@ async def _transcribe(params: wf.TranscribeInput) -> str:
             timeout_seconds=params.stt_timeout_seconds,
             attempt=activity.info().attempt,
         )
+    except NoSpeechDetectedError:
+        # No speech is an expected outcome, not a failed transcription.
+        if not _shared.update_in_progress(
+            transcription.id, status=JobStatus.COMPLETED, dialogue_entries=[], error=None
+        ):
+            msg = "Transcription changed while being written"
+            raise _shared.TranscriptionTransientError(msg) from None
+        return ""
     except Exception as e:
         if is_transient(e):
             raise _shared.TranscriptionTransientError(str(e)) from e
@@ -72,7 +81,7 @@ async def _transcribe(params: wf.TranscribeInput) -> str:
 
 @activity.defn(name=wf.TRANSCRIBE)
 async def transcribe(params: wf.TranscribeInput) -> str:
-    """One STT provider call on the prepared mp3. Returns the transcription id."""
+    """Return the transcription id, or an empty string for a completed no-speech result."""
     slogger.refresh_context()
     slogger.set_context_field("minute_id", params.minute_id)
     try:

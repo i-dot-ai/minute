@@ -6,7 +6,14 @@ import { DialogueEntryForm } from '@/types/transcriptions'
 import { ExportTranscriptDialog } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/ExportTranscriptDialog'
 import { formatTime } from '@/components/audio/audio-player'
 import { ProcessingCard } from '@/components/processing-card'
+import {
+  formatMeetingTime,
+  MeetingTime,
+  MeetingTimeField,
+  toMeetingTime,
+} from '@/components/audio/meeting-time-field'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
+import { useSaveMeetingTime } from '@/hooks/use-save-meeting-time'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
@@ -56,7 +63,9 @@ export default function TranscriptPage({
     status: transcription?.status ?? 'completed',
   })
 
-  const methods = useForm<DialogueEntryForm>({
+  const methods = useForm<
+    DialogueEntryForm & { meeting_datetime?: MeetingTime }
+  >({
     defaultValues: { entries: transcription?.dialogue_entries || [] },
     mode: 'onBlur',
   })
@@ -66,6 +75,7 @@ export default function TranscriptPage({
     handleSubmit,
     formState: { dirtyFields },
     reset,
+    setValue,
   } = methods
 
   const transcriptionString = useMemo(
@@ -80,15 +90,35 @@ export default function TranscriptPage({
     reset({ entries: transcription?.dialogue_entries || [] })
   }, [reset, transcription?.dialogue_entries])
 
-  // A failed transcription has no transcript to show; the index page owns the
+  // A failed or no-speech transcription has no transcript to show; the index page owns the
   // failure UI (retry / download), so send the user there.
   useEffect(() => {
-    if (transcription?.status === 'failed') {
+    if (
+      transcription?.status === 'failed' ||
+      transcription?.no_speech_detected
+    ) {
       router.replace(`/transcriptions/${transcriptionId}`)
     }
-  }, [transcription?.status, router, transcriptionId])
+  }, [
+    transcription?.status,
+    transcription?.no_speech_detected,
+    router,
+    transcriptionId,
+  ])
 
   const { saveTranscription } = useSaveTranscription(transcriptionId)
+  const { save: saveMeetingTime } = useSaveMeetingTime(transcriptionId)
+
+  const startEditing = () => {
+    setDraftTitle(transcription?.title ?? '')
+    if (transcription?.meeting_datetime) {
+      setValue(
+        'meeting_datetime',
+        toMeetingTime(new Date(transcription.meeting_datetime))
+      )
+    }
+    setIsEditing(true)
+  }
 
   const handleSave = handleSubmit(async (data) => {
     try {
@@ -99,6 +129,7 @@ export default function TranscriptPage({
       if (draftTitle !== (transcription?.title ?? '')) {
         saveTitle(draftTitle)
       }
+      saveMeetingTime(data.meeting_datetime, transcription?.meeting_datetime)
       reset(data)
       setIsEditing(false)
     } catch {
@@ -333,20 +364,14 @@ export default function TranscriptPage({
                   <button
                     type="button"
                     className="transcript-edit-button govuk-button govuk-!-margin-bottom-0 !hidden sm:!flex"
-                    onClick={() => {
-                      setDraftTitle(transcription.title ?? '')
-                      setIsEditing(true)
-                    }}
+                    onClick={startEditing}
                   >
                     <Pencil className="size-4" /> Edit
                   </button>
                   <button
                     type="button"
                     className="transcript-edit-button govuk-button govuk-button--secondary sm:!hidden"
-                    onClick={() => {
-                      setDraftTitle(transcription.title ?? '')
-                      setIsEditing(true)
-                    }}
+                    onClick={startEditing}
                   >
                     <Pencil className="size-4" /> Edit
                   </button>
@@ -415,11 +440,19 @@ export default function TranscriptPage({
                   value={draftTitle}
                   onChange={(e) => setDraftTitle(e.target.value)}
                 />
+                <div className="govuk-!-margin-top-6">
+                  <MeetingTimeField variant="edit" />
+                </div>
               </div>
             ) : (
-              <h1 className="govuk-heading-m govuk-!-margin-top-4">
-                {transcription.title}
-              </h1>
+              <>
+                <h1 className="govuk-heading-m govuk-!-margin-top-4 govuk-!-margin-bottom-2">
+                  {transcription.title}
+                </h1>
+                <p className="govuk-body govuk-hint govuk-!-margin-bottom-4">
+                  {formatMeetingTime(new Date(transcription.meeting_datetime))}
+                </p>
+              </>
             )}
             <form onSubmit={handleSave}>
               <div className="flex flex-col gap-6">

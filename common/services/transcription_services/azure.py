@@ -73,17 +73,28 @@ class AzureSpeechAdapter(TranscriptionAdapter):
 
     @classmethod
     async def start(
-        cls, audio_file_path_or_recording: Path | Recording, timeout_seconds: float | None = None, attempt: int = 1
+        cls,
+        audio_file_path_or_recording: Path | Recording,
+        timeout_seconds: float | None = None,
+        attempt: int = 1,
+        *,
+        allow_fallbacks: bool = True,
     ) -> TranscriptionJobMessageData:
-        """One request per Temporal attempt, rotating through configured regions on retries."""
+        """One request per Temporal attempt; rotate regions only when fallbacks are allowed."""
         if not isinstance(audio_file_path_or_recording, Path):
             msg = "Synchronous transcription requires a local audio file"
             raise TypeError(msg)
         audio_file_path = audio_file_path_or_recording
-        if not regions:
-            msg = "No Azure speech regions are configured"
-            raise TranscriptionFailedError(msg)
-        region = regions[(attempt - 1) % len(regions)]
+        if allow_fallbacks:
+            if not regions:
+                msg = "No Azure speech regions are configured"
+                raise TranscriptionFailedError(msg)
+            region = regions[(attempt - 1) % len(regions)]
+        else:
+            if not cls.is_available():
+                msg = "The primary Azure speech region is not configured"
+                raise TranscriptionFailedError(msg)
+            region = AzureSpeechRegion(region=settings.AZURE_SPEECH_REGION, key=settings.AZURE_SPEECH_KEY)
         # The caller sizes this from the audio duration; fall back to the adapter default.
         request_timeout = httpx.Timeout(timeout_seconds) if timeout_seconds else TIMEOUT
 
@@ -130,8 +141,8 @@ class AzureSpeechAdapter(TranscriptionAdapter):
                 # If no error, proceed with phrases extraction
                 phrases = full_response.get("phrases")
                 if not phrases:
-                    error_msg = "No transcription phrases found in response"
-                    raise TranscriptionFailedError(error_msg)
+                    # Let the manager investigate the audio after a successful empty response.
+                    return TranscriptionJobMessageData(transcription_service=cls.name, transcript=[])
                 return TranscriptionJobMessageData(
                     transcription_service=cls.name, transcript=convert_to_dialogue_entries(phrases)
                 )

@@ -1,6 +1,7 @@
 'use client'
 
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
+import { formatMeetingTime } from '@/components/audio/meeting-time-field'
 import { ProcessingCard } from '@/components/processing-card'
 import { useNow } from '@/hooks/use-now'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
@@ -35,6 +36,15 @@ import { Controller, useForm } from 'react-hook-form'
 
 type MinuteEditorForm = {
   html: string
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
 }
 
 export type MinuteExportState = {
@@ -118,9 +128,18 @@ export function MinuteEditor({
     }
   }, [form, minuteVersion])
   const htmlContent = form.watch('html')
+  // Heads the copied and downloaded summary; the app shows the same above the editor.
+  const titleAndDateHtml =
+    (transcription.title ? `<h1>${escapeHtml(transcription.title)}</h1>` : '') +
+    (transcription.meeting_datetime
+      ? `<p class="govuk-body">${formatMeetingTime(new Date(transcription.meeting_datetime))}</p>`
+      : '')
   const contentToCopy = useMemo(() => {
-    return htmlContent?.replaceAll(citationRegexWithSpace, '') || ''
-  }, [htmlContent])
+    return (
+      titleAndDateHtml +
+      (htmlContent?.replaceAll(citationRegexWithSpace, '') || '')
+    )
+  }, [titleAndDateHtml, htmlContent])
   const hasCitations = useMemo(() => {
     return !!htmlContent?.match(citationRegex)
   }, [htmlContent])
@@ -235,12 +254,13 @@ export function MinuteEditor({
       return
     }
     onExportStateChange({
-      htmlContent: htmlContent || '',
+      htmlContent: titleAndDateHtml + (htmlContent || ''),
       contentToCopy,
       minuteVersionId: minuteVersion.id!,
     })
   }, [
     contentToCopy,
+    titleAndDateHtml,
     htmlContent,
     isError,
     isGenerating,

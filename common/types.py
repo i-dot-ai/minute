@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import StrEnum, auto
 
-from pydantic import BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field
 
 from common.database.postgres_models import ContentSource, DialogueEntry, JobStatus, TemplateType
 
@@ -17,10 +17,12 @@ class TranscriptionMetadata(BaseModel):
 
     id: uuid.UUID
     created_datetime: datetime
+    meeting_datetime: datetime
     title: str | None = None
     text: str
     status: JobStatus
     expiring: bool
+    no_speech_detected: bool = Field(default=False, description="Transcription completed without detected speech.")
 
 
 class PaginatedTranscriptionsResponse(BaseModel):
@@ -33,12 +35,56 @@ class PaginatedTranscriptionsResponse(BaseModel):
     total_pages: int
 
 
+class SearchHighlight(BaseModel):
+    start: int = Field(description="Inclusive UTF-16 offset within the snippet.")
+    end: int = Field(description="Exclusive UTF-16 offset within the snippet.")
+
+
+class TranscriptionSearchSource(StrEnum):
+    TITLE = "title"
+    TRANSCRIPT = "transcript"
+    SUMMARY = "summary"
+    SPEAKER = "speaker"
+
+
+class TranscriptionSearchMatch(BaseModel):
+    source: TranscriptionSearchSource
+    snippet: str
+    snippet_start: int = Field(
+        description="UTF-16 offset in the title, entry text, summary plain text, or speaker label."
+    )
+    highlights: list[SearchHighlight]
+    entry_index: int | None = None
+    speaker: str | None = None
+    speech_excerpt: str | None = Field(default=None, description="Unhighlighted speech context for a speaker match.")
+    start_time: float | None = None
+    end_time: float | None = None
+    minute_id: uuid.UUID | None = None
+    minute_version_id: uuid.UUID | None = None
+
+
+class TranscriptionSearchResult(TranscriptionMetadata):
+    matches: list[TranscriptionSearchMatch]
+    matches_truncated: bool = Field(description="Additional matching excerpts or summary versions were omitted.")
+
+
+class PaginatedTranscriptionSearchResponse(BaseModel):
+    items: list[TranscriptionSearchResult]
+    total_count: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
 class TranscriptionCreateRequest(BaseModel):
     recording_id: uuid.UUID
     template_name: str
     template_id: uuid.UUID | None = None
     agenda: str | None = None
     title: str | None = None
+    meeting_datetime: AwareDatetime | None = Field(
+        default=None, description="When the meeting started. Defaults to the upload time if omitted."
+    )
 
 
 class TranscriptionRetryRequest(BaseModel):
@@ -67,6 +113,7 @@ class TranscriptionConfirmResponse(BaseModel):
 class TranscriptionPatchRequest(BaseModel):
     title: str | None = None
     dialogue_entries: list[DialogueEntry] | None = None
+    meeting_datetime: AwareDatetime | None = None
 
 
 class GetUserResponse(BaseModel):
@@ -74,9 +121,16 @@ class GetUserResponse(BaseModel):
     created_datetime: datetime
     updated_datetime: datetime
     email: str
+    display_name: str
     data_retention_days: int | None
     default_template_id: uuid.UUID | None = None
     default_template_name: str | None = None
+
+
+class SetDisplayNameRequest(BaseModel):
+    # "None" clears the stored name so it derives the name from the email again
+    # Distinct from blank strings which are rejected by the route
+    display_name: str | None = Field(default=None, max_length=100)
 
 
 class DataRetentionUpdateResponse(BaseModel):
@@ -91,10 +145,12 @@ class SetDefaultTemplateRequest(BaseModel):
 class TranscriptionGetResponse(BaseModel):
     id: uuid.UUID
     title: str | None
+    meeting_datetime: datetime
     dialogue_entries: list[DialogueEntry] | None
     status: JobStatus
     created_datetime: datetime
     error: str | None = None
+    no_speech_detected: bool = Field(default=False, description="Transcription completed without detected speech.")
 
 
 class SingleRecording(BaseModel):
@@ -290,11 +346,11 @@ class StatusBucket(BaseModel):
     completed: int
     failed: int = Field(description="Failed or timed out runs")
     failure_rate: float | None = Field(description="failed / (completed + failed); 0-1, null without outcomes")
-    avg_processing_seconds: float | None = Field(description="Mean start-to-close time of listed completed runs")
-    audio_hours: float = Field(description="Audio in listed completed runs that recorded its duration")
-    processing_seconds_per_audio_hour: float | None = Field(description="Total processing / total audio hours")
-    per_audio_hour_seconds: StatusDistribution = Field(
-        description="Percentiles of each run's processing seconds per audio hour"
+    avg_processing_seconds: float | None = Field(description="Mean start-to-close time of sampled completed runs")
+    audio_hours: float = Field(description="Audio in sampled completed runs that recorded its duration")
+    projected_one_hour_seconds: float | None = Field(
+        description="Projected total processing for one hour of audio: audio-independent part of each run"
+        " plus the transcribe time one audio hour takes"
     )
 
 

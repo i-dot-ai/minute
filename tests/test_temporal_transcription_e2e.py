@@ -32,6 +32,7 @@ from common.workflows.transcription import (
     SUMMARISE,
     TASK_QUEUE,
     TRANSCRIBE,
+    TRANSCRIBE_SECONDS_MEMO,
     workflow_id,
 )
 from tests.marks import costs_money
@@ -121,10 +122,11 @@ async def test_upload_creates_transcription_via_temporal():
     assert description.typed_search_attributes[sa.TRANSCRIPTION_ID] == transcription_id
     assert description.typed_search_attributes[sa.MINUTE_ID] == minutes[0]["id"]
     assert description.typed_search_attributes[sa.MINUTE_VERSION_ID] == versions[0]["id"]
-    assert await description.memo() == {
-        "AudioUploadSizeMb": pytest.approx(AUDIO.stat().st_size / 1_000_000),
-        "AudioDurationSeconds": pytest.approx(98.45, abs=0.1),
-    }
+    memo = await description.memo()
+    assert memo["AudioUploadSizeMb"] == pytest.approx(AUDIO.stat().st_size / 1_000_000)
+    assert memo["AudioDurationSeconds"] == pytest.approx(98.45, abs=0.1)
+    # The transcribe wall-clock is recorded for the status page's fixed-vs-per-audio split.
+    assert memo[TRANSCRIBE_SECONDS_MEMO] > 0
     user_id = description.typed_search_attributes[sa.USER_ID]
 
     # User-created minute: its own Temporal workflow (MinuteGenerationWorkflow).

@@ -17,7 +17,7 @@ from common.types import (
     StatusResponse,
     StatusSummary,
 )
-from common.workflows.transcription import AUDIO_SECONDS_MEMO
+from common.workflows.transcription import AUDIO_SECONDS_MEMO, TRANSCRIBE_SECONDS_MEMO
 
 _COMPONENTS = {
     "transcription": "TranscriptionWorkflow",
@@ -154,12 +154,14 @@ def _bucket(
     sampled: int,
     processing: float,
     audio: float,
-    audio_processing: float,
-    rates: list[float],
+    stt: float,
 ):
     closed = {group.group_values[0]: group.count for group in counts.groups}
     completed = closed.get("Completed", 0)
     failed = closed.get("Failed", 0) + closed.get("TimedOut", 0)
+    # Transcribe is the pipeline's only audio-length-dependent phase; the rest of the wall-clock
+    # is audio-independent. For a 1-hour meeting that's the fixed part plus one hour's transcribe.
+    fixed = (processing - stt) / sampled if sampled else None
     return StatusBucket(
         start=start,
         completed=completed,
@@ -167,9 +169,7 @@ def _bucket(
         failure_rate=failed / (completed + failed) if completed + failed else None,
         avg_processing_seconds=processing / sampled if sampled else None,
         audio_hours=audio / 3_600,
-        processing_seconds_per_audio_hour=audio_processing / (audio / 3_600) if audio else None,
-        # Rates are already read (capped by _MAX_HOURLY_RUNS), so no per-bucket cap.
-        per_audio_hour_seconds=_distribution(rates, cap=False),
+        projected_one_hour_seconds=(fixed + stt * 3_600 / audio) if sampled else None,
     )
 
 
@@ -182,9 +182,9 @@ async def _collect_hourly() -> HourlyStatusResponse:
         f'{base} AND CloseTime >= "{first.isoformat()}" AND CloseTime < "{now.isoformat()}"'
         ' AND ExecutionStatus = "Completed"'
     )
-    # [sampled completed runs, processing s, audio s, processing s of runs with audio, per-run s per audio hour]
-    totals = [[0, 0.0, 0.0, 0.0, []] for _ in range(_HOURS)]
-    recent = [0, 0.0, 0.0, 0.0, []]
+    # [sampled completed runs, processing s, audio s, transcribe s]
+    totals = [[0, 0.0, 0.0, 0.0] for _ in range(_HOURS)]
+    recent = [0, 0.0, 0.0, 0.0]
     read = 0
     client = await get_temporal_client()
     runs = client.list_workflows(query, limit=_MAX_HOURLY_RUNS + 1, page_size=1_000, rpc_timeout=_RPC_TIMEOUT)
@@ -199,13 +199,13 @@ async def _collect_hourly() -> HourlyStatusResponse:
         audio = await run.memo_value(AUDIO_SECONDS_MEMO, None)
         if audio is None:
             audio = await run.memo_value("audio_seconds", None)
-        for bucket in buckets:
-            bucket[0] += 1
-            bucket[1] += seconds
-            if audio:  # skips pre-deploy runs (None) and zero-length audio
+        stt = await run.memo_value(TRANSCRIBE_SECONDS_MEMO, None)
+        if audio and stt is not None:  # skips pre-deploy runs (None) and zero-length audio
+            for bucket in buckets:
+                bucket[0] += 1
+                bucket[1] += seconds
                 bucket[2] += audio
-                bucket[3] += seconds
-                bucket[4].append(seconds / (audio / 3_600))
+                bucket[3] += stt
 
     starts = [first + timedelta(hours=i) for i in range(_HOURS)] + [now - _RECENT]
     async with asyncio.TaskGroup() as tasks:

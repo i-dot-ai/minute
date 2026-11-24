@@ -39,6 +39,9 @@ import type {
   EditUserTemplateUserTemplatesTemplateIdPatchData,
   EditUserTemplateUserTemplatesTemplateIdPatchErrors,
   EditUserTemplateUserTemplatesTemplateIdPatchResponses,
+  GetHourlyStatusStatusHourlyGetData,
+  GetHourlyStatusStatusHourlyGetErrors,
+  GetHourlyStatusStatusHourlyGetResponses,
   GetMinuteMinutesMinutesIdGetData,
   GetMinuteMinutesMinutesIdGetErrors,
   GetMinuteMinutesMinutesIdGetResponses,
@@ -48,6 +51,9 @@ import type {
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetData,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetErrors,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponses,
+  GetStatusStatusGetData,
+  GetStatusStatusGetErrors,
+  GetStatusStatusGetResponses,
   GetSupportTicketsConfigurationSupportTicketsConfigurationGetData,
   GetSupportTicketsConfigurationSupportTicketsConfigurationGetResponses,
   GetTemplatesTemplatesGetData,
@@ -82,12 +88,18 @@ import type {
   SaveTranscriptionTranscriptionsTranscriptionIdPatchData,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchErrors,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchResponses,
+  SearchTranscriptionsTranscriptionsSearchGetData,
+  SearchTranscriptionsTranscriptionsSearchGetErrors,
+  SearchTranscriptionsTranscriptionsSearchGetResponses,
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchErrors,
   UpdateDataRetentionUsersDataRetentionPatchResponses,
   UpdateDefaultTemplateUsersDefaultTemplatePatchData,
   UpdateDefaultTemplateUsersDefaultTemplatePatchErrors,
   UpdateDefaultTemplateUsersDefaultTemplatePatchResponses,
+  UpdateDisplayNameUsersDisplayNamePatchData,
+  UpdateDisplayNameUsersDisplayNamePatchErrors,
+  UpdateDisplayNameUsersDisplayNamePatchResponses,
 } from './types.gen'
 
 export type Options<
@@ -119,6 +131,44 @@ export const healthcheckHealthcheckGet = <ThrowOnError extends boolean = false>(
     unknown,
     ThrowOnError
   >({ url: '/healthcheck', ...options })
+
+/**
+ * Get Status
+ *
+ * Aggregate workflow-run counts and nearest-rank timing percentiles in seconds.
+ *
+ * Starts and closures use the horizon; in-progress counts/ages include older runs.
+ * Processing time covers successful whole pipelines, including waiting/retries,
+ * not upload time or time until the transcript is ready. Completed transcription
+ * workflows can still have optional enrichment/summary failures. Visibility is
+ * eventually consistent; successful responses are cached for 30 seconds.
+ */
+export const getStatusStatusGet = <ThrowOnError extends boolean = false>(
+  options?: Options<GetStatusStatusGetData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<
+    GetStatusStatusGetResponses,
+    GetStatusStatusGetErrors,
+    ThrowOnError
+  >({ url: '/status', ...options })
+
+/**
+ * Get Hourly Status
+ *
+ * Transcriptions per hour for the last 24 hours, by close time: counts, failure rate, mean
+ * processing time, and the projected processing time for a 1-hour meeting, plus the same for
+ * the last 10 minutes. Cached for 1 minute.
+ */
+export const getHourlyStatusStatusHourlyGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<GetHourlyStatusStatusHourlyGetData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<
+    GetHourlyStatusStatusHourlyGetResponses,
+    GetHourlyStatusStatusHourlyGetErrors,
+    ThrowOnError
+  >({ url: '/status/hourly', ...options })
 
 /**
  * List Transcriptions
@@ -158,6 +208,30 @@ export const createTranscriptionTranscriptionsPost = <
       ...options.headers,
     },
   })
+
+/**
+ * Search Transcriptions
+ *
+ * Search selected sources within the current user's transcriptions.
+ *
+ * Keywords are literal, case-insensitive substrings; they can span transcript entries,
+ * but cannot be combined across sources, speaker labels or summary versions.
+ * Speakers match stored labels, not mentions in speech. Results rank title, speaker,
+ * summary, then transcript, newest first within each rank.
+ */
+export const searchTranscriptionsTranscriptionsSearchGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    SearchTranscriptionsTranscriptionsSearchGetData,
+    ThrowOnError
+  >
+) =>
+  (options.client ?? client).get<
+    SearchTranscriptionsTranscriptionsSearchGetResponses,
+    SearchTranscriptionsTranscriptionsSearchGetErrors,
+    ThrowOnError
+  >({ url: '/transcriptions/search', ...options })
 
 /**
  * Create Recording
@@ -297,6 +371,34 @@ export const getUserUsersMeGet = <ThrowOnError extends boolean = false>(
     GetUserUsersMeGetErrors,
     ThrowOnError
   >({ url: '/users/me', ...options })
+
+/**
+ * Update Display Name
+ *
+ * Set or clear the current user's display name.
+ *
+ * Args:
+ * data: Request body containing display_name; null clears it, omitting the field leaves it unchanged.
+ * session: Database session
+ * user: The current authenticated user
+ */
+export const updateDisplayNameUsersDisplayNamePatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpdateDisplayNameUsersDisplayNamePatchData, ThrowOnError>
+) =>
+  (options.client ?? client).patch<
+    UpdateDisplayNameUsersDisplayNamePatchResponses,
+    UpdateDisplayNameUsersDisplayNamePatchErrors,
+    ThrowOnError
+  >({
+    url: '/users/display-name',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
 
 /**
  * Update Data Retention

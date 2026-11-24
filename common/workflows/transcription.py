@@ -32,6 +32,7 @@ COMPLETE_TRANSCRIPTION = "complete_transcription"
 SUMMARISE = "summarise"
 FAIL_SUMMARISE = "fail_summarise"
 AUDIO_SECONDS_MEMO = "AudioDurationSeconds"
+TRANSCRIBE_SECONDS_MEMO = "TranscribeSeconds"
 
 # STT timeout = floor + factor x audio duration. Measured: Azure took 119s for a 2h file (~2% of
 # the duration), so 10% is ~5x headroom; the floor covers download, upload and short files.
@@ -122,6 +123,9 @@ class TranscriptionWorkflow:
 
     async def _run(self, minute_id: str) -> dict[str, str]:
         transcription_id = await self._transcribe(minute_id)
+        if not transcription_id:
+            # No speech: the activity completed the row; there is nothing to enrich or summarise.
+            return {TRANSCRIBE: "no speech detected"}
 
         outcome: dict[str, str] = {}
         # Speaker naming before title and summary: both are generated from the named transcript.
@@ -166,7 +170,8 @@ class TranscriptionWorkflow:
             # Preserve the Memo command recorded by workflows started on the status-page branch.
             workflow.upsert_memo({"audio_seconds": audio.duration_seconds})
         timeout = stt_timeout(audio.duration_seconds)
-        return await workflow.execute_activity(
+        start = workflow.now()
+        transcription_id = await workflow.execute_activity(
             TRANSCRIBE,
             TranscribeInput(
                 minute_id=minute_id,
@@ -181,6 +186,12 @@ class TranscriptionWorkflow:
             heartbeat_timeout=timedelta(seconds=90),
             retry_policy=_STT_RETRY,
         )
+        # Transcribe is the pipeline's only audio-length-dependent phase; recording its wall-clock
+        # (queue wait and retries included) lets the status page split fixed overhead from the
+        # per-audio rate via visibility alone. Patched: older replays must not emit this command.
+        if workflow.patched("transcribe-seconds-memo"):
+            workflow.upsert_memo({TRANSCRIBE_SECONDS_MEMO: (workflow.now() - start).total_seconds()})
+        return transcription_id
 
     async def _optional(self, step: str, arg: str, start_to_close: timedelta, retry: RetryPolicy) -> str:
         """Optional LLM steps degrade: a failure is recorded in the outcome and the run carries on."""

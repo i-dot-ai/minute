@@ -17,6 +17,7 @@ let nextConfig = {
     '@i-dot-ai-npm/component-library-react',
     '@i-dot-ai-npm/component-library-frontend',
   ],
+  devIndicators: false,
 }
 
 const sentryConfig = {

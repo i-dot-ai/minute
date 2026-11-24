@@ -42,13 +42,15 @@ function Status(): React.JSX.Element {
   return (
     <div className="govuk-width-container govuk-main-wrapper">
       <div className="govuk-grid-row">
-        <div className="govuk-grid-column-two-thirds">
-          <h1 className="govuk-heading-xl">Status</h1>
+        <div className="govuk-grid-column-two-thirds-from-desktop">
+          <h1 className="govuk-heading-xl">System status</h1>
+          <h2 className="govuk-heading-m">Minute is working normally</h2>
+          <p className="govuk-body-s">Updated now</p>
         </div>
       </div>
       {isPending || isError || !recent ? (
         <div className="govuk-grid-row">
-          <div className="govuk-grid-column-two-thirds">
+          <div className="govuk-grid-column-two-thirds-from-desktop">
             <p className="govuk-body">
               {isPending
                 ? 'Checking metrics…'
@@ -72,56 +74,40 @@ function Status(): React.JSX.Element {
             </div>
           )}
           <div className="govuk-grid-row">
-            <div className="govuk-grid-column-two-thirds">
-              <h2 className="govuk-heading-l">Last 10 mins</h2>
+            <div className="govuk-grid-column-two-thirds-from-desktop">
+              <h2 className="govuk-heading-l">Right now</h2>
+              <p className="govuk-body">Last 10 mins</p>
             </div>
           </div>
           <div className="govuk-grid-row">
-            <div className="govuk-grid-column-one-third-from-desktop">
+            <div className="govuk-grid-column-one-half govuk-grid-column-one-third-from-desktop">
               <div className="analytics-card analytics-card--blue">
-                <h3 className="govuk-heading-m govuk-!-font-weight-regular">
-                  Processing time for a 1-hour meeting:
+                <h3 className="govuk-heading-s govuk-!-font-weight-regular">
+                  Time to transcribe a 1-hour meeting
                 </h3>
                 <p className="govuk-body govuk-!-font-size-48 govuk-!-font-weight-bold">
                   {formatProcessingTime(recent.projected_one_hour_seconds)}
                 </p>
+                <p className="govuk-body">Usually about 1-3 mins</p>
               </div>
             </div>
-            <div className="govuk-grid-column-one-third-from-desktop">
-              <div className="analytics-card analytics-card--red">
-                <h3 className="govuk-heading-m govuk-!-font-weight-regular">
-                  Error rate:
-                </h3>
-                <p className="govuk-body govuk-!-font-size-48 govuk-!-font-weight-bold">
-                  {failureRate == null
-                    ? 'N/A'
-                    : `${(failureRate * 100).toLocaleString('en-GB', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}%`}
-                </p>
-              </div>
-            </div>
-            <div className="govuk-grid-column-one-third-from-desktop">
+            <div className="govuk-grid-column-one-half govuk-grid-column-one-third-from-desktop">
               <div className="analytics-card analytics-card--teal">
-                <h3 className="govuk-heading-m govuk-!-font-weight-regular">
-                  Transcriptions completed:
+                <h3 className="govuk-heading-s govuk-!-font-weight-regular">
+                  Transcriptions
                 </h3>
                 <p className="govuk-body govuk-!-font-size-48 govuk-!-font-weight-bold">
-                  {recent.completed}
+                  {recent.completed} completed
                 </p>
+                <p className="govuk-body">{recent.failed} failed</p>
               </div>
             </div>
           </div>
           <div className="govuk-grid-row govuk-!-margin-top-9">
-            <div className="govuk-grid-column-two-thirds">
+            <div className="govuk-grid-column-two-thirds-from-desktop">
               <h2 className="govuk-heading-l">Last 24 hours</h2>
-            </div>
-          </div>
-          <div className="govuk-grid-row">
-            <div className="govuk-grid-column-full govuk-grid-column-one-half-from-desktop">
               <Chart
-                title="Processing time for a 1-hour meeting"
+                title="Time to transcribe a 1 hour meeting"
                 variant="line"
                 showNullValuesAsZero
                 format={(value) => formatProcessingTime(value as number)}
@@ -138,7 +124,7 @@ function Status(): React.JSX.Element {
               />
               <Chart
                 title="Transcriptions completed per hour"
-                variant="line"
+                variant="bar"
                 data={{
                   heading: 'Count',
                   labels: labels,
@@ -151,15 +137,9 @@ function Status(): React.JSX.Element {
                   ],
                 }}
               />
-            </div>
-            <div className="govuk-grid-column-full govuk-grid-column-one-half-from-desktop">
               <Chart
-                title="Error rate per hour"
-                variant="line"
-                showNullValuesAsZero
-                format={(value) =>
-                  `${value.toLocaleString('en-GB', { maximumFractionDigits: 2 })}%`
-                }
+                title="Failed transcriptions per hour"
+                variant="bar"
                 data={{
                   heading: 'Error rate',
                   labels: labels,
@@ -167,9 +147,7 @@ function Status(): React.JSX.Element {
                     {
                       label: 'Error rate',
                       colour: 'magenta',
-                      data: data.hours.map((h) =>
-                        h.failure_rate == null ? null : h.failure_rate * 100
-                      ),
+                      data: data.hours.map((h) => h.failed),
                     },
                   ],
                 }}

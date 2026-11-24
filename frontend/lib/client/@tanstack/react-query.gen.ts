@@ -36,6 +36,7 @@ import {
   healthcheckHealthcheckGet,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGet,
   listMinuteVersionsMinutesMinuteIdVersionsGet,
+  listOrgMembersOrganisationsOrgIdMembersGet,
   listTranscriptionsTranscriptionsGet,
   type Options,
   retryTranscriptionTranscriptionsTranscriptionIdRetryPost,
@@ -117,6 +118,9 @@ import type {
   ListMinuteVersionsMinutesMinuteIdVersionsGetData,
   ListMinuteVersionsMinutesMinuteIdVersionsGetError,
   ListMinuteVersionsMinutesMinuteIdVersionsGetResponse,
+  ListOrgMembersOrganisationsOrgIdMembersGetData,
+  ListOrgMembersOrganisationsOrgIdMembersGetError,
+  ListOrgMembersOrganisationsOrgIdMembersGetResponse,
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetError,
   ListTranscriptionsTranscriptionsGetResponse,
@@ -1346,3 +1350,33 @@ export const createSupportTicketSupportTicketsPostMutation = (
   }
   return mutationOptions
 }
+
+export const listOrgMembersOrganisationsOrgIdMembersGetQueryKey = (
+  options: Options<ListOrgMembersOrganisationsOrgIdMembersGetData>
+) => createQueryKey('listOrgMembersOrganisationsOrgIdMembersGet', options)
+
+/**
+ * List Org Members
+ *
+ * List the members of an organisation.
+ */
+export const listOrgMembersOrganisationsOrgIdMembersGetOptions = (
+  options: Options<ListOrgMembersOrganisationsOrgIdMembersGetData>
+) =>
+  queryOptions<
+    ListOrgMembersOrganisationsOrgIdMembersGetResponse,
+    ListOrgMembersOrganisationsOrgIdMembersGetError,
+    ListOrgMembersOrganisationsOrgIdMembersGetResponse,
+    ReturnType<typeof listOrgMembersOrganisationsOrgIdMembersGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listOrgMembersOrganisationsOrgIdMembersGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: listOrgMembersOrganisationsOrgIdMembersGetQueryKey(options),
+  })

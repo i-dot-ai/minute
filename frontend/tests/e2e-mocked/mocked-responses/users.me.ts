@@ -6,7 +6,6 @@ export const usersMe = {
   updated_datetime: '2026-09-29T12:44:09.910005Z',
   email: 'name.surname@domain.gov.uk',
   display_name: 'Name Surname',
-  roles: [],
   data_retention_days: null,
   default_template_id: null,
   default_template_name: null,

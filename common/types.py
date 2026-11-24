@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import StrEnum, auto
 
-from pydantic import BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field
 
 from common.database.postgres_models import ContentSource, DialogueEntry, JobStatus, TemplateType
 
@@ -17,6 +17,7 @@ class TranscriptionMetadata(BaseModel):
 
     id: uuid.UUID
     created_datetime: datetime
+    meeting_datetime: datetime
     title: str | None = None
     text: str
     status: JobStatus
@@ -81,6 +82,9 @@ class TranscriptionCreateRequest(BaseModel):
     template_id: uuid.UUID | None = None
     agenda: str | None = None
     title: str | None = None
+    meeting_datetime: AwareDatetime | None = Field(
+        default=None, description="When the meeting started. Defaults to the upload time if omitted."
+    )
 
 
 class TranscriptionRetryRequest(BaseModel):
@@ -109,6 +113,7 @@ class TranscriptionConfirmResponse(BaseModel):
 class TranscriptionPatchRequest(BaseModel):
     title: str | None = None
     dialogue_entries: list[DialogueEntry] | None = None
+    meeting_datetime: AwareDatetime | None = None
 
 
 class GetUserResponse(BaseModel):
@@ -140,6 +145,7 @@ class SetDefaultTemplateRequest(BaseModel):
 class TranscriptionGetResponse(BaseModel):
     id: uuid.UUID
     title: str | None
+    meeting_datetime: datetime
     dialogue_entries: list[DialogueEntry] | None
     status: JobStatus
     created_datetime: datetime

@@ -12,6 +12,7 @@ import { TranscriptionForm } from '@/components/audio/types'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
+import { toMeetingTime } from '@/components/audio/meeting-time-field'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import { AudioDevice } from './microphone-permission'
@@ -147,6 +148,8 @@ function MicRecorderComponent({
       mediaRecorderRef.current = mediaRecorder
 
       mediaRecorder.onstart = async () => {
+        // A live recording starts with the meeting, so no need to ask when.
+        form.setValue('meeting_datetime', toMeetingTime(new Date()))
         const recordingId = await addRecording(new Blob())
         form.setValue('recordingId', recordingId)
       }

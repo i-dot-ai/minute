@@ -108,6 +108,7 @@ async def test_search_ranks_sources_before_date_and_paginates(
             title="Budget" if source == "title" else "Unrelated",
             status=JobStatus.COMPLETED,
             created_datetime=now - timedelta(minutes=index),
+            meeting_datetime=now - timedelta(minutes=index),
             dialogue_entries=[
                 {
                     "speaker": "Budget" if source == "speaker" or multiple_sources else "Alex",

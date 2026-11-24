@@ -13,6 +13,7 @@ import { TranscriptionForm } from '@/components/audio/types'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
+import { toMeetingTime } from '@/components/audio/meeting-time-field'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import { RecordingFinishedState } from '@/components/audio/recording-finished-state'
@@ -268,6 +269,7 @@ function TabRecorder({
       mediaRecorderRef.current = mediaRecorder
 
       mediaRecorder.onstart = async () => {
+        form.setValue('meeting_datetime', toMeetingTime(new Date()))
         const recordingId = await addRecording(new Blob())
         form.setValue('recordingId', recordingId)
       }

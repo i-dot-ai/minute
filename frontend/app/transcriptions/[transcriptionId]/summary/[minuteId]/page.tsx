@@ -13,8 +13,15 @@ import {
   SpeakerEditorDialog,
   SpeakerRenames,
 } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerEditor'
+import {
+  formatMeetingTime,
+  MeetingTime,
+  MeetingTimeField,
+  toMeetingTime,
+} from '@/components/audio/meeting-time-field'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
 import { useGenerateSummaryFromMinute } from '@/hooks/use-generate-summary-from-minute'
+import { useSaveMeetingTime } from '@/hooks/use-save-meeting-time'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
@@ -34,6 +41,7 @@ import {
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { use, useCallback, useEffect, useRef, useState } from 'react'
+import { FormProvider, useForm } from 'react-hook-form'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 
 export default function SummaryPage({
@@ -67,7 +75,6 @@ export default function SummaryPage({
 
   const [exportState, setExportState] = useState<MinuteExportState | null>(null)
   const [editState, setEditState] = useState<MinuteEditState | null>(null)
-  const [draftTitle, setDraftTitle] = useState('')
   const [speakerEditorOpen, setSpeakerEditorOpen] = useState(false)
   const [isSavingSpeakers, setIsSavingSpeakers] = useState(false)
 
@@ -119,23 +126,37 @@ export default function SummaryPage({
     status: transcription?.status ?? 'completed',
   })
 
+  const { save: saveMeetingTime } = useSaveMeetingTime(transcriptionId)
+  const editForm = useForm<{ title: string; meeting_datetime?: MeetingTime }>()
+
   const titleRef = useRef(transcription?.title)
   titleRef.current = transcription?.title
+  const meetingDatetimeRef = useRef(transcription?.meeting_datetime)
+  meetingDatetimeRef.current = transcription?.meeting_datetime
+  const resetEditForm = useCallback(
+    () =>
+      editForm.reset({
+        title: titleRef.current ?? '',
+        meeting_datetime: meetingDatetimeRef.current
+          ? toMeetingTime(new Date(meetingDatetimeRef.current))
+          : undefined,
+      }),
+    [editForm]
+  )
   useEffect(() => {
-    if (editState?.isEditable) {
-      setDraftTitle(titleRef.current ?? '')
-    }
-  }, [editState?.isEditable])
+    if (editState?.isEditable) resetEditForm()
+  }, [editState?.isEditable, resetEditForm])
 
-  const handleSave = useCallback(() => {
-    saveTitle(draftTitle)
+  const handleSave = editForm.handleSubmit(({ title, meeting_datetime }) => {
+    saveMeetingTime(meeting_datetime, transcription?.meeting_datetime)
+    saveTitle(title)
     editState?.onSave()
-  }, [draftTitle, editState, saveTitle])
+  })
 
   const handleDiscard = useCallback(() => {
-    setDraftTitle(transcription?.title ?? '')
+    resetEditForm()
     editState?.onCancel()
-  }, [editState, transcription?.title])
+  }, [editState, resetEditForm])
 
   const handleSaveSpeakersAndGenerate = useCallback(
     async (renames: SpeakerRenames) => {
@@ -355,9 +376,9 @@ export default function SummaryPage({
                   Discard
                 </button>
                 <button
-                  type="button"
+                  type="submit"
+                  form="summary-edit-form"
                   className="govuk-button sm:mb-0"
-                  onClick={handleSave}
                 >
                   <Save className="size-4" /> Save
                 </button>
@@ -382,11 +403,9 @@ export default function SummaryPage({
         >
           {editState?.isEditable ? (
             <form
+              id="summary-edit-form"
               className="govuk-form-group govuk-!-margin-bottom-6 govuk-!-margin-top-4"
-              onSubmit={(e) => {
-                e.preventDefault()
-                handleSave()
-              }}
+              onSubmit={handleSave}
             >
               <h1 className="govuk-label-wrapper">
                 <label
@@ -401,14 +420,23 @@ export default function SummaryPage({
                 className="govuk-input bg-white"
                 type="text"
                 placeholder="Add title"
-                value={draftTitle}
-                onChange={(e) => setDraftTitle(e.target.value)}
+                {...editForm.register('title')}
               />
+              <div className="govuk-!-margin-top-6">
+                <FormProvider {...editForm}>
+                  <MeetingTimeField variant="edit" />
+                </FormProvider>
+              </div>
             </form>
           ) : (
-            <h1 className="govuk-heading-l govuk-!-margin-top-4">
-              {transcription.title}
-            </h1>
+            <>
+              <h1 className="govuk-heading-l govuk-!-margin-top-4 govuk-!-margin-bottom-2">
+                {transcription.title}
+              </h1>
+              <p className="govuk-body govuk-hint govuk-!-margin-bottom-4">
+                {formatMeetingTime(new Date(transcription.meeting_datetime))}
+              </p>
+            </>
           )}
           {!minute ? (
             <p className="govuk-body">Summary not found.</p>

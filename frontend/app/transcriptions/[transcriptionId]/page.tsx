@@ -112,7 +112,7 @@ export default function TranscriptionPage() {
     )
   }
 
-  const date = new Date(transcription.created_datetime).toLocaleString(
+  const date = new Date(transcription.meeting_datetime).toLocaleString(
     'en-GB',
     {
       year: 'numeric',

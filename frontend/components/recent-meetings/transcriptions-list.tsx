@@ -54,9 +54,10 @@ function TranscriptionTableRow({
     transcription.title,
     transcription.status
   )
-  const created = new Date(transcription.created_datetime)
-  const isEarlierYear = created.getFullYear() < new Date().getFullYear()
-  const date = created.toLocaleString('en-GB', {
+  // Show when the meeting happened, not when it was uploaded.
+  const meetingTime = new Date(transcription.meeting_datetime)
+  const isEarlierYear = meetingTime.getFullYear() < new Date().getFullYear()
+  const date = meetingTime.toLocaleString('en-GB', {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',

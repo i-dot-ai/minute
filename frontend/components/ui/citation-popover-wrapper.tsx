@@ -8,13 +8,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { CitationPopoverState } from '@/hooks/use-citation-popover'
-import { Transcription } from '@/lib/client'
+import { TranscriptionGetResponse } from '@/lib/client'
 
 interface CitationPopoverWrapperProps {
   citationPopover: CitationPopoverState | null
   isPopoverOpen: boolean
   onOpenChange: (open: boolean) => void
-  transcription: Transcription
+  transcription: TranscriptionGetResponse
 }
 
 export function CitationPopoverWrapper({

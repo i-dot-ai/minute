@@ -8,7 +8,7 @@ from sqlalchemy import func
 from sqlmodel import col, select
 
 from backend.api.dependencies import SQLSessionDep, require_permission
-from common.authz.roles import RoleName
+from common.authz import RoleName
 from common.database.postgres_models import (
     Membership,
     Permission,

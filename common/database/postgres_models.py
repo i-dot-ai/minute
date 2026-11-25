@@ -9,8 +9,7 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
 from sqlmodel import Field, Relationship, SQLModel, col, func
 
-from common.authz.permissions import Permission
-from common.authz.roles import RoleName
+from common.authz import Permission, RoleName
 
 
 class DialogueEntry(TypedDict):

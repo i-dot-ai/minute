@@ -408,7 +408,7 @@ async def test_empty_transcript_without_speech_runs_diagnostics_after_provider(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("text", [None, "...", "…?!", "hello", "123", "你好"])
 @pytest.mark.parametrize("detector_fails", [False, True])
-async def test_transcript_or_inconclusive_diagnostics_preserve_provider_result(
+async def test_empty_transcript_is_no_speech_whatever_the_detector_finds(
     monkeypatch: pytest.MonkeyPatch,
     manager: TranscriptionServiceManager,
     mock_recording: Recording,
@@ -417,7 +417,7 @@ async def test_transcript_or_inconclusive_diagnostics_preserve_provider_result(
     text: str | None,
     detector_fails: bool,
 ) -> None:
-    """Valid transcripts skip detection; speech or detector errors permit retry."""
+    """Valid transcripts skip detection; an empty one is no speech even if the detector hears speech or fails."""
     path = tmp_path / "audio.mp3"
     path.write_bytes(b"audio")
     job = TranscriptionJobMessageData(
@@ -432,12 +432,13 @@ async def test_transcript_or_inconclusive_diagnostics_preserve_provider_result(
         detect.side_effect = RuntimeError("Detector unavailable")
     monkeypatch.setattr(transcription_manager, "detect_speech", detect)
 
-    assert await manager.perform_transcription_steps(mock_transcription) is job
     if text is not None and any(character.isalnum() for character in text):
+        assert await manager.perform_transcription_steps(mock_transcription) is job
         detect.assert_not_called()
     else:
+        with pytest.raises(NoSpeechDetectedError, match="No speech detected"):
+            await manager.perform_transcription_steps(mock_transcription)
         detect.assert_called_once_with(path)
-        assert job.transcript == []
 
 
 @pytest.mark.asyncio

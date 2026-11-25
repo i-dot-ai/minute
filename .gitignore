@@ -44,6 +44,7 @@ Brewfile.lock.json
 # Rendered presentations
 *.html
 !frontend/content/*.html
+!docs/design/**/*.html
 !frontend/public-site/**/*.html
 !terraform/waf_block_page/index.html
 

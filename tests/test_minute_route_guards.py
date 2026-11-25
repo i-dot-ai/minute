@@ -44,7 +44,10 @@ async def tenants() -> dict[str, dict[str, uuid.UUID]]:
             session.add(transcription)
             session.add(template)
             await session.flush()
-            minute = Minute(template_name="General", transcription_id=transcription.id)
+            minute = Minute(
+                template_name="General",
+                transcription_id=transcription.id,
+            )
             minute_version = MinuteVersion(minute_id=minute.id, status=JobStatus.COMPLETED)
             session.add(minute)
             session.add(minute_version)

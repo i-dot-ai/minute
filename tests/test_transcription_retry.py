@@ -112,14 +112,14 @@ def started_workflows(monkeypatch):
         return False
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.storage_service.check_object_exists",
+        "backend.api.routes.transcriptions.router.storage_service.check_object_exists",
         _object_exists,
     )
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
+        "backend.api.routes.transcriptions.router.temporal.start_transcription_workflow",
         _start,
     )
-    monkeypatch.setattr("backend.api.routes.transcriptions.temporal.transcription_workflow_running", _running)
+    monkeypatch.setattr("backend.api.routes.transcriptions.router.temporal.transcription_workflow_running", _running)
     return started
 
 
@@ -134,7 +134,7 @@ async def test_retry_does_not_reset_data_until_previous_workflow_is_closed(
             raise ConnectionError(msg)
         return running
 
-    monkeypatch.setattr("backend.api.routes.transcriptions.temporal.transcription_workflow_running", _running)
+    monkeypatch.setattr("backend.api.routes.transcriptions.router.temporal.transcription_workflow_running", _running)
     transcription_id = failed_transcription["transcription_id"]
     async with get_test_client() as ac:
         response = await ac.post(f"/transcriptions/{transcription_id}/retry", json={"template_name": "New template"})
@@ -188,8 +188,8 @@ async def test_retry_concurrent_requests_publish_once(
                 await session.commit()
         first_started.set()
 
-    monkeypatch.setattr("backend.api.routes.transcriptions.storage_service.check_object_exists", _object_exists)
-    monkeypatch.setattr("backend.api.routes.transcriptions.temporal.start_transcription_workflow", _start)
+    monkeypatch.setattr("backend.api.routes.transcriptions.router.storage_service.check_object_exists", _object_exists)
+    monkeypatch.setattr("backend.api.routes.transcriptions.router.temporal.start_transcription_workflow", _start)
 
     async with get_test_client() as ac:
         responses = await asyncio.wait_for(
@@ -292,7 +292,7 @@ async def test_retry_publish_failure_marks_failed(failed_transcription, monkeypa
         raise RuntimeError(msg)
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
+        "backend.api.routes.transcriptions.router.temporal.start_transcription_workflow",
         _boom,
     )
 

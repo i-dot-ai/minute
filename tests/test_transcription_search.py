@@ -13,15 +13,21 @@ from sqlalchemy import update
 from sqlmodel import col, delete
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from backend.api.routes.transcriptions import search_transcriptions
+from backend.api.routes.transcriptions.router import search_transcriptions
 from backend.utils.transcription_search import search_patterns, search_previews, summary_plain_text
 from common.auth import get_user_info
+from common.authz import ActorPermissions, Permission
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription, User
 from common.sentry import _redact_search_query
 from common.services.exceptions import MissingAuthTokenError
 from common.types import TranscriptionSearchSource
 from tests.utils import get_or_create_user, get_test_client
+
+
+def _personal_actor(user: User) -> ActorPermissions:
+    """A plain user with only personal (own-scoped) read"""
+    return ActorPermissions(user_id=user.id, personal=frozenset({Permission.FILE_READ_OWN}), by_org={})
 
 
 def test_search_queries_are_redacted_from_backend_telemetry():
@@ -96,9 +102,13 @@ def test_excerpts_are_bounded_and_locate_later_hits():
 async def test_search_ranks_sources_before_date_and_paginates(
     monkeypatch, page_size, sources, search, expected_indices, deleted_index
 ):
-    monkeypatch.setattr("backend.api.routes.transcriptions.SEARCH_BATCH_SIZE", 2)
+    monkeypatch.setattr("backend.api.routes.transcriptions.router.SEARCH_BATCH_SIZE", 2)
     previews = Mock(wraps=search_previews)
-    monkeypatch.setattr("backend.api.routes.transcriptions.search_previews", previews)
+    monkeypatch.setattr("backend.api.routes.transcriptions.router.search_previews", previews)
+    monkeypatch.setattr(
+        "backend.api.routes.transcriptions.router.query_actor_permissions",
+        AsyncMock(side_effect=lambda _session, user: _personal_actor(user)),
+    )
     now = datetime.now(UTC)
     rows = []
     # Newer transcript matches must rank below older title, speaker and summary matches.
@@ -145,7 +155,13 @@ async def test_search_ranks_sources_before_date_and_paginates(
         session = SimpleNamespace(exec=AsyncMock(side_effect=[SimpleNamespace(all=lambda b=b: b) for b in results]))
         user = User(data_retention_days=None)
         response = await search_transcriptions(
-            session, user, Response(), search=search, page=page, page_size=page_size, sources=sources
+            session,
+            user,
+            Response(),
+            search=search,
+            page=page,
+            page_size=page_size,
+            sources=sources,
         )
         assert response.total_count == len(expected)
         assert response.total_pages == total_pages
@@ -155,7 +171,7 @@ async def test_search_ranks_sources_before_date_and_paginates(
         if expected_page:
             parameters = session.exec.call_args.args[0].compile().params
             assert parameters["id_1"] == expected_page
-            assert parameters["user_id_1"] == user.id
+            assert user.id in parameters.values()
         for item in response.items:
             if item.id == rows[7].id:
                 assert [match.source for match in item.matches] == [
@@ -192,6 +208,10 @@ async def test_search_omits_rows_edited_after_matching(searchable, monkeypatch, 
             return await exec_query(statement)
 
         monkeypatch.setattr(session, "exec", exec_with_edit)
+        monkeypatch.setattr(
+            "backend.api.routes.transcriptions.router.query_actor_permissions",
+            AsyncMock(side_effect=lambda _session, user: _personal_actor(user)),
+        )
         response = await search_transcriptions(session, user, Response(), search=f"{token} approval", sources=(source,))
 
     assert response.total_count == 1
@@ -282,7 +302,7 @@ async def searchable():
 async def test_search_ownership_sources_history_and_pagination(searchable, monkeypatch):
     token, rows, versions = searchable
     # Exercise crossing candidate batches before filtering and paginating matches.
-    monkeypatch.setattr("backend.api.routes.transcriptions.SEARCH_BATCH_SIZE", 2)
+    monkeypatch.setattr("backend.api.routes.transcriptions.router.SEARCH_BATCH_SIZE", 2)
     async with get_test_client() as client:
         params = {
             "search": f"  {token.upper()} approval {token} ",

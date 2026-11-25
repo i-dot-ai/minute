@@ -70,7 +70,7 @@ def _patch_storage(monkeypatch):
         return True
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.storage_service.check_object_exists",
+        "backend.api.routes.transcriptions.router.storage_service.check_object_exists",
         _object_exists,
     )
 
@@ -87,7 +87,7 @@ async def test_recording_reuse_boundary(recordings, monkeypatch):
         started.append((transcription_id, minute_id))
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
+        "backend.api.routes.transcriptions.router.temporal.start_transcription_workflow",
         _start,
     )
     linked, fresh = recordings["linked"], recordings["fresh"]
@@ -138,11 +138,11 @@ async def test_concurrent_reuse_creates_and_queues_only_one_transcription(record
         started.append((transcription_id, minute_id))
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.storage_service.check_object_exists",
+        "backend.api.routes.transcriptions.router.storage_service.check_object_exists",
         _object_exists,
     )
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
+        "backend.api.routes.transcriptions.router.temporal.start_transcription_workflow",
         _start,
     )
 
@@ -185,7 +185,7 @@ async def test_publish_failure_marks_transcription_failed(recordings, monkeypatc
         raise RuntimeError(msg)
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
+        "backend.api.routes.transcriptions.router.temporal.start_transcription_workflow",
         _boom,
     )
 

@@ -20,7 +20,7 @@ import {
 import { CitationPopoverWrapper } from '@/components/ui/citation-popover-wrapper'
 import { useCitationPopover } from '@/hooks/use-citation-popover'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
-import { Transcription } from '@/lib/client'
+import { TranscriptionGetResponse } from '@/lib/client'
 import { cn } from '@/lib/utils'
 import posthog from 'posthog-js'
 
@@ -46,7 +46,7 @@ function SimpleEditor({
   initialContent: string
   onContentChange: (newContent: string) => void
   isEditing: boolean
-  currentTranscription: Transcription
+  currentTranscription: TranscriptionGetResponse
   hideCitations: boolean
 }) {
   const {

@@ -174,6 +174,7 @@ class TranscriptionServiceManager:
                 id=new_recording_id,
                 s3_file_key=new_s3_key,
                 user_id=recording.user_id,
+                org_id=recording.org_id,
                 transcription_id=recording.transcription_id,
             )
             session.add(new_recording)

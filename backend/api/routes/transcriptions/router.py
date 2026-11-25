@@ -1,25 +1,25 @@
 import math
 import uuid
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, Response
 from sqlalchemy import tuple_, update
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, func, or_, select
-from sqlmodel.ext.asyncio.session import AsyncSession
 
 from backend.api.dependencies import SQLSessionDep, UserDep
+from backend.api.dependencies.authorization import authorize_resource
 from backend.utils import temporal
-from backend.utils.get_file_s3_key import get_file_s3_key
 from backend.utils.transcription_search import matching_sources, search_patterns, search_previews
-from common.authz import user_has_permission
+from common.authz import (
+    Action,
+    query_actor_permissions,
+)
 from common.database.postgres_models import (
     JobStatus,
     Minute,
     MinuteVersion,
-    Permission,
     Recording,
     Transcription,
     UserTemplate,
@@ -29,9 +29,6 @@ from common.settings import get_settings, get_structured_logger
 from common.types import (
     PaginatedTranscriptionSearchResponse,
     PaginatedTranscriptionsResponse,
-    RecordingCreateRequest,
-    RecordingCreateResponse,
-    SingleRecording,
     TranscriptionCreateRequest,
     TranscriptionCreateResponse,
     TranscriptionGetResponse,
@@ -43,10 +40,12 @@ from common.types import (
     TranscriptionSearchSource,
 )
 
+from .enqueue import enqueue_transcription
+from .filters import visible_transcriptions_filter
+
 settings = get_settings()
 
 storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
-
 
 transcriptions_router = APIRouter(tags=["Transcriptions"])
 
@@ -61,25 +60,6 @@ def _next_cleanup_cutoff(retention_days: int) -> datetime:
     if next_run <= now:
         next_run += timedelta(days=1)
     return next_run - timedelta(days=retention_days)
-
-
-async def _enqueue_transcription(
-    session: AsyncSession, transcription: Transcription, minute_version: MinuteVersion
-) -> None:
-    """Commit before starting the workflow so the worker can always see the job row."""
-    await session.commit()
-    try:
-        await temporal.start_transcription_workflow(
-            transcription.id,
-            minute_version.minute_id,
-            user_id=transcription.user_id,
-            minute_version_id=minute_version.id,
-        )
-    except Exception as exc:
-        transcription.status = JobStatus.FAILED
-        transcription.error = "Failed to enqueue transcription"
-        await session.commit()
-        raise HTTPException(status_code=503, detail="Failed to enqueue transcription") from exc
 
 
 async def _check_retry_workflow(transcription_id: uuid.UUID) -> None:
@@ -112,7 +92,8 @@ async def list_transcriptions(
     if filter_by == TranscriptionListFilter.EXPIRING_SOON and expiry_cutoff is None:
         return PaginatedTranscriptionsResponse(items=[], total_count=0, page=page, page_size=page_size, total_pages=1)
 
-    filters = [Transcription.user_id == current_user.id]
+    actor_permissions = await query_actor_permissions(session, current_user)
+    filters = [visible_transcriptions_filter(actor_permissions)]
     if filter_by == TranscriptionListFilter.EXPIRING_SOON:  # expiry_cutoff is not None here
         filters.append(Transcription.created_datetime < expiry_cutoff)
     elif filter_by == TranscriptionListFilter.FAILED:
@@ -156,6 +137,7 @@ async def list_transcriptions(
             status=t.status,
             expiring=expiry_cutoff is not None and t.created_datetime < expiry_cutoff,
             no_speech_detected=t.no_speech_detected,
+            org_id=t.org_id,
         )
         for t in transcriptions
     ]
@@ -200,7 +182,8 @@ async def search_transcriptions(  # noqa: C901 # Keep matching and page validati
     expiry_cutoff = (
         _next_cleanup_cutoff(current_user.data_retention_days) if current_user.data_retention_days is not None else None
     )
-    filters = [Transcription.user_id == current_user.id]
+    actor_permissions = await query_actor_permissions(session, current_user)
+    filters = [visible_transcriptions_filter(actor_permissions)]
     if filter_by == TranscriptionListFilter.EXPIRING_SOON:
         if expiry_cutoff is None:
             return PaginatedTranscriptionSearchResponse(
@@ -259,6 +242,7 @@ async def search_transcriptions(  # noqa: C901 # Keep matching and page validati
                 no_speech_detected=transcription.no_speech_detected,
                 matches=matches,
                 matches_truncated=truncated,
+                org_id=transcription.org_id,
             )
         )
     total_count = len(ranked_ids)
@@ -271,25 +255,6 @@ async def search_transcriptions(  # noqa: C901 # Keep matching and page validati
     )
 
 
-@transcriptions_router.post("/recordings")
-async def create_recording(
-    request: RecordingCreateRequest, session: SQLSessionDep, user: UserDep
-) -> RecordingCreateResponse:
-    if request.org_id is not None and not await user_has_permission(
-        session, user.id, Permission.FILE_CREATE, request.org_id
-    ):
-        raise HTTPException(404, detail="Not found")
-    recording_id = uuid.uuid4()
-    file_name = f"{recording_id}.{request.file_extension}"
-    user_upload_s3_file_key = get_file_s3_key(user.email, file_name)
-    recording = Recording(user_id=user.id, org_id=request.org_id, s3_file_key=user_upload_s3_file_key)
-    session.add(recording)
-    await session.commit()
-    presigned_url = await storage_service.generate_presigned_url_put_object(user_upload_s3_file_key, 3600)
-    await session.refresh(recording)
-    return RecordingCreateResponse(id=recording.id, upload_url=presigned_url)
-
-
 @transcriptions_router.post("/transcriptions", response_model=TranscriptionCreateResponse, status_code=201)
 async def create_transcription(
     request: TranscriptionCreateRequest,
@@ -300,11 +265,10 @@ async def create_transcription(
     # FOR UPDATE: serialise concurrent creates for this recording (so only one can
     # claim it) and participate in the orphan-cleanup lock protocol, so cleanup and
     # this association cannot interleave into a broken transcription.
-    recording = (
+    recording_row = (
         await session.exec(select(Recording).where(Recording.id == request.recording_id).with_for_update())
     ).first()
-    if not recording or recording.user_id != current_user.id:
-        raise HTTPException(404, detail="Recording not found")
+    recording = await authorize_resource(session, current_user.id, recording_row, Action.EDIT)
     # A recording belongs to exactly one transcription: re-submitting it must not
     # re-link the audio (orphaning the first transcription and re-queueing work).
     if recording.transcription_id is not None:
@@ -344,7 +308,7 @@ async def create_transcription(
     session.add(minute)
     session.add(minute_version)
     recording.transcription_id = transcription.id
-    await _enqueue_transcription(session, transcription, minute_version)
+    await enqueue_transcription(session, transcription, minute_version)
 
     return TranscriptionCreateResponse(id=transcription.id)
 
@@ -361,7 +325,7 @@ async def retry_transcription(
     current_user: UserDep,
 ) -> TranscriptionCreateResponse:
     """Re-run a failed transcription in place, reusing the existing recording and id."""
-    transcription = (
+    transcription_row = (
         await session.exec(
             select(Transcription)
             .where(Transcription.id == transcription_id)
@@ -371,8 +335,7 @@ async def retry_transcription(
             )
         )
     ).first()
-    if not transcription or transcription.user_id != current_user.id:
-        raise HTTPException(404, detail="Transcription not found")
+    transcription = await authorize_resource(session, current_user.id, transcription_row, Action.EDIT)
     if transcription.status != JobStatus.FAILED:
         raise HTTPException(400, detail="Only failed transcriptions can be retried")
     await _check_retry_workflow(transcription.id)
@@ -433,7 +396,7 @@ async def retry_transcription(
     minute_version.error = None
     minute_version.html_content = ""
 
-    await _enqueue_transcription(session, transcription, minute_version)
+    await enqueue_transcription(session, transcription, minute_version)
 
     return TranscriptionCreateResponse(id=transcription.id)
 
@@ -445,9 +408,8 @@ async def get_transcription(
     current_user: UserDep,
 ) -> TranscriptionGetResponse:
     """Get a specific transcription by ID."""
-    transcription = await session.get(Transcription, transcription_id)
-    if not transcription or transcription.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Transcription not found")
+    transcription_row = await session.get(Transcription, transcription_id)
+    transcription = await authorize_resource(session, current_user.id, transcription_row, Action.READ)
     return TranscriptionGetResponse(
         id=transcription.id,
         status=transcription.status,
@@ -461,50 +423,18 @@ async def get_transcription(
     )
 
 
-@transcriptions_router.get("/transcriptions/{transcription_id}/recordings")
-async def get_recordings_for_transcription(
-    transcription_id: uuid.UUID, session: SQLSessionDep, user: UserDep
-) -> list[SingleRecording]:
-    transcription = await session.get(Transcription, transcription_id)
-    if not transcription or transcription.user_id != user.id:
-        raise HTTPException(404)
-
-    result = await session.exec(
-        select(Recording)
-        .where(Recording.transcription_id == transcription.id)
-        .order_by(col(Recording.created_datetime).desc())
-    )
-    recordings = result.all()
-    # Only return oldest of each file type
-    # So users only see original mp3 file if it was converted due to multiple channels
-    recordings = {Path(recording.s3_file_key).suffix: recording for recording in recordings}.values()
-    signed_recordings: list[SingleRecording] = []
-    for recording in recordings:
-        if not await storage_service.check_object_exists(recording.s3_file_key):
-            continue
-        key_path = Path(recording.s3_file_key)
-        filename = f"{transcription.title}{key_path.suffix}" if transcription.title else key_path.name
-        presigned_url = await storage_service.generate_presigned_url_get_object(
-            recording.s3_file_key, filename, 60 * 60 * 12
-        )
-        signed_recordings.append(SingleRecording(id=recording.id, url=presigned_url, extension=key_path.suffix))
-
-    return signed_recordings
-
-
-@transcriptions_router.patch("/transcriptions/{transcription_id}", response_model=Transcription)
+@transcriptions_router.patch("/transcriptions/{transcription_id}", response_model=TranscriptionGetResponse)
 async def save_transcription(
     transcription_id: uuid.UUID,
     transcription_data: TranscriptionPatchRequest,
     session: SQLSessionDep,
     current_user: UserDep,
-):
+) -> TranscriptionGetResponse:
     """Save or update a transcription."""
     logger.info("Saving transcription")
     # Use the transcription service to handle the save operation
-    transcription = await session.get(Transcription, transcription_id)
-    if not transcription or transcription.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Transcription not found")
+    transcription_row = await session.get(Transcription, transcription_id)
+    transcription = await authorize_resource(session, current_user.id, transcription_row, Action.EDIT)
     # The workflow writes the row (speakers, title) while it is processing, so an edit now
     # would race those writes.
     if transcription.status in (JobStatus.AWAITING_START, JobStatus.IN_PROGRESS):
@@ -519,16 +449,25 @@ async def save_transcription(
     await session.commit()
     await session.refresh(transcription)
 
-    return transcription
+    return TranscriptionGetResponse(
+        id=transcription.id,
+        status=transcription.status,
+        dialogue_entries=transcription.dialogue_entries,
+        title=transcription.title,
+        meeting_datetime=transcription.meeting_datetime,
+        created_datetime=transcription.created_datetime,
+        error=transcription.error,
+        no_speech_detected=transcription.no_speech_detected,
+        org_id=transcription.org_id,
+    )
 
 
 @transcriptions_router.delete("/transcriptions/{transcription_id}", status_code=204)
 async def delete_transcription(transcription_id: uuid.UUID, session: SQLSessionDep, current_user: UserDep):
     """Delete a specific transcription by ID."""
-    # First check if the transcription exists and belongs to the user
-    transcription = await session.get(Transcription, transcription_id)
-    if not transcription or transcription.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Transcription not found")
+    # First check if the transcription exists and the caller may delete it
+    transcription_row = await session.get(Transcription, transcription_id)
+    transcription = await authorize_resource(session, current_user.id, transcription_row, Action.DELETE)
 
     # Delete the transcription
     await session.delete(transcription)

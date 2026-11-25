@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import select
 
 from backend.api.dependencies import SQLSessionDep, UserDep, require_global_permission, require_permission
-from common.authz.roles import RoleName
+from common.authz import RoleName
 from common.database.postgres_models import (
     Membership,
     Organisation,

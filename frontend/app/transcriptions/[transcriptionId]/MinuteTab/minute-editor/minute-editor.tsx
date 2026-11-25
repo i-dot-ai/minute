@@ -13,7 +13,7 @@ import {
 import {
   MinuteListItem,
   MinuteVersionResponse,
-  Transcription,
+  TranscriptionGetResponse,
 } from '@/lib/client'
 import {
   createMinuteVersionMinutesMinuteIdVersionsPostMutation,
@@ -77,7 +77,7 @@ export function MinuteEditor({
   onExportStateChange,
   onEditStateChange,
 }: {
-  transcription: Transcription
+  transcription: TranscriptionGetResponse
   minute: MinuteListItem
   onExportStateChange?: (state: MinuteExportState | null) => void
   onEditStateChange?: (state: MinuteEditState | null) => void

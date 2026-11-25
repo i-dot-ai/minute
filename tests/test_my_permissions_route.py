@@ -17,7 +17,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import get_user_info
-from common.authz.roles import RoleName
+from common.authz import RoleName
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import Permission, User
 from tests.utils import get_or_create_user, get_test_client

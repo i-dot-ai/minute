@@ -1093,49 +1093,6 @@ export type TemplateResponse = {
 export type TemplateType = 'document' | 'form'
 
 /**
- * Transcription
- */
-export type Transcription = {
-  /**
-   * Id
-   */
-  id?: string
-  /**
-   * Created Datetime
-   */
-  created_datetime?: string
-  /**
-   * Updated Datetime
-   */
-  updated_datetime?: string
-  /**
-   * Title
-   */
-  title?: string | null
-  /**
-   * Meeting Datetime
-   */
-  meeting_datetime?: string
-  /**
-   * Dialogue Entries
-   */
-  dialogue_entries?: Array<DialogueEntry> | null
-  status?: JobStatus
-  /**
-   * Error
-   */
-  error?: string | null
-  /**
-   * User Id
-   */
-  user_id?: string | null
-  /**
-   * Org Id
-   */
-  org_id?: string | null
-}
-
-/**
  * TranscriptionCreateRequest
  */
 export type TranscriptionCreateRequest = {
@@ -1262,6 +1219,12 @@ export type TranscriptionMetadata = {
    * Transcription completed without detected speech.
    */
   no_speech_detected?: boolean
+  /**
+   * Org Id
+   *
+   * Owning organisation, or null if personal.
+   */
+  org_id?: string | null
 }
 
 /**
@@ -1386,6 +1349,12 @@ export type TranscriptionSearchResult = {
    * Transcription completed without detected speech.
    */
   no_speech_detected?: boolean
+  /**
+   * Org Id
+   *
+   * Owning organisation, or null if personal.
+   */
+  org_id?: string | null
   /**
    * Matches
    */
@@ -1849,7 +1818,7 @@ export type SaveTranscriptionTranscriptionsTranscriptionIdPatchResponses = {
   /**
    * Successful Response
    */
-  200: Transcription
+  200: TranscriptionGetResponse
 }
 
 export type SaveTranscriptionTranscriptionsTranscriptionIdPatchResponse =

@@ -22,7 +22,9 @@ export type PosthogBannerPayload = JsonType & {
 export function Banner() {
   const isOldUrl = useIsOldUrl()
   const { data } = useProcessingStatus()
-  const { failing, slow } = processingAlert(data?.last_10_minutes)
+  const { failing, slow, systemStatusTitle } = processingAlert(
+    data?.last_10_minutes
+  )
   const statusPayload = useFeatureFlagPayload(FeatureFlags.ShowStatusBanner) as
     | PosthogBannerPayload
     | undefined
@@ -43,7 +45,12 @@ export function Banner() {
   const showStatusBanner = !!statusPayload || failing || slow
 
   if (showStatusBanner) {
-    return <StatusBanner payload={statusPayload} />
+    return (
+      <StatusBanner
+        payload={statusPayload}
+        systemStatusTitle={systemStatusTitle}
+      />
+    )
   }
 
   if (issuePayload && !isDismissed) {

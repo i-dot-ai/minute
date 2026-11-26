@@ -26,7 +26,7 @@ function format24hrTime(time: string): string {
 function Status(): React.JSX.Element {
   const { data, isPending, isError } = useProcessingStatus()
   const recent = data?.last_10_minutes
-  const { message, slow, failing } = processingAlert(recent)
+  const { systemStatusTitle, slow, failing } = processingAlert(recent)
   const labels = data?.hours.map((hour) => format24hrTime(hour.start)) ?? []
 
   return (
@@ -69,7 +69,7 @@ function Status(): React.JSX.Element {
                     !
                   </span>
                   <h2 className="govuk-warning-text__text" role="status">
-                    {message}
+                    {systemStatusTitle}
                   </h2>
                 </div>
               ) : (

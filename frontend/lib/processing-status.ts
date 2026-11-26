@@ -32,12 +32,12 @@ export function processingAlert(recent: StatusBucket | undefined) {
       (recent.failure_rate ?? 0) > FAILURE_RATE)
   const slow =
     (recent?.projected_one_hour_seconds ?? 0) > SLOW_PROJECTED_SECONDS
-  const message = failing
+  const systemStatusTitle = failing
     ? slow
       ? 'We are currently experiencing a high number of failed transcripts and long processing times'
       : 'We are currently experiencing a high number of failed transcripts'
     : slow
       ? 'We are currently experiencing long processing times'
       : ''
-  return { failing, slow, message }
+  return { failing, slow, systemStatusTitle }
 }

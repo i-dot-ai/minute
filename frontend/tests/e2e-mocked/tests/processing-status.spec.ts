@@ -223,7 +223,7 @@ test('the status line names the service problems', async ({ page }) => {
   const failing = last10({ completed: 10, failed: 10, failure_rate: 0.6 })
   await openStatus(page, failing)
   await expect(
-    page.getByText(processingAlert(failing.last_10_minutes).message)
+    page.getByText(processingAlert(failing.last_10_minutes).systemStatusTitle)
   ).toBeVisible()
 
   const slow = last10({
@@ -234,7 +234,7 @@ test('the status line names the service problems', async ({ page }) => {
   })
   await openStatus(page, slow)
   await expect(
-    page.getByText(processingAlert(slow.last_10_minutes).message)
+    page.getByText(processingAlert(slow.last_10_minutes).systemStatusTitle)
   ).toBeVisible()
 
   const both = last10({
@@ -245,7 +245,7 @@ test('the status line names the service problems', async ({ page }) => {
   })
   await openStatus(page, both)
   await expect(
-    page.getByText(processingAlert(both.last_10_minutes).message)
+    page.getByText(processingAlert(both.last_10_minutes).systemStatusTitle)
   ).toBeVisible()
 })
 

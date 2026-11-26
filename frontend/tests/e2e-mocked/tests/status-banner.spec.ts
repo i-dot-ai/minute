@@ -42,7 +42,7 @@ const status = last10()
 
 // Copy lives in processingAlert; asserting against it keeps these tests copy-agnostic.
 const bannerText = (values?: Partial<StatusBucket>) =>
-  processingAlert(last10(values).last_10_minutes).message
+  processingAlert(last10(values).last_10_minutes).systemStatusTitle
 
 async function openHome(page: Page, body: HourlyProcessingStatus = status) {
   await page.route('**/api/status', (route) => route.fulfill({ json: body }))

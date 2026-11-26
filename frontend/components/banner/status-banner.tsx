@@ -1,13 +1,16 @@
 'use client'
 
 import { PosthogBannerPayload } from '@/components/banner/banner-controller'
-import { useProcessingStatus } from '@/hooks/use-processing-status'
 import { processingAlert } from '@/lib/processing-status'
 
-export function StatusBanner({ payload }: { payload?: PosthogBannerPayload }) {
-  const { data } = useProcessingStatus()
-  const { message } = processingAlert(data?.last_10_minutes)
-  const title = payload?.title || message
+export function StatusBanner({
+  payload,
+  systemStatusTitle,
+}: {
+  payload?: PosthogBannerPayload
+  systemStatusTitle?: string
+}) {
+  const title = payload?.title || systemStatusTitle
 
   return (
     <div

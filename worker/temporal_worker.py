@@ -8,6 +8,7 @@ import asyncio
 import logging
 import signal
 from datetime import timedelta
+from pathlib import Path
 
 from temporalio.api.workflowservice.v1 import DescribeNamespaceRequest
 from temporalio.client import (
@@ -41,6 +42,31 @@ logger = logging.getLogger(__name__)
 # a race. This covers a cold start (schema setup, then namespace registration).
 NAMESPACE_WAIT_SECONDS = 300
 NAMESPACE_POLL_SECONDS = 2
+
+# Poll-readiness marker for the ECS container healthcheck (for all workers).
+READINESS_FILE = Path("/app/worker_ready")
+READINESS_WAIT_SECONDS = 30
+READINESS_POLL_SECONDS = 0.5
+
+
+async def _wait_until_polling(workers: list[Worker]) -> bool:
+    """Return True once every worker reports running, or False if the bound elapses first."""
+    waited = 0.0
+    while waited < READINESS_WAIT_SECONDS:
+        if all(worker.is_running for worker in workers):
+            return True
+        await asyncio.sleep(READINESS_POLL_SECONDS)
+        waited += READINESS_POLL_SECONDS
+    return False
+
+
+def _mark_ready() -> None:
+    READINESS_FILE.touch()
+    logger.info("Readiness marker written at %s; worker is polling", READINESS_FILE)
+
+
+def _clear_ready() -> None:
+    READINESS_FILE.unlink(missing_ok=True)
 
 
 async def _wait_for_namespace(client: Client, namespace: str) -> None:
@@ -148,6 +174,10 @@ async def main() -> None:
     runs = [asyncio.create_task(worker.run()) for worker in workers]
     stopper = asyncio.create_task(stop.wait())
     try:
+        if await _wait_until_polling(workers):
+            _mark_ready()
+        else:
+            logger.error("Workers did not all report running within %ds", READINESS_WAIT_SECONDS)
         finished, _ = await asyncio.wait([*runs, stopper], return_when=asyncio.FIRST_COMPLETED)
         if not stopper.done():
             # A worker stopped on its own; it never should while we are running. Fail loudly so the
@@ -158,6 +188,7 @@ async def main() -> None:
             msg = "A Temporal worker exited unexpectedly"
             raise RuntimeError(msg)
     finally:
+        _clear_ready()
         stopper.cancel()
         # shutdown() tells the SDK to stop polling and cancel in-flight activities; a cancelled
         # attempt is reported to the server as retryable, so Temporal re-runs it on another worker.

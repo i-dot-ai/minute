@@ -10,7 +10,7 @@ from contextlib import suppress
 
 import pytest
 import pytest_asyncio
-from sqlmodel import delete, select
+from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import get_user_info
@@ -58,6 +58,8 @@ async def recordings() -> dict[str, Recording]:
             if minute:
                 await session.exec(delete(MinuteVersion).where(MinuteVersion.minute_id == minute.id))
                 await session.exec(delete(Minute).where(Minute.id == minute.id))
+        await session.exec(delete(Recording).where(col(Recording.id).in_([linked.id, fresh.id])))
+        for recording in (linked, fresh):
             await session.exec(delete(Transcription).where(Transcription.id == recording.transcription_id))
         await session.commit()
 

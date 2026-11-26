@@ -1,4 +1,5 @@
 from i_dot_ai_utilities.auth.auth_api import AuthApiClient, UserAuthorisationResult
+from i_dot_ai_utilities.auth.auth_reason import AuthReason
 
 from common.services.exceptions import MissingAuthTokenError
 from common.settings import get_settings, get_structured_logger
@@ -22,7 +23,7 @@ def __load_dummy_user_info() -> UserAuthorisationResult:
     return UserAuthorisationResult(
         email="name.surname@domain.gov.uk",
         is_authorised=True,
-        auth_reason="LOCAL_TESTING",
+        auth_reason=AuthReason.ACL_GLOBAL_ACCESS_EMAIL,
     )
 
 

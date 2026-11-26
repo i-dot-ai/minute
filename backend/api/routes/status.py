@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Query
 
 from backend.api.dependencies import UserDep
-from backend.utils import temporal_status
+from common.observability import temporal_status
 from common.settings import get_structured_logger
 from common.types import HourlyStatusResponse, StatusResponse
 

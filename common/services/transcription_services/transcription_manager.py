@@ -30,15 +30,14 @@ storage_service = get_storage_service(get_settings().STORAGE_SERVICE_NAME)
 
 
 async def _check_speech(file_path: Path, duration: float) -> SpeechCheck | None:
-    """Logs why a transcript came back empty, for diagnostics only.
+    """Logs why a transcript came back empty.
 
     Args:
         file_path: Path to the prepared local audio file.
         duration: Recording duration in seconds, included in diagnostic logs.
 
     Returns:
-        The speech check result, or None if detection fails. The result does not
-        change the outcome: every empty transcript completes as no speech.
+        The speech check result, or None if detection fails. No retry logic
     """
     try:
         speech = await asyncio.to_thread(detect_speech, file_path)
@@ -139,8 +138,6 @@ class TranscriptionServiceManager:
                     has_text = any(character.isalnum() for entry in transcript for character in entry["text"])
                     if not has_text:
                         # This can happen during noisy but non voice audio such as "Speaker 1: ..."
-                        # Diagnose while the downloaded audio still exists. The check is logged only:
-                        # an empty transcript is bad audio, not a failure, whatever the detector finds.
                         await _check_speech(file_path, duration_seconds)
                         msg = "No speech detected in the recording"
                         raise NoSpeechDetectedError(msg)

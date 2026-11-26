@@ -155,11 +155,11 @@ function Status(): React.JSX.Element {
                 title="Failed transcriptions per hour"
                 variant="bar"
                 data={{
-                  heading: 'Error rate',
+                  heading: 'Failed transcriptions',
                   labels: labels,
                   datasets: [
                     {
-                      label: 'Error rate',
+                      label: 'Failed transcriptions',
                       colour: 'magenta',
                       data: data.hours.map((h) => h.failed),
                     },

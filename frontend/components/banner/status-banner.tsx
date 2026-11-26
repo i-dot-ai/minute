@@ -1,7 +1,6 @@
 'use client'
 
 import { PosthogBannerPayload } from '@/components/banner/banner-controller'
-import { processingAlert } from '@/lib/processing-status'
 
 export function StatusBanner({
   payload,
@@ -10,7 +9,7 @@ export function StatusBanner({
   payload?: PosthogBannerPayload
   systemStatusTitle?: string
 }) {
-  const title = payload?.title || systemStatusTitle
+  const title = payload?.title || systemStatusTitle || 'Service disruption'
 
   return (
     <div

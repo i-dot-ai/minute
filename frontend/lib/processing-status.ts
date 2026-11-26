@@ -17,7 +17,7 @@ export type HourlyProcessingStatus = {
 
 // Alert limits, judged on the last-10-minute transcription of transcriptions which is often between 3-10
 // Below 5 transcriptions in that 10 miins you need at least 3 failures to trigger the banner and status of high failures
-// Above 5 transcriptions in the 10 mins and you need at least 50% failure rate
+// Above 5 transcriptions in the 10 mins and you need more than a 50% failure rate
 // Long processing times requires processing times to go above 10 mins - usually around 1-4 mins
 const MIN_FAILURES = 3
 const MIN_OUTCOMES = 5

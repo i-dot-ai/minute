@@ -30,20 +30,19 @@ storage_service = get_storage_service(get_settings().STORAGE_SERVICE_NAME)
 
 
 async def _check_speech(file_path: Path, duration: float) -> SpeechCheck | None:
-    """Diagnoses an empty transcript without replacing it with a detector error.
+    """Logs why a transcript came back empty.
 
     Args:
         file_path: Path to the prepared local audio file.
         duration: Recording duration in seconds, included in diagnostic logs.
 
     Returns:
-        The speech check result, or None if detection fails. Speech or an
-        inconclusive check leaves the empty transcript available for retry.
+        The speech check result, or None if detection fails. No retry logic
     """
     try:
         speech = await asyncio.to_thread(detect_speech, file_path)
     except Exception:
-        slogger.exception("Speech detection failed after an empty transcript; keeping the transcription retry path")
+        slogger.exception("Speech detection failed after an empty transcript")
         return None
     slogger.info(
         "[TAG]",
@@ -139,12 +138,9 @@ class TranscriptionServiceManager:
                     has_text = any(character.isalnum() for entry in transcript for character in entry["text"])
                     if not has_text:
                         # This can happen during noisy but non voice audio such as "Speaker 1: ..."
-                        transcription_job.transcript = []
-                        # Diagnose while the downloaded audio still exists.
-                        speech = await _check_speech(file_path, duration_seconds)
-                        if speech is not None and not speech.has_speech:
-                            msg = "No speech detected in the recording"
-                            raise NoSpeechDetectedError(msg)
+                        await _check_speech(file_path, duration_seconds)
+                        msg = "No speech detected in the recording"
+                        raise NoSpeechDetectedError(msg)
                 case AdapterType.ASYNC:
                     transcription_job = await adapter.start(
                         audio_file_path_or_recording=recording, timeout_seconds=timeout_seconds, attempt=attempt

@@ -138,7 +138,7 @@ module "frontend" {
     accepted_response   = 200
     path                = "/health"
     interval            = 60
-    timeout             = 70
+    timeout             = 30
     healthy_threshold   = 2
     unhealthy_threshold = 5
     port                = local.frontend_port

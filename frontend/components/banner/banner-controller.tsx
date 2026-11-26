@@ -9,6 +9,7 @@ import { processingAlert } from '@/lib/processing-status'
 import { FeatureFlags } from '@/lib/feature-flags'
 import posthog, { type JsonType } from 'posthog-js'
 import { useFeatureFlagPayload } from 'posthog-js/react'
+import { useEffect } from 'react'
 
 export type PosthogBannerPayload = JsonType & {
   title: string
@@ -43,6 +44,15 @@ export function Banner() {
   }
 
   const showStatusBanner = !!statusPayload || failing || slow
+
+  useEffect(() => {
+    if (showStatusBanner) {
+      posthog.capture('status_banner_shown', {
+        failedTranscripts: failing,
+        longProcessingTimes: slow,
+      })
+    }
+  }, [showStatusBanner, failing, slow])
 
   if (showStatusBanner) {
     return (

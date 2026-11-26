@@ -89,7 +89,7 @@ resource "aws_cloudwatch_metric_alarm" "temporal_in_progress_age" {
 }
 
 # Above pipeline metrics treat missing data as notBreaching so workers could stop emitting 
-in error without triggering any alarms. This heartbeat closes that gap, and treats an 
+# in error without triggering any alarms. This heartbeat closes that gap, and treats an 
 # absence as breaching even if temporal in general is still up and "healthy"
 resource "aws_cloudwatch_metric_alarm" "temporal_metrics_heartbeat" {
   alarm_name          = "${local.name}-temporal-metrics-heartbeat-missing-alarm"

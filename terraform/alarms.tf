@@ -30,7 +30,7 @@ resource "aws_cloudwatch_metric_alarm" "temporal_failure_rate" {
   alarm_description   = "Temporal ${each.key} failure rate over a 5-minute window exceeded ${each.value.failure_rate_percent}%."
   comparison_operator = "GreaterThanThreshold"
   threshold           = each.value.failure_rate_percent
-  evaluation_periods  = 1
+  evaluation_periods  = 2
   datapoints_to_alarm = 1
   treat_missing_data  = "notBreaching"
 
@@ -80,7 +80,7 @@ resource "aws_cloudwatch_metric_alarm" "temporal_in_progress_age" {
   comparison_operator = "GreaterThanThreshold"
   threshold           = each.value.max_age_seconds
   period              = 300
-  evaluation_periods  = 1
+  evaluation_periods  = 2
   datapoints_to_alarm = 1
   treat_missing_data  = "notBreaching"
 
@@ -100,7 +100,7 @@ resource "aws_cloudwatch_metric_alarm" "temporal_metrics_heartbeat" {
   comparison_operator = "LessThanThreshold"
   threshold           = 1
   period              = 300
-  evaluation_periods  = 1
+  evaluation_periods  = 2
   datapoints_to_alarm = 1
   treat_missing_data  = "breaching"
 

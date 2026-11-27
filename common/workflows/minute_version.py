@@ -2,7 +2,7 @@
 
 Both wrap one MinuteHandlerService handler — the work the SQS LLM queue used to dispatch. The
 activities live in common/workflows/activities/ and run on the shared LLM task queue (capped by
-MAX_LLM_PROCESSES).
+LLM_MAX_CONCURRENCY).
 """
 
 from dataclasses import dataclass

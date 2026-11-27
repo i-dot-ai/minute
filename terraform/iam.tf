@@ -29,6 +29,20 @@ data "aws_iam_policy_document" "ecs_exec_custom_policy" {
   statement {
     effect = "Allow"
     actions = [
+      "bedrock:InvokeModel",
+      "bedrock:InvokeModelWithResponseStream",
+    ]
+    # Cross-region inference needs both: the profile in this account and region, and the foundation
+    # model in whichever EU region the profile routes the request to.
+    resources = [
+      "arn:aws:bedrock:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:inference-profile/${local.bedrock_inference_profile_id}",
+      "arn:aws:bedrock:*::foundation-model/${local.bedrock_foundation_model_id}",
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
       "ssm:GetParameter",
       "ssm:GetParameters",
     ]

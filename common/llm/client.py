@@ -6,10 +6,9 @@ from google.genai.types import (
 )
 from pydantic import BaseModel
 
-from common.llm.adapters import GeminiModelAdapter, ModelAdapter, OpenAIModelAdapter
+from common.llm.adapters import BedrockModelAdapter, GeminiModelAdapter, ModelAdapter
 from common.settings import get_settings
 
-settings = get_settings()
 T = TypeVar("T", bound=BaseModel)
 
 # Gemini 3 models are tuned to run at their default temperature of 1.0. Google warns that
@@ -20,22 +19,14 @@ DEFAULT_TEMPERATURE = 1.0
 
 
 class ChatBot:
-    """
-    Represents an interface for engaging in conversational AI tasks, including general chat
-    and structured interactions.
+    """A conversation with a model: each call sends the history so far plus the new messages.
 
-    This class provides methods for interacting with an underlying model adapter to perform various
-    chat functionalities, with methods for both general conversation and specific structured
-    responses. It does not retry: the Temporal activity that calls it does.
-
-    Attributes:
-        adapter (ModelAdapter): The underlying adapter interface that handles communication
-            with the conversational model(s).
+    It does not retry: the Temporal activity that calls it does.
     """
 
     def __init__(self, adapter: ModelAdapter) -> None:
         self.adapter = adapter
-        self.messages = []
+        self.messages: list[dict[str, str]] = []
 
     async def chat(self, messages: list[dict[str, str]]) -> str:
         response = await self.adapter.chat(messages=self.messages + messages)
@@ -44,69 +35,54 @@ class ChatBot:
         return response
 
     async def structured_chat(self, messages: list[dict[str, str]], response_format: type[T]) -> T:
-        response = await self.adapter.structured_chat(messages=messages, response_format=response_format)
+        response = await self.adapter.structured_chat(
+            messages=self.messages + messages, response_format=response_format
+        )
         self.messages.extend(messages)
         self.messages.append({"role": "assistant", "content": response.model_dump_json()})
         return response
 
 
-def create_chatbot(model_type: str, model_name: str, temperature: float = DEFAULT_TEMPERATURE) -> ChatBot:
+class ModelTier(Enum):
+    PRIMARY = auto()  # minute generation and other high-complexity tasks
+    LIGHTWEIGHT = auto()  # titles, speakers, citations, AI edits
+
+
+def create_chatbot(provider: str, model_name: str, temperature: float | None = None) -> ChatBot:
+    """A ChatBot for a model on the given provider ("bedrock" or "gemini").
+
+    Leave temperature unset for Claude Sonnet 5.5, which rejects non-default sampling values. Unset on
+    Gemini means DEFAULT_TEMPERATURE.
     """
-    Creates and returns a chatbot instance based on the specified model type and name.
-
-    This function initializes a ChatBot instance by selecting the appropriate model adapter
-    based on the provided model type. It supports "openai" and "gemini" model types. Additional
-    settings required for model initialization are sourced from application settings or passed
-    as keyword arguments. If an unsupported model type is specified, a ValueError is raised.
-
-    Args:
-        model_type: A string specifying the type of the model. Supported values are "openai"
-            and "gemini".
-        model_name: A string indicating the name of the model to be used.
-        temperature: Sampling temperature for the model. Defaults to DEFAULT_TEMPERATURE, which
-            is what Gemini 3 expects; only override it if a caller genuinely needs determinism.
-
-    Returns:
-        ChatBot: An instance of the ChatBot class configured with the appropriate model adapter.
-
-    Raises:
-        ValueError: If the specified model type is unsupported.
-    """
-    if model_type == "openai":
-        return ChatBot(
-            OpenAIModelAdapter(
-                model=model_name,
-                api_key=settings.AZURE_OPENAI_API_KEY,
-                api_version=settings.AZURE_OPENAI_API_VERSION,
-                azure_deployment=settings.AZURE_DEPLOYMENT,
-                azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
-                temperature=temperature,
-            )
+    settings = get_settings()
+    if provider == "bedrock":
+        adapter: ModelAdapter = BedrockModelAdapter(
+            model_id=model_name,
+            region=settings.AWS_REGION,
+            max_tokens=settings.BEDROCK_MAX_OUTPUT_TOKENS,
+            read_timeout_seconds=settings.BEDROCK_READ_TIMEOUT_SECONDS,
+            temperature=temperature,
         )
-    elif model_type == "gemini":
-        return ChatBot(
-            GeminiModelAdapter(
-                model=model_name,
-                generate_content_config=GenerateContentConfig(
-                    safety_settings=GeminiModelAdapter.no_safety_settings(),
-                    temperature=temperature,
-                ),
-            )
+    elif provider == "gemini":
+        adapter = GeminiModelAdapter(
+            model=model_name,
+            generate_content_config=GenerateContentConfig(
+                safety_settings=GeminiModelAdapter.no_safety_settings(),
+                temperature=DEFAULT_TEMPERATURE if temperature is None else temperature,
+            ),
         )
     else:
-        msg = f"Unsupported model type: {model_type}"
+        msg = f"Unsupported LLM provider: {provider}"
         raise ValueError(msg)
+    return ChatBot(adapter)
 
 
-class FastOrBestLLM(Enum):
-    FAST = auto()
-    BEST = auto()
-
-
-def create_default_chatbot(fast_or_best: FastOrBestLLM) -> ChatBot:
-    """Helper function to create an OpenAI client. Let's replace when we have something like OmegaConf/Hydra.cc to
-    instantiate chatbot"""
-    if fast_or_best == FastOrBestLLM.BEST:
-        return create_chatbot(settings.BEST_LLM_PROVIDER, settings.BEST_LLM_MODEL_NAME)
+def get_chatbot(tier: ModelTier) -> ChatBot:
+    """A ChatBot for the tier's model on the provider set by LLM_PROVIDER."""
+    settings = get_settings()
+    primary = tier == ModelTier.PRIMARY
+    if settings.LLM_PROVIDER == "gemini":
+        model = settings.GEMINI_PRIMARY_MODEL if primary else settings.GEMINI_LIGHTWEIGHT_MODEL
     else:
-        return create_chatbot(settings.FAST_LLM_PROVIDER, settings.FAST_LLM_MODEL_NAME)
+        model = settings.BEDROCK_PRIMARY_MODEL if primary else settings.BEDROCK_LIGHTWEIGHT_MODEL
+    return create_chatbot(settings.LLM_PROVIDER, model)

@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 from common.database.postgres_models import DialogueEntry
-from common.llm.client import FastOrBestLLM, create_default_chatbot
+from common.llm.client import ModelTier, get_chatbot
 from common.prompts import get_meeting_title_prompt
 
 
@@ -11,7 +11,7 @@ class MeetingTitleResponse(BaseModel):
 
 async def generate_meeting_title(transcript: list[DialogueEntry]) -> str:
     """Raises on LLM failure; the activity retries and the workflow treats a missing title as optional."""
-    chatbot = create_default_chatbot(fast_or_best=FastOrBestLLM.FAST)
+    chatbot = get_chatbot(ModelTier.LIGHTWEIGHT)
     response = await chatbot.structured_chat(
         messages=get_meeting_title_prompt(transcript=transcript), response_format=MeetingTitleResponse
     )

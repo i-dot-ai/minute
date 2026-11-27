@@ -2,7 +2,7 @@
 from pydantic import BaseModel, Field
 
 from common.format_transcript import transcript_as_speaker_and_utterance
-from common.llm.client import FastOrBestLLM, create_default_chatbot
+from common.llm.client import ModelTier, get_chatbot
 from common.prompts import get_sections_from_transcript_prompt
 from common.templates.types import SectionTemplate
 from common.types import (
@@ -187,7 +187,7 @@ The transcript for the item you are contributing to is:
     @classmethod
     async def sections(cls, transcript: list[DialogueEntry] | None, agenda: str | None) -> list[str]:
         if not agenda:
-            chatbot = create_default_chatbot(FastOrBestLLM.FAST)
+            chatbot = get_chatbot(ModelTier.LIGHTWEIGHT)
             messages = get_sections_from_transcript_prompt(transcript=transcript)
             response = await chatbot.structured_chat(
                 messages=messages,

@@ -6,10 +6,10 @@ from diagrams import Cluster, Diagram, Edge, Node
 from diagrams.aws.compute import ECS
 from diagrams.aws.database import Aurora
 from diagrams.aws.general import Users
+from diagrams.aws.ml import MachineLearning
 from diagrams.aws.network import ALB
 from diagrams.aws.storage import S3
 from diagrams.azure.ml import CognitiveServices
-from diagrams.gcp.ml import AIPlatform
 
 output = Path(__file__).resolve().parents[1] / "minute_architecture_diagram"
 temporal_logo = Path(__file__).resolve().parent / "diagram-assets" / "temporal-logo.png"
@@ -73,8 +73,9 @@ with Diagram(
 
     with Cluster("Azure Cloud"):
         speech = CognitiveServices("Azure Speech\nAudio to text")
-    with Cluster("Google Cloud"):
-        gemini = AIPlatform("Gemini\nAI summaries")
+    # No Bedrock icon in diagrams 0.24; the eu. inference profile may run in any EU region, not just London.
+    with Cluster("Amazon Bedrock · EU regions"):
+        bedrock = MachineLearning("Claude\nAI summaries")
 
     with diagram.dot.subgraph() as row:
         row.attr(rank="same")
@@ -90,7 +91,7 @@ with Diagram(
             row.node(node.nodeid)
     with diagram.dot.subgraph() as row:
         row.attr(rank="same")
-        for node in [audio_route, worker, speech, gemini]:
+        for node in [audio_route, worker, speech, bedrock]:
             row.node(node.nodeid)
 
     users >> internal_access
@@ -113,4 +114,4 @@ with Diagram(
     audio_route >> Edge(color="#719a24") >> worker
     worker >> Edge(constraint="false") >> meetings
     worker >> speech
-    worker >> gemini
+    worker >> bedrock

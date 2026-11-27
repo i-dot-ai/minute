@@ -101,7 +101,7 @@ async def main() -> None:
     await _ensure_cleanup_schedule(client)
     await _ensure_metrics_schedule(client)
 
-    llm_cap = max(settings.MAX_LLM_PROCESSES, 1)
+    llm_cap = max(settings.LLM_MAX_CONCURRENCY, 1)
     # One Worker per task queue. Slots per queue = that resource's cap in this process;
     # extra tasks wait on the server (no timeout is consumed while waiting).
     workers = [

@@ -12,9 +12,23 @@ from sqlalchemy.exc import TimeoutError as DatabaseTimeoutError
 # 408 timeout, 409 conflict, 429 rate limit; everything >= 500 is a server-side failure.
 TRANSIENT_STATUS_CODES = frozenset({408, 409, 429})
 
+# AWS error codes worth retrying whatever HTTP status they arrive with: S3 throttling and timeouts, and
+# Bedrock throttling, capacity and model start-up errors.
+TRANSIENT_AWS_ERROR_CODES = frozenset(
+    {
+        "RequestTimeout",
+        "SlowDown",
+        "Throttling",
+        "ThrottlingException",
+        "ServiceUnavailableException",
+        "ModelNotReadyException",
+        "ModelTimeoutException",
+    }
+)
+
 
 def _http_status(error: BaseException) -> int | None:
-    """The HTTP status carried by a provider SDK error (OpenAI: status_code, Google genai: code)."""
+    """The HTTP status carried by an httpx error, or by an SDK error exposing status_code or code (Google genai)."""
     if isinstance(error, httpx.HTTPStatusError):
         return error.response.status_code
     for attribute in ("status_code", "code"):
@@ -45,6 +59,10 @@ def is_transient(error: BaseException) -> bool:
     if isinstance(error, ClientError):
         status = error.response.get("ResponseMetadata", {}).get("HTTPStatusCode", 0)
         code = error.response.get("Error", {}).get("Code", "")
-        return status >= httpx.codes.INTERNAL_SERVER_ERROR or code in {"RequestTimeout", "SlowDown", "Throttling"}
-    # Provider connection errors that carry no status (e.g. OpenAI's APIConnectionError/APITimeoutError).
+        return (
+            status in TRANSIENT_STATUS_CODES
+            or status >= httpx.codes.INTERNAL_SERVER_ERROR
+            or code in TRANSIENT_AWS_ERROR_CODES
+        )
+    # Connection errors from other clients that carry no status, named like the builtin exceptions.
     return type(error).__name__.endswith(("ConnectionError", "TimeoutError"))

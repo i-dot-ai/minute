@@ -4,8 +4,13 @@ locals {
 
   additional_policy_arns = { for idx, arn in [aws_iam_policy.ecs_exec_custom_policy.arn] : idx => arn }
 
-  MAX_LLM_PROCESSES   = terraform.workspace == "prod" ? 8 : 4
+  LLM_MAX_CONCURRENCY = terraform.workspace == "prod" ? 8 : 4
   STT_MAX_CONCURRENCY = terraform.workspace == "prod" ? 4 : 2
+
+  # Claude Sonnet 5.5 through the EU cross-region inference profile. iam.tf grants invoke on this profile
+  # and on the foundation model in each EU region it routes to.
+  bedrock_foundation_model_id  = "anthropic.claude-sonnet-5-5"
+  bedrock_inference_profile_id = "eu.${local.bedrock_foundation_model_id}"
 
   shared_environment_variables = {
     "ENVIRONMENT" : terraform.workspace,
@@ -13,18 +18,15 @@ locals {
     "APP_URL" : aws_route53_record.type_a_record.fqdn,
     "AWS_ACCOUNT_ID" : data.aws_caller_identity.current.account_id,
     "POSTGRES_HOST" : module.rds.db_instance_address,
-    "AZURE_OPENAI_API_VERSION" : "2024-10-21"
     "TRANSCRIPTION_SERVICES" : "[\"azure_stt_synchronous\"]"
-    "MAX_LLM_PROCESSES" : local.MAX_LLM_PROCESSES
+    "LLM_MAX_CONCURRENCY" : local.LLM_MAX_CONCURRENCY
     "STT_MAX_CONCURRENCY" : local.STT_MAX_CONCURRENCY
     "TEMPORAL_ADDRESS" : "temporal.${local.name}-internal:7233"
     "TEMPORAL_NAMESPACE" : "default"
-    "FAST_LLM_PROVIDER"   = "gemini"
-    "FAST_LLM_MODEL_NAME" = "gemini-3.5-flash"
-    "BEST_LLM_PROVIDER"   = "gemini"
-    "BEST_LLM_MODEL_NAME" = "gemini-3.5-flash"
-    "LINEAR_TEAM_ID"      = "9d22ea41-d2da-4fa9-be1e-f45ca9f6a170"
-    "LINEAR_PROJECT_ID"   = "7310478b-768a-40ae-865d-325fb5444638"
+    "BEDROCK_PRIMARY_MODEL"     = local.bedrock_inference_profile_id
+    "BEDROCK_LIGHTWEIGHT_MODEL" = local.bedrock_inference_profile_id
+    "LINEAR_TEAM_ID"            = "9d22ea41-d2da-4fa9-be1e-f45ca9f6a170"
+    "LINEAR_PROJECT_ID"         = "7310478b-768a-40ae-865d-325fb5444638"
 
     "LINEAR_LABEL_ID_ACCESS"         = "00dc78ba-3fad-4b0b-aa9f-0bf861c6a21e"
     "LINEAR_LABEL_ID_ISSUE"          = "d8caf6e7-64e5-47bd-ae8a-200193d4841a"

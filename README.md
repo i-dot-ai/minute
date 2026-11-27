@@ -125,9 +125,9 @@ Operational runbooks are maintained in [minute-infra](https://github.com/i-dot-a
 
 #### Architecture diagram
 
-Minute runs on AWS. Internal Access is managed separately and signs users in before they use Minute. Audio uploads use a time-limited link authorised by the backend. Temporal coordinates processing, S3 stores audio, and Aurora PostgreSQL stores meetings and minutes. Azure Speech transcribes the audio, and Gemini generates the summaries.
+Minute runs on AWS. Internal Access is managed separately and signs users in before they use Minute. Audio uploads use a time-limited link authorised by the backend. Temporal coordinates processing, S3 stores audio, and Aurora PostgreSQL stores meetings and minutes. Azure Speech transcribes the audio, and Claude on Amazon Bedrock generates the summaries, with Gemini on Google Cloud available as a fallback.
 
-<img src="minute_architecture_diagram.png" width="100%" alt="Minute architecture: Internal Access signs users in before app access and authorised audio uploads; Temporal coordinates processing, Azure transcribes audio, and Gemini generates summaries"/>
+<img src="minute_architecture_diagram.png" width="100%" alt="Minute architecture: Internal Access signs users in before app access and authorised audio uploads; Temporal coordinates processing, Azure transcribes audio, and Claude on Amazon Bedrock generates summaries"/>
 
 Regenerate the diagram with `uv run python terraform/diagram_script.py` (requires Graphviz).
 

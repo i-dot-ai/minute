@@ -2,7 +2,7 @@ import markdownify
 
 from common.database.postgres_models import TemplateType, Transcription, UserTemplate
 from common.format_transcript import transcript_as_speaker_and_utterance
-from common.llm.client import FastOrBestLLM, create_default_chatbot
+from common.llm.client import ModelTier, get_chatbot
 from common.prompts import NO_MEETING_DATE_INSTRUCTION, get_transcript_messages
 
 document_prompt = """<task>
@@ -82,12 +82,12 @@ async def generate_user_template(template: UserTemplate, transcription: Transcri
             },
             get_transcript_messages(transcription.dialogue_entries or []),
         ]
-        chatbot = create_default_chatbot(FastOrBestLLM.BEST)
+        chatbot = get_chatbot(ModelTier.PRIMARY)
         return await chatbot.chat(messages)
     else:
         qa_pairs: list[tuple[str, str]] = []
         for question in template.questions:
-            chatbot = create_default_chatbot(FastOrBestLLM.FAST)
+            chatbot = get_chatbot(ModelTier.LIGHTWEIGHT)
             if len(qa_pairs) > 0:
                 previous_questions = "\n\n".join(f"## {q}\n{a}" for (q, a) in qa_pairs)
             else:

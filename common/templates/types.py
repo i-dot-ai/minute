@@ -1,7 +1,7 @@
 from typing import Protocol
 
 from common.database.postgres_models import DialogueEntry, Minute
-from common.llm.client import FastOrBestLLM, create_default_chatbot
+from common.llm.client import ModelTier, get_chatbot
 from common.prompts import get_section_for_agenda_prompt, string_to_system_message
 from common.settings import get_settings
 from common.templates.citations import add_citations_to_minute
@@ -30,7 +30,6 @@ class Template(Protocol):
     description: str
     category: str
     agenda_usage: AgendaUsage
-    temperature = 0.0
 
     @classmethod
     async def generate(
@@ -91,7 +90,7 @@ class SimpleTemplate(Template, Protocol):
         cls,
         minute: Minute,
     ) -> str:
-        chatbot = create_default_chatbot(FastOrBestLLM.BEST)
+        chatbot = get_chatbot(ModelTier.PRIMARY)
         minutes = await chatbot.chat(cls.prompt(minute.transcription.dialogue_entries, minute.agenda))
         if cls.citations_required:
             minutes = await add_citations_to_minute(
@@ -165,7 +164,7 @@ class SectionTemplate(Template, Protocol):
         sections = await cls.sections(transcript, minute.agenda)
         # Generate content for each section
         final_sections = []
-        chatbot = create_default_chatbot(FastOrBestLLM.BEST)
+        chatbot = get_chatbot(ModelTier.PRIMARY)
         for i, section in enumerate(sections):
             if i == 0:
                 # use system message exactly once

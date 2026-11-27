@@ -25,7 +25,6 @@ from common.database.postgres_models import (
     User,
 )
 from common.services.minute_handler_service import MinuteGenerationFailedError, MinuteHandlerService
-from common.types import MeetingType
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -33,15 +32,13 @@ async def test_minute_generation_crashing_halfway_recovers_on_retry(minute_versi
     minute_version_id = minute_version_setup["minute_version_id"]
 
     # Force the too_short path so generation stays LLM-free on the retry.
-    monkeypatch.setattr(
-        MinuteHandlerService, "predict_meeting", classmethod(lambda _cls, _entries: MeetingType.too_short)
-    )
+    monkeypatch.setattr(MinuteHandlerService, "is_too_short", classmethod(lambda _cls, _entries: True))
     monkeypatch.setattr("common.services.minute_handler_service.capture_event", lambda *_args, **_kwargs: None)
 
     # First attempt: generation dies like an unexpected worker crash would.
     real_generate_minutes = MinuteHandlerService.generate_minutes.__func__
 
-    async def _crash(cls, meeting_type, minute):  # noqa: ARG001
+    async def _crash(cls, minute):  # noqa: ARG001
         raise asyncio.CancelledError  # BaseException: survives the handler's except block
 
     monkeypatch.setattr(MinuteHandlerService, "generate_minutes", classmethod(_crash))

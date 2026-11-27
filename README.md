@@ -28,7 +28,10 @@ Minute streamlines the traditionally time-intensive process of creating meeting 
 #### Run the app locally
 
 1. copy `.env.example` to a file called `.env`, and fill in the required values
-2. Run `docker compose up --build`
+2. Run `aws-vault exec ai-engineer-role --duration=4h -- docker compose up --build`
+
+The worker calls Amazon Bedrock, so it needs AWS credentials. docker compose passes through the ones
+from your aws-vault session. When the session expires, restart the containers with a fresh one.
 
 This will build and run 5 containers:
 

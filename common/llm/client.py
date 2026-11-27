@@ -48,11 +48,11 @@ class ModelTier(Enum):
     LIGHTWEIGHT = auto()  # titles, speakers, citations, AI edits
 
 
-def create_chatbot(provider: str, model_name: str, temperature: float | None = None) -> ChatBot:
+def create_chatbot(provider: str, model_name: str, temperature: float = DEFAULT_TEMPERATURE) -> ChatBot:
     """A ChatBot for a model on the given provider ("bedrock" or "gemini").
 
-    Leave temperature unset for Claude Sonnet 5.5, which rejects non-default sampling values. Unset on
-    Gemini means DEFAULT_TEMPERATURE.
+    temperature only applies to Gemini. Claude Sonnet 5.5 rejects non-default sampling values, so
+    Bedrock always uses the model's default.
     """
     settings = get_settings()
     if provider == "bedrock":
@@ -61,14 +61,13 @@ def create_chatbot(provider: str, model_name: str, temperature: float | None = N
             region=settings.AWS_REGION,
             max_tokens=settings.BEDROCK_MAX_OUTPUT_TOKENS,
             read_timeout_seconds=settings.BEDROCK_READ_TIMEOUT_SECONDS,
-            temperature=temperature,
         )
     elif provider == "gemini":
         adapter = GeminiModelAdapter(
             model=model_name,
             generate_content_config=GenerateContentConfig(
                 safety_settings=GeminiModelAdapter.no_safety_settings(),
-                temperature=DEFAULT_TEMPERATURE if temperature is None else temperature,
+                temperature=temperature,
             ),
         )
     else:

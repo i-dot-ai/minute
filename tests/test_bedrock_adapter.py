@@ -22,13 +22,12 @@ class House(BaseModel):
     bedrooms: int
 
 
-def _adapter(**kwargs) -> BedrockModelAdapter:
+def _adapter() -> BedrockModelAdapter:
     return BedrockModelAdapter(
         model_id="eu.anthropic.claude-sonnet-5-5",
         region="eu-west-2",
         max_tokens=1000,
         read_timeout_seconds=10,
-        **kwargs,
     )
 
 
@@ -64,11 +63,6 @@ def test_convert_messages_splits_system_merges_roles_and_drops_blanks():
 def test_convert_messages_rejects_unknown_role():
     with pytest.raises(ValueError, match="Invalid role"):
         BedrockModelAdapter.convert_messages([{"role": "tool", "content": "x"}])
-
-
-def test_temperature_only_sent_when_set():
-    assert "temperature" not in _adapter()._inference_config
-    assert _adapter(temperature=0.5)._inference_config["temperature"] == 0.5
 
 
 def test_sdk_does_not_retry():

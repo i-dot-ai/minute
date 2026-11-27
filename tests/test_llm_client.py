@@ -35,15 +35,15 @@ class House(BaseModel):
 
 
 MODELS_TO_TEST = [
-    ("bedrock", "eu.anthropic.claude-sonnet-5-5", None),  # Sonnet 5.5 rejects non-default temperature
-    ("gemini", "gemini-3.5-flash", 0.0),
+    ("bedrock", "eu.anthropic.claude-sonnet-5-5"),
+    ("gemini", "gemini-3.5-flash"),
 ]
 
 
 @pytest.mark.asyncio(loop_scope="session")
-@pytest.mark.parametrize(("provider", "model", "temperature"), MODELS_TO_TEST)
-async def test_structured_output_chatbots(provider, model, temperature) -> None:
-    chatbot = create_chatbot(provider, model, temperature=temperature)
+@pytest.mark.parametrize(("provider", "model"), MODELS_TO_TEST)
+async def test_structured_output_chatbots(provider, model) -> None:
+    chatbot = create_chatbot(provider, model)
     expected_output_1 = House(color="red", size=10, size_unit="meters", bedrooms=3, bathrooms=2)
     result = await chatbot.structured_chat(structured_chat_prompt_1, House)
     assert result == expected_output_1
@@ -53,9 +53,9 @@ async def test_structured_output_chatbots(provider, model, temperature) -> None:
 
 
 @pytest.mark.asyncio(loop_scope="session")
-@pytest.mark.parametrize(("provider", "model", "temperature"), MODELS_TO_TEST)
-async def test_chat_chatbots(provider, model, temperature) -> None:
-    chatbot = create_chatbot(provider, model, temperature=temperature)
+@pytest.mark.parametrize(("provider", "model"), MODELS_TO_TEST)
+async def test_chat_chatbots(provider, model) -> None:
+    chatbot = create_chatbot(provider, model)
     result_1 = await chatbot.chat(chat_prompts_1)
     result_2 = await chatbot.chat(chat_prompts_2)
     result_3 = await chatbot.chat(chat_prompts_3)

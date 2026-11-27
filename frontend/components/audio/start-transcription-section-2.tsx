@@ -225,31 +225,33 @@ export const StartTranscriptionSection = ({
         </select>
       </div>
       {showWelshLanguageOption ? (
-        <fieldset className="govuk-fieldset">
-          <legend className="govuk-fieldset__legend govuk-fieldset__legend--s">
-            Choose language:
-          </legend>
+        <fieldset className="govuk-fieldset govuk-!-margin-bottom-2 flex items-center gap-2">
+          <div>
+            <legend className="govuk-fieldset__legend govuk-!-margin-bottom-0">
+              Choose language:
+            </legend>
+          </div>
           <div
             className="govuk-radios govuk-radios--small govuk-radios--inline"
             data-module="govuk-radios"
           >
             <div className="govuk-radios__item">
-              <div className="govuk-radios__item">
-                <input
-                  className="govuk-radios__input"
-                  id="cymraeg"
-                  name="language"
-                  type="radio"
-                  value="cymraeg"
-                  defaultChecked
-                />
-                <label
-                  className="govuk-label govuk-radios__label"
-                  htmlFor="cymraeg"
-                >
-                  Cymraeg
-                </label>
-              </div>
+              <input
+                className="govuk-radios__input"
+                id="cymraeg"
+                name="language"
+                type="radio"
+                value="cymraeg"
+                defaultChecked
+              />
+              <label
+                className="govuk-label govuk-radios__label"
+                htmlFor="cymraeg"
+              >
+                Cymraeg
+              </label>
+            </div>
+            <div className="govuk-radios__item">
               <input
                 className="govuk-radios__input"
                 id="english"

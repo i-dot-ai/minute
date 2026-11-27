@@ -14,10 +14,12 @@ from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils import temporal
 from backend.utils.get_file_s3_key import get_file_s3_key
 from backend.utils.transcription_search import matching_sources, search_patterns, search_previews
+from common.authz import user_has_permission
 from common.database.postgres_models import (
     JobStatus,
     Minute,
     MinuteVersion,
+    Permission,
     Recording,
     Transcription,
     UserTemplate,
@@ -273,10 +275,14 @@ async def search_transcriptions(  # noqa: C901 # Keep matching and page validati
 async def create_recording(
     request: RecordingCreateRequest, session: SQLSessionDep, user: UserDep
 ) -> RecordingCreateResponse:
+    if request.org_id is not None and not await user_has_permission(
+        session, user.id, Permission.FILE_CREATE, request.org_id
+    ):
+        raise HTTPException(404, detail="Not found")
     recording_id = uuid.uuid4()
     file_name = f"{recording_id}.{request.file_extension}"
     user_upload_s3_file_key = get_file_s3_key(user.email, file_name)
-    recording = Recording(user_id=user.id, s3_file_key=user_upload_s3_file_key)
+    recording = Recording(user_id=user.id, org_id=request.org_id, s3_file_key=user_upload_s3_file_key)
     session.add(recording)
     await session.commit()
     presigned_url = await storage_service.generate_presigned_url_put_object(user_upload_s3_file_key, 3600)
@@ -303,7 +309,7 @@ async def create_transcription(
     # re-link the audio (orphaning the first transcription and re-queueing work).
     if recording.transcription_id is not None:
         raise HTTPException(status_code=409, detail="Recording has already been transcribed")
-    transcription = Transcription(user_id=current_user.id, title=request.title)
+    transcription = Transcription(user_id=current_user.id, title=request.title, org_id=recording.org_id)
     # Left unset, the column defaults to now (the upload time). Setting None would insert NULL.
     if request.meeting_datetime is not None:
         transcription.meeting_datetime = request.meeting_datetime
@@ -451,6 +457,7 @@ async def get_transcription(
         created_datetime=transcription.created_datetime,
         error=transcription.error,
         no_speech_detected=transcription.no_speech_detected,
+        org_id=transcription.org_id,
     )
 
 

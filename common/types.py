@@ -97,6 +97,9 @@ class TranscriptionRetryRequest(BaseModel):
 
 class RecordingCreateRequest(BaseModel):
     file_extension: str
+    org_id: uuid.UUID | None = Field(
+        default=None, description="Owning organisation. Omit or null to save to the user's personal space."
+    )
 
 
 class RecordingCreateResponse(BaseModel):
@@ -157,6 +160,7 @@ class TranscriptionGetResponse(BaseModel):
     created_datetime: datetime
     error: str | None = None
     no_speech_detected: bool = Field(default=False, description="Transcription completed without detected speech.")
+    org_id: uuid.UUID | None = Field(default=None, description="Owning organisation, or null if personal.")
 
 
 class SingleRecording(BaseModel):

@@ -20,6 +20,8 @@ type RecordingSessionValue = {
   setUploadAgenda: (agenda: string | undefined) => void
   uploadMeetingTime: MeetingTime | undefined
   setUploadMeetingTime: (meetingTime: MeetingTime | undefined) => void
+  uploadOrgId: string | undefined
+  setUploadOrgId: (orgId: string | undefined) => void
   devices: AudioDevice[]
   setDevices: (devices: AudioDevice[]) => void
   selectedDeviceId: string
@@ -46,6 +48,7 @@ export function RecordingSessionProvider({
   const [uploadMeetingTime, setUploadMeetingTime] = useState<
     MeetingTime | undefined
   >(undefined)
+  const [uploadOrgId, setUploadOrgId] = useState<string | undefined>(undefined)
   const [devices, setDevices] = useState<AudioDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState('')
 
@@ -56,6 +59,7 @@ export function RecordingSessionProvider({
     setUploadTemplate(null)
     setUploadAgenda(undefined)
     setUploadMeetingTime(undefined)
+    setUploadOrgId(undefined)
   }
 
   return (
@@ -73,6 +77,8 @@ export function RecordingSessionProvider({
         setUploadAgenda,
         uploadMeetingTime,
         setUploadMeetingTime,
+        uploadOrgId,
+        setUploadOrgId,
         devices,
         setDevices,
         selectedDeviceId,

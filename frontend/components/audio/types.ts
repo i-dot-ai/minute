@@ -8,4 +8,5 @@ export type TranscriptionForm = {
   agenda?: string
   meeting_datetime?: MeetingTime
   recordingId?: string
+  orgId?: string
 }

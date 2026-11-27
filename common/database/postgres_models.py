@@ -107,8 +107,6 @@ class User(BaseTableMixin, table=True):
     # Both null means no explicit default (falls back to the implicit General template).
     default_template_id: UUID | None = Field(default=None, foreign_key="user_template.id", ondelete="SET NULL")
     default_template_name: str | None = Field(default=None)
-    # 'english' or 'cymraeg' (see SetDefaultLanguageRequest); None falls back to English.
-    default_language: str | None = Field(default=None)
     transcriptions: list["Transcription"] = Relationship(back_populates="user")
 
 

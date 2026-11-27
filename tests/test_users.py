@@ -50,28 +50,6 @@ async def test_display_name_defaults_to_email_derived():
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_default_language_patch_set_clear_and_validation():
-    async with get_test_client() as ac:
-        try:
-            set_response = await ac.patch("/users/default-language", json={"default_language": "cymraeg"})
-            assert set_response.status_code == 200
-            assert set_response.json()["default_language"] == "cymraeg"
-
-            me = (await ac.get("/users/me")).json()
-            assert me["default_language"] == "cymraeg"
-
-            cleared = await ac.patch("/users/default-language", json={"default_language": None})
-            assert cleared.status_code == 200
-            assert cleared.json()["default_language"] is None
-
-            # Anything outside english/cymraeg is rejected by the model.
-            invalid = await ac.patch("/users/default-language", json={"default_language": "french"})
-            assert invalid.status_code == 422
-        finally:
-            await ac.patch("/users/default-language", json={"default_language": None})
-
-
-@pytest.mark.asyncio(loop_scope="session")
 async def test_display_name_patch_set_clear_and_validation():
     async with get_test_client() as ac:
         try:

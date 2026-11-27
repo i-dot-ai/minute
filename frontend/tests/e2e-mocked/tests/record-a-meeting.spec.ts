@@ -161,18 +161,8 @@ test('language radios are hidden if the Welsh language flag is not enabled', asy
   await expect(dialog.getByText('Choose language:')).toHaveCount(0)
 })
 
-test('Welsh flag shows language radios, defaulting to the user profile language if flag enabled', async ({
-  page,
-}) => {
+test('Welsh flag shows language radios if flag enabled', async ({ page }) => {
   await mockBackend(page)
-  // Latest-registered route wins, so this overrides mockBackend's users/me.
-  await page.route('**/users/me', (route) =>
-    route.fulfill({
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ ...usersMe, default_language: 'cymraeg' }),
-    })
-  )
   // mockBackend aborts all PostHog traffic, which leaves every flag off.
   // Serve a flags response with the Welsh option enabled instead.
   await page.route(/posthog\.com\/flags/, (route) =>

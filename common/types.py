@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime
 from enum import StrEnum, auto
-from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel, Field
 
@@ -126,18 +125,12 @@ class GetUserResponse(BaseModel):
     data_retention_days: int | None
     default_template_id: uuid.UUID | None = None
     default_template_name: str | None = None
-    default_language: Literal["english", "cymraeg"] | None = None
 
 
 class SetDisplayNameRequest(BaseModel):
     # "None" clears the stored name so it derives the name from the email again
     # Distinct from blank strings which are rejected by the route
     display_name: str | None = Field(default=None, max_length=100)
-
-
-class SetDefaultLanguageRequest(BaseModel):
-    # None clears the preference, meaning English everywhere.
-    default_language: Literal["english", "cymraeg"] | None = None
 
 
 class DataRetentionUpdateResponse(BaseModel):

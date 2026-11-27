@@ -107,13 +107,9 @@ export const StartTranscriptionSection = ({
   const { data: userTemplates = [] } = useQuery(
     getUserTemplatesUserTemplatesGetOptions()
   )
-  const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
   const showWelshLanguageOption = useFeatureFlagEnabled(
     FeatureFlags.WelshLanguageOption
   )
-
-  const defaultLanguage =
-    user?.default_language === 'cymraeg' ? 'cymraeg' : 'english'
 
   const { mutate: setDefault, isPending: isSettingDefault } = useMutation({
     ...updateDefaultTemplateUsersDefaultTemplatePatchMutation(),
@@ -237,38 +233,36 @@ export const StartTranscriptionSection = ({
           <div
             className="govuk-radios govuk-radios--small govuk-radios--inline"
             data-module="govuk-radios"
-            key={defaultLanguage}
           >
             <div className="govuk-radios__item">
+              <div className="govuk-radios__item">
+                <input
+                  className="govuk-radios__input"
+                  id="cymraeg"
+                  name="language"
+                  type="radio"
+                  value="cymraeg"
+                  defaultChecked
+                />
+                <label
+                  className="govuk-label govuk-radios__label"
+                  htmlFor="cymraeg"
+                >
+                  Cymraeg
+                </label>
+              </div>
               <input
                 className="govuk-radios__input"
                 id="english"
                 name="language"
                 type="radio"
                 value="english"
-                defaultChecked
               />
               <label
                 className="govuk-label govuk-radios__label"
                 htmlFor="english"
               >
                 English
-              </label>
-            </div>
-            <div className="govuk-radios__item">
-              <input
-                className="govuk-radios__input"
-                id="cymraeg"
-                name="language"
-                type="radio"
-                value="cymraeg"
-                defaultChecked={defaultLanguage === 'cymraeg'}
-              />
-              <label
-                className="govuk-label govuk-radios__label"
-                htmlFor="cymraeg"
-              >
-                Cymraeg
               </label>
             </div>
           </div>

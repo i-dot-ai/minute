@@ -158,10 +158,6 @@ export type GetUserResponse = {
    * Default Template Name
    */
   default_template_name?: string | null
-  /**
-   * Default Language
-   */
-  default_language?: 'english' | 'cymraeg' | null
 }
 
 /**
@@ -534,16 +530,6 @@ export type SearchHighlight = {
    * Exclusive UTF-16 offset within the snippet.
    */
   end: number
-}
-
-/**
- * SetDefaultLanguageRequest
- */
-export type SetDefaultLanguageRequest = {
-  /**
-   * Default Language
-   */
-  default_language?: 'english' | 'cymraeg' | null
 }
 
 /**
@@ -1786,39 +1772,6 @@ export type UpdateDataRetentionUsersDataRetentionPatchResponses = {
 
 export type UpdateDataRetentionUsersDataRetentionPatchResponse =
   UpdateDataRetentionUsersDataRetentionPatchResponses[keyof UpdateDataRetentionUsersDataRetentionPatchResponses]
-
-export type UpdateDefaultLanguageUsersDefaultLanguagePatchData = {
-  body: SetDefaultLanguageRequest
-  headers?: {
-    /**
-     * X-Amzn-Oidc-Data
-     */
-    'x-amzn-oidc-data'?: string | null
-  }
-  path?: never
-  query?: never
-  url: '/users/default-language'
-}
-
-export type UpdateDefaultLanguageUsersDefaultLanguagePatchErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError
-}
-
-export type UpdateDefaultLanguageUsersDefaultLanguagePatchError =
-  UpdateDefaultLanguageUsersDefaultLanguagePatchErrors[keyof UpdateDefaultLanguageUsersDefaultLanguagePatchErrors]
-
-export type UpdateDefaultLanguageUsersDefaultLanguagePatchResponses = {
-  /**
-   * Successful Response
-   */
-  200: GetUserResponse
-}
-
-export type UpdateDefaultLanguageUsersDefaultLanguagePatchResponse =
-  UpdateDefaultLanguageUsersDefaultLanguagePatchResponses[keyof UpdateDefaultLanguageUsersDefaultLanguagePatchResponses]
 
 export type UpdateDefaultTemplateUsersDefaultTemplatePatchData = {
   body: SetDefaultTemplateRequest

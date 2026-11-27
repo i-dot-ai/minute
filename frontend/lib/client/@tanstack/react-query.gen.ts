@@ -42,7 +42,6 @@ import {
   saveTranscriptionTranscriptionsTranscriptionIdPatch,
   searchTranscriptionsTranscriptionsSearchGet,
   updateDataRetentionUsersDataRetentionPatch,
-  updateDefaultLanguageUsersDefaultLanguagePatch,
   updateDefaultTemplateUsersDefaultTemplatePatch,
   updateDisplayNameUsersDisplayNamePatch,
 } from '../sdk.gen'
@@ -133,9 +132,6 @@ import type {
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchError,
   UpdateDataRetentionUsersDataRetentionPatchResponse,
-  UpdateDefaultLanguageUsersDefaultLanguagePatchData,
-  UpdateDefaultLanguageUsersDefaultLanguagePatchError,
-  UpdateDefaultLanguageUsersDefaultLanguagePatchResponse,
   UpdateDefaultTemplateUsersDefaultTemplatePatchData,
   UpdateDefaultTemplateUsersDefaultTemplatePatchError,
   UpdateDefaultTemplateUsersDefaultTemplatePatchResponse,
@@ -799,40 +795,6 @@ export const updateDataRetentionUsersDataRetentionPatchMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await updateDataRetentionUsersDataRetentionPatch({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      })
-      return data
-    },
-  }
-  return mutationOptions
-}
-
-/**
- * Update Default Language
- *
- * Set or clear the current user's default summary language.
- *
- * Args:
- * data: Request body containing default_language; None clears the preference (English).
- * session: Database session
- * user: The current authenticated user
- */
-export const updateDefaultLanguageUsersDefaultLanguagePatchMutation = (
-  options?: Partial<Options<UpdateDefaultLanguageUsersDefaultLanguagePatchData>>
-): UseMutationOptions<
-  UpdateDefaultLanguageUsersDefaultLanguagePatchResponse,
-  UpdateDefaultLanguageUsersDefaultLanguagePatchError,
-  Options<UpdateDefaultLanguageUsersDefaultLanguagePatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UpdateDefaultLanguageUsersDefaultLanguagePatchResponse,
-    UpdateDefaultLanguageUsersDefaultLanguagePatchError,
-    Options<UpdateDefaultLanguageUsersDefaultLanguagePatchData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await updateDefaultLanguageUsersDefaultLanguagePatch({
         ...options,
         ...fnOptions,
         throwOnError: true,

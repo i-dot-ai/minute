@@ -1,11 +1,8 @@
 'use client'
 
 import { ChangeNameDialog } from '@/components/header/change-name-dialog'
-import { DefaultLanguageDialog } from '@/components/settings/default-language-dialog'
 import { SettingsDialog } from '@/components/settings/settings-dialog'
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
-import { FeatureFlags } from '@/lib/feature-flags'
-import { useFeatureFlagEnabled } from 'posthog-js/react'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
@@ -13,11 +10,6 @@ import { useState } from 'react'
 export default function ProfilePage() {
   const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
   const [nameDialogOpen, setNameDialogOpen] = useState(false)
-  const showWelshLanguageOption = useFeatureFlagEnabled(
-    FeatureFlags.WelshLanguageOption
-  )
-
-  const capitaliseName = (name: string) => name[0].toUpperCase() + name.slice(1)
 
   return (
     <>
@@ -115,23 +107,6 @@ export default function ProfilePage() {
                         <SettingsDialog user={user} />
                       </td>
                     </tr>
-                    {showWelshLanguageOption ? (
-                      <tr className="govuk-table__row">
-                        <th scope="row" className="govuk-table__header">
-                          Default language
-                        </th>
-                        <td className="govuk-table__cell">
-                          {user.default_language
-                            ? capitaliseName(user.default_language)
-                            : 'English'}
-                        </td>
-                        <td className="govuk-table__cell">
-                          <DefaultLanguageDialog user={user} />
-                        </td>
-                      </tr>
-                    ) : (
-                      <></>
-                    )}
                   </tbody>
                 </table>
               </>

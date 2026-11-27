@@ -2,11 +2,20 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
+from common.authz import active_member_orgs, context_permissions
 from common.database.postgres_models import User, UserTemplate
 from common.services.template_manager import TemplateManager
 from common.services.user_details import display_name_from_email, has_fixed_data_retention
 from common.settings import get_settings, get_structured_logger
-from common.types import DataRetentionUpdateResponse, GetUserResponse, SetDefaultTemplateRequest, SetDisplayNameRequest
+from common.types import (
+    DataRetentionUpdateResponse,
+    GetUserResponse,
+    MyOrg,
+    MyOrgsResponse,
+    MyPermissionsResponse,
+    SetDefaultTemplateRequest,
+    SetDisplayNameRequest,
+)
 
 users_router = APIRouter(tags=["Users"])
 
@@ -29,6 +38,31 @@ def _user_response(user: User) -> GetUserResponse:
 @users_router.get("/users/me")
 def get_user(user: UserDep) -> GetUserResponse:
     return _user_response(user)
+
+
+@users_router.get("/users/me/permissions", response_model=MyPermissionsResponse)
+async def get_my_permissions(user: UserDep, session: SQLSessionDep) -> MyPermissionsResponse:
+    """The caller's global permissions."""
+    perms = await context_permissions(session, user.id, None)
+    return MyPermissionsResponse(permissions=sorted(perms))
+
+
+@users_router.get("/users/me/organisations", response_model=MyOrgsResponse)
+async def get_my_organisations(user: UserDep, session: SQLSessionDep) -> MyOrgsResponse:
+    """The orgs the caller is an active member of, with their authz context."""
+    orgs = await active_member_orgs(session, user.id)
+    return MyOrgsResponse(
+        orgs=[
+            MyOrg(
+                id=org.id,
+                name=org.name,
+                is_active=org.is_active,
+                roles=roles,
+                my_permissions=sorted(perms),
+            )
+            for org, roles, perms in orgs
+        ]
+    )
 
 
 @users_router.patch("/users/display-name", response_model=GetUserResponse)

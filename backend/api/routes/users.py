@@ -6,7 +6,13 @@ from common.database.postgres_models import User, UserTemplate
 from common.services.template_manager import TemplateManager
 from common.services.user_details import display_name_from_email, has_fixed_data_retention
 from common.settings import get_settings, get_structured_logger
-from common.types import DataRetentionUpdateResponse, GetUserResponse, SetDefaultTemplateRequest, SetDisplayNameRequest
+from common.types import (
+    DataRetentionUpdateResponse,
+    GetUserResponse,
+    SetDefaultLanguageRequest,
+    SetDefaultTemplateRequest,
+    SetDisplayNameRequest,
+)
 
 users_router = APIRouter(tags=["Users"])
 
@@ -23,6 +29,7 @@ def _user_response(user: User) -> GetUserResponse:
         data_retention_days=user.data_retention_days,
         default_template_id=user.default_template_id,
         default_template_name=user.default_template_name,
+        default_language=user.default_language,
     )
 
 
@@ -92,6 +99,23 @@ async def update_data_retention(
     await session.refresh(user)
 
     logger.info("Updated data retention period to {days} days", days=data.data_retention_days)
+
+    return _user_response(user)
+
+
+@users_router.patch("/users/default-language", response_model=GetUserResponse)
+async def update_default_language(
+    data: SetDefaultLanguageRequest,
+    session: SQLSessionDep,
+    user: UserDep,
+) -> GetUserResponse:
+    """Set or clear the current user's default summary language; null means English."""
+    user.default_language = data.default_language
+
+    await session.commit()
+    await session.refresh(user)
+
+    logger.info("Updated default language to {language}", language=data.default_language)
 
     return _user_response(user)
 

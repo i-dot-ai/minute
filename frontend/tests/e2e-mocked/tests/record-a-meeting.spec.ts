@@ -1,7 +1,9 @@
 import { mockBackend } from '@/tests/e2e-mocked/utilities/mock-backend'
+import { usersMe } from '@/tests/e2e-mocked/mocked-responses/users.me'
 import {
   recordAudioFlow,
   statusToSummaryFlow,
+  uploadAudioFlow,
 } from '@/tests/e2e-mocked/utilities/navigation'
 import { test, expect } from '@playwright/test'
 import path from 'node:path'
@@ -143,4 +145,60 @@ test('select a microphone passes device id as an exact match to prevent slipping
   expect(typeof audio === 'object' ? audio?.deviceId : undefined).toEqual({
     exact: 'mac-mic',
   })
+})
+
+test('language radios are hidden if the Welsh language flag is not enabled', async ({
+  page,
+}) => {
+  // mockBackend leaves PostHog unavailable, so the flag never resolves.
+  await mockBackend(page)
+
+  await uploadAudioFlow(page, sampleMeeting)
+  await page.getByRole('button', { name: 'Generate summary' }).click()
+
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByText('Choose language:')).toHaveCount(0)
+})
+
+test('Welsh flag shows language radios, defaulting to the user profile language if flag enabled', async ({
+  page,
+}) => {
+  await mockBackend(page)
+  // Latest-registered route wins, so this overrides mockBackend's users/me.
+  await page.route('**/users/me', (route) =>
+    route.fulfill({
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ...usersMe, default_language: 'cymraeg' }),
+    })
+  )
+  // mockBackend aborts all PostHog traffic, which leaves every flag off.
+  // Serve a flags response with the Welsh option enabled instead.
+  await page.route(/posthog\.com\/flags/, (route) =>
+    route.fulfill({
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        flags: {
+          'welsh-language-option': {
+            enabled: true,
+            variant: null,
+            metadata: { id: 1, payload: null, version: 1 },
+          },
+        },
+        request_id: 'e2e',
+        extras: {},
+      }),
+    })
+  )
+
+  await uploadAudioFlow(page, sampleMeeting)
+  await page.getByRole('button', { name: 'Generate summary' }).click()
+
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByText('Choose language:')).toBeVisible()
+  await expect(dialog.getByRole('radio', { name: 'Cymraeg' })).toBeChecked()
+  await expect(dialog.getByRole('radio', { name: 'English' })).not.toBeChecked()
 })

@@ -94,6 +94,9 @@ import type {
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchErrors,
   UpdateDataRetentionUsersDataRetentionPatchResponses,
+  UpdateDefaultLanguageUsersDefaultLanguagePatchData,
+  UpdateDefaultLanguageUsersDefaultLanguagePatchErrors,
+  UpdateDefaultLanguageUsersDefaultLanguagePatchResponses,
   UpdateDefaultTemplateUsersDefaultTemplatePatchData,
   UpdateDefaultTemplateUsersDefaultTemplatePatchErrors,
   UpdateDefaultTemplateUsersDefaultTemplatePatchResponses,
@@ -420,6 +423,37 @@ export const updateDataRetentionUsersDataRetentionPatch = <
     ThrowOnError
   >({
     url: '/users/data-retention',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+
+/**
+ * Update Default Language
+ *
+ * Set or clear the current user's default summary language.
+ *
+ * Args:
+ * data: Request body containing default_language; None clears the preference (English).
+ * session: Database session
+ * user: The current authenticated user
+ */
+export const updateDefaultLanguageUsersDefaultLanguagePatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateDefaultLanguageUsersDefaultLanguagePatchData,
+    ThrowOnError
+  >
+) =>
+  (options.client ?? client).patch<
+    UpdateDefaultLanguageUsersDefaultLanguagePatchResponses,
+    UpdateDefaultLanguageUsersDefaultLanguagePatchErrors,
+    ThrowOnError
+  >({
+    url: '/users/default-language',
     ...options,
     headers: {
       'Content-Type': 'application/json',

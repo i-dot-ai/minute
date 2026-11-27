@@ -85,3 +85,62 @@ test('Upload a file to summary', async ({ page }) => {
 
   await statusToSummaryFlow(page)
 })
+
+test('select a microphone passes device id as an exact match to prevent slipping to default audio bug', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const md = navigator.mediaDevices
+    md.enumerateDevices = async () =>
+      [
+        {
+          deviceId: 'default',
+          kind: 'audioinput',
+          label: 'AirPods Pro',
+          groupId: 'fake',
+        },
+        {
+          deviceId: 'mac-mic',
+          kind: 'audioinput',
+          label: 'MacBook Pro Microphone',
+          groupId: 'fake',
+        },
+      ] as unknown as MediaDeviceInfo[]
+    const origGetUserMedia = md.getUserMedia.bind(md)
+    md.getUserMedia = async (constraints) => {
+      ;(
+        window as unknown as { __micConstraints?: MediaStreamConstraints }
+      ).__micConstraints = constraints
+      return origGetUserMedia(constraints)
+    }
+  })
+
+  await page.goto('/')
+  await page.getByRole('radio', { name: 'In person' }).check()
+  await page
+    .getByLabel('Select microphone:')
+    .selectOption({ label: 'MacBook Pro Microphone' })
+  await page.getByRole('button', { name: 'Start recording' }).click()
+
+  // Recording starts asynchronously, so poll until the recorder has actually
+  // called getUserMedia.
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          !!(window as unknown as { __micConstraints?: MediaStreamConstraints })
+            .__micConstraints
+      )
+    )
+    .toBe(true)
+
+  const constraints = await page.evaluate(
+    () =>
+      (window as unknown as { __micConstraints?: MediaStreamConstraints })
+        .__micConstraints
+  )
+  const audio = constraints?.audio
+  expect(typeof audio === 'object' ? audio?.deviceId : undefined).toEqual({
+    exact: 'mac-mic',
+  })
+})

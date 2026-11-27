@@ -236,7 +236,7 @@ function TabRecorder({
       // Merge both audio streams with gain control
       try {
         const micStream = await navigator.mediaDevices.getUserMedia({
-          audio: { deviceId: selectedDeviceId },
+          audio: { deviceId: { exact: selectedDeviceId } },
         })
         micStreamRef.current = micStream
         // Add mic audio to the composed stream

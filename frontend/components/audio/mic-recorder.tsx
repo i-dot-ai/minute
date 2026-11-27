@@ -137,7 +137,7 @@ function MicRecorderComponent({
       mediaChunksRef.current = []
       const micStream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          deviceId: selectedDeviceId,
+          deviceId: { exact: selectedDeviceId },
           noiseSuppression: false,
           echoCancellation: false,
         },
@@ -213,6 +213,9 @@ function MicRecorderComponent({
     } catch (micError) {
       console.warn('Error occurred starting audio recording.', micError)
       posthog.capture('mic_start_failed', { source: 'mic_recorder' })
+      setError(
+        'Could not start recording from the selected microphone. Please try again.'
+      )
     }
     // Create a media recorder from the composed stream
   }, [

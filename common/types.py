@@ -4,6 +4,7 @@ from enum import StrEnum, auto
 
 from pydantic import AwareDatetime, BaseModel, Field
 
+from common.authz.roles import RoleName
 from common.database.postgres_models import ContentSource, DialogueEntry, JobStatus, TemplateType
 
 
@@ -360,3 +361,17 @@ class HourlyStatusResponse(BaseModel):
     partial: bool = Field(description="Timing read limit reached; counts and failure rates are not capped")
     hours: list[StatusBucket] = Field(description="Oldest first, bucketed by close time; last hour is partial")
     last_10_minutes: StatusBucket = Field(description="Runs that closed in the 10 minutes before collected_at")
+
+
+class OrgMember(BaseModel):
+    """A member of an organisation, as surfaced to permissions admins."""
+
+    user_id: uuid.UUID
+    email: str
+    is_active: bool
+    roles: list[RoleName]
+
+
+class OrgMembersResponse(BaseModel):
+    org_id: uuid.UUID
+    members: list[OrgMember]

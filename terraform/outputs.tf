@@ -6,7 +6,6 @@ output "temporal_dependencies" {
     alb_security_group_id     = module.load_balancer.load_balancer_security_group_id
     backend_security_group_id = module.backend.ecs_sg_id
     worker_security_group_id  = module.worker.ecs_sg_id
-    policy_arn                = aws_iam_policy.ecs_exec_custom_policy.arn
     sns_topic_arn             = module.sns_topic.sns_topic_arn
   }
 }

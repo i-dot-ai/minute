@@ -59,8 +59,9 @@ class Settings(BaseSettings):
         self.LOGGING_FORMAT = LogOutputFormat.TEXT if is_local else LogOutputFormat.JSON
         return self
 
-    AZURE_SPEECH_KEY: str = Field(description="Azure STT speech key for API")
-    AZURE_SPEECH_REGION: str = Field(description="Region for Azure STT")
+    # Optional so services that don't do STT can boot without azure secrets.
+    AZURE_SPEECH_KEY: str | None = Field(description="Azure STT speech key for API", default=None)
+    AZURE_SPEECH_REGION: str | None = Field(description="Region for Azure STT", default=None)
     # optional extra Azure STT regions, tried in order when a region returns 429 or 5xx
     AZURE_SPEECH_FALLBACK_1_KEY: str | None = Field(description="Azure STT speech key for fallback 1", default=None)
     AZURE_SPEECH_FALLBACK_1_REGION: str | None = Field(description="Region for Azure STT fallback 1", default=None)

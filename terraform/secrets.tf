@@ -89,6 +89,41 @@ locals {
   ] : []
 
   all_env_secrets = concat(local.env_secrets, local.prod_only_env_secrets)
+
+  # Per-service secret allow-lists: which of the secrets above each service is injected with, and
+  # (via terraform/iam.tf) granted SSM read on.
+  backend_secret_names = toset([
+    "DATA_S3_BUCKET",
+    "POSTGRES_PORT",
+    "POSTGRES_DB",
+    "POSTGRES_USER",
+    "POSTGRES_PASSWORD",
+    "SENTRY_DSN",
+    "POSTHOG_API_KEY",
+    "LINEAR_API_KEY",
+  ])
+
+  worker_secret_names = toset([
+    "DATA_S3_BUCKET",
+    "POSTGRES_PORT",
+    "POSTGRES_DB",
+    "POSTGRES_USER",
+    "POSTGRES_PASSWORD",
+    "SENTRY_DSN",
+    "POSTHOG_API_KEY",
+    "AZURE_OPENAI_ENDPOINT",
+    "AZURE_OPENAI_API_KEY",
+    "AZURE_DEPLOYMENT",
+    "AZURE_SPEECH_KEY",
+    "AZURE_SPEECH_REGION",
+    "AZURE_SPEECH_FALLBACK_1_KEY",
+    "AZURE_SPEECH_FALLBACK_1_REGION",
+    "AZURE_SPEECH_FALLBACK_2_KEY",
+    "AZURE_SPEECH_FALLBACK_2_REGION",
+    "GOOGLE_APPLICATION_CREDENTIALS_BASE64",
+    "GOOGLE_CLOUD_PROJECT",
+    "GOOGLE_CLOUD_LOCATION",
+  ])
 }
 
 resource "aws_ssm_parameter" "env_secrets" {

@@ -2,8 +2,6 @@ locals {
   backend_port  = 8080
   frontend_port = 8081
 
-  additional_policy_arns = { for idx, arn in [aws_iam_policy.ecs_exec_custom_policy.arn] : idx => arn }
-
   MAX_LLM_PROCESSES   = terraform.workspace == "prod" ? 8 : 4
   STT_MAX_CONCURRENCY = terraform.workspace == "prod" ? 4 : 2
 
@@ -50,7 +48,7 @@ module "backend" {
   aws_lb_arn                   = module.load_balancer.alb_arn
   ecs_cluster_id               = data.terraform_remote_state.platform.outputs.ecs_cluster_id
   ecs_cluster_name             = data.terraform_remote_state.platform.outputs.ecs_cluster_name
-  task_additional_iam_policies = local.additional_policy_arns
+  task_additional_iam_policies = { "0" = aws_iam_policy.backend_policy.arn }
   certificate_arn              = data.terraform_remote_state.universal.outputs.certificate_arn
   target_group_name_override   = "minute-backend-${var.env}-tg"
   permissions_boundary_name    = "infra/i-dot-ai-${var.env}-minute-perms-boundary-app"
@@ -76,7 +74,7 @@ module "backend" {
     for k, v in aws_ssm_parameter.env_secrets : {
       name      = regex("([^/]+$)", v.arn)[0], # Extract right-most string (param name) after the final slash
       valueFrom = v.arn
-    }
+    } if contains(local.backend_secret_names, k)
   ]
 
   container_port = local.backend_port
@@ -111,7 +109,7 @@ module "frontend" {
   create_listener              = true
   certificate_arn              = data.terraform_remote_state.universal.outputs.certificate_arn
   target_group_name_override   = "minute-frontend-${var.env}-tg"
-  task_additional_iam_policies = local.additional_policy_arns
+  task_additional_iam_policies = {}
   permissions_boundary_name    = "infra/i-dot-ai-${var.env}-minute-perms-boundary-app"
 
   environment_variables = {
@@ -123,12 +121,6 @@ module "frontend" {
     "OIDC_CLIENT_ID" : aws_ssm_parameter.oidc_secrets["client_id"].value,
   }
 
-  secrets = [
-    for k, v in aws_ssm_parameter.env_secrets : {
-      name      = regex("([^/]+$)", v.arn)[0], # Extract right-most string (param name) after the final slash
-      valueFrom = v.arn
-    }
-  ]
 
   container_port = local.frontend_port
   memory         = terraform.workspace == "prod" ? 2048 : 1024
@@ -171,7 +163,7 @@ module "worker" {
   aws_lb_arn                   = module.load_balancer.alb_arn
   ecs_cluster_id               = data.terraform_remote_state.platform.outputs.ecs_cluster_id
   ecs_cluster_name             = data.terraform_remote_state.platform.outputs.ecs_cluster_name
-  task_additional_iam_policies = local.additional_policy_arns
+  task_additional_iam_policies = { "0" = aws_iam_policy.worker_policy.arn }
   certificate_arn              = data.terraform_remote_state.universal.outputs.certificate_arn
   target_group_name_override   = "minute-worker-${var.env}-tg"
   permissions_boundary_name    = "infra/i-dot-ai-${var.env}-minute-perms-boundary-app"
@@ -187,7 +179,7 @@ module "worker" {
     for k, v in aws_ssm_parameter.env_secrets : {
       name      = regex("([^/]+$)", v.arn)[0], # Extract right-most string (param name) after the final slash
       valueFrom = v.arn
-    }
+    } if contains(local.worker_secret_names, k)
   ]
 
   memory            = terraform.workspace == "prod" ? 8192 : 4096

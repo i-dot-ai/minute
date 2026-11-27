@@ -20,9 +20,14 @@ import {
   toMeetingTime,
 } from '@/components/audio/meeting-time-field'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
+import {
+  TranscriptionKeywordField,
+  TranscriptionKeywords,
+} from '@/components/transcription-keywords'
 import { useGenerateSummaryFromMinute } from '@/hooks/use-generate-summary-from-minute'
 import { useSaveMeetingTime } from '@/hooks/use-save-meeting-time'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
+import { useTranscriptionKeywords } from '@/hooks/use-transcription-keywords'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
@@ -72,6 +77,10 @@ export default function SummaryPage({
 
   const noSummaries =
     !!transcription?.error || !!transcription?.no_speech_detected
+  const keywords = useTranscriptionKeywords(
+    transcriptionId,
+    transcription?.status === 'completed' && !noSummaries
+  )
 
   const [exportState, setExportState] = useState<MinuteExportState | null>(null)
   const [editState, setEditState] = useState<MinuteEditState | null>(null)
@@ -147,11 +156,22 @@ export default function SummaryPage({
     if (editState?.isEditable) resetEditForm()
   }, [editState?.isEditable, resetEditForm])
 
-  const handleSave = editForm.handleSubmit(({ title, meeting_datetime }) => {
-    saveMeetingTime(meeting_datetime, transcription?.meeting_datetime)
-    saveTitle(title)
-    editState?.onSave()
-  })
+  const startEditing = () => {
+    keywords.reset()
+    editState?.setIsEditable(true)
+  }
+  const handleSave = editForm.handleSubmit(
+    async ({ title, meeting_datetime }) => {
+      try {
+        await keywords.save()
+      } catch {
+        return
+      }
+      saveMeetingTime(meeting_datetime, transcription?.meeting_datetime)
+      saveTitle(title)
+      editState?.onSave()
+    }
+  )
 
   const handleDiscard = useCallback(() => {
     resetEditForm()
@@ -283,7 +303,7 @@ export default function SummaryPage({
                     />
                     <button
                       className="govuk-button !hidden sm:!flex"
-                      onClick={() => editState.setIsEditable(true)}
+                      onClick={startEditing}
                       type="button"
                       disabled={editState.isEditable}
                       id="tour-edit-summary"
@@ -292,7 +312,7 @@ export default function SummaryPage({
                     </button>
                     <button
                       className="govuk-button govuk-button--secondary sm:!hidden"
-                      onClick={() => editState.setIsEditable(true)}
+                      onClick={startEditing}
                       type="button"
                       disabled={editState.isEditable}
                       id="tour-edit-summary"
@@ -372,6 +392,7 @@ export default function SummaryPage({
                   type="button"
                   className="govuk-button govuk-button--secondary sm:mb-0"
                   onClick={handleDiscard}
+                  disabled={editForm.formState.isSubmitting}
                 >
                   Discard
                 </button>
@@ -379,6 +400,7 @@ export default function SummaryPage({
                   type="submit"
                   form="summary-edit-form"
                   className="govuk-button sm:mb-0"
+                  disabled={editForm.formState.isSubmitting}
                 >
                   <Save className="size-4" /> Save
                 </button>
@@ -427,6 +449,9 @@ export default function SummaryPage({
                   <MeetingTimeField variant="edit" />
                 </FormProvider>
               </div>
+              <div className="govuk-!-margin-top-6">
+                <TranscriptionKeywordField {...keywords.field} />
+              </div>
             </form>
           ) : (
             <>
@@ -436,6 +461,7 @@ export default function SummaryPage({
               <p className="govuk-body govuk-hint govuk-!-margin-bottom-4">
                 {formatMeetingTime(new Date(transcription.meeting_datetime))}
               </p>
+              <TranscriptionKeywords keywords={keywords.saved} />
             </>
           )}
           {!minute ? (

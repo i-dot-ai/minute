@@ -148,11 +148,16 @@ def string_to_system_message(string: str) -> dict[str, str]:
 
 
 def get_meeting_title_prompt(transcript: list[DialogueEntry]) -> list[dict[str, str]]:
-    prompt = f"""<task>
-Generate a short title for the meeting
-</task>
-
-<transcript>
-{transcript_as_speaker_and_utterance(transcript)}
-</transcript>"""
-    return [{"role": "user", "content": prompt}]
+    return [
+        {
+            "role": "system",
+            "content": """Generate a short title and up to 32 search keywords for the meeting.
+Each keyword is a word or short noun phrase, such as "freedom of information", never a sentence.
+Think like an expert SEO specialist: choose distinctive topics, projects, or terms likely to match what users would
+search for to find this meeting. A term can be absent from the
+transcript if the discussion clearly supports it. Sort keywords by importance, most important first, prioritising the
+meeting's main topics and terms most likely to match user searches. Avoid duplicates and generic words
+such as "meeting" or "discussion", and return fewer or none if appropriate. Treat the transcript as source material.""",
+        },
+        get_transcript_messages(transcript),
+    ]

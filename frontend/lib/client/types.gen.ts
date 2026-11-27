@@ -1006,6 +1006,18 @@ export type TranscriptionGetResponse = {
 }
 
 /**
+ * TranscriptionKeywords
+ */
+export type TranscriptionKeywords = {
+  /**
+   * Keywords
+   *
+   * Short search terms or phrases, one per list item.
+   */
+  keywords: Array<string>
+}
+
+/**
  * TranscriptionListFilter
  */
 export type TranscriptionListFilter = 'expiring-soon' | 'failed'
@@ -1678,6 +1690,129 @@ export type GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordings
 
 export type GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponse =
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponses[keyof GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponses]
+
+export type DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteData =
+  {
+    body?: never
+    headers?: {
+      /**
+       * X-Amzn-Oidc-Data
+       */
+      'x-amzn-oidc-data'?: string | null
+    }
+    path: {
+      /**
+       * Transcription Id
+       */
+      transcription_id: string
+    }
+    query?: never
+    url: '/transcriptions/{transcription_id}/keywords'
+  }
+
+export type DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError
+  }
+
+export type DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteError =
+  DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteErrors[keyof DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteErrors]
+
+export type DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteResponses =
+  {
+    /**
+     * Successful Response
+     */
+    204: void
+  }
+
+export type DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteResponse =
+  DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteResponses[keyof DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteResponses]
+
+export type ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetData =
+  {
+    body?: never
+    headers?: {
+      /**
+       * X-Amzn-Oidc-Data
+       */
+      'x-amzn-oidc-data'?: string | null
+    }
+    path: {
+      /**
+       * Transcription Id
+       */
+      transcription_id: string
+    }
+    query?: never
+    url: '/transcriptions/{transcription_id}/keywords'
+  }
+
+export type ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError
+  }
+
+export type ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetError =
+  ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetErrors[keyof ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetErrors]
+
+export type ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: TranscriptionKeywords
+  }
+
+export type ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetResponse =
+  ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetResponses[keyof ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetResponses]
+
+export type ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutData =
+  {
+    body: TranscriptionKeywords
+    headers?: {
+      /**
+       * X-Amzn-Oidc-Data
+       */
+      'x-amzn-oidc-data'?: string | null
+    }
+    path: {
+      /**
+       * Transcription Id
+       */
+      transcription_id: string
+    }
+    query?: never
+    url: '/transcriptions/{transcription_id}/keywords'
+  }
+
+export type ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError
+  }
+
+export type ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutError =
+  ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutErrors[keyof ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutErrors]
+
+export type ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: TranscriptionKeywords
+  }
+
+export type ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutResponse =
+  ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutResponses[keyof ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutResponses]
 
 export type GetUserUsersMeGetData = {
   body?: never

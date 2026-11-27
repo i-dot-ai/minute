@@ -1,6 +1,7 @@
 import { DialogueEntry } from '@/lib/client'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
+  listTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetQueryKey,
   saveTranscriptionTranscriptionsTranscriptionIdPatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -26,6 +27,14 @@ export const useSaveTranscription = (transcription_id: string) => {
               }),
               updatedTranscription
             )
+            queryClient.invalidateQueries({
+              queryKey:
+                listTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetQueryKey(
+                  {
+                    path: { transcription_id },
+                  }
+                ),
+            })
           },
         }
       )

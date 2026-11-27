@@ -1,8 +1,9 @@
 import uuid
 from datetime import datetime
 from enum import StrEnum, auto
+from typing import Annotated
 
-from pydantic import AwareDatetime, BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field, StringConstraints, field_validator
 
 from common.database.postgres_models import ContentSource, DialogueEntry, JobStatus, TemplateType
 
@@ -114,6 +115,28 @@ class TranscriptionPatchRequest(BaseModel):
     title: str | None = None
     dialogue_entries: list[DialogueEntry] | None = None
     meeting_datetime: AwareDatetime | None = None
+
+
+TranscriptionKeyword = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100, pattern=r"^[^\x00-\x1f\x7f]+$")
+]
+
+
+def deduplicate_keywords(keywords: list[str]) -> list[str]:
+    unique: dict[str, str] = {}
+    for keyword in keywords:
+        phrase = " ".join(keyword.split())
+        unique.setdefault(phrase.casefold(), phrase)
+    return list(unique.values())
+
+
+class TranscriptionKeywords(BaseModel):
+    keywords: list[TranscriptionKeyword] = Field(description="Short search terms or phrases, one per list item.")
+
+    @field_validator("keywords")
+    @classmethod
+    def normalize_keywords(cls, keywords: list[str]) -> list[str]:
+        return deduplicate_keywords(keywords)
 
 
 class GetUserResponse(BaseModel):

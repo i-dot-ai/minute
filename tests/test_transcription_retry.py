@@ -46,6 +46,8 @@ async def _seed_failed_transcription(
             error="boom",
             created_datetime=SEED_TIME,
             dialogue_entries=[{"speaker": "A", "text": "body", "start_time": 0.0, "end_time": 1.0}],
+            search_keywords=["old topic"],
+            search_keywords_generated=True,
         )
         session.add(transcription)
         recording = Recording(
@@ -238,6 +240,8 @@ async def test_retry_resets_existing_transcription(failed_transcription, started
         assert transcription.status == JobStatus.AWAITING_START
         assert transcription.error is None
         assert transcription.dialogue_entries is None
+        assert transcription.search_keywords is None
+        assert not transcription.search_keywords_generated
         assert transcription.created_datetime > SEED_TIME
 
         minute = await session.get(Minute, minute_id)
@@ -309,13 +313,14 @@ async def test_retry_publish_failure_marks_failed(failed_transcription, monkeypa
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_patch_rejected_while_processing(in_progress_transcription, failed_transcription):
+async def test_edits_rejected_while_processing(in_progress_transcription, failed_transcription):
     """Finding 2: a PATCH while processing would race the workflow's writes, so it is
     refused until the job is terminal."""
     async with get_test_client() as ac:
-        blocked = await ac.patch(
-            f"/transcriptions/{in_progress_transcription['transcription_id']}", json={"title": "renamed"}
-        )
+        pending_path = f"/transcriptions/{in_progress_transcription['transcription_id']}"
+        blocked = await ac.patch(pending_path, json={"title": "renamed"})
+        assert (await ac.put(f"{pending_path}/keywords", json={"keywords": ["topic"]})).status_code == 409
+        assert (await ac.delete(f"{pending_path}/keywords")).status_code == 409
         allowed = await ac.patch(
             f"/transcriptions/{failed_transcription['transcription_id']}", json={"title": "renamed"}
         )

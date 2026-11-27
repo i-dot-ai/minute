@@ -1,4 +1,4 @@
-"""Activity: generate a title for the transcription (one LLM call; failures degrade)."""
+"""Activity: generate a title and search keywords in one optional LLM call."""
 
 from uuid import UUID
 
@@ -13,10 +13,9 @@ from common.workflows.activities import _shared
 async def generate_title(transcription_id: str) -> None:
     transcription_id_uuid = UUID(transcription_id)
     row = _shared.in_progress(transcription_id_uuid)
-    if row is None or not row.dialogue_entries or row.title:
+    if row is None or not row.dialogue_entries:
         return
-    # generate_meeting_title raises on LLM failure; the activity retries, and the workflow treats a
-    # missing title as optional.
-    title = await generate_meeting_title(transcript=row.dialogue_entries)
-    if title:
-        _shared.set_title_if_empty(transcription_id_uuid, title)
+    if row.title and row.search_keywords is not None:
+        return
+    metadata = await generate_meeting_title(transcript=row.dialogue_entries)
+    _shared.set_generated_title_and_keywords(row, metadata.title.strip(), metadata.keywords)

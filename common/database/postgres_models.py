@@ -3,8 +3,8 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Column, Index, text
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import TIMESTAMP, Column, Index, Text, text
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
 from sqlmodel import Field, Relationship, SQLModel, col, func
@@ -127,6 +127,10 @@ class Transcription(BaseTableMixin, table=True):
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     title: str | None = Field(default=None)
+    search_keywords: list[str] | None = Field(default=None, exclude=True, sa_column=Column(ARRAY(Text)))
+    search_keywords_generated: bool = Field(
+        default=False, exclude=True, sa_column_kwargs={"server_default": text("false")}
+    )
     # When the meeting started. Defaults to upload time if the client doesn't send one.
     meeting_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     dialogue_entries: list[DialogueEntry] | None = Field(default=None, sa_column=Column(JSONB))
@@ -150,6 +154,11 @@ class Transcription(BaseTableMixin, table=True):
     def no_speech_detected(self) -> bool:
         """Whether transcription completed without any speech transcribed."""
         return self.status == JobStatus.COMPLETED and not self.dialogue_entries
+
+    def clear_generated_keywords(self) -> None:
+        if self.search_keywords_generated:
+            self.search_keywords = None
+            self.search_keywords_generated = False
 
 
 class TemplateType(StrEnum):

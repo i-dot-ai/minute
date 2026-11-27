@@ -416,6 +416,7 @@ async def retry_transcription(
     transcription.status = JobStatus.AWAITING_START
     transcription.error = None
     transcription.dialogue_entries = None
+    transcription.clear_generated_keywords()
     transcription.created_datetime = datetime.now(UTC)
 
     minute.template_name = request.template_name
@@ -452,6 +453,23 @@ async def get_transcription(
         error=transcription.error,
         no_speech_detected=transcription.no_speech_detected,
     )
+
+
+async def _transcription_for_edit(
+    transcription_id: uuid.UUID, session: AsyncSession, user_id: uuid.UUID
+) -> Transcription:
+    transcription = (
+        await session.exec(
+            select(Transcription)
+            .where(Transcription.id == transcription_id, Transcription.user_id == user_id)
+            .with_for_update()
+        )
+    ).first()
+    if transcription is None:
+        raise HTTPException(404, detail="Transcription not found")
+    if transcription.status in (JobStatus.AWAITING_START, JobStatus.IN_PROGRESS):
+        raise HTTPException(409, detail="Transcription cannot be edited while it is processing")
+    return transcription
 
 
 @transcriptions_router.get("/transcriptions/{transcription_id}/recordings")
@@ -494,18 +512,15 @@ async def save_transcription(
 ):
     """Save or update a transcription."""
     logger.info("Saving transcription")
-    # Use the transcription service to handle the save operation
-    transcription = await session.get(Transcription, transcription_id)
-    if not transcription or transcription.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Transcription not found")
-    # The workflow writes the row (speakers, title) while it is processing, so an edit now
-    # would race those writes.
-    if transcription.status in (JobStatus.AWAITING_START, JobStatus.IN_PROGRESS):
-        raise HTTPException(status_code=409, detail="Transcription cannot be edited while it is processing")
+    transcription = await _transcription_for_edit(transcription_id, session, current_user.id)
 
     if transcription_data.title is not None:
         transcription.title = transcription_data.title
     if transcription_data.dialogue_entries is not None:
+        old_text = [entry["text"] for entry in transcription.dialogue_entries or []]
+        new_text = [entry["text"] for entry in transcription_data.dialogue_entries]
+        if old_text != new_text:
+            transcription.clear_generated_keywords()
         transcription.dialogue_entries = transcription_data.dialogue_entries
     if transcription_data.meeting_datetime is not None:
         transcription.meeting_datetime = transcription_data.meeting_datetime

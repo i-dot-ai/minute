@@ -2,8 +2,8 @@
 
 from uuid import UUID
 
-from sqlalchemy import or_, update
-from sqlmodel import col
+from sqlalchemy import ColumnElement, case, literal, or_, update
+from sqlmodel import col, func
 
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import JobStatus, Transcription
@@ -51,17 +51,32 @@ def update_in_progress(transcription_id: UUID, **values) -> bool:
         return result.rowcount == 1  # pyright: ignore[reportAttributeAccessIssue]
 
 
-def set_title_if_empty(transcription_id: UUID, title: str) -> bool:
-    """Write a generated title only while processing and still empty; preserve user titles."""
+def set_generated_title_and_keywords(transcription: Transcription, title: str, keywords: list[str]) -> bool:
+    """Fill missing metadata only; a supplied title or explicitly empty keyword list is preserved."""
+    title_column = col(Transcription.title)
+    keywords_column = col(Transcription.search_keywords)
+    keywords_missing = keywords_column.is_(None)
+    missing = keywords_missing
+    values: dict[str, ColumnElement] = {
+        "search_keywords": func.coalesce(keywords_column, literal(keywords, type_=keywords_column.type)),
+        "search_keywords_generated": or_(keywords_missing, col(Transcription.search_keywords_generated)),
+    }
+    if title:
+        title_missing = or_(title_column.is_(None), title_column == "")
+        missing = or_(missing, title_missing)
+        values["title"] = case((title_missing, title), else_=title_column)
+
     with SessionLocal() as session:
         result = session.exec(
             update(Transcription)
             .where(
-                col(Transcription.id) == transcription_id,
+                col(Transcription.id) == transcription.id,
                 col(Transcription.status) == JobStatus.IN_PROGRESS,
-                or_(col(Transcription.title).is_(None), col(Transcription.title) == ""),
+                # A retry resets created_datetime, so a late result cannot enrich the next attempt.
+                col(Transcription.created_datetime) == transcription.created_datetime,
+                missing,
             )
-            .values(title=title)
+            .values(**values)
         )
         session.commit()
         return result.rowcount == 1  # pyright: ignore[reportAttributeAccessIssue]

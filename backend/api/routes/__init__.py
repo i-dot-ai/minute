@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from .health import health_router
+from .keywords import keywords_router
 from .minutes import minutes_router
 from .status import status_router
 from .support import support_router
@@ -13,6 +14,7 @@ router = APIRouter()
 router.include_router(health_router)
 router.include_router(status_router)
 router.include_router(transcriptions_router)
+router.include_router(keywords_router)
 router.include_router(users_router)
 router.include_router(minutes_router)
 router.include_router(templates_router)

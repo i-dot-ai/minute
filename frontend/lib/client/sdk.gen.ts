@@ -27,6 +27,9 @@ import type {
   DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteData,
   DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteErrors,
   DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteResponses,
+  DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteData,
+  DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteErrors,
+  DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteResponses,
   DeleteTranscriptionTranscriptionsTranscriptionIdDeleteData,
   DeleteTranscriptionTranscriptionsTranscriptionIdDeleteErrors,
   DeleteTranscriptionTranscriptionsTranscriptionIdDeleteResponses,
@@ -79,9 +82,15 @@ import type {
   ListMinuteVersionsMinutesMinuteIdVersionsGetData,
   ListMinuteVersionsMinutesMinuteIdVersionsGetErrors,
   ListMinuteVersionsMinutesMinuteIdVersionsGetResponses,
+  ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetData,
+  ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetErrors,
+  ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetResponses,
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetErrors,
   ListTranscriptionsTranscriptionsGetResponses,
+  ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutData,
+  ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutErrors,
+  ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutResponses,
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostData,
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostErrors,
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponses,
@@ -359,6 +368,67 @@ export const getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecording
       GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetErrors,
       ThrowOnError
     >({ url: '/transcriptions/{transcription_id}/recordings', ...options })
+
+/**
+ * Delete Transcription Keywords
+ *
+ * Clear the keyword list.
+ */
+export const deleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDelete =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteData,
+      ThrowOnError
+    >
+  ) =>
+    (options.client ?? client).delete<
+      DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteResponses,
+      DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteErrors,
+      ThrowOnError
+    >({ url: '/transcriptions/{transcription_id}/keywords', ...options })
+
+/**
+ * List Transcription Keywords
+ *
+ * List the search keywords for a transcription owned by the current user.
+ */
+export const listTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGet =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetData,
+      ThrowOnError
+    >
+  ) =>
+    (options.client ?? client).get<
+      ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetResponses,
+      ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetErrors,
+      ThrowOnError
+    >({ url: '/transcriptions/{transcription_id}/keywords', ...options })
+
+/**
+ * Replace Transcription Keywords
+ *
+ * Create or replace the entire keyword list.
+ */
+export const replaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPut =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutData,
+      ThrowOnError
+    >
+  ) =>
+    (options.client ?? client).put<
+      ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutResponses,
+      ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutErrors,
+      ThrowOnError
+    >({
+      url: '/transcriptions/{transcription_id}/keywords',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    })
 
 /**
  * Get User

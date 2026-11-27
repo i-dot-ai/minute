@@ -15,6 +15,7 @@ from temporalio.exceptions import ApplicationError
 from temporalio.testing import ActivityEnvironment
 
 from common.database.postgres_models import JobStatus
+from common.generate_meeting_title import MeetingTitleResponse
 from common.services.exceptions import NoSpeechDetectedError, TranscriptionFailedError
 from common.services.minute_handler_service import (
     MinuteGenerationFailedError,
@@ -45,9 +46,14 @@ ENTRIES = [{"speaker": "A", "text": "hi", "start_time": 0.0, "end_time": 1.0}]
 TRANSCRIBE_INPUT = wf.TranscribeInput(minute_id=str(MINUTE_ID), stt_timeout_seconds=60)
 
 
-def _row(status=JobStatus.IN_PROGRESS, entries=ENTRIES, title=None):
+def _row(status=JobStatus.IN_PROGRESS, entries=ENTRIES, title=None, search_keywords=None):
     return SimpleNamespace(
-        id=TRANSCRIPTION_ID, user_id=uuid.uuid4(), status=status, dialogue_entries=entries, title=title
+        id=TRANSCRIPTION_ID,
+        user_id=uuid.uuid4(),
+        status=status,
+        dialogue_entries=entries,
+        title=title,
+        search_keywords=search_keywords,
     )
 
 
@@ -64,12 +70,12 @@ def writes(monkeypatch):
         calls.append((tid, values))
         return True
 
-    def _set_title(tid, title):
-        calls.append((tid, {"title": title}))
-        return True
-
     monkeypatch.setattr(_shared, "update_in_progress", _update)
-    monkeypatch.setattr(_shared, "set_title_if_empty", _set_title)
+    monkeypatch.setattr(
+        _shared,
+        "set_generated_title_and_keywords",
+        lambda row, title, keywords: _update(row.id, title=title, keywords=keywords),
+    )
     monkeypatch.setattr(
         _shared,
         "mark_failed",
@@ -294,13 +300,24 @@ async def test_identify_speakers_saves_named_entries(monkeypatch, writes):
 
 
 @pytest.mark.asyncio
-async def test_generate_title_saves_title(monkeypatch, writes):
-    llm = AsyncMock(return_value="Weekly sync")
-    _patch_row(monkeypatch, _row())
-    monkeypatch.setattr(generate_title, "generate_meeting_title", llm)
+async def test_generate_keywords_with_the_title_call_even_when_title_is_supplied(monkeypatch, writes):
+    topics = [f"topic {index}" for index in range(32)]
+    unfiltered = [" Freedom  of information ", "freedom of information", " ", "first\nsecond", *topics]
+    llm = AsyncMock(
+        side_effect=lambda *, response_format, **_: response_format(title="Weekly sync", keywords=unfiltered)
+    )
+    monkeypatch.setattr(
+        "common.generate_meeting_title.create_default_chatbot", lambda **_: SimpleNamespace(structured_chat=llm)
+    )
+    _patch_row(monkeypatch, _row(title="User title"))
     await _run(generate_title.generate_title, str(TRANSCRIPTION_ID))
-    llm.assert_awaited_once_with(transcript=ENTRIES)
-    assert writes == [(TRANSCRIPTION_ID, {"title": "Weekly sync"})]
+    llm.assert_awaited_once()
+    assert llm.call_args.kwargs["response_format"] is MeetingTitleResponse
+    assert "up to 32 search keywords" in llm.call_args.kwargs["messages"][0]["content"]
+    assert "Sort keywords by importance, most important first" in llm.call_args.kwargs["messages"][0]["content"]
+    assert "expert SEO specialist" in llm.call_args.kwargs["messages"][0]["content"]
+    assert "A: hi" in llm.call_args.kwargs["messages"][1]["content"]
+    assert writes == [(TRANSCRIPTION_ID, {"title": "Weekly sync", "keywords": ["Freedom of information", *topics]})]
 
 
 @pytest.mark.asyncio
@@ -335,8 +352,9 @@ async def test_speaker_provider_error_propagates_without_changing_entries(monkey
 
 
 @pytest.mark.asyncio
-async def test_generate_title_skips_existing_title(monkeypatch, writes):
-    _patch_row(monkeypatch, _row(title="User title"))
+@pytest.mark.parametrize("row", [_row(title="User title", search_keywords=[]), _row(entries=[])])
+async def test_generate_title_skips_when_enriched_or_no_speech(monkeypatch, writes, row):
+    _patch_row(monkeypatch, row)
     llm = AsyncMock()
     monkeypatch.setattr(generate_title, "generate_meeting_title", llm)
     await _run(generate_title.generate_title, str(TRANSCRIPTION_ID))

@@ -18,6 +18,7 @@ import {
   createUserTemplateUserTemplatesPost,
   deleteMinuteMinutesMinuteIdDelete,
   deleteMinuteVersionMinuteVersionsMinuteVersionIdDelete,
+  deleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDelete,
   deleteTranscriptionTranscriptionsTranscriptionIdDelete,
   deleteUserTemplateUserTemplatesTemplateIdDelete,
   duplicateUserTemplateUserTemplatesTemplateIdDuplicatePost,
@@ -36,8 +37,10 @@ import {
   healthcheckHealthcheckGet,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGet,
   listMinuteVersionsMinutesMinuteIdVersionsGet,
+  listTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGet,
   listTranscriptionsTranscriptionsGet,
   type Options,
+  replaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPut,
   retryTranscriptionTranscriptionsTranscriptionIdRetryPost,
   saveTranscriptionTranscriptionsTranscriptionIdPatch,
   searchTranscriptionsTranscriptionsSearchGet,
@@ -68,6 +71,9 @@ import type {
   DeleteMinuteMinutesMinuteIdDeleteResponse,
   DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteData,
   DeleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteError,
+  DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteData,
+  DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteError,
+  DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteResponse,
   DeleteTranscriptionTranscriptionsTranscriptionIdDeleteData,
   DeleteTranscriptionTranscriptionsTranscriptionIdDeleteError,
   DeleteTranscriptionTranscriptionsTranscriptionIdDeleteResponse,
@@ -117,9 +123,15 @@ import type {
   ListMinuteVersionsMinutesMinuteIdVersionsGetData,
   ListMinuteVersionsMinutesMinuteIdVersionsGetError,
   ListMinuteVersionsMinutesMinuteIdVersionsGetResponse,
+  ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetData,
+  ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetError,
+  ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetResponse,
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetError,
   ListTranscriptionsTranscriptionsGetResponse,
+  ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutData,
+  ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutError,
+  ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutResponse,
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostData,
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostError,
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponse,
@@ -709,6 +721,120 @@ export const getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecording
           options
         ),
     })
+
+/**
+ * Delete Transcription Keywords
+ *
+ * Clear the keyword list.
+ */
+export const deleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteMutation =
+  (
+    options?: Partial<
+      Options<DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteData>
+    >
+  ): UseMutationOptions<
+    DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteResponse,
+    DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteError,
+    Options<DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteResponse,
+      DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteError,
+      Options<DeleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDeleteData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await deleteTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsDelete(
+            {
+              ...options,
+              ...fnOptions,
+              throwOnError: true,
+            }
+          )
+        return data
+      },
+    }
+    return mutationOptions
+  }
+
+export const listTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetQueryKey =
+  (
+    options: Options<ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetData>
+  ) =>
+    createQueryKey(
+      'listTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGet',
+      options
+    )
+
+/**
+ * List Transcription Keywords
+ *
+ * List the search keywords for a transcription owned by the current user.
+ */
+export const listTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetOptions =
+  (
+    options: Options<ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetData>
+  ) =>
+    queryOptions<
+      ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetResponse,
+      ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetError,
+      ListTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetResponse,
+      ReturnType<
+        typeof listTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetQueryKey
+      >
+    >({
+      queryFn: async ({ queryKey, signal }) => {
+        const { data } =
+          await listTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGet(
+            {
+              ...options,
+              ...queryKey[0],
+              signal,
+              throwOnError: true,
+            }
+          )
+        return data
+      },
+      queryKey:
+        listTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsGetQueryKey(
+          options
+        ),
+    })
+
+/**
+ * Replace Transcription Keywords
+ *
+ * Create or replace the entire keyword list.
+ */
+export const replaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutMutation =
+  (
+    options?: Partial<
+      Options<ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutData>
+    >
+  ): UseMutationOptions<
+    ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutResponse,
+    ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutError,
+    Options<ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutResponse,
+      ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutError,
+      Options<ReplaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPutData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await replaceTranscriptionKeywordsTranscriptionsTranscriptionIdKeywordsPut(
+            {
+              ...options,
+              ...fnOptions,
+              throwOnError: true,
+            }
+          )
+        return data
+      },
+    }
+    return mutationOptions
+  }
 
 export const getUserUsersMeGetQueryKey = (
   options?: Options<GetUserUsersMeGetData>

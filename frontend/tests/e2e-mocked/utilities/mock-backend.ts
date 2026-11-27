@@ -111,6 +111,12 @@ export async function mockBackend(
     },
     {
       method: 'GET',
+      path: `/transcriptions/${transcriptionId}/keywords`,
+      status: 200,
+      response: { keywords: [] },
+    },
+    {
+      method: 'GET',
       path: `/transcription/${transcriptionId}/minutes`,
       status: 200,
       response: minutes,

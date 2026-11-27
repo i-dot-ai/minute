@@ -13,8 +13,13 @@ import {
   toMeetingTime,
 } from '@/components/audio/meeting-time-field'
 import { useRenameTranscription } from '@/components/recent-meetings/rename-transcription'
+import {
+  TranscriptionKeywordField,
+  TranscriptionKeywords,
+} from '@/components/transcription-keywords'
 import { useSaveMeetingTime } from '@/hooks/use-save-meeting-time'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
+import { useTranscriptionKeywords } from '@/hooks/use-transcription-keywords'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
@@ -54,6 +59,10 @@ export default function TranscriptPage({
         ? 2000
         : false,
   })
+  const keywords = useTranscriptionKeywords(
+    transcriptionId,
+    transcription?.status === 'completed' && !transcription.no_speech_detected
+  )
 
   const [isEditing, setIsEditing] = useState(false)
   const [draftTitle, setDraftTitle] = useState('')
@@ -73,7 +82,7 @@ export default function TranscriptPage({
     control,
     register,
     handleSubmit,
-    formState: { dirtyFields },
+    formState: { dirtyFields, isSubmitting },
     reset,
     setValue,
   } = methods
@@ -110,6 +119,7 @@ export default function TranscriptPage({
   const { save: saveMeetingTime } = useSaveMeetingTime(transcriptionId)
 
   const startEditing = () => {
+    keywords.reset()
     setDraftTitle(transcription?.title ?? '')
     if (transcription?.meeting_datetime) {
       setValue(
@@ -122,6 +132,7 @@ export default function TranscriptPage({
 
   const handleSave = handleSubmit(async (data) => {
     try {
+      await keywords.save()
       await saveTranscription(data)
       if (dirtyFields.entries) {
         posthog.capture('transcript_text_edited')
@@ -382,6 +393,7 @@ export default function TranscriptPage({
                     type="button"
                     className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
                     onClick={handleDiscard}
+                    disabled={isSubmitting}
                   >
                     Discard
                   </button>
@@ -389,7 +401,7 @@ export default function TranscriptPage({
                     type="button"
                     className="govuk-button govuk-!-margin-bottom-0"
                     onClick={handleSave}
-                    disabled={isSavingTitle}
+                    disabled={isSavingTitle || isSubmitting}
                   >
                     <Save className="size-4" /> Save
                   </button>
@@ -443,6 +455,9 @@ export default function TranscriptPage({
                 <div className="govuk-!-margin-top-6">
                   <MeetingTimeField variant="edit" />
                 </div>
+                <div className="govuk-!-margin-top-6">
+                  <TranscriptionKeywordField {...keywords.field} />
+                </div>
               </div>
             ) : (
               <>
@@ -452,6 +467,7 @@ export default function TranscriptPage({
                 <p className="govuk-body govuk-hint govuk-!-margin-bottom-4">
                   {formatMeetingTime(new Date(transcription.meeting_datetime))}
                 </p>
+                <TranscriptionKeywords keywords={keywords.saved} />
               </>
             )}
             <form onSubmit={handleSave}>

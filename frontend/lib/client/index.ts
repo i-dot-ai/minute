@@ -194,6 +194,7 @@ export type {
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostErrors,
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponse,
   RetryTranscriptionTranscriptionsTranscriptionIdRetryPostResponses,
+  Role,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchData,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchError,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchErrors,

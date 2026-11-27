@@ -1,6 +1,7 @@
 'use client'
 
 import { ChangeNameDialog } from '@/components/header/change-name-dialog'
+import ProfileAvatar from '@/components/profile-avatar'
 import { SettingsDialog } from '@/components/settings/settings-dialog'
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'

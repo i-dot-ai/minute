@@ -7,7 +7,6 @@ import {
   getTemplatesTemplatesGetQueryKey,
   getUserTemplatesUserTemplatesGetOptions,
   getUserTemplatesUserTemplatesGetQueryKey,
-  getUserUsersMeGetOptions,
   updateDefaultTemplateUsersDefaultTemplatePatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { FeatureFlags } from '@/lib/feature-flags'

@@ -147,6 +147,10 @@ export type GetUserResponse = {
    */
   display_name: string
   /**
+   * Roles
+   */
+  roles: Array<Role>
+  /**
    * Data Retention Days
    */
   data_retention_days: number | null
@@ -513,6 +517,11 @@ export type RecordingCreateResponse = {
    */
   upload_url: string
 }
+
+/**
+ * Role
+ */
+export type Role = 'admin' | 'audit'
 
 /**
  * SearchHighlight
@@ -1139,10 +1148,6 @@ export type TranscriptionSearchResult = {
    * Created Datetime
    */
   created_datetime: string
-  /**
-   * Meeting Datetime
-   */
-  meeting_datetime: string
   /**
    * Title
    */

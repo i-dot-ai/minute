@@ -195,10 +195,13 @@ module "worker" {
   ephemeral_storage = 40
 
   http_healthcheck = false
-  # The Temporal worker has no HTTP endpoint or heartbeat file to check. Temporal's own activity
-  # retries (and the STT heartbeat) handle worker loss, so a container healthcheck here would only
-  # risk flapping a healthy task.
-  container_healthcheck = null
+  container_healthcheck = {
+    command     = ["CMD-SHELL", "test -f /app/worker_ready || exit 1"]
+    interval    = 15
+    retries     = 3
+    startPeriod = 120
+    timeout     = 5
+  }
 }
 
 resource "aws_service_discovery_private_dns_namespace" "private_dns_namespace" {

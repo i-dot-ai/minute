@@ -19,18 +19,14 @@ from common.database.postgres_models import (
     UserTemplate,
 )
 from common.format_transcript import transcript_as_speaker_and_utterance
-from common.llm.client import FastOrBestLLM, create_default_chatbot
-from common.prompts import (
-    get_ai_edit_initial_messages,
-    get_basic_minutes_prompt,
-)
+from common.llm.client import ModelTier, get_chatbot
+from common.prompts import get_ai_edit_initial_messages
 from common.services.errors import is_transient
 from common.services.job_claim import claim_job
 from common.services.posthog_client import capture_event
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings, get_structured_logger
 from common.templates.user_template import generate_user_template
-from common.types import MeetingType
 
 settings = get_settings()
 
@@ -155,9 +151,7 @@ class MinuteHandlerService:
             if current.status in (JobStatus.COMPLETED, JobStatus.FAILED):
                 return  # a previous attempt finished it: idempotent retry
         try:
-            meeting_type = cls.predict_meeting(minute_version.minute.transcription.dialogue_entries)
-            slogger.info("Predicted meeting type {meeting_type}", meeting_type=str(meeting_type))
-            html_content = await cls.generate_minutes(meeting_type, minute_version.minute)
+            html_content = await cls.generate_minutes(minute_version.minute)
             if not cls.update_minute_version(minute_version.id, html_content=html_content, status=JobStatus.COMPLETED):
                 return  # the row moved on (deleted/failed): nothing to write
             capture_event(
@@ -232,23 +226,18 @@ class MinuteHandlerService:
         return await generate_user_template(template=template, transcription=minute.transcription)
 
     @classmethod
-    async def generate_minutes(
-        cls,
-        meeting_type: MeetingType,
-        minute: Minute,
-    ) -> str:
-        match meeting_type:
-            case MeetingType.too_short:
-                result = cls.handle_bad_transcript(minute.transcription.dialogue_entries)
-            case MeetingType.short:
-                result = await cls.generate_basic_minutes(minute.transcription.dialogue_entries)
-            case _:
-                result = await cls.generate_full_minutes(minute)
+    async def generate_minutes(cls, minute: Minute) -> str:
+        dialogue_entries = minute.transcription.dialogue_entries
+        if cls.is_too_short(dialogue_entries):
+            logger.info("%s: Transcript too short to summarise", minute.id)
+            result = cls.too_short_message(dialogue_entries)
+        else:
+            result = await cls.generate_from_template(minute)
         result = mistune.html(strip_document_code_fence(result))
         return cast(str, result)
 
     @classmethod
-    async def generate_full_minutes(cls, minute: Minute) -> str:
+    async def generate_from_template(cls, minute: Minute) -> str:
         if minute.user_template_id is not None:
             logger.info(
                 "%s: Generating minute from user template user_template_id=%s", minute.id, minute.user_template_id
@@ -262,28 +251,14 @@ class MinuteHandlerService:
         return convert_american_to_british_spelling(result)
 
     @classmethod
-    def handle_bad_transcript(cls, transcript: list[DialogueEntry]) -> str:
+    def too_short_message(cls, transcript: list[DialogueEntry]) -> str:
         return f"""Short meeting detected. Minutes not available.
          Please try again with a longer meeting. Transcript is: {transcript_as_speaker_and_utterance(transcript)}"""
 
     @classmethod
-    async def generate_basic_minutes(
-        cls,
-        transcript: list[DialogueEntry],
-    ) -> str:
-        chatbot = create_default_chatbot(FastOrBestLLM.FAST)
-        return await chatbot.chat(messages=get_basic_minutes_prompt(transcript))
-
-    @classmethod
-    def predict_meeting(cls, dialogue_entries: list[DialogueEntry]) -> MeetingType:
+    def is_too_short(cls, dialogue_entries: list[DialogueEntry]) -> bool:
         word_count = sum(len(entry["text"].split()) for entry in dialogue_entries)
-        match word_count:
-            case n if n < settings.MIN_WORD_COUNT_FOR_SUMMARY:
-                return MeetingType.too_short
-            case n if n < settings.MIN_WORD_COUNT_FOR_FULL_SUMMARY:
-                return MeetingType.short
-            case _:
-                return MeetingType.standard
+        return word_count < settings.MIN_WORD_COUNT_FOR_SUMMARY
 
     @classmethod
     async def edit_minutes_with_ai(
@@ -292,7 +267,7 @@ class MinuteHandlerService:
         edit_instructions: str,
         transcript: list[DialogueEntry],
     ) -> str:
-        chatbot = create_default_chatbot(FastOrBestLLM.FAST)
+        chatbot = get_chatbot(ModelTier.LIGHTWEIGHT)
         edited_minutes = await chatbot.chat(
             messages=get_ai_edit_initial_messages(minutes, edit_instructions, transcript)
         )

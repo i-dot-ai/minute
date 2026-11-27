@@ -1,5 +1,5 @@
-from .azure_openai import OpenAIModelAdapter
-from .base import ModelAdapter
+from .base import ModelAdapter, StructuredOutputError
+from .bedrock import BedrockModelAdapter
 from .gemini import GeminiModelAdapter
 
-__all__ = ["GeminiModelAdapter", "ModelAdapter", "OpenAIModelAdapter"]
+__all__ = ["BedrockModelAdapter", "GeminiModelAdapter", "ModelAdapter", "StructuredOutputError"]

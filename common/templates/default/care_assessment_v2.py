@@ -25,7 +25,6 @@ class CareAssessmentV2(SimpleTemplate):
     description = "Enhanced Social care assessment template based on Care Act Eligibility Criteria"
     citations_required = True
     agenda_usage = AgendaUsage.NOT_USED
-    temperature = 0.0
 
     @classmethod
     def prompt(cls, transcript: list[DialogueEntry], agenda: str | None = None) -> list[dict[str, str]]:  # noqa: ARG003

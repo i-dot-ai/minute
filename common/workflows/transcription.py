@@ -21,7 +21,7 @@ from temporalio.exceptions import ActivityError
 # total concurrency = slots x worker processes polling the queue (worker/temporal_worker.py).
 TASK_QUEUE = "transcription"  # workflow tasks + DB status writes (fast, uncapped)
 STT_TASK_QUEUE = "stt"  # prepare_audio + transcribe: ffmpeg and Azure STT, capped by STT_MAX_CONCURRENCY
-LLM_TASK_QUEUE = "llm"  # speakers, title, summary: shared Gemini quota, capped by MAX_LLM_PROCESSES
+LLM_TASK_QUEUE = "llm"  # speakers, title, summary, user minutes, AI edits: LLM quota, capped by LLM_MAX_CONCURRENCY
 
 PREPARE_AUDIO = "prepare_audio"
 TRANSCRIBE = "transcribe"

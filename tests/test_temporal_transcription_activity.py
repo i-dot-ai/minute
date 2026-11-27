@@ -326,7 +326,7 @@ async def test_title_llm_error_propagates_for_temporal_to_retry(monkeypatch, wri
 async def test_speaker_provider_error_propagates_without_changing_entries(monkeypatch, writes):
     _patch_row(monkeypatch, _row())
     bot = SimpleNamespace(structured_chat=AsyncMock(side_effect=httpx.ReadTimeout("LLM temporarily unavailable")))
-    monkeypatch.setattr("common.audio.generate_speaker_predictions.create_default_chatbot", lambda *_args: bot)
+    monkeypatch.setattr("common.audio.generate_speaker_predictions.get_chatbot", lambda *_args: bot)
     with pytest.raises(httpx.ReadTimeout):
         await _run(identify_speakers.identify_speakers, str(TRANSCRIPTION_ID))
     assert writes == []

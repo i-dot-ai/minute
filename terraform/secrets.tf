@@ -7,14 +7,6 @@ locals {
       value = module.app_bucket.id
     },
     {
-      name  = "AZURE_OPENAI_ENDPOINT"
-      value = "placeholder" # Update value in SSM - Do not hardcode
-    },
-    {
-      name  = "AZURE_OPENAI_API_KEY"
-      value = "placeholder" # Update value in SSM - Do not hardcode
-    },
-    {
       name  = "AZURE_SPEECH_KEY"
       value = "placeholder" # Update value in SSM - Do not hardcode
     },
@@ -43,8 +35,10 @@ locals {
       value = "placeholder" # Update value in SSM - Do not hardcode
     },
     {
-      name  = "AZURE_DEPLOYMENT"
-      value = "placeholder" # Update value in SSM - Do not hardcode
+      # LLM provider: "bedrock", or "gemini" as the fallback. To switch, update this value in SSM and
+      # force a new worker deployment; no release needed (values here are ignored after creation).
+      name  = "LLM_PROVIDER"
+      value = "bedrock"
     },
     {
       name  = "GOOGLE_APPLICATION_CREDENTIALS_BASE64"

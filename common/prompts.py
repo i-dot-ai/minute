@@ -43,24 +43,6 @@ def get_ai_edit_initial_messages(
     ]
 
 
-def get_basic_minutes_prompt(
-    transcript: list[DialogueEntry],
-) -> list[dict[str, str]]:
-    """
-    A function to generate a basic meeting minutes prompt based on a provided transcript of dialogues. It combines
-    a generic prompt with the transcript entries to create a structured message list. Intended to be used
-    as a fallback when no other summary type is suitable.
-    """
-    prompt = """Provide a simple summary of the meeting."""
-    return [
-        {
-            "role": "system",
-            "content": prompt,
-        },
-        get_transcript_messages(transcript),
-    ]
-
-
 def get_sections_from_transcript_prompt(
     transcript: list[DialogueEntry],
 ) -> list[dict[str, str]]:

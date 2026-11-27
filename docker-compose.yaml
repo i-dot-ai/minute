@@ -63,6 +63,10 @@ services:
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
       - TEMPORAL_ADDRESS=temporal:7233
+      # Passed through from the host (e.g. an aws-vault session) for Bedrock calls; see .env.example.
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SESSION_TOKEN
     stop_grace_period: 30s
     depends_on:
       db:

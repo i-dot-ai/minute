@@ -239,12 +239,6 @@ class TranscriptionJobMessageData(BaseModel):
     )
 
 
-class MeetingType(StrEnum):
-    too_short = auto()
-    short = auto()
-    standard = auto()
-
-
 class AgendaUsage(StrEnum):
     NOT_USED = auto()
     OPTIONAL = auto()

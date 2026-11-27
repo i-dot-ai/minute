@@ -1,5 +1,6 @@
 import logging
 from functools import lru_cache
+from typing import Literal
 
 import dotenv
 from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
@@ -67,20 +68,6 @@ class Settings(BaseSettings):
     AZURE_SPEECH_FALLBACK_2_KEY: str | None = Field(description="Azure STT speech key for fallback 2", default=None)
     AZURE_SPEECH_FALLBACK_2_REGION: str | None = Field(description="Region for Azure STT fallback 2", default=None)
 
-    MAX_LLM_PROCESSES: int = Field(
-        description="Max concurrent LLM steps (speakers, title, summary, minute generation, edits) per node",
-        default=4,
-    )
-
-    # if using Azure OpenAI
-    AZURE_DEPLOYMENT: str | None = Field(description="Azure deployment for openAI", default=None)
-    AZURE_OPENAI_API_KEY: str | None = Field(description="Azure API key for openAI", default=None)
-    AZURE_OPENAI_ENDPOINT: str | None = Field(description="Azure OpenAI service endpoint URL", default=None)
-    AZURE_OPENAI_API_VERSION: str | None = Field(description="Azure OpenAI API version", default=None)
-
-    # GOOGLE_APPLICATION_CREDENTIALS and GOOGLE_CLOUD_PROJECT are read directly by the Google SDK.
-    GOOGLE_CLOUD_LOCATION: str | None = Field(description="Google Cloud region/location", default=None)
-
     # if using MiniStack for development (recommended)
     USE_MINISTACK: bool = Field(description="Use MiniStack for local AWS services emulation in dev", default=True)
     MINISTACK_URL: str = Field(
@@ -92,25 +79,41 @@ class Settings(BaseSettings):
         default_factory=list,
     )
 
-    FAST_LLM_PROVIDER: str = Field(
-        description="Fast LLM provider to use. Currently 'openai' or 'gemini' are supported. Note that this should be "
-        "used for low complexity LLM tasks, like AI edits",
-        default="gemini",
+    # LLM: which provider serves the calls, and how many run at once
+    LLM_PROVIDER: Literal["bedrock", "gemini"] = Field(
+        description="Which provider serves LLM calls. Gemini is the fallback if Bedrock has problems; deployed "
+        "environments read this from SSM, so it can be switched without a release.",
+        default="bedrock",
     )
-    FAST_LLM_MODEL_NAME: str = Field(
-        description="Fast LLM model name to use. Note that this should be used for low complexity LLM tasks",
-        default="gemini-3.5-flash",
+    LLM_MAX_CONCURRENCY: int = Field(
+        description="Max concurrent LLM steps (speakers, title, summary, minute generation, edits) per Temporal "
+        "LLM worker. The cluster-wide cap is this times the number of worker processes polling the 'llm' task queue.",
+        default=4,
     )
-    BEST_LLM_PROVIDER: str = Field(
-        description="Best LLM provider to use. Currently 'openai' or 'gemini' are supported. Note that this should be "
-        "used for higher complexity LLM tasks, like initial minute generation.",
-        default="gemini",
+
+    BEDROCK_PRIMARY_MODEL: str = Field(
+        description="Bedrock model for high-complexity LLM tasks, like initial minute generation",
+        default="eu.anthropic.claude-sonnet-5-5",
     )
-    BEST_LLM_MODEL_NAME: str = Field(
-        description="Best LLM model name to use. Note that this should be used for higher complexity LLM tasks, like "
-        "initial minute generation.",
-        default="gemini-3.5-flash",
+    BEDROCK_LIGHTWEIGHT_MODEL: str = Field(
+        description="Bedrock model for low-complexity LLM tasks, like titles, speakers, citations and AI edits",
+        default="eu.anthropic.claude-sonnet-5-5",
     )
+    BEDROCK_MAX_OUTPUT_TOKENS: int = Field(description="Max output tokens per Bedrock response", default=16384)
+    BEDROCK_READ_TIMEOUT_SECONDS: int = Field(
+        description="Socket read timeout for a Bedrock call. Long minutes can take minutes to generate.",
+        default=300,
+    )
+
+    # Gemini on Vertex AI
+    GEMINI_PRIMARY_MODEL: str = Field(
+        description="Gemini model for high-complexity LLM tasks", default="gemini-3.5-flash"
+    )
+    GEMINI_LIGHTWEIGHT_MODEL: str = Field(
+        description="Gemini model for low-complexity LLM tasks", default="gemini-3.5-flash"
+    )
+    # GOOGLE_APPLICATION_CREDENTIALS and GOOGLE_CLOUD_PROJECT are read directly by the Google SDK.
+    GOOGLE_CLOUD_LOCATION: str | None = Field(description="Google Cloud region/location", default=None)
 
     STORAGE_SERVICE_NAME: str = Field(
         description="Storage service type to use for file uploads. Currently supported are: s3, local",
@@ -147,13 +150,6 @@ class Settings(BaseSettings):
 
     MIN_WORD_COUNT_FOR_SUMMARY: int = Field(
         default=200, description="Transcript must have at least this many words to be passed to summary stage"
-    )
-    MIN_WORD_COUNT_FOR_FULL_SUMMARY: int = Field(
-        default=199,
-        description=(
-            "Transcript must have at least this many words to be passed to complex summary stage. "
-            "Note, this is disabled by default as is lower than the MIN_WORD_COUNT_FOR_SUMMARY"
-        ),
     )
 
     SEARCH_SIMILARITY_THRESHOLD: float = Field(

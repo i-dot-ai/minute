@@ -9,6 +9,8 @@ import {
   getUserTemplatesUserTemplatesGetQueryKey,
   updateDefaultTemplateUsersDefaultTemplatePatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { FeatureFlags } from '@/lib/feature-flags'
+import { useFeatureFlagEnabled } from 'posthog-js/react'
 import { Template } from '@/types/templates'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
@@ -103,6 +105,9 @@ export const StartTranscriptionSection = ({
   )
   const { data: userTemplates = [] } = useQuery(
     getUserTemplatesUserTemplatesGetOptions()
+  )
+  const showWelshLanguageOption = useFeatureFlagEnabled(
+    FeatureFlags.WelshLanguageOption
   )
 
   const { mutate: setDefault, isPending: isSettingDefault } = useMutation({
@@ -219,6 +224,53 @@ export const StartTranscriptionSection = ({
           ))}
         </select>
       </div>
+      {showWelshLanguageOption ? (
+        <fieldset className="govuk-fieldset govuk-!-margin-bottom-2 flex items-center gap-2">
+          <div>
+            <legend className="govuk-fieldset__legend govuk-!-margin-bottom-0">
+              Choose language:
+            </legend>
+          </div>
+          <div
+            className="govuk-radios govuk-radios--small govuk-radios--inline"
+            data-module="govuk-radios"
+          >
+            <div className="govuk-radios__item">
+              <input
+                className="govuk-radios__input"
+                id="cymraeg"
+                name="language"
+                type="radio"
+                value="cymraeg"
+                defaultChecked
+              />
+              <label
+                className="govuk-label govuk-radios__label"
+                htmlFor="cymraeg"
+              >
+                Cymraeg
+              </label>
+            </div>
+            <div className="govuk-radios__item">
+              <input
+                className="govuk-radios__input"
+                id="english"
+                name="language"
+                type="radio"
+                value="english"
+              />
+              <label
+                className="govuk-label govuk-radios__label"
+                htmlFor="english"
+              >
+                English
+              </label>
+            </div>
+          </div>
+        </fieldset>
+      ) : (
+        <></>
+      )}
 
       {resolvedTemplate.agenda_usage != 'not_used' && (
         <div className="govuk-form-group">

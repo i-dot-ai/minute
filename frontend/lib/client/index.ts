@@ -306,7 +306,6 @@ export type {
   TemplateMetadata,
   TemplateResponse,
   TemplateType,
-  Transcription,
   TranscriptionCreateRequest,
   TranscriptionCreateResponse,
   TranscriptionGetResponse,

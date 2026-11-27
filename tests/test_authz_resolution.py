@@ -17,9 +17,7 @@ from sqlmodel import delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import get_user_info
-from common.authz import context_permissions
-from common.authz.permissions import Permission
-from common.authz.roles import ROLE_PERMISSIONS, RoleName
+from common.authz import ROLE_PERMISSIONS, Permission, RoleName, context_permissions
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import (
     Membership,

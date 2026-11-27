@@ -18,7 +18,7 @@ from sqlmodel import delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import get_user_info
-from common.authz.roles import RoleName
+from common.authz import RoleName
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import (
     Membership,
@@ -184,11 +184,11 @@ async def test_transcription_inherits_recording_org(orgs, monkeypatch):
         return None
 
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.storage_service.check_object_exists",
+        "backend.api.routes.transcriptions.router.storage_service.check_object_exists",
         _object_exists,
     )
     monkeypatch.setattr(
-        "backend.api.routes.transcriptions.temporal.start_transcription_workflow",
+        "backend.api.routes.transcriptions.router.temporal.start_transcription_workflow",
         _start,
     )
 

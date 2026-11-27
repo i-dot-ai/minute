@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { useGenerateSummaryFromMinute } from '@/hooks/use-generate-summary-from-minute'
 import { useSaveTranscription } from '@/hooks/use-save-transcription'
-import { DialogueEntry, Transcription } from '@/lib/client'
+import { DialogueEntry, TranscriptionGetResponse } from '@/lib/client'
 import { listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, Pause, Play, User } from 'lucide-react'
@@ -37,7 +37,7 @@ export const SpeakerEditor = ({
   src,
   onSaved,
 }: {
-  transcription: Transcription
+  transcription: TranscriptionGetResponse
   src?: string
   onSaved?: (data: DialogueEntryForm) => void
 }) => {

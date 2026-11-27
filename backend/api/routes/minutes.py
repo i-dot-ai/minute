@@ -7,7 +7,9 @@ from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from backend.api.dependencies import SQLSessionDep, UserDep
+from backend.api.dependencies.authorization import authorize_resource
 from backend.utils import temporal
+from common.authz import Action
 from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription, UserTemplate
 from common.types import (
     MinuteListItem,
@@ -63,8 +65,9 @@ async def list_minutes_for_transcription(
     transcription_id: uuid.UUID, session: SQLSessionDep, user: UserDep
 ) -> list[MinuteListItem]:
     transcription = await session.get(Transcription, transcription_id)
-    if not transcription or transcription.user_id != user.id:
+    if not transcription:
         raise HTTPException(404, "Not found")
+    await authorize_resource(session, user.id, transcription, Action.READ)
 
     query = (
         select(Minute).where(Minute.transcription_id == transcription_id).order_by(col(Minute.updated_datetime).desc())
@@ -89,8 +92,9 @@ async def create_minute(
     transcription_id: uuid.UUID, request: MinutesCreateRequest, session: SQLSessionDep, user: UserDep
 ) -> MinuteListItem:
     transcription = await session.get(Transcription, transcription_id)
-    if not transcription or transcription.user_id != user.id:
+    if not transcription:
         raise HTTPException(404, "Not found")
+    await authorize_resource(session, user.id, transcription, Action.EDIT)
     if request.source_minute_id:
         source_minute = await session.get(Minute, request.source_minute_id)
         if not source_minute or source_minute.transcription_id != transcription_id:
@@ -148,8 +152,9 @@ async def get_minute(minutes_id: uuid.UUID, session: SQLSessionDep, user: UserDe
     )
     result = await session.exec(query)
     minute = result.first()
-    if not minute or not minute.transcription.user_id or minute.transcription.user_id != user.id:
+    if not minute:
         raise HTTPException(404, "Not found")
+    await authorize_resource(session, user.id, minute, Action.READ)
 
     return minute
 
@@ -158,8 +163,9 @@ async def get_minute(minutes_id: uuid.UUID, session: SQLSessionDep, user: UserDe
 async def delete_minute(minute_id: uuid.UUID, session: SQLSessionDep, user: UserDep) -> None:
     query = select(Minute).where(Minute.id == minute_id).options(selectinload(Minute.transcription))
     minute = (await session.exec(query)).first()
-    if not minute or not minute.transcription.user_id or minute.transcription.user_id != user.id:
+    if not minute:
         raise HTTPException(404, "Not found")
+    await authorize_resource(session, user.id, minute, Action.DELETE)
 
     await session.delete(minute)
     await session.commit()
@@ -175,8 +181,9 @@ async def list_minute_versions(
         .options(selectinload(Minute.minute_versions), selectinload(Minute.transcription))
     )
     minute = result.first()
-    if not minute or not minute.transcription.user_id or minute.transcription.user_id != user.id:
+    if not minute:
         raise HTTPException(404)
+    await authorize_resource(session, user.id, minute, Action.READ)
 
     return [
         MinuteVersionResponse(
@@ -198,7 +205,9 @@ async def list_minute_versions(
 async def create_minute_version(
     minute_id: uuid.UUID, request: MinuteVersionCreateRequest, session: SQLSessionDep, user: UserDep
 ) -> MinuteVersionResponse:
-    minute = await get_minute(minute_id, session, user)
+    query = select(Minute).where(Minute.id == minute_id).options(selectinload(Minute.transcription))
+    minute = (await session.exec(query)).first()
+    await authorize_resource(session, user.id, minute, Action.EDIT)
     # An authenticated user CANNOT submit an AI edit for their own minute
     # while naming another user's minute version as the source.
     if request.ai_edit_instructions:
@@ -209,13 +218,11 @@ async def create_minute_version(
                 .options(selectinload(MinuteVersion.minute).selectinload(Minute.transcription))
             )
         ).first()
-        if (
-            not source_minute_version
-            or not source_minute_version.minute.transcription.user_id
-            or source_minute_version.minute.transcription.user_id != user.id
-        ):
+        if not source_minute_version or not source_minute_version.minute.transcription.user_id:
             msg = "Source minute version not found"
             raise HTTPException(status_code=404, detail=msg)
+
+        await authorize_resource(session, user.id, source_minute_version, Action.READ)
 
     minute_version = MinuteVersion(
         id=uuid.uuid4(),
@@ -255,12 +262,9 @@ async def get_minute_version(minute_version_id: uuid.UUID, session: SQLSessionDe
         .options(selectinload(MinuteVersion.minute).selectinload(Minute.transcription))
     )
     minute_version = (await session.exec(query)).first()
-    if (
-        not minute_version
-        or not minute_version.minute.transcription.user_id
-        or minute_version.minute.transcription.user_id != user.id
-    ):
+    if not minute_version or not minute_version.minute.transcription.user_id:
         raise HTTPException(404, "Not found")
+    await authorize_resource(session, user.id, minute_version, Action.READ)
 
     return minute_version
 
@@ -273,12 +277,9 @@ async def delete_minute_version(minute_version_id: uuid.UUID, session: SQLSessio
         .options(selectinload(MinuteVersion.minute).selectinload(Minute.transcription))
     )
     minute_version = (await session.exec(query)).first()
-    if (
-        not minute_version
-        or not minute_version.minute.transcription.user_id
-        or minute_version.minute.transcription.user_id != user.id
-    ):
+    if not minute_version or not minute_version.minute.transcription.user_id:
         raise HTTPException(404, "Not found")
+    await authorize_resource(session, user.id, minute_version, Action.DELETE)
 
     await session.delete(minute_version)
     await session.commit()

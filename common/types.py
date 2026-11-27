@@ -4,8 +4,7 @@ from enum import StrEnum, auto
 
 from pydantic import AwareDatetime, BaseModel, Field
 
-from common.authz.permissions import Permission
-from common.authz.roles import RoleName
+from common.authz import Permission, RoleName
 from common.database.postgres_models import ContentSource, DialogueEntry, JobStatus, TemplateType
 
 
@@ -25,6 +24,7 @@ class TranscriptionMetadata(BaseModel):
     status: JobStatus
     expiring: bool
     no_speech_detected: bool = Field(default=False, description="Transcription completed without detected speech.")
+    org_id: uuid.UUID | None = Field(default=None, description="Owning organisation, or null if personal.")
 
 
 class PaginatedTranscriptionsResponse(BaseModel):

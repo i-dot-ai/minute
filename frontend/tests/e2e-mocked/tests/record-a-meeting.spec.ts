@@ -1,5 +1,4 @@
 import { mockBackend } from '@/tests/e2e-mocked/utilities/mock-backend'
-import { usersMe } from '@/tests/e2e-mocked/mocked-responses/users.me'
 import {
   recordAudioFlow,
   statusToSummaryFlow,
